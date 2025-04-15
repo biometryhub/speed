@@ -78,27 +78,19 @@ check_block_constraints <- function(design, blocks, treatments) {
     return(TRUE)  # No blocks means no constraints to check
   }
 
-  # Get unique block IDs
-  block_ids <- unique(as.vector(blocks))
+  # Flatten the design and blocks matrices
+  design_flat <- as.vector(design)
+  blocks_flat <- as.vector(blocks)
 
-  for (b in block_ids) {
-    # Get positions for this block
-    block_positions <- which(blocks == b, arr.ind = TRUE)
+  # Group treatments by block
+  block_groups <- split(design_flat, blocks_flat)
 
-    # Extract treatments for this block
-    block_treatments <- sapply(1:nrow(block_positions), function(i) {
-      row_idx <- block_positions[i, 1]
-      col_idx <- block_positions[i, 2]
-      return(design[row_idx, col_idx])
-    })
+  # Check for duplicates in each block using a vectorized approach
+  has_duplicates <- any(vapply(block_groups, function(block_treatments) {
+    length(block_treatments) != length(unique(block_treatments))
+  }, logical(1)))
 
-    # Check if there are duplicates within the block
-    if (length(unique(block_treatments)) != length(block_treatments)) {
-      return(FALSE)
-    }
-  }
-
-  return(TRUE)
+  return(!has_duplicates)
 }
 
 # Calculate overall objective function value
