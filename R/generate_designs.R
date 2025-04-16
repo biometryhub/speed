@@ -37,14 +37,24 @@ calculate_adjacency_score <- function(design) {
   nrows <- nrow(design)
   ncols <- ncol(design)
 
+  # # Check row adjacencies using matrix operations
+  # row_adjacencies <- rowSums(design[, 1:(ncols-1)] == design[, 2:ncols], na.rm = TRUE)
+  #
+  # # Check column adjacencies using matrix operations
+  # col_adjacencies <- colSums(design[1:(nrows-1), ] == design[2:nrows, ], na.rm = TRUE)
+  #
+  # # Total score is sum of all adjacencies
+  # score <- sum(row_adjacencies) + sum(col_adjacencies)
+
+  # 100% faster and don't need to worry about 2*X or X*2 designs
   # Check row adjacencies using matrix operations
-  row_adjacencies <- rowSums(design[, 1:(ncols-1)] == design[, 2:ncols], na.rm = TRUE)
+  row_adjacencies <- sum(design[, 1:(ncols-1)] == design[, 2:ncols], na.rm = TRUE)
 
   # Check column adjacencies using matrix operations
-  col_adjacencies <- colSums(design[1:(nrows-1), ] == design[2:nrows, ], na.rm = TRUE)
+  col_adjacencies <- sum(design[1:(nrows-1), ] == design[2:nrows, ], na.rm = TRUE)
 
   # Total score is sum of all adjacencies
-  score <- sum(row_adjacencies) + sum(col_adjacencies)
+  score <- row_adjacencies + col_adjacencies
 
   return(score)
 }
@@ -59,7 +69,7 @@ calculate_balance_score <- function(design, treatments) {
   col_counts <- matrix(0, nrow = ncols, ncol = length(treatments))
 
   # Count treatments by row and column in a vectorized way
-  for (t_idx in 1:length(treatments)) {
+  for (t_idx in seq_along(treatments)) {
     t <- treatments[t_idx]
     row_counts[, t_idx] <- rowSums(design == t, na.rm = TRUE)
     col_counts[, t_idx] <- colSums(design == t, na.rm = TRUE)
@@ -273,20 +283,20 @@ plot_design <- function(design, blocks = NULL, title = "Experimental Design") {
     design_df$block <- as.vector(blocks)
   }
 
-  p <- ggplot(design_df, aes(x = col, y = -row, fill = factor(treatment))) +
-    geom_tile(color = "black") +
-    geom_text(aes(label = treatment), size = 3) +
-    scale_fill_viridis_d() +
-    labs(title = title, fill = "Treatment") +
-    theme_minimal() +
-    theme(axis.text = element_text(size = 10),
-          axis.title = element_text(size = 12),
-          plot.title = element_text(size = 14, hjust = 0.5),
-          legend.text = element_text(size = 10),
-          legend.title = element_text(size = 12)) +
-    coord_equal() +
-    scale_x_continuous(breaks = 1:ncol(design)) +
-    scale_y_continuous(breaks = -1:-nrow(design),
+  p <- ggplot2::ggplot(design_df, ggplot2::aes(x = col, y = -row, fill = factor(treatment))) +
+    ggplot2::geom_tile(color = "black") +
+    ggplot2::geom_text(ggplot2::aes(label = treatment), size = 3) +
+    ggplot2::scale_fill_viridis_d() +
+    ggplot2::labs(title = title, fill = "Treatment") +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(axis.text = ggplot2::element_text(size = 10),
+          axis.title = ggplot2::element_text(size = 12),
+          plot.title = ggplot2::element_text(size = 14, hjust = 0.5),
+          legend.text = ggplot2::element_text(size = 10),
+          legend.title = ggplot2::element_text(size = 12)) +
+    ggplot2::coord_equal() +
+    ggplot2::scale_x_continuous(breaks = 1:ncol(design)) +
+    ggplot2::scale_y_continuous(breaks = -1:-nrow(design),
                       labels = 1:nrow(design))
 
   # Add block outlines if blocks are provided
@@ -318,8 +328,8 @@ plot_design <- function(design, blocks = NULL, title = "Experimental Design") {
 
     # Add boundaries to plot
     if (nrow(block_boundaries) > 0) {
-      p <- p + geom_segment(data = block_boundaries,
-                           aes(x = x, y = y, xend = xend, yend = yend),
+      p <- p + ggplot2::geom_segment(data = block_boundaries,
+                           ggplot2::aes(x = x, y = y, xend = xend, yend = yend),
                            inherit.aes = FALSE,
                            linewidth = 1.5, color = "red")
     }
@@ -336,17 +346,17 @@ plot_progress <- function(result) {
     temperature = result$temperatures
   )
 
-  p1 <- ggplot(df, aes(x = iteration, y = score)) +
-    geom_line() +
-    labs(title = "Objective Score Over Iterations",
+  p1 <- ggplot2::ggplot(df, ggplot2::aes(x = iteration, y = score)) +
+    ggplot2::geom_line() +
+    ggplot2::labs(title = "Objective Score Over Iterations",
          x = "Iteration", y = "Score") +
-    theme_minimal()
+    ggplot2::theme_minimal()
 
-  p2 <- ggplot(df, aes(x = iteration, y = temperature)) +
-    geom_line() +
-    labs(title = "Temperature Over Iterations",
+  p2 <- ggplot2::ggplot(df, ggplot2::aes(x = iteration, y = temperature)) +
+    ggplot2::geom_line() +
+    ggplot2::labs(title = "Temperature Over Iterations",
          x = "Iteration", y = "Temperature") +
-    theme_minimal()
+    ggplot2::theme_minimal()
 
   print(p1)
   print(p2)

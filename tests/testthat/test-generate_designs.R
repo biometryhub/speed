@@ -2,7 +2,7 @@ test_that("generate_designs produces expected output", {
     nrows <- 5
     ncols <- 8
     treatments <- paste0("T", 1:5)  # 5 treatments
-    blocks <- create_block_structure(nrows, ncols, 5, 1)  # 5 blocks of 5x1
+    blocks <- create_block_structure(nrows, ncols, 5, 1)  # 8 blocks of 5x1
 
     # Run optimization with early stopping
     set.seed(123)  # For reproducibility
