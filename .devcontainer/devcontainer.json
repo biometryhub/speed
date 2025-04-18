@@ -3,7 +3,7 @@
   "image": "ghcr.io/rocker-org/devcontainer/r-ver:4",
   "features": {
     "ghcr.io/rocker-org/devcontainer-features/r-packages:1": {
-      "packages": ["ggplot2", "testthat", "vdiffr"]
+      "packages": ["ggplot2", "testthat", "vdiffr", "igraph"]
     }
   },
   "postCreateCommand": "./.devcontainer/postCreateCommand.sh"
