@@ -9,17 +9,11 @@ speed_tabu <- function(
     iterations = 10000,
     early_stop_iterations = 2000,
     quiet = FALSE,
-    # Size of tabu list
     tabu_size = 20,
-    # Multiplier for tabu tenure
     tabu_tenure_modifier = 1,
-    # Number of candidate moves to evaluate
     candidate_moves = 5,
-    # How often to diversify search
     diversification_freq = 50,
-    # Weight for adjacency score in objective
     adj_weight = 1,
-    # Weight for balance score in objective function
     functionbal_weight = 1) {
   # Input validation
   if (!is.data.frame(df)) {
