@@ -145,7 +145,7 @@ generate_neighbor <- function(design, blocks = NULL) {
     block_positions <- which(blocks == selected_block, arr.ind = TRUE)
 
     # Choose two random positions within the block
-    swap_indices <- sample(1:nrow(block_positions), 2)
+    swap_indices <- sample(seq_len(nrow(block_positions)), 2)
     pos1 <- block_positions[swap_indices[1], ]
     pos2 <- block_positions[swap_indices[2], ]
   }

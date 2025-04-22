@@ -1,9 +1,10 @@
 {
   "name": "nert-container",
   "image": "ghcr.io/rocker-org/devcontainer/r-ver:4",
+  "appPort": [4200],
   "features": {
     "ghcr.io/rocker-org/devcontainer-features/r-packages:1": {
-      "packages": ["ggplot2", "testthat", "vdiffr", "igraph"]
+      "packages": ["ggplot2", "testthat", "vdiffr", "igraph", "pak"]
     }
   },
   "postCreateCommand": "./.devcontainer/postCreateCommand.sh"
