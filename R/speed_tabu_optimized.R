@@ -14,7 +14,7 @@ speed_tabu <- function(
     candidate_moves = 5,
     diversification_freq = 50,
     adj_weight = 1,
-    functionbal_weight = 1) {
+    bal_weight = 1) {
   # Input validation
   if (!is.data.frame(df)) {
     stop("df must be an initial data frame of the design")
@@ -176,6 +176,7 @@ speed_tabu <- function(
 
       # Check if move is tabu
       move_key <- create_move_key(move)
+      # is.null(tabu_list[move_key]) is faster
       is_tabu <- exists(move_key, envir = tabu_list) &&
         (iter - get(move_key, envir = tabu_list) <= tabu_tenure_modifier * tabu_size)
 
@@ -198,6 +199,7 @@ speed_tabu <- function(
         move <- generate_move(current_design, swap_mat, current_swap_count, TRUE)
         if (length(move) == 0) next
         move_key <- create_move_key(move)
+        # is.null(tabu_list[move_key]) is faster
         if (!exists(move_key, envir = tabu_list) ||
           (iter - get(move_key, envir = tabu_list) > tabu_tenure_modifier * tabu_size)) {
           candidate_design <- apply_move(current_design, move)
@@ -278,3 +280,31 @@ speed_tabu <- function(
     final_tabu_size = length(ls(tabu_list))
   ))
 }
+
+
+nrows <- 5
+ncols <- 8
+nblocks <- 8
+treatments <- rep(paste0("T", 1:5), nblocks)
+df_initial <- data.frame(
+  Row = factor(rep(1:nrows, ncols)),
+  Col = factor(rep(1:ncols, each = nrows)),
+  block = factor(rep(1:nblocks, each = nrows * ncols / nblocks)),
+  treatment = factor(sample(treatments, length(treatments)))
+)
+
+speed_design <- speed_tabu(
+  df_initial,
+  permute = ~treatment,
+  swap = ~1,
+  spatialFactors = ~block,
+  iterations = 40000,
+  early_stop_iterations = 10000,
+  swap_count = 5,
+  adaptive_swaps = TRUE
+)
+
+
+# initiate_design_speed <- function(nrows, ncols, treatments) {
+#
+# }
