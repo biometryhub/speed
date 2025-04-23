@@ -116,3 +116,57 @@ get_vertices <- function(design_matrix) {
 
   return(vertices)
 }
+
+#' Calculate Adjacency Score for Experimental Design
+#'
+#' @description
+#' Calculates the number of adjacent treatments that are the same in an experimental
+#' design layout. Lower scores indicate better separation of treatments.
+#'
+#' @param design A matrix containing the experimental design layout with treatments
+#'
+#' @return Numeric value representing the total number of adjacent same treatments.
+#'        The score is the sum of same treatments that are adjacent horizontally
+#'        and vertically.
+#'
+#' @examples
+#' design <- matrix(c("A", "B", "A",
+#'                    "B", "A", "B",
+#'                    "A", "B", "A"), 
+#'                  nrow = 3, byrow = TRUE)
+#' calculate_adjacency_score(design)  # Returns the number of adjacent matches
+#'
+#' @export
+calculate_adjacency_score <- function(design) {
+        row_adjacencies <- rowSums(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
+        col_adjacencies <- colSums(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
+        sum(row_adjacencies) + sum(col_adjacencies)
+}
+
+#' Calculate Balance Score for Experimental Design
+#'
+#' @description
+#' Calculates a balance score that measures how evenly treatments are distributed
+#' across spatial factors in an experimental design. Lower scores indicate better balance.
+#'
+#' @param layout_df A data frame containing the experimental design layout
+#' @param permute_var Character string specifying the name of the treatment variable
+#' @param spatial_fac Character vector of spatial factors to consider (e.g., c("Row", "Col"))
+#'
+#' @return Numeric value representing the total balance score. Lower values indicate
+#'         better balance of treatments across spatial factors.
+#'
+#' @examples
+#' layout_df <- data.frame(
+#'   Row = rep(1:3, each = 3),
+#'   Col = rep(1:3, times = 3),
+#'   Treatment = rep(LETTERS[1:3], 3)
+#' )
+#' calculate_balance_score(layout_df, "Treatment", c("Row", "Col"))
+#'
+#' @export
+calculate_balance_score <- function(layout_df, permute_var, spatial_fac) {
+    bscore <- sapply(spatial_fac, function(el)
+        sum(apply(table(layout_df[[el]], layout_df[[permute_var]]), 1, var)))
+    sum(bscore)
+}
