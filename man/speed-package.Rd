@@ -2,14 +2,34 @@
 % Please edit documentation in R/speed-package.R
 \docType{package}
 \name{speed-package}
-\alias{speed}
 \alias{speed-package}
-\title{speed: What the Package Does (Title Case)}
+\title{speed: Generate Spatially Optimal Experimental Designs}
 \description{
 More about what it does (maybe more than one line). Continuation lines should be indented.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://biometryhub.github.io/speed/}
+  \item Report bugs at \url{https://github.com/biometryhub/speed/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Sam Rogers \email{sam.rogers@adelaide.edu.au}
+
+Authors:
+\itemize{
+  \item Julian Taylor \email{julian.taylor@adelaide.edu.au}
+  \item Russell Edson \email{russell.edson@adelaide.edu.au}
+  \item Wasin Pipattungsakul \email{wasin.pipattungsakul@adelaide.edu.au}
+}
+
+Other contributors:
+\itemize{
+  \item University of Adelaide (https://adelaide.edu.au/) [copyright holder, funder]
+  \item Grains Research and Development Corporation (https://grdc.com.au/) [copyright holder, funder]
+}
 
 }
 \keyword{internal}
