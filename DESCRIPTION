@@ -25,10 +25,15 @@ Authors@R:
       person(given = "Grains Research and Development Corporation",
              role = c("cph", "fnd"),
              comment = "https://grdc.com.au/"))
-Description: More about what it does (maybe more than one line).
-    Continuation lines should be indented.
+Description: The Speed package optimizes spatial experimental designs by rearranging 
+    treatments to improve statistical efficiency while maintaining statistical validity. 
+    It employs customisable optimisation metrics, with a default approach that balances 
+    minimising treatment adjacency and maintaining spatial balance. Users can supply their 
+    own optimisation metrics to tailor designs to specific experimental requirements. 
+    The package also includes visualisation tools that allow researchers to inspect 
+    optimised designs.
 License: MIT + file LICENSE
-URL: https://biometryhub.github.io/speed/, https://biometryhub.github.io/speed-sam/
+URL: https://biometryhub.github.io/speed/
 BugReports: https://github.com/biometryhub/speed/issues
 Imports: 
     ggplot2,
