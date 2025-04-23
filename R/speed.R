@@ -11,6 +11,7 @@
 #' @param iterations Maximum number of iterations for the simulated annealing algorithm (default: 10000)
 #' @param early_stop_iterations Number of iterations without improvement before early stopping (default: 2000)
 #' @param quiet Logical; if TRUE, suppresses progress messages (default: FALSE)
+#' @param seed A numeric value for random seed. If provided, it ensures reproducibility of results (default: NULL).
 #' @param swap_count Number of treatment swaps per iteration (default: 1)
 #' @param swap_all_blocks Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)
 #' @param adaptive_swaps Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)
@@ -31,6 +32,7 @@
 #'   \item iterations_run - Total number of iterations performed
 #'   \item stopped_early - Logical indicating if optimization stopped early
 #'   \item treatments - Vector of unique treatments
+#'   \item seed - Random seed used for reproducibility of the design. If not set in the function, the seed is set to the second element of .Random.seed.
 #' }
 #'
 #' @importFrom stringi stri_sort
@@ -70,9 +72,9 @@ speed <- function(data,
 # E.g. swap_within = ~block will permute treatments within blocks, rather than the entire layout
 # E.g. permute = ~treatment will permute the levels of treatment within the blocks
 
-    if (!is.data.frame(df))
+    if (!is.data.frame(data))
         stop("df must be an initial data frame of the design")
-    layout_df <- df
+    layout_df <- data
     if(!inherits(permute, "formula"))
         stop("permute must be a one sided formula")
     permute_var <- deparse(permute[[2]])

@@ -37,6 +37,8 @@ speed(
 
 \item{quiet}{Logical; if TRUE, suppresses progress messages (default: FALSE)}
 
+\item{seed}{A numeric value for random seed. If provided, it ensures reproducibility of results (default: NULL).}
+
 \item{swap_count}{Number of treatment swaps per iteration (default: 1)}
 
 \item{swap_all_blocks}{Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)}
@@ -64,6 +66,7 @@ A list containing:
 \item iterations_run - Total number of iterations performed
 \item stopped_early - Logical indicating if optimization stopped early
 \item treatments - Vector of unique treatments
+\item seed - Random seed used for reproducibility of the design. If not set in the function, the seed is set to the second element of .Random.seed.
 }
 }
 \description{
