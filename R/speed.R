@@ -85,7 +85,7 @@ speed <- function(data,
         stop("swap_within must be a one sided formula")
     swap_var <- deparse(swap_within[[2]])
     if(swap_var == "1")
-        swap_vals <- factor(rep(1, nrow(df)))
+        swap_vals <- factor(rep(1, nrow(data)))
     else if (!(swap_var %in% names(layout_df)))
         stop("swap column not found in data frame")
     else swap_vals <- layout_df[[swap_var]]

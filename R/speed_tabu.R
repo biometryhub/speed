@@ -1,4 +1,4 @@
-speed_tabu <- function(df,
+speed_tabu <- function(data,
                        permute,
                        swap = ~ 1,
                        spatialFactors = ~ Row + Col,
@@ -16,9 +16,9 @@ speed_tabu <- function(df,
                        bal_weight = 1) {          # Weight for balance score in objective function
 
     # Input validation
-    if (!is.data.frame(df))
-        stop("df must be an initial data frame of the design")
-    layout_df <- df
+    if (!is.data.frame(data))
+        stop("data must be an initial data frame of the design")
+    layout_df <- data
     if(!inherits(permute, "formula"))
         stop("permute must be a one sided formula")
     permute_var <- deparse(permute[[2]])
@@ -29,7 +29,7 @@ speed_tabu <- function(df,
         stop("swap must be a one sided formula")
     swap_var <- deparse(swap[[2]])
     if(swap_var == "1")
-        swap_vals <- factor(rep(1, nrow(df)))
+        swap_vals <- factor(rep(1, nrow(data)))
     else if (!(swap_var %in% names(layout_df)))
         stop("swap column not found in data frame")
     else swap_vals <- layout_df[[swap_var]]
