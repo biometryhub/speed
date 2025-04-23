@@ -235,8 +235,8 @@ optimize_design <- function(nrows, ncols, treatments, blocks = NULL,
             }
 
             # Trim tracking vectors to actual number of iterations run
-            scores <- scores[1:iter]
-            temperatures <- temperatures[1:iter]
+            # scores <- scores[1:iter]
+            # temperatures <- temperatures[1:iter]
             break
         }
   }

@@ -1,3 +1,116 @@
+optimize_design_tabu <- function(
+    nrows,
+    ncols,
+    treatments,
+    blocks = NULL,
+    iterations = 10000,
+    start_temp = 100,
+    cooling_rate = 0.99,
+    adj_weight = 1,
+    bal_weight = 1,
+    early_stop_iterations = 2000,
+    ntabu = 20,
+    quiet = FALSE) {
+  # Create initial design
+  current_design <- create_initial_design(nrows, ncols, treatments, blocks)
+  best_design <- current_design
+
+  # Calculate initial scores
+  current_score <- calculate_objective(current_design, treatments, blocks, adj_weight, bal_weight)
+  best_score <- current_score
+
+  # Set initial temperature
+  temp <- start_temp
+
+  # Create vectors to track progress
+  scores <- numeric(iterations)
+  temperatures <- numeric(iterations)
+
+  # For early stopping
+  last_improvement_iter <- 0
+
+  tabu_list <- new.env(hash = TRUE)
+  tabu_seq <- c()
+
+  # Run simulated annealing
+  for (iter in 1:iterations) {
+    # Store current values
+    scores[iter] <- current_score
+    temperatures[iter] <- temp
+    is_best <- FALSE
+
+    new_design <- generate_neighbor(current_design, blocks)
+    new_score <- calculate_objective(new_design, treatments, blocks, adj_weight, bal_weight)
+    design_hash <- rlang::hash(new_design)
+
+    if (new_score < best_score) {
+      best_design <- new_design
+      best_score <- new_score
+      last_improvement_iter <- iter # Record when we last improved
+      is_best <- TRUE
+    }
+
+    # lower is better
+    if (!is.null(tabu_list[[design_hash]]) && new_score < current_score) {
+      current_design <- new_design
+      current_score <- new_score
+      is_best <- TRUE
+    } else {
+      # Accept with probability dependent on temperature
+      p <- exp((current_score - new_score) / temp)
+      if (runif(1) < p) {
+        current_design <- new_design
+        current_score <- new_score
+      }
+    }
+
+    if (is_best) {
+      tabu_list[[design_hash]] <- iter
+      tabu_seq <- c(tabu_seq, design_hash)
+    }
+
+    if (length(tabu_seq) > ntabu) {
+      tabu_pop <- tabu_seq[1]
+      tabu_seq <- tabu_seq[-1]
+      tabu_list[[tabu_pop]] <- NULL
+    }
+
+    # Cool down temperature
+    temp <- temp * cooling_rate
+
+    # Report progress - modified to respect quiet parameter
+    if (!quiet && iter %% 1000 == 0) {
+      cat(
+        "Iteration:", iter, "Score:", current_score, "Best:", best_score,
+        "Iterations since improvement:", iter - last_improvement_iter, "\n"
+      )
+    }
+
+    # Check for early stopping
+    if (iter - last_improvement_iter >= early_stop_iterations) {
+      if (!quiet) {
+        cat(
+          "Early stopping at iteration", iter,
+          "- No improvement for", early_stop_iterations, "iterations\n"
+        )
+      }
+
+      break
+    }
+  }
+
+  return(list(
+    design = best_design,
+    score = best_score,
+    adjacency_score = calculate_adjacency_score(best_design),
+    balance_score = calculate_balance_score(best_design, treatments),
+    scores = scores,
+    temperatures = temperatures,
+    iterations_run = length(scores),
+    stopped_early = length(scores) < iterations
+  ))
+}
+
 speed_tabu <- function(
     df,
     permute,
@@ -10,41 +123,42 @@ speed_tabu <- function(
     early_stop_iterations = 2000,
     quiet = FALSE,
     tabu_size = 20,
-    tabu_tenure_modifier = 1,
     candidate_moves = 5,
     diversification_freq = 50,
     adj_weight = 1,
     bal_weight = 1) {
   # Input validation
-  if (!is.data.frame(df)) {
-    stop("df must be an initial data frame of the design")
-  }
-  layout_df <- df
-  if (!inherits(permute, "formula")) {
-    stop("permute must be a one sided formula")
-  }
-  permute_var <- deparse(permute[[2]])
-  if (!(permute_var %in% names(layout_df))) {
-    stop("permute column not found in data frame")
-  }
-  permute_vals <- layout_df[[permute_var]]
-  if (!inherits(swap, "formula")) {
-    stop("swap must be a one sided formula")
-  }
-  swap_var <- deparse(swap[[2]])
-  if (swap_var == "1") {
-    swap_vals <- factor(rep(1, nrow(df)))
-  } else if (!(swap_var %in% names(layout_df))) {
-    stop("swap column not found in data frame")
-  } else {
-    swap_vals <- layout_df[[swap_var]]
-  }
-  if (!inherits(spatialFactors, "formula")) {
-    stop("spatialFactors must be a one sided formula")
-  }
-  spatial_fac <- all.vars(spatialFactors)
-  if (!all(spatial_fac %in% names(layout_df))) {
-    stop("One or more spatialFactors not found in data frame")
+  {
+    if (!is.data.frame(df)) {
+      stop("df must be an initial data frame of the design")
+    }
+    layout_df <- df
+    if (!inherits(permute, "formula")) {
+      stop("permute must be a one sided formula")
+    }
+    permute_var <- deparse(permute[[2]])
+    if (!(permute_var %in% names(layout_df))) {
+      stop("permute column not found in data frame")
+    }
+    permute_vals <- layout_df[[permute_var]]
+    if (!inherits(swap, "formula")) {
+      stop("swap must be a one sided formula")
+    }
+    swap_var <- deparse(swap[[2]])
+    if (swap_var == "1") {
+      swap_vals <- factor(rep(1, nrow(df)))
+    } else if (!(swap_var %in% names(layout_df))) {
+      stop("swap column not found in data frame")
+    } else {
+      swap_vals <- layout_df[[swap_var]]
+    }
+    if (!inherits(spatialFactors, "formula")) {
+      stop("spatialFactors must be a one sided formula")
+    }
+    spatial_fac <- all.vars(spatialFactors)
+    if (!all(spatial_fac %in% names(layout_df))) {
+      stop("One or more spatialFactors not found in data frame")
+    }
   }
 
   # Derive dimensions
@@ -95,51 +209,24 @@ speed_tabu <- function(
   }
 
   # Generate a candidate move
-  generate_move <- function(design, swap_mat, swap_count, swap_all_blocks) {
+  generate_neighbor <- function(design, swap_mat, swap_count, swap_all_blocks) {
+    new_design <- design
     swap_levels <- unique(as.vector(swap_mat))
     if (!swap_all_blocks) swap_levels <- sample(swap_levels, 1)
-
-    # Generate and return move positions
-    moves <- list()
     for (level in swap_levels) {
       for (i in 1:swap_count) {
         level <- sample(swap_levels, 1)
         positions <- which(swap_mat == level, arr.ind = TRUE)
         if (nrow(positions) < 2) next
-        idx <- sample(1:nrow(positions), 2)
+        idx <- sample(seq_len(nrow(positions)), 2)
         pos1 <- positions[idx[1], ]
         pos2 <- positions[idx[2], ]
-        moves <- c(moves, list(list(pos1 = pos1, pos2 = pos2)))
+        tmp <- new_design[pos1[1], pos1[2]]
+        new_design[pos1[1], pos1[2]] <- new_design[pos2[1], pos2[2]]
+        new_design[pos2[1], pos2[2]] <- tmp
       }
     }
-    return(moves)
-  }
-
-  # Apply move to design
-  apply_move <- function(design, move) {
-    new_design <- design
-    for (swap in move) {
-      pos1 <- swap$pos1
-      pos2 <- swap$pos2
-      tmp <- new_design[pos1[1], pos1[2]]
-      new_design[pos1[1], pos1[2]] <- new_design[pos2[1], pos2[2]]
-      new_design[pos2[1], pos2[2]] <- tmp
-    }
     return(new_design)
-  }
-
-  # Create move key for tabu list
-  create_move_key <- function(move) {
-    keys <- character(length(move))
-    for (i in seq_along(move)) {
-      swap <- move[[i]]
-      keys[i] <- paste(
-        paste0(swap$pos1[1], "-", swap$pos1[2], "-", current_design[swap$pos1[1], swap$pos1[2]]),
-        paste0(swap$pos2[1], "-", swap$pos2[2], "-", current_design[swap$pos2[1], swap$pos2[2]]),
-        sep = "_"
-      )
-    }
-    paste(keys, collapse = "|")
   }
 
   # Initialize tabu list - will store iteration when move was made
@@ -171,40 +258,41 @@ speed_tabu <- function(
 
     for (c in 1:candidate_moves) {
       # Generate a candidate move
-      move <- generate_move(current_design, swap_mat, current_swap_count, current_swap_all_blocks)
-      if (length(move) == 0) next
-
-      # Check if move is tabu
-      move_key <- create_move_key(move)
-      # is.null(tabu_list[move_key]) is faster
-      is_tabu <- exists(move_key, envir = tabu_list) &&
-        (iter - get(move_key, envir = tabu_list) <= tabu_tenure_modifier * tabu_size)
+      candidate_design <- generate_neighbor(
+        current_design,
+        swap_mat,
+        current_swap_count,
+        current_swap_all_blocks
+      )
+      design_hash <- rlang::hash(candidate_design)
 
       # Apply move to get new design
-      candidate_design <- apply_move(current_design, move)
       candidate_score <- calculate_objective(candidate_design, permute_var, layout_df, spatial_fac)
 
       # Aspiration criterion: accept tabu move if it gives the best solution found so far
-      if (!is_tabu || candidate_score < best_score) {
-        if (candidate_score < best_candidate_score) {
-          best_candidate <- list(design = candidate_design, score = candidate_score, move = move)
-          best_candidate_score <- candidate_score
-        }
+      if (
+        candidate_score < best_score ||
+          (!is_tabu(tabu_list, design_hash, iter, tabu_size) && candidate_score < best_candidate_score)
+      ) {
+        best_candidate <- list(design = candidate_design, score = candidate_score, hash = design_hash)
+        best_candidate_score <- candidate_score
       }
     }
 
     # If no valid move found (all were tabu), generate a random non-tabu move
     if (is.null(best_candidate)) {
       repeat {
-        move <- generate_move(current_design, swap_mat, current_swap_count, TRUE)
-        if (length(move) == 0) next
-        move_key <- create_move_key(move)
-        # is.null(tabu_list[move_key]) is faster
-        if (!exists(move_key, envir = tabu_list) ||
-          (iter - get(move_key, envir = tabu_list) > tabu_tenure_modifier * tabu_size)) {
-          candidate_design <- apply_move(current_design, move)
+        candidate_design <- generate_neighbor(
+          current_design,
+          swap_mat,
+          current_swap_count,
+          current_swap_all_blocks
+        )
+        design_hash <- rlang::hash(candidate_design)
+
+        if (!is_tabu(tabu_list, design_hash, iter, tabu_size)) {
           candidate_score <- calculate_objective(candidate_design, permute_var, layout_df, spatial_fac)
-          best_candidate <- list(design = candidate_design, score = candidate_score, move = move)
+          best_candidate <- list(design = candidate_design, score = candidate_score, hash = design_hash)
           break
         }
       }
@@ -214,15 +302,14 @@ speed_tabu <- function(
     current_design <- best_candidate$design
     current_score <- best_candidate$score
 
-    # Add move to tabu list
-    move_key <- create_move_key(best_candidate$move)
-    assign(move_key, iter, envir = tabu_list)
+    # Add design tabu list
+    tabu_list[[best_candidate$hash]] <- iter
 
     # Maintain tabu list size (optional - can just let the tenure expire)
     if (iter %% 100 == 0) {
       tabu_keys <- ls(tabu_list)
       for (key in tabu_keys) {
-        if (iter - get(key, envir = tabu_list) > tabu_tenure_modifier * tabu_size * 2) {
+        if (iter - get(key, envir = tabu_list) > tabu_size * 2) {
           rm(list = key, envir = tabu_list)
         }
       }
@@ -241,8 +328,7 @@ speed_tabu <- function(
 
       # Increase swap count temporarily for greater diversification
       temp_swap_count <- min(5, swap_count * 3)
-      diversify_moves <- generate_move(current_design, swap_mat, temp_swap_count, TRUE)
-      current_design <- apply_move(current_design, diversify_moves)
+      current_design <- generate_neighbor(current_design, swap_mat, temp_swap_count, TRUE)
       current_score <- calculate_objective(current_design, permute_var, layout_df, spatial_fac)
     }
 
@@ -281,28 +367,35 @@ speed_tabu <- function(
   ))
 }
 
+is_tabu <- function(tabu_list, hash, iter, tabu_size) {
+  # is.null(tabu_list[move_key]) is faster
+  return(!is.null(tabu_list[[hash]]) && (iter - tabu_list[[hash]] <= tabu_size))
+}
 
-nrows <- 5
-ncols <- 8
-nblocks <- 8
-treatments <- rep(paste0("T", 1:5), nblocks)
-df_initial <- data.frame(
-  Row = factor(rep(1:nrows, ncols)),
-  Col = factor(rep(1:ncols, each = nrows)),
-  block = factor(rep(1:nblocks, each = nrows * ncols / nblocks)),
-  treatment = factor(sample(treatments, length(treatments)))
-)
 
-speed_design <- speed_tabu(
-  df_initial,
-  permute = ~treatment,
-  swap = ~1,
-  spatialFactors = ~block,
-  iterations = 40000,
-  early_stop_iterations = 10000,
-  swap_count = 5,
-  adaptive_swaps = TRUE
-)
+
+# nrows <- 5
+# ncols <- 8
+# nblocks <- 8
+# treatments <- rep(paste0("T", 1:5), nblocks)
+# df_initial <- data.frame(
+#   Row = factor(rep(1:nrows, ncols)),
+#   Col = factor(rep(1:ncols, each = nrows)),
+#   block = factor(rep(1:nblocks, each = nrows * ncols / nblocks)),
+#   treatment = factor(sample(treatments, length(treatments)))
+# )
+#
+# speed_design <- speed_tabu(
+#   df_initial,
+#   permute = ~treatment,
+#   swap = ~1,
+#   candidate_moves = 9,
+#   spatialFactors = ~ block + Row,
+#   iterations = 40000,
+#   early_stop_iterations = 10000,
+#   swap_count = 3,
+#   adaptive_swaps = TRUE
+# )
 
 
 # initiate_design_speed <- function(nrows, ncols, treatments) {
