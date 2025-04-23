@@ -1,23 +1,44 @@
-Package: speed
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Authors@R: c(
-    person(
-      "Sam", "Rogers",
-      email = "sam.rogers@adelaide.edu.au",
-      role = c("aut", "cre")
-    )
-  )
+Package: speed
+Title: Generate Spatially Optimal Experimental Designs
+Version: 0.0.1
+Authors@R: 
+    c(person(given = "Sam",
+             family = "Rogers",
+             role = c("aut", "cre"),
+             email = "sam.rogers@adelaide.edu.au"),
+      person(given = "Julian",
+             family = "Taylor",
+             role = "aut",
+             email = "julian.taylor@adelaide.edu.au"),
+      person(given = "Russell",
+             family = "Edson",
+             role = "aut",
+             email = "russell.edson@adelaide.edu.au"),
+      person(given = "Wasin",
+             family = "Pipattungsakul",
+             role = "aut",
+             email = "wasin.pipattungsakul@adelaide.edu.au"),
+      person(given = "University of Adelaide",
+             role = c("cph", "fnd"),
+             comment = "https://adelaide.edu.au/"),
+      person(given = "Grains Research and Development Corporation",
+             role = c("cph", "fnd"),
+             comment = "https://grdc.com.au/"))
 Description: More about what it does (maybe more than one line).
     Continuation lines should be indented.
-License: What license is it under?
-Encoding: UTF-8
-LazyData: true
+License: MIT + file LICENSE
+URL: https://biometryhub.github.io/speed/, https://biometryhub.github.io/speed-sam/
+BugReports: https://github.com/biometryhub/speed/issues
 Imports: 
-    ggplot2 (>= 3.5.0)
+    ggplot2,
+    igraph,
+    stringi
 Suggests: 
     testthat (>= 3.0.0),
     vdiffr
 Config/testthat/edition: 3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
