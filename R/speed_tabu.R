@@ -65,18 +65,6 @@ speed_tabu <- function(data,
     current_design <- perm_design(permute_mat, swap_mat)
     best_design <- current_design
 
-    # Scoring functions
-    calculate_adjacency_score <- function(design) {
-        row_adjacencies <- rowSums(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
-        col_adjacencies <- colSums(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
-        sum(row_adjacencies) + sum(col_adjacencies)
-    }
-
-    calculate_balance_score <- function(layout_df, permute_var, spatial_fac) {
-        bscore <- sapply(spatial_fac, function(el)
-            sum(apply(table(layout_df[[el]], layout_df[[permute_var]]), 1, var)))
-        sum(bscore)
-    }
 
     calculate_objective <- function(design, permute_var, layout_df, spatial_fac) {
         layout_df[[permute_var]] <- as.vector(design)

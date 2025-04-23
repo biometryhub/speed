@@ -31,57 +31,6 @@ create_initial_design <- function(nrows, ncols, treatments, blocks = NULL) {
     }
 }
 
-# Calculate the number of adjacent same treatments
-calculate_adjacency_score <- function(design) {
-  nrows <- nrow(design)
-  ncols <- ncol(design)
-
-  # # Check row adjacencies using matrix operations
-  # row_adjacencies <- rowSums(design[, 1:(ncols-1)] == design[, 2:ncols], na.rm = TRUE)
-  #
-  # # Check column adjacencies using matrix operations
-  # col_adjacencies <- colSums(design[1:(nrows-1), ] == design[2:nrows, ], na.rm = TRUE)
-  #
-  # # Total score is sum of all adjacencies
-  # score <- sum(row_adjacencies) + sum(col_adjacencies)
-
-  # 100% faster and don't need to worry about 2*X or X*2 designs
-  # Check row adjacencies using matrix operations
-  row_adjacencies <- sum(design[, 1:(ncols-1)] == design[, 2:ncols], na.rm = TRUE)
-
-  # Check column adjacencies using matrix operations
-  col_adjacencies <- sum(design[1:(nrows-1), ] == design[2:nrows, ], na.rm = TRUE)
-
-  # Total score is sum of all adjacencies
-  score <- row_adjacencies + col_adjacencies
-
-  return(score)
-}
-
-# Count treatment frequencies in rows and columns - vectorized version
-calculate_balance_score <- function(design, treatments) {
-  nrows <- nrow(design)
-  ncols <- ncol(design)
-
-  # Initialize row and column count matrices
-  row_counts <- matrix(0, nrow = nrows, ncol = length(treatments))
-  col_counts <- matrix(0, nrow = ncols, ncol = length(treatments))
-
-  # Count treatments by row and column in a vectorized way
-  for (t_idx in seq_along(treatments)) {
-    t <- treatments[t_idx]
-    row_counts[, t_idx] <- rowSums(design == t, na.rm = TRUE)
-    col_counts[, t_idx] <- colSums(design == t, na.rm = TRUE)
-  }
-
-
-
-  # Calculate variance of counts (lower is better)
-  row_var <- sum(apply(row_counts, 2, var))
-  col_var <- sum(apply(col_counts, 2, var))
-
-  return(row_var + col_var)
-}
 
 # Check if design satisfies block constraints
 check_block_constraints <- function(design, blocks, treatments) {
