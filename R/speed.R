@@ -1,18 +1,74 @@
+#' Optimize Experimental Design Layout Using Simulated Annealing
+#'
+#' @description
+#' Optimizes the spatial layout of experimental designs using simulated annealing to minimize
+#' treatment adjacency and maintain treatment balance across spatial factors.
+#'
+#' @param data A data frame containing the initial design layout with row and col coordinates
+#' @param permute A one-sided formula specifying the treatment variable to be permuted (e.g., ~treatment)
+#' @param swap_within A one-sided formula specifying the blocking factor within which to permute treatments (default: ~1)
+#' @param spatial_factors A one-sided formula specifying spatial factors to consider for balance (default: ~row + col)
+#' @param iterations Maximum number of iterations for the simulated annealing algorithm (default: 10000)
+#' @param early_stop_iterations Number of iterations without improvement before early stopping (default: 2000)
+#' @param quiet Logical; if TRUE, suppresses progress messages (default: FALSE)
+#' @param swap_count Number of treatment swaps per iteration (default: 1)
+#' @param swap_all_blocks Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)
+#' @param adaptive_swaps Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)
+#' @param start_temp Starting temperature for simulated annealing (default: 100)
+#' @param cooling_rate Rate at which temperature decreases (default: 0.99)
+#' @param adj_weight Weight given to adjacency score in objective function (default: 1)
+#' @param bal_weight Weight given to balance score in objective function (default: 1)
+#'
+#' @return A list containing:
+#' \itemize{
+#'   \item design - Matrix of optimized treatment layout
+#'   \item design_df - Data frame of optimized design
+#'   \item score - Final optimization score
+#'   \item adjacency_score - Score for treatment adjacencies
+#'   \item balance_score - Score for spatial balance
+#'   \item scores - Vector of scores across iterations
+#'   \item temperatures - Vector of temperatures across iterations
+#'   \item iterations_run - Total number of iterations performed
+#'   \item stopped_early - Logical indicating if optimization stopped early
+#'   \item treatments - Vector of unique treatments
+#' }
+#'
+#' @importFrom stringi stri_sort
+#'
+#' @examples
+#' # Create a simple design with 3 replicates of 4 treatments in a 4x3 layout
+#' df <- data.frame(
+#'   row = rep(1:4, each = 3),
+#'   col = rep(1:3, times = 4),
+#'   Treatment = rep(LETTERS[1:4], 3)
+#' )
+#'
+#' # Optimize the design
+#' result <- speed(df, permute = ~Treatment)
+#'
+#' @export
 
-speed <- function(df,
+speed <- function(data,
                   permute,
-                  swap = ~ 1,
-                  spatialFactors = ~ Row + Col,
-                  swap_count = 1,
-                  swap_all_blocks = FALSE,
-                  adaptive_swaps = FALSE,
+                  swap_within = ~ 1,
+                  spatial_factors = ~ row + col,
                   iterations = 10000,
                   early_stop_iterations = 2000,
                   quiet = FALSE,
+                  seed = NULL,
+
+                  # These could probably be options
+                  swap_count = 1,
+                  swap_all_blocks = FALSE,
+                  adaptive_swaps = FALSE,
                   start_temp = 100,
                   cooling_rate = 0.99,
                   adj_weight = 1,
                   bal_weight = 1) {
+
+# Permute is for the levels of the treatment that get shuffled within the levels of the swap_within factor
+# E.g. swap_within = ~block will permute treatments within blocks, rather than the entire layout
+# E.g. permute = ~treatment will permute the levels of treatment within the blocks
 
     if (!is.data.frame(df))
         stop("df must be an initial data frame of the design")
@@ -23,28 +79,34 @@ speed <- function(df,
     if (!(permute_var %in% names(layout_df)))
         stop("permute column not found in data frame")
     permute_vals <- layout_df[[permute_var]]
-    if(!inherits(swap, "formula"))
-        stop("swap must be a one sided formula")
-    swap_var <- deparse(swap[[2]])
+    if(!inherits(swap_within, "formula"))
+        stop("swap_within must be a one sided formula")
+    swap_var <- deparse(swap_within[[2]])
     if(swap_var == "1")
         swap_vals <- factor(rep(1, nrow(df)))
     else if (!(swap_var %in% names(layout_df)))
         stop("swap column not found in data frame")
     else swap_vals <- layout_df[[swap_var]]
-    if(!inherits(spatialFactors, "formula"))
-        stop("spatialFactors must be a one sided formula")
-    spatial_fac <- all.vars(spatialFactors)
+    if(!inherits(spatial_factors, "formula"))
+        stop("spatial_factors must be a one sided formula")
+    spatial_fac <- all.vars(spatial_factors)
     if (!all(spatial_fac %in% names(layout_df)))
-        stop("One or more spatialFactors not found in data frame")
+        stop("One or more spatial_factors not found in data frame")
 
     # Derive dimensions
-    row <- as.integer(as.character(layout_df$Row))
-    col <- as.integer(as.character(layout_df$Col))
+    row <- as.integer(as.character(layout_df$row))
+    col <- as.integer(as.character(layout_df$col))
     nrows <- max(row)
     ncols <- max(col)
     permute_mat <- matrix(permute_vals, nrow = nrows, ncol = ncols, byrow = FALSE)
     swap_mat <- matrix(swap_vals, nrow = nrows, ncol = ncols, byrow = FALSE)
     treatments <- unique(as.vector(permute_mat))
+
+    # Set seed for reproducibility
+    if(is.null(seed)) {
+        seed <- .Random.seed[2]
+    }
+    set.seed(seed)
 
     perm_design <- function(permute_mat, swap_mat) {
         design <- matrix(NA, nrow = nrows, ncol = ncols)
@@ -62,17 +124,6 @@ speed <- function(df,
     current_design <- perm_design(permute_mat, swap_mat)
     best_design <- current_design
 
-    calculate_adjacency_score <- function(design) {
-        row_adjacencies <- rowSums(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
-        col_adjacencies <- colSums(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
-        sum(row_adjacencies) + sum(col_adjacencies)
-    }
-
-    calculate_balance_score <- function(layout_df, permute_var, spatial_fac) {
-        bscore <- sapply(spatial_fac, function(el)
-            sum(apply(table(layout_df[[el]], layout_df[[permute_var]]), 1, var)))
-        sum(bscore)
-    }
 
     calculate_objective <- function(design, permute_var, layout_df, spatial_fac) {
         layout_df[[permute_var]] <- as.vector(design)
@@ -151,6 +202,7 @@ speed <- function(df,
         temperatures = temperatures,
         iterations_run = length(scores),
         stopped_early = length(scores) < iterations,
-        treatments = treatments
+        treatments = stringi::stri_sort(treatments, numeric = TRUE),
+        seed = seed
     ))
 }
