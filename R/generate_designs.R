@@ -1,5 +1,4 @@
 # Spatial Optimal Design Implementation with Optional Block Constraints
-library(ggplot2)
 
 create_initial_design <- function(nrows, ncols, treatments, blocks = NULL) {
     if (is.null(blocks)) {
@@ -74,6 +73,8 @@ calculate_balance_score <- function(design, treatments) {
     row_counts[, t_idx] <- rowSums(design == t, na.rm = TRUE)
     col_counts[, t_idx] <- colSums(design == t, na.rm = TRUE)
   }
+
+
 
   # Calculate variance of counts (lower is better)
   row_var <- sum(apply(row_counts, 2, var))
@@ -274,93 +275,6 @@ evaluate_distribution <- function(design, treatments) {
   return(list(row_counts = row_counts, col_counts = col_counts))
 }
 
-# Function to visualize the design
-plot_design <- function(design, blocks = NULL, title = "Experimental Design") {
-  design_df <- expand.grid(row = 1:nrow(design), col = 1:ncol(design))
-  design_df$treatment <- as.vector(design)
-
-  if (!is.null(blocks)) {
-    design_df$block <- as.vector(blocks)
-  }
-
-  p <- ggplot2::ggplot(design_df, ggplot2::aes(x = col, y = -row, fill = factor(treatment))) +
-    ggplot2::geom_tile(color = "black") +
-    ggplot2::geom_text(ggplot2::aes(label = treatment), size = 3) +
-    ggplot2::scale_fill_viridis_d() +
-    ggplot2::labs(title = title, fill = "Treatment") +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(axis.text = ggplot2::element_text(size = 10),
-          axis.title = ggplot2::element_text(size = 12),
-          plot.title = ggplot2::element_text(size = 14, hjust = 0.5),
-          legend.text = ggplot2::element_text(size = 10),
-          legend.title = ggplot2::element_text(size = 12)) +
-    ggplot2::coord_equal() +
-    ggplot2::scale_x_continuous(breaks = 1:ncol(design)) +
-    ggplot2::scale_y_continuous(breaks = -1:-nrow(design),
-                      labels = 1:nrow(design))
-
-  # Add block outlines if blocks are provided
-  if (!is.null(blocks)) {
-    # Find boundaries between blocks
-    block_boundaries <- data.frame()
-
-    # Check horizontal boundaries
-    for (i in 1:nrow(blocks)) {
-      for (j in 1:(ncol(blocks)-1)) {
-        if (blocks[i, j] != blocks[i, j+1]) {
-          block_boundaries <- rbind(block_boundaries,
-                                   data.frame(x = j + 0.5, y = -i,
-                                             xend = j + 0.5, yend = -(i-1)))
-        }
-      }
-    }
-
-    # Check vertical boundaries
-    for (i in 1:(nrow(blocks)-1)) {
-      for (j in 1:ncol(blocks)) {
-        if (blocks[i, j] != blocks[i+1, j]) {
-          block_boundaries <- rbind(block_boundaries,
-                                   data.frame(x = j, y = -(i + 0.5),
-                                             xend = j + 1, yend = -(i + 0.5)))
-        }
-      }
-    }
-
-    # Add boundaries to plot
-    if (nrow(block_boundaries) > 0) {
-      p <- p + ggplot2::geom_segment(data = block_boundaries,
-                           ggplot2::aes(x = x, y = y, xend = xend, yend = yend),
-                           inherit.aes = FALSE,
-                           linewidth = 1.5, color = "red")
-    }
-  }
-
-  return(p)
-}
-
-# Function to plot optimization progress
-plot_progress <- function(result) {
-  df <- data.frame(
-    iteration = 1:length(result$scores),
-    score = result$scores,
-    temperature = result$temperatures
-  )
-
-  p1 <- ggplot2::ggplot(df, ggplot2::aes(x = iteration, y = score)) +
-    ggplot2::geom_line() +
-    ggplot2::labs(title = "Objective Score Over Iterations",
-         x = "Iteration", y = "Score") +
-    ggplot2::theme_minimal()
-
-  p2 <- ggplot2::ggplot(df, ggplot2::aes(x = iteration, y = temperature)) +
-    ggplot2::geom_line() +
-    ggplot2::labs(title = "Temperature Over Iterations",
-         x = "Iteration", y = "Temperature") +
-    ggplot2::theme_minimal()
-
-  print(p1)
-  print(p2)
-}
 
 # Function to create block structure for a grid
 create_block_structure <- function(nrows, ncols, block_rows, block_cols) {
