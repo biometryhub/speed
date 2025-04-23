@@ -77,11 +77,14 @@ Temperature decay over iterations
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Optimize the design</span></span></span>
 <span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="speed.html">speed</a></span><span class="op">(</span><span class="va">df</span>, permute <span class="op">=</span> <span class="op">~</span><span class="va">Treatment</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in rep(1, nrow(df)):</span> invalid 'times' argument</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration: 1000 Score: 0 Best: 0 Since Improvement: 750 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration: 2000 Score: 0 Best: 0 Since Improvement: 1750 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Early stopping at iteration 2250 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Plot optimization progress</span></span></span>
 <span class="r-in"><span><span class="fu">plot_progress</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'result' not found</span>
+<span class="r-plt img"><img src="plot_progress-1.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_progress-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
