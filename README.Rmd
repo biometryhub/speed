@@ -13,44 +13,93 @@ knitr::opts_chunk$set(
 )
 ```
 
-# speed
+# speed - Spatially Efficient Experimental Designs
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/biometryhub/speed-sam/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/biometryhub/speed-sam/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of speed is to ...
+
+## Overview
+
+The `speed` package optimizes spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It uses simulated annealing to:
+
+- Minimize treatment adjacency (reducing neighbor effects)
+- Maintain spatial balance across rows and columns
+- Respect blocking constraints if specified
+- Provide visualization tools for design evaluation
 
 ## Installation
 
-You can install the development version of speed from [GitHub](https://github.com/) with:
+You can install the development version of speed from [GitHub](https://github.com/biometryhub/speed) with:
 
-``` r
+```r
 # install.packages("pak")
-pak::pak("biometryhub/speed-sam")
+pak::pak("biometryhub/speed")
 ```
 
-## Example
+## Features
 
-This is a basic example which shows you how to solve a common problem:
+- Flexible optimization of experimental designs
+- Support for blocked designs
+- Customizable optimization parameters
+- Built-in visualization functions
+- Progress tracking during optimization
+- Early stopping when convergence is reached
+
+See the package documentation for more detailed examples and options.
+
+## Basic Example
+
+A simple example optimizing a 4×3 completely randomised design with 4 treatments:
 
 ```{r example}
 library(speed)
-## basic example code
+
+# Create a simple design with 3 replicates of 4 treatments
+df <- data.frame(
+  row = rep(1:4, each = 3),
+  col = rep(1:3, times = 4),
+  Treatment = rep(LETTERS[1:4], 3)
+)
+
+# Set seed for reproducibility
+set.seed(42)
+
+# Optimize the design
+result <- speed(df, permute = ~Treatment)
+
+# Plot the optimized design
+plot_design(result)
+
+# View optimization progress
+plot_progress(result)
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
+## Blocked design
 
-```{r cars}
-summary(cars)
+You can also optimize designs within blocks:
+
+```{r blocks}
+# Create a design with blocks
+df <- data.frame(
+  row = rep(1:6, each = 4),
+  col = rep(1:4, times = 6),
+  Treatment = rep(LETTERS[1:8], 3),
+  Block = rep(1:3, each = 8)
+)
+
+# Set seed for reproducibility
+set.seed(42)
+
+# Optimize while respecting blocks
+result <- speed(df, 
+                permute = ~Treatment,
+                swap_within = ~Block,
+                iterations = 2000)
+
+# Plot the design with block boundaries
+plot_design(result, block_var = "Block")
 ```
 
-You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this.
 
-You can also embed plots, for example:
-
-```{r pressure, echo = FALSE}
-plot(pressure)
-```
-
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.

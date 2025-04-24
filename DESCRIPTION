@@ -1,6 +1,6 @@
 Type: Package
 Package: speed
-Title: Generate Spatially Optimal Experimental Designs
+Title: Generate Spatially Efficient Experimental Designs
 Version: 0.0.1
 Authors@R: 
     c(person(given = "Sam",
