@@ -38,16 +38,6 @@ treatments. Specify \code{"1"} or \code{"none"} for no boundary (default: \code{
 
 \item{seed}{A numeric value for random seed. If provided, it ensures reproducibility of results (default:
 NULL).}
-
-\item{swap_count}{Number of treatment swaps per iteration (default: 1)}
-
-\item{swap_all_blocks}{Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)}
-
-\item{adaptive_swaps}{Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)}
-
-\item{start_temp}{Starting temperature for simulated annealing (default: 100)}
-
-\item{cooling_rate}{Rate at which temperature decreases (default: 0.99)}
 }
 \value{
 A list containing:

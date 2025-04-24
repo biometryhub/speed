@@ -22,10 +22,10 @@ objective_function_default <- function(
     bal_weight = getOption("speed.bal_weight", 1)) {
   return(
     # TODO: move to return function signature
-    #' @param design_matrix A design matrix
-    #' @param layout_df A data frame representing the spatial information of the design
-    #' @param treatment_cols A column name of the treatment
-    #' @param spatial_cols Column names of the spatial factors
+    # design_matrix A design matrix
+    # layout_df A data frame representing the spatial information of the design
+    # treatment_cols A column name of the treatment
+    # spatial_cols Column names of the spatial factors
     function(design_matrix, layout_df, treatment_cols, spatial_cols) {
       layout_df[[treatment_cols]] <- as.vector(design_matrix)
       adj <- calculate_adjacency_score(design_matrix)

@@ -69,11 +69,11 @@ speed <- function(
   # E.g. swap_within = ~block will permute treatments within blocks, rather than the entire layout
   # E.g. permute = ~treatment will permute the levels of treatment within the blocks
   # TODO: convert to doc for options
-  #' @param swap_count Number of treatment swaps per iteration (default: 1)
-  #' @param swap_all_blocks Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)
-  #' @param adaptive_swaps Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)
-  #' @param start_temp Starting temperature for simulated annealing (default: 100)
-  #' @param cooling_rate Rate at which temperature decreases (default: 0.99)
+  # swap_count Number of treatment swaps per iteration (default: 1)
+  # swap_all_blocks Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)
+  # adaptive_swaps Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)
+  # start_temp Starting temperature for simulated annealing (default: 100)
+  # cooling_rate Rate at which temperature decreases (default: 0.99)
   # NOTE: weights moved to cost function
   swap_count <- getOption("speed.swap_count", 1)
   swap_all_blocks <- getOption("speed.swap_all_blocks", FALSE)

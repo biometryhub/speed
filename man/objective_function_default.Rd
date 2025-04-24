@@ -13,14 +13,6 @@ objective_function_default(
 \item{adj_weight}{Weight for adjacency score (default: 1)}
 
 \item{bal_weight}{Weight for balance score (default: 1)}
-
-\item{design_matrix}{A design matrix}
-
-\item{layout_df}{A data frame representing the spatial information of the design}
-
-\item{treatment_cols}{A column name of the treatment}
-
-\item{spatial_cols}{Column names of the spatial factors}
 }
 \value{
 A function which returns numeric value representing the score of the design (lower is better)
