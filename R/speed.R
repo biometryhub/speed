@@ -127,14 +127,6 @@ speed <- function(data,
     current_design <- perm_design(permute_mat, swap_mat)
     best_design <- current_design
 
-
-    calculate_objective <- function(design, permute_var, layout_df, spatial_fac) {
-        layout_df[[permute_var]] <- as.vector(design)
-        adj <- calculate_adjacency_score(design)
-        bal <- calculate_balance_score(layout_df, permute_var, spatial_fac)
-        adj_weight * adj + bal_weight * bal
-    }
-
     generate_neighbor <- function(design, swap_mat, swap_count, swap_all_blocks) {
         new_design <- design
         swap_levels <- unique(as.vector(swap_mat))
