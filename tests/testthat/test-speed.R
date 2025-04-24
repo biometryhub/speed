@@ -2,13 +2,8 @@ test_that("speed works for simple design", {
   nrows <- 5
   ncols <- 5
   nblocks <- 5
-  treatments <- rep(paste0("T", 1:5), nblocks)
-  df_initial <- data.frame(
-    row = factor(rep(1:nrows, ncols)),
-    col = factor(rep(1:ncols, each = nrows)),
-    block = factor(rep(1:nblocks, each = nrows * ncols / nblocks)),
-    treatment = factor(sample(treatments, length(treatments)))
-  )
+  df_initial <- initialize_design_df(1:5, 5, nrows, ncols, nblocks, 1)
+  treatments <- sort(as.character(df_initial$treatment))
 
   iterations <- 40000
   seed <- 112
@@ -23,9 +18,10 @@ test_that("speed works for simple design", {
     speed.bal_weight = 1
   )
 
-  speed_design <- speed(df_initial,
+  speed_design <- speed(
+    df_initial,
     treatment_cols = "treatment",
-    swap = ~1,
+    swap_within = "1",
     spatial_factors = ~ block + row,
     iterations = ,
     early_stop_iterations = 10000,
@@ -35,58 +31,74 @@ test_that("speed works for simple design", {
   design_matrix <- speed_design$design
   design_df <- speed_design$design_df
 
+  # check quality
   expect_equal(speed_design$adjacency_score, 0)
   expect_equal(speed_design$balance_score, 0)
   expect_equal(speed_design$score, 0)
   expect_equal(unique(table(design_df$treatment, design_df$row)), 1)
   expect_equal(unique(table(design_df$treatment, design_df$col)), 1)
 
+  # check simple config
   expect_equal(speed_design$seed, seed)
   expect_lt(speed_design$iterations_run, iterations)
   expect_lte(max(speed_design$temperatures), start_temp)
 
+  expect_equal(sort(speed_design$treatments), unique(treatments))
+
+  # check matrix
   expect_equal(nrow(design_matrix), nrows)
   expect_equal(ncol(design_matrix), ncols)
+  expect_equal(sort(as.vector(design_matrix)), treatments)
+
+  # check df
+  expect_equal(sort(design_df$treatment), treatments)
+})
+
+test_that("speed works for 2d blocking", {
+  nrows <- 20
+  ncols <- 20
+  df_initial <- initialize_design_df(1:40, 10, nrows, ncols, 2, 2)
+  treatments <- sort(as.character(df_initial$treatment))
+
+  options(
+    speed.swap_count = 5,
+    speed.swap_all_blocks = FALSE,
+    speed.adaptive_swaps = TRUE,
+    speed.start_temp = 100,
+    speed.cooling_rate = 0.99,
+    speed.adj_weight = 1,
+    speed.bal_weight = 1
+  )
+
+  speed_design <- speed(
+    df_initial,
+    treatment_cols = "treatment",
+    swap_within = "col_block",
+    spatial_factors = ~row_block,
+    iterations = 1000000,
+    early_stop_iterations = 20000,
+    quiet = TRUE,
+    seed = 538
+  )
+  design_matrix <- speed_design$design
+  design_df <- speed_design$design_df
+
+  # check quality
+  expect_equal(speed_design$adjacency_score, 0)
+  expect_equal(speed_design$balance_score, 0)
+  expect_equal(speed_design$score, 0)
+  expect_equal(max(unique(table(design_df$treatment, design_df$row))), 1)
+  expect_equal(max(unique(table(design_df$treatment, design_df$col))), 1)
+  expect_equal(max(unique(table(design_df$treatment, design_df$row_block))), 1)
+  expect_equal(max(unique(table(design_df$treatment, design_df$col_block))), 1)
+
+  # check matrix
+  expect_equal(nrow(design_matrix), nrows)
+  expect_equal(ncol(design_matrix), ncols)
+  expect_equal(sort(as.vector(design_matrix)), treatments)
+
+  # check df
+  expect_equal(sort(design_df$treatment), treatments)
 })
 
 # TODO: add tests for more complex designs
-
-# # 2d blocking
-# row <- factor(rep(1:20, each = 20))
-# col <- factor(rep(1:20, 20))
-# block <- factor(rep(1:10, each = 40))
-# treats <- rep(factor(paste("V", 1:40, sep = "")), 10)
-# dat <- data.frame(row = row, col = col, treat = treats, row_block = block)
-# dat <- dat[order(dat$col, dat$row), ]
-# dat$col_block <- factor(rep(1:10, each = 40))
-#
-# options(
-#   speed.swap_count = 3,
-#   speed.swap_all_blocks = FALSE,
-#   speed.adaptive_swaps = TRUE,
-#   speed.start_temp = 100,
-#   speed.cooling_rate = 0.99,
-#   speed.adj_weight = 1,
-#   speed.bal_weight = 1
-# )
-# des <- speed(
-#   dat,
-#   treatment_cols = "treat",
-#   swap_within = ~row_block,
-#   spatial_factors = ~col_block,
-#   iterations = 1000000,
-#   early_stop_iterations = 10000
-# )
-# desd <- des$design_df
-# trs <- paste("V", 1:40, sep = "")
-#
-# ## check unique entries in RowBlock and ColBlock.
-#
-# lapply(split(desd, desd$row_block), function(el, trs) trs %in% as.character(unique(el$treat)), trs)
-# lapply(split(desd, desd$col_block), function(el, trs) trs %in% as.character(unique(el$treat)), trs)
-#
-# ## already optimal across rows and cols
-#
-# desd <- des$design_df
-# table(desd$treat, desd$row)
-# table(desd$treat, desd$col)
