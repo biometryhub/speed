@@ -106,6 +106,7 @@ speed <- function(data,
 
     # Set seed for reproducibility
     if(is.null(seed)) {
+        gen_seed <- runif(1)
         seed <- .Random.seed[2]
     }
     set.seed(seed)
