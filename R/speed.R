@@ -137,6 +137,7 @@ speed <- function(
   temperatures <- numeric(iterations)
   last_improvement_iter <- 0
 
+
   for (iter in 1:iterations) {
     scores[iter] <- current_score
     temperatures[iter] <- temp

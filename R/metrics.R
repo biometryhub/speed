@@ -210,3 +210,26 @@ calculate_balance_score <- function(layout_df, treatment_cols, spatial_cols) {
   })
   return(sum(score))
 }
+
+#' Calculate Combined Objective Score for Design Optimization
+#'
+#' @description
+#' Internal function that calculates a combined score based on treatment adjacency
+#' and spatial balance. Used by the optimization algorithms.
+#'
+#' @param design Matrix containing the experimental design layout
+#' @param permute_var Character string naming the treatment variable to be permuted
+#' @param layout_df Data frame containing the full design layout
+#' @param spatial_fac Character vector of spatial factors to consider
+#' @param adj_weight Weight for adjacency score (default: 1)
+#' @param bal_weight Weight for balance score (default: 1)
+#'
+#' @return Numeric value representing the weighted sum of adjacency and balance scores
+#'
+#' @keywords internal
+calculate_objective <- function(design, permute_var, layout_df, spatial_fac, adj_weight = 1, bal_weight = 1) {
+  layout_df[[permute_var]] <- as.vector(design)
+  adj <- calculate_adjacency_score(design)
+  bal <- calculate_balance_score(layout_df, permute_var, spatial_fac)
+  adj_weight * adj + bal_weight * bal
+}
