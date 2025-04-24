@@ -14,10 +14,10 @@
 #'   row = rep(1:3, each = 3),
 #'   col = rep(1:3, times = 3)
 #' )
-#' default_objective_function(design_matrix, layout_df, "treatment", c("row", "col"))
+#' objective_function_default()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
 #' @return Numeric value representing the score of the design (lower is better)
-default_objective_function <- function(
+objective_function_default <- function(
     adj_weight = getOption("speed.adj_weight", 1),
     bal_weight = getOption("speed.bal_weight", 1)) {
   return(
@@ -205,8 +205,8 @@ calculate_adjacency_score <- function(design) {
 #'
 #' @export
 calculate_balance_score <- function(layout_df, treatment_cols, spatial_cols) {
-  bscore <- sapply(spatial_cols, function(el) {
+  score <- sapply(spatial_cols, function(el) {
     sum(apply(table(layout_df[[el]], layout_df[[treatment_cols]]), 1, var))
   })
-  return(sum(bscore))
+  return(sum(score))
 }

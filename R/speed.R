@@ -5,16 +5,15 @@
 #' treatment adjacency and maintain treatment balance across spatial factors.
 #'
 #' @param data A data frame containing the initial design layout with row and col coordinates
-#' @param treatment_cols A one-sided formula specifying the treatment variable to be permuted (e.g.,
-#'   `~treatment`)
-#' @param swap_within A one-sided formula specifying the blocking factor within which to permute treatments
-#'   (default: `~1`)
+#' @param treatment_cols A string specifying the treatment variable to be swapped (e.g., `"treatment"`)
+#' @param swap_within A string specifying the blocking variable that is a boundary within which to swap
+#'   treatments. Specify `"1"` or `"none"` for no boundary (default: `"1"`)
 #' @param spatial_factors A one-sided formula specifying spatial factors to consider for balance (default:
 #'   `~row + col`)
 #' @param iterations Maximum number of iterations for the simulated annealing algorithm (default: 10000)
 #' @param early_stop_iterations Number of iterations without improvement before early stopping (default: 2000)
 #' @param objective_function Objective function used to calculate score (lower is better) (default:
-#'   \link{default_objective_function})
+#'   \link{objective_function_default})
 #' @param quiet Logical; if TRUE, suppresses progress messages (default: FALSE)
 #' @param seed A numeric value for random seed. If provided, it ensures reproducibility of results (default:
 #'   NULL).
@@ -52,11 +51,11 @@
 speed <- function(
     data,
     treatment_cols,
-    swap_within = ~1,
+    swap_within = "1",
     spatial_factors = ~ row + col,
     iterations = 10000,
     early_stop_iterations = 2000,
-    objective_function = default_objective_function(),
+    objective_function = objective_function_default(),
     quiet = FALSE,
     seed = NULL
     # These could probably be options
@@ -99,12 +98,11 @@ speed <- function(
   )
 
   # currently support only 1 constraint
-  swap_constraints <- deparse(swap_within[[2]])
   layout_df <- data
-  if (swap_constraints == "1") {
+  if (swap_within == "1") {
     swap_vals <- factor(rep(1, nrow(data)))
   } else {
-    swap_vals <- layout_df[[swap_constraints]]
+    swap_vals <- layout_df[[swap_within]]
   }
   spatial_cols <- all.vars(spatial_factors)
   treatments <- layout_df[[treatment_cols]]
@@ -128,6 +126,11 @@ speed <- function(
   best_design <- current_design
 
   current_score <- objective_function(current_design, layout_df, treatment_cols, spatial_cols)
+  # TODO: somehow move this to `.verify_speed_inputs`
+  if (!is.numeric(current_score)) {
+    stop("Value from `objective_function` must be numeric.")
+  }
+
   best_score <- current_score
   temp <- start_temp
   scores <- numeric(iterations)
@@ -213,11 +216,8 @@ speed <- function(
 #' @param adaptive_swaps Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)
 #' @param start_temp Starting temperature for simulated annealing (default: 100)
 #' @param cooling_rate Rate at which temperature decreases (default: 0.99)
-#' @param adj_weight Weight given to adjacency score in objective function (default: 1)
-#' @param bal_weight Weight given to balance score in objective function (default: 1)
 #'
-#' @autoglobal
-#' @dev
+#' @keywords internal
 .verify_speed_inputs <- function(
     data,
     treatment_cols,
@@ -231,32 +231,55 @@ speed <- function(
     swap_all_blocks,
     adaptive_swaps,
     start_temp,
-    cooling_rate,
-    adj_weight,
-    bal_weight) {
+    cooling_rate) {
   if (!is.data.frame(data)) {
-    stop("df must be an initial data frame of the design")
+    stop("`data` must be an initial data frame of the design")
   }
 
-  if (!(all(treatment_cols %in% names(data)))) {
-    stop("permute column not found in data frame")
-  }
-
-  if (!inherits(swap_within, "formula")) {
-    stop("swap_within must be a one sided formula")
+  for (col in treatment_cols) {
+    if (!(col %in% names(data))) {
+      .not_found_in_cols_error(col, data, "treatment")
+    }
   }
 
   # currently support only 1 constraint
-  swap_constraints <- deparse(swap_within[[2]])
-  if (!(swap_constraints %in% names(data)) && (swap_constraints != "1")) {
-    stop("swap column not found in data frame")
+  if (swap_within != "1") {
+    for (col in swap_within) {
+      if (!(col %in% names(data))) {
+        .not_found_in_cols_error(col, data, "constraint")
+      }
+    }
   }
 
   if (!inherits(spatial_factors, "formula")) {
     stop("spatial_factors must be a one sided formula")
   }
 
-  if (!all(all.vars(spatial_factors) %in% names(data))) {
-    stop("One or more spatial_factors not found in data frame")
+  for (col in all.vars(spatial_factors)) {
+    if (!(col %in% names(data))) {
+      .not_found_in_cols_error(col, data, "spatial factor")
+    }
   }
+
+  verify_positive_whole_number(iterations, early_stop_iterations, swap_count)
+  verify_non_negative_whole(start_temp)
+  verify_boolean(quiet, adaptive_swaps, swap_all_blocks)
+  verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
+  if (!is.null(seed)) {
+    verify_between(seed, lower = -.Machine$integer.max, upper = .Machine$integer.max)
+  }
+}
+
+#' Not Found in Columns Error
+#'
+#' @description
+#' Ipsum lorem
+#'
+#' @param col
+#' @param data
+#' @param prefix
+#'
+#' @keywords internal
+.not_found_in_cols_error <- function(col, data, prefix) {
+  stop(paste0(prefix, ' "', col, '" not found in data frame columns: ', names(data), collapse = ", "))
 }

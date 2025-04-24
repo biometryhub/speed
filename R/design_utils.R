@@ -57,7 +57,29 @@ generate_neighbor <- function(design_matrix, swap_matrix, swap_count, swap_all_b
   return(new_design)
 }
 
-# TODO: a function to generate design df
+# TODO: add doc
+# currently support only full rep
+initialize_design_df <- function(treatments, reps, nrows, ncols, nrows_block = NULL, ncols_block = NULL) {
+  # .verify_initialize_design_df(treatments, reps, nrows, ncols, nrows_block, ncols_block)
+  rows <- factor(rep(1:nrows, ncols))
+  cols <- factor(rep(1:ncols, each = nrows))
+  treatments <- factor(rep(treatments, reps))
+  df <- data.frame(
+    row = rows,
+    col = cols,
+    treatment = treatments
+  )
+
+  if (!is.null(nrows_block)) {
+    nblocks_row <- nrows / nrows_block
+    nblocks_col <- ncols / ncols_block
+
+    df$row_block <- factor(rep(1:nblocks_row, ncols, each = nrows_block))
+    df$col_block <- factor(rep(1:nblocks_col, each = nrows * ncols_block))
+    df$block <- factor(as.numeric(df$row_block) + nblocks_row * (as.numeric(df$col_block) - 1))
+  }
+  return(df)
+}
 # row <- factor(rep(1:20, each = 20))
 # col <- factor(rep(1:20, 20))
 # block <- factor(rep(1:10, each = 40))
@@ -65,3 +87,19 @@ generate_neighbor <- function(design_matrix, swap_matrix, swap_count, swap_all_b
 # dat <- data.frame(row = row, col = col, treat = treats, row_block = block)
 # dat <- dat[order(dat$col, dat$row), ]
 # dat$col_block <- factor(rep(1:10, each = 40))
+
+.verify_initialize_design_df <- function(treatments, reps, nrows, ncols, nrows_block, block_ncols) {
+  verify_positive_whole_number(reps, nrows, ncols)
+
+  if ((!is.null(nrows_block) && is.null(block_ncols)) || (is.null(nrows_block) && !is.null(block_ncols))) {
+    stop("`block_nrows` and `block_ncols` must both be numeric or `NULL`")
+  }
+
+  if (!is.null(nrows_block)) {
+    verify_positive_whole_number(nrows_block)
+    verify_positive_whole_number(block_ncols)
+
+    verify_multiple_of(nrows, nrows_block)
+    verify_multiple_of(ncols, block_ncols)
+  }
+}
