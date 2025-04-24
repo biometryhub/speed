@@ -53,61 +53,61 @@ check_block_constraints <- function(design, blocks, treatments) {
   return(!has_duplicates)
 }
 
-# Calculate overall objective function value
-calculate_objective <- function(design, treatments, blocks = NULL,
-                               adj_weight = 1, bal_weight = 1) {
-  adjacency_score <- calculate_adjacency_score(design)
-  balance_score <- calculate_balance_score(design, treatments)
+# # Calculate overall objective function value
+# calculate_objective <- function(design, treatments, blocks = NULL,
+#                                adj_weight = 1, bal_weight = 1) {
+#   adjacency_score <- calculate_adjacency_score(design)
+#   balance_score <- calculate_balance_score(design, treatments)
+#
+#   # Check if design satisfies block constraints (if blocks are provided)
+#   if (!is.null(blocks)) {
+#     valid_blocks <- check_block_constraints(design, blocks, treatments)
+#
+#     # If design violates block constraints, return a very high score
+#     if (!valid_blocks) {
+#       return(1e9)  # Effectively infinity for optimization purposes
+#     }
+#   }
+#
+#   return(adj_weight * adjacency_score + bal_weight * balance_score)
+# }
 
-  # Check if design satisfies block constraints (if blocks are provided)
-  if (!is.null(blocks)) {
-    valid_blocks <- check_block_constraints(design, blocks, treatments)
-
-    # If design violates block constraints, return a very high score
-    if (!valid_blocks) {
-      return(1e9)  # Effectively infinity for optimization purposes
-    }
-  }
-
-  return(adj_weight * adjacency_score + bal_weight * balance_score)
-}
-
-# Generate neighbor with flexible block handling
-generate_neighbor <- function(design, blocks = NULL) {
-  nrows <- nrow(design)
-  ncols <- ncol(design)
-
-  if (is.null(blocks)) {
-    # No blocks: swap any two random positions
-    pos1 <- c(sample(1:nrows, 1), sample(1:ncols, 1))
-    pos2 <- c(sample(1:nrows, 1), sample(1:ncols, 1))
-
-    # Ensure positions are different
-    while (pos1[1] == pos2[1] && pos1[2] == pos2[2]) {
-      pos2 <- c(sample(1:nrows, 1), sample(1:ncols, 1))
-    }
-  } else {
-    # With blocks: swap within the same block
-    block_ids <- unique(as.vector(blocks))
-    selected_block <- sample(block_ids, 1)
-
-    # Get positions for this block
-    block_positions <- which(blocks == selected_block, arr.ind = TRUE)
-
-    # Choose two random positions within the block
-    swap_indices <- sample(1:nrow(block_positions), 2)
-    pos1 <- block_positions[swap_indices[1], ]
-    pos2 <- block_positions[swap_indices[2], ]
-  }
-
-  # Create new design by swapping
-  new_design <- design
-  temp_val <- new_design[pos1[1], pos1[2]]
-  new_design[pos1[1], pos1[2]] <- new_design[pos2[1], pos2[2]]
-  new_design[pos2[1], pos2[2]] <- temp_val
-
-  return(new_design)
-}
+# # Generate neighbor with flexible block handling
+# generate_neighbor <- function(design, blocks = NULL) {
+#   nrows <- nrow(design)
+#   ncols <- ncol(design)
+#
+#   if (is.null(blocks)) {
+#     # No blocks: swap any two random positions
+#     pos1 <- c(sample(1:nrows, 1), sample(1:ncols, 1))
+#     pos2 <- c(sample(1:nrows, 1), sample(1:ncols, 1))
+#
+#     # Ensure positions are different
+#     while (pos1[1] == pos2[1] && pos1[2] == pos2[2]) {
+#       pos2 <- c(sample(1:nrows, 1), sample(1:ncols, 1))
+#     }
+#   } else {
+#     # With blocks: swap within the same block
+#     block_ids <- unique(as.vector(blocks))
+#     selected_block <- sample(block_ids, 1)
+#
+#     # Get positions for this block
+#     block_positions <- which(blocks == selected_block, arr.ind = TRUE)
+#
+#     # Choose two random positions within the block
+#     swap_indices <- sample(1:nrow(block_positions), 2)
+#     pos1 <- block_positions[swap_indices[1], ]
+#     pos2 <- block_positions[swap_indices[2], ]
+#   }
+#
+#   # Create new design by swapping
+#   new_design <- design
+#   temp_val <- new_design[pos1[1], pos1[2]]
+#   new_design[pos1[1], pos1[2]] <- new_design[pos2[1], pos2[2]]
+#   new_design[pos2[1], pos2[2]] <- temp_val
+#
+#   return(new_design)
+# }
 
 # Simulated annealing algorithm with early stopping
 optimize_design <- function(nrows, ncols, treatments, blocks = NULL,
