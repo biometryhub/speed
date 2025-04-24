@@ -60,14 +60,14 @@ library(speed)
 df <- data.frame(
   row = rep(1:4, each = 3),
   col = rep(1:3, times = 4),
-  Treatment = rep(LETTERS[1:4], 3)
+  treatment = rep(LETTERS[1:4], 3)
 )
 
 # Set seed for reproducibility
 set.seed(42)
 
 # Optimize the design
-result <- speed(df, permute = ~Treatment)
+result <- speed(df, treatment_cols = "treatment")
 
 # Plot the optimized design
 plot_design(result)
@@ -85,8 +85,8 @@ You can also optimize designs within blocks:
 df <- data.frame(
   row = rep(1:6, each = 4),
   col = rep(1:4, times = 6),
-  Treatment = rep(LETTERS[1:8], 3),
-  Block = rep(1:3, each = 8)
+  treatment = rep(LETTERS[1:8], 3),
+  block = rep(1:3, each = 8)
 )
 
 # Set seed for reproducibility
@@ -94,12 +94,12 @@ set.seed(42)
 
 # Optimize while respecting blocks
 result <- speed(df, 
-                permute = ~Treatment,
-                swap_within = ~Block,
+                treatment_cols = "treatment",
+                swap_within = "block",
                 iterations = 2000)
 
 # Plot the design with block boundaries
-plot_design(result, block_var = "Block")
+plot_design(result, block_var = "block")
 ```
 
 

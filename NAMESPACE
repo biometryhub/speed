@@ -2,6 +2,7 @@
 
 export(calculate_adjacency_score)
 export(calculate_balance_score)
+export(objective_function_default)
 export(plot_design)
 export(plot_progress)
 export(speed)

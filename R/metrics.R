@@ -3,10 +3,8 @@
 #' @description
 #' A default objective function that combines adjacency and balance scores.
 #'
-#' @param design_matrix A design matrix
-#' @param layout_df A data frame representing the spatial information of the design
-#' @param treatment_cols A column name of the treatment
-#' @param spatial_cols Column names of the spatial factors
+#' @param adj_weight Weight for adjacency score (default: 1)
+#' @param bal_weight Weight for balance score (default: 1)
 #'
 #' @examples
 #' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
@@ -16,11 +14,18 @@
 #' )
 #' objective_function_default()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
-#' @return Numeric value representing the score of the design (lower is better)
+#' @return A function which returns numeric value representing the score of the design (lower is better)
+#'
+#' @export
 objective_function_default <- function(
     adj_weight = getOption("speed.adj_weight", 1),
     bal_weight = getOption("speed.bal_weight", 1)) {
   return(
+    # TODO: move to return function signature
+    #' @param design_matrix A design matrix
+    #' @param layout_df A data frame representing the spatial information of the design
+    #' @param treatment_cols A column name of the treatment
+    #' @param spatial_cols Column names of the spatial factors
     function(design_matrix, layout_df, treatment_cols, spatial_cols) {
       layout_df[[treatment_cols]] <- as.vector(design_matrix)
       adj <- calculate_adjacency_score(design_matrix)

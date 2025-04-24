@@ -38,16 +38,16 @@ and customize the appearance.
 df <- data.frame(
   row = rep(1:4, each = 3),
   col = rep(1:3, times = 4),
-  Treatment = rep(LETTERS[1:4], 3)
+  treatment = rep(LETTERS[1:4], 3)
 )
 
 # Optimize the design
-result <- speed(df, permute = ~Treatment)
+result <- speed(df, treatment_cols = "treatment")
 
 # Plot the optimized design
 plot_design(result)
 
 # Plot with custom treatment variable name
-plot_design(result$design_df, treatment_var = "Treatment")
+plot_design(result$design_df, treatment_var = "treatment")
 
 }

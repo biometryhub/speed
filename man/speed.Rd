@@ -6,38 +6,38 @@
 \usage{
 speed(
   data,
-  permute,
-  swap_within = ~1,
+  treatment_cols,
+  swap_within = "1",
   spatial_factors = ~row + col,
   iterations = 10000,
   early_stop_iterations = 2000,
+  objective_function = objective_function_default(),
   quiet = FALSE,
-  seed = NULL,
-  swap_count = 1,
-  swap_all_blocks = FALSE,
-  adaptive_swaps = FALSE,
-  start_temp = 100,
-  cooling_rate = 0.99,
-  adj_weight = 1,
-  bal_weight = 1
+  seed = NULL
 )
 }
 \arguments{
 \item{data}{A data frame containing the initial design layout with row and col coordinates}
 
-\item{permute}{A one-sided formula specifying the treatment variable to be permuted (e.g., ~treatment)}
+\item{treatment_cols}{A string specifying the treatment variable to be swapped (e.g., \code{"treatment"})}
 
-\item{swap_within}{A one-sided formula specifying the blocking factor within which to permute treatments (default: ~1)}
+\item{swap_within}{A string specifying the blocking variable that is a boundary within which to swap
+treatments. Specify \code{"1"} or \code{"none"} for no boundary (default: \code{"1"})}
 
-\item{spatial_factors}{A one-sided formula specifying spatial factors to consider for balance (default: ~row + col)}
+\item{spatial_factors}{A one-sided formula specifying spatial factors to consider for balance (default:
+\code{~row + col})}
 
 \item{iterations}{Maximum number of iterations for the simulated annealing algorithm (default: 10000)}
 
 \item{early_stop_iterations}{Number of iterations without improvement before early stopping (default: 2000)}
 
+\item{objective_function}{Objective function used to calculate score (lower is better) (default:
+\link{objective_function_default})}
+
 \item{quiet}{Logical; if TRUE, suppresses progress messages (default: FALSE)}
 
-\item{seed}{A numeric value for random seed. If provided, it ensures reproducibility of results (default: NULL).}
+\item{seed}{A numeric value for random seed. If provided, it ensures reproducibility of results (default:
+NULL).}
 
 \item{swap_count}{Number of treatment swaps per iteration (default: 1)}
 
@@ -48,10 +48,6 @@ speed(
 \item{start_temp}{Starting temperature for simulated annealing (default: 100)}
 
 \item{cooling_rate}{Rate at which temperature decreases (default: 0.99)}
-
-\item{adj_weight}{Weight given to adjacency score in objective function (default: 1)}
-
-\item{bal_weight}{Weight given to balance score in objective function (default: 1)}
 }
 \value{
 A list containing:
@@ -66,7 +62,8 @@ A list containing:
 \item iterations_run - Total number of iterations performed
 \item stopped_early - Logical indicating if optimization stopped early
 \item treatments - Vector of unique treatments
-\item seed - Random seed used for reproducibility of the design. If not set in the function, the seed is set to the second element of .Random.seed.
+\item seed - Random seed used for reproducibility of the design. If not set in the function, the seed is
+set to the second element of .Random.seed.
 }
 }
 \description{
@@ -78,10 +75,10 @@ treatment adjacency and maintain treatment balance across spatial factors.
 df <- data.frame(
   row = rep(1:4, each = 3),
   col = rep(1:3, times = 4),
-  Treatment = rep(LETTERS[1:4], 3)
+  treatment = rep(LETTERS[1:4], 3)
 )
 
 # Optimize the design
-result <- speed(df, permute = ~Treatment)
+result <- speed(df, treatment_cols = "treatment")
 
 }

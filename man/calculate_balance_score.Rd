@@ -4,14 +4,14 @@
 \alias{calculate_balance_score}
 \title{Calculate Balance Score for Experimental Design}
 \usage{
-calculate_balance_score(layout_df, permute_var, spatial_fac)
+calculate_balance_score(layout_df, treatment_cols, spatial_cols)
 }
 \arguments{
 \item{layout_df}{A data frame containing the experimental design layout}
 
-\item{permute_var}{Character string specifying the name of the treatment variable}
+\item{treatment_cols}{A column name of the treatment}
 
-\item{spatial_fac}{Character vector of spatial factors to consider (e.g., c("Row", "Col"))}
+\item{spatial_cols}{Column names of the spatial factors}
 }
 \value{
 Numeric value representing the total balance score. Lower values indicate
@@ -23,10 +23,10 @@ across spatial factors in an experimental design. Lower scores indicate better b
 }
 \examples{
 layout_df <- data.frame(
-  Row = rep(1:3, each = 3),
-  Col = rep(1:3, times = 3),
-  Treatment = rep(LETTERS[1:3], 3)
+  row = rep(1:3, each = 3),
+  col = rep(1:3, times = 3),
+  treatment = rep(letters[1:3], 3)
 )
-calculate_balance_score(layout_df, "Treatment", c("Row", "Col"))
+calculate_balance_score(layout_df, "treatment", c("row", "col"))
 
 }
