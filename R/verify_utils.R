@@ -107,6 +107,12 @@ verify_boolean <- function(..., var_names = NULL) {
   verify_data_type(is_boolean, "a boolean", var_names, ...)
 }
 
+verify_column_exists <- function(col, data, prefix) {
+  if (!(col %in% names(data))) {
+    stop(paste0(prefix, ' "', col, '" not found in data frame columns: ', names(data), collapse = ", "))
+  }
+}
+
 verify_non_negative_whole <- function(..., var_names = NULL) {
   verify_data_type(is_non_negative_whole_number, "a non-negative whole number", var_names, ...)
 }

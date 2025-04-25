@@ -12,12 +12,12 @@
 #'   row = rep(1:3, each = 3),
 #'   col = rep(1:3, times = 3)
 #' )
-#' objective_function_default()(design_matrix, layout_df, "treatment", c("row", "col"))
+#' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
 #' @return A function which returns numeric value representing the score of the design (lower is better)
 #'
 #' @export
-objective_function_default <- function(
+objective_function <- function(
     adj_weight = getOption("speed.adj_weight", 1),
     bal_weight = getOption("speed.bal_weight", 1)) {
   return(

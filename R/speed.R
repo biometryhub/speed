@@ -5,15 +5,15 @@
 #' treatment adjacency and maintain treatment balance across spatial factors.
 #'
 #' @param data A data frame containing the initial design layout with row and col coordinates
-#' @param treatment_cols A string specifying the treatment variable to be swapped (e.g., `"treatment"`)
+#' @param treatment_cols A column name of the treatment to be swapped (e.g., `treatment`)
 #' @param swap_within A string specifying the blocking variable that is a boundary within which to swap
 #'   treatments. Specify `"1"` or `"none"` for no boundary (default: `"1"`)
 #' @param spatial_factors A one-sided formula specifying spatial factors to consider for balance (default:
 #'   `~row + col`)
 #' @param iterations Maximum number of iterations for the simulated annealing algorithm (default: 10000)
 #' @param early_stop_iterations Number of iterations without improvement before early stopping (default: 2000)
-#' @param objective_function Objective function used to calculate score (lower is better) (default:
-#'   \link{objective_function_default})
+#' @param obj_function Objective function used to calculate score (lower is better) (default:
+#'   \link{objective_function})
 #' @param quiet Logical; if TRUE, suppresses progress messages (default: FALSE)
 #' @param seed A numeric value for random seed. If provided, it ensures reproducibility of results (default:
 #'   NULL).
@@ -55,7 +55,7 @@ speed <- function(
     spatial_factors = ~ row + col,
     iterations = 10000,
     early_stop_iterations = 2000,
-    objective_function = objective_function_default(),
+    obj_function = objective_function(),
     quiet = FALSE,
     seed = NULL
     # These could probably be options
@@ -80,6 +80,8 @@ speed <- function(
   adaptive_swaps <- getOption("speed.adaptive_swaps", FALSE)
   start_temp <- getOption("speed.start_temp", 100)
   cooling_rate <- getOption("speed.cooling_rate", 0.99)
+
+  treatment_cols <- as.character(substitute(treatment_cols))
 
   .verify_speed_inputs(
     data,
@@ -125,7 +127,7 @@ speed <- function(
   current_design <- initialize_design_matrix(treatment_matrix, swap_matrix)
   best_design <- current_design
 
-  current_score <- objective_function(current_design, layout_df, treatment_cols, spatial_cols)
+  current_score <- obj_function(current_design, layout_df, treatment_cols, spatial_cols)
   # TODO: somehow move this to `.verify_speed_inputs`
   if (!is.numeric(current_score)) {
     stop("Value from `objective_function` must be numeric.")
@@ -150,7 +152,7 @@ speed <- function(
     }
 
     new_design <- generate_neighbor(current_design, swap_matrix, current_swap_count, current_swap_all_blocks)
-    new_score <- objective_function(new_design, layout_df, treatment_cols, spatial_cols)
+    new_score <- obj_function(new_design, layout_df, treatment_cols, spatial_cols)
     if (new_score < current_score || runif(1) < exp((current_score - new_score) / temp)) {
       current_design <- new_design
       current_score <- new_score
@@ -237,19 +239,17 @@ speed <- function(
     stop("`data` must be an initial data frame of the design")
   }
 
-  for (col in treatment_cols) {
-    if (!(col %in% names(data))) {
-      .not_found_in_cols_error(col, data, "treatment")
-    }
+  # verify_column_exists(treatment_cols, data, "treatment")
+  if (!(treatment_cols %in% names(data))) {
+    .not_found_in_cols_error(treatment_cols, data, "treatment")
   }
 
   # currently support only 1 constraint
   if (swap_within != "1") {
-    for (col in swap_within) {
-      if (!(col %in% names(data))) {
-        .not_found_in_cols_error(col, data, "constraint")
-      }
-    }
+    verify_column_exists(swap_within, data, "constraint")
+    # if (!(swap_within %in% names(data))) {
+    #   .not_found_in_cols_error(swap_within, data, "constraint")
+    # }
   }
 
   if (!inherits(spatial_factors, "formula")) {
