@@ -43,20 +43,14 @@ treatment adjacency and maintain treatment balance across spatial factors.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">speed</span><span class="op">(</span></span>
 <span>  <span class="va">data</span>,</span>
-<span>  <span class="va">permute</span>,</span>
-<span>  swap_within <span class="op">=</span> <span class="op">~</span><span class="fl">1</span>,</span>
+<span>  <span class="va">treatment_cols</span>,</span>
+<span>  swap_within <span class="op">=</span> <span class="st">"1"</span>,</span>
 <span>  spatial_factors <span class="op">=</span> <span class="op">~</span><span class="va">row</span> <span class="op">+</span> <span class="va">col</span>,</span>
 <span>  iterations <span class="op">=</span> <span class="fl">10000</span>,</span>
 <span>  early_stop_iterations <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  obj_function <span class="op">=</span> <span class="fu"><a href="objective_function.html">objective_function</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  swap_count <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  swap_all_blocks <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  adaptive_swaps <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  start_temp <span class="op">=</span> <span class="fl">100</span>,</span>
-<span>  cooling_rate <span class="op">=</span> <span class="fl">0.99</span>,</span>
-<span>  adj_weight <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  bal_weight <span class="op">=</span> <span class="fl">1</span></span>
+<span>  seed <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -68,16 +62,18 @@ treatment adjacency and maintain treatment balance across spatial factors.</p>
 <dd><p>A data frame containing the initial design layout with row and col coordinates</p></dd>
 
 
-<dt id="arg-permute">permute<a class="anchor" aria-label="anchor" href="#arg-permute"></a></dt>
-<dd><p>A one-sided formula specifying the treatment variable to be permuted (e.g., ~treatment)</p></dd>
+<dt id="arg-treatment-cols">treatment_cols<a class="anchor" aria-label="anchor" href="#arg-treatment-cols"></a></dt>
+<dd><p>A column name of the treatment to be swapped (e.g., <code>treatment</code>)</p></dd>
 
 
 <dt id="arg-swap-within">swap_within<a class="anchor" aria-label="anchor" href="#arg-swap-within"></a></dt>
-<dd><p>A one-sided formula specifying the blocking factor within which to permute treatments (default: ~1)</p></dd>
+<dd><p>A string specifying the blocking variable that is a boundary within which to swap
+treatments. Specify <code>"1"</code> or <code>"none"</code> for no boundary (default: <code>"1"</code>)</p></dd>
 
 
 <dt id="arg-spatial-factors">spatial_factors<a class="anchor" aria-label="anchor" href="#arg-spatial-factors"></a></dt>
-<dd><p>A one-sided formula specifying spatial factors to consider for balance (default: ~row + col)</p></dd>
+<dd><p>A one-sided formula specifying spatial factors to consider for balance (default:
+<code>~row + col</code>)</p></dd>
 
 
 <dt id="arg-iterations">iterations<a class="anchor" aria-label="anchor" href="#arg-iterations"></a></dt>
@@ -88,40 +84,18 @@ treatment adjacency and maintain treatment balance across spatial factors.</p>
 <dd><p>Number of iterations without improvement before early stopping (default: 2000)</p></dd>
 
 
+<dt id="arg-obj-function">obj_function<a class="anchor" aria-label="anchor" href="#arg-obj-function"></a></dt>
+<dd><p>Objective function used to calculate score (lower is better) (default:
+<a href="objective_function.html">objective_function</a>)</p></dd>
+
+
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
 <dd><p>Logical; if TRUE, suppresses progress messages (default: FALSE)</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>A numeric value for random seed. If provided, it ensures reproducibility of results (default: NULL).</p></dd>
-
-
-<dt id="arg-swap-count">swap_count<a class="anchor" aria-label="anchor" href="#arg-swap-count"></a></dt>
-<dd><p>Number of treatment swaps per iteration (default: 1)</p></dd>
-
-
-<dt id="arg-swap-all-blocks">swap_all_blocks<a class="anchor" aria-label="anchor" href="#arg-swap-all-blocks"></a></dt>
-<dd><p>Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)</p></dd>
-
-
-<dt id="arg-adaptive-swaps">adaptive_swaps<a class="anchor" aria-label="anchor" href="#arg-adaptive-swaps"></a></dt>
-<dd><p>Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)</p></dd>
-
-
-<dt id="arg-start-temp">start_temp<a class="anchor" aria-label="anchor" href="#arg-start-temp"></a></dt>
-<dd><p>Starting temperature for simulated annealing (default: 100)</p></dd>
-
-
-<dt id="arg-cooling-rate">cooling_rate<a class="anchor" aria-label="anchor" href="#arg-cooling-rate"></a></dt>
-<dd><p>Rate at which temperature decreases (default: 0.99)</p></dd>
-
-
-<dt id="arg-adj-weight">adj_weight<a class="anchor" aria-label="anchor" href="#arg-adj-weight"></a></dt>
-<dd><p>Weight given to adjacency score in objective function (default: 1)</p></dd>
-
-
-<dt id="arg-bal-weight">bal_weight<a class="anchor" aria-label="anchor" href="#arg-bal-weight"></a></dt>
-<dd><p>Weight given to balance score in objective function (default: 1)</p></dd>
+<dd><p>A numeric value for random seed. If provided, it ensures reproducibility of results (default:
+NULL).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -136,7 +110,8 @@ treatment adjacency and maintain treatment balance across spatial factors.</p>
 <li><p>iterations_run - Total number of iterations performed</p></li>
 <li><p>stopped_early - Logical indicating if optimization stopped early</p></li>
 <li><p>treatments - Vector of unique treatments</p></li>
-<li><p>seed - Random seed used for reproducibility of the design. If not set in the function, the seed is set to the second element of .Random.seed.</p></li>
+<li><p>seed - Random seed used for reproducibility of the design. If not set in the function, the seed is
+set to the second element of .Random.seed.</p></li>
 </ul></div>
 
     <div class="section level2">
@@ -145,14 +120,14 @@ treatment adjacency and maintain treatment balance across spatial factors.</p>
 <span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  row <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  col <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, times <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  Treatment <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">LETTERS</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  treatment <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">LETTERS</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Optimize the design</span></span></span>
-<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">speed</span><span class="op">(</span><span class="va">df</span>, permute <span class="op">=</span> <span class="op">~</span><span class="va">Treatment</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration: 1000 Score: 1 Best: 1 Since Improvement: 388 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1388 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Early stopping at iteration 2612 </span>
+<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">speed</span><span class="op">(</span><span class="va">df</span>, treatment_cols <span class="op">=</span> <span class="st">"treatment"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration: 1000 Score: 2.333333 Best: 2.333333 Since Improvement: 894 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration: 2000 Score: 2.333333 Best: 2.333333 Since Improvement: 1894 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Early stopping at iteration 2106 </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
