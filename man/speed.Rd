@@ -11,7 +11,7 @@ speed(
   spatial_factors = ~row + col,
   iterations = 10000,
   early_stop_iterations = 2000,
-  objective_function = objective_function_default(),
+  obj_function = objective_function(),
   quiet = FALSE,
   seed = NULL
 )
@@ -19,7 +19,7 @@ speed(
 \arguments{
 \item{data}{A data frame containing the initial design layout with row and col coordinates}
 
-\item{treatment_cols}{A string specifying the treatment variable to be swapped (e.g., \code{"treatment"})}
+\item{treatment_cols}{A column name of the treatment to be swapped (e.g., \code{treatment})}
 
 \item{swap_within}{A string specifying the blocking variable that is a boundary within which to swap
 treatments. Specify \code{"1"} or \code{"none"} for no boundary (default: \code{"1"})}
@@ -31,8 +31,8 @@ treatments. Specify \code{"1"} or \code{"none"} for no boundary (default: \code{
 
 \item{early_stop_iterations}{Number of iterations without improvement before early stopping (default: 2000)}
 
-\item{objective_function}{Objective function used to calculate score (lower is better) (default:
-\link{objective_function_default})}
+\item{obj_function}{Objective function used to calculate score (lower is better) (default:
+\link{objective_function})}
 
 \item{quiet}{Logical; if TRUE, suppresses progress messages (default: FALSE)}
 
