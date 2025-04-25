@@ -239,17 +239,11 @@ speed <- function(
     stop("`data` must be an initial data frame of the design")
   }
 
-  # verify_column_exists(treatment_cols, data, "treatment")
-  if (!(treatment_cols %in% names(data))) {
-    .not_found_in_cols_error(treatment_cols, data, "treatment")
-  }
+  verify_column_exists(treatment_cols, data, "treatment")
 
   # currently support only 1 constraint
   if (swap_within != "1") {
     verify_column_exists(swap_within, data, "constraint")
-    # if (!(swap_within %in% names(data))) {
-    #   .not_found_in_cols_error(swap_within, data, "constraint")
-    # }
   }
 
   if (!inherits(spatial_factors, "formula")) {
@@ -257,9 +251,7 @@ speed <- function(
   }
 
   for (col in all.vars(spatial_factors)) {
-    if (!(col %in% names(data))) {
-      .not_found_in_cols_error(col, data, "spatial factor")
-    }
+    verify_column_exists(col, data, "spatial factor")
   }
 
   verify_positive_whole_number(iterations, early_stop_iterations, swap_count)
@@ -269,18 +261,4 @@ speed <- function(
   if (!is.null(seed)) {
     verify_between(seed, lower = -.Machine$integer.max, upper = .Machine$integer.max)
   }
-}
-
-#' Not Found in Columns Error
-#'
-#' @description
-#' Ipsum lorem
-#'
-#' @param col
-#' @param data
-#' @param prefix
-#'
-#' @keywords internal
-.not_found_in_cols_error <- function(col, data, prefix) {
-  stop(paste0(prefix, ' "', col, '" not found in data frame columns: ', names(data), collapse = ", "))
 }
