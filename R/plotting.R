@@ -21,17 +21,17 @@
 #' df <- data.frame(
 #'   row = rep(1:4, each = 3),
 #'   col = rep(1:3, times = 4),
-#'   Treatment = rep(LETTERS[1:4], 3)
+#'   treatment = rep(LETTERS[1:4], 3)
 #' )
 #'
 #' # Optimize the design
-#' result <- speed(df, permute = ~Treatment)
+#' result <- speed(df, treatment_cols = "treatment", seed = 42)
 #'
 #' # Plot the optimized design
 #' plot_design(result)
 #'
 #' # Plot with custom treatment variable name
-#' plot_design(result$design_df, treatment_var = "Treatment")
+#' plot_design(result$design_df, treatment_var = "treatment")
 #'
 #' @export
 plot_design <- function(design_result, treatment_var = NULL, block_var = NULL,
@@ -371,11 +371,11 @@ autoplot.design <- function(object, rotation = 0, size = 4, margin = FALSE, pale
 #' df <- data.frame(
 #'   row = rep(1:3, each = 3),
 #'   col = rep(1:3, times = 3),
-#'   Treatment = rep(LETTERS[1:3], 3)
+#'   treatment = rep(LETTERS[1:3], 3)
 #' )
 #'
 #' # Optimize the design
-#' result <- speed(df, permute = ~Treatment)
+#' result <- speed(df, treatment_cols = "treatment")
 #'
 #' # Plot optimization progress
 #' plot_progress(result)
@@ -404,3 +404,4 @@ plot_progress <- function(result) {
     print(p1)
     print(p2)
 }
+

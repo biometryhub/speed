@@ -19,10 +19,14 @@ Calculates the number of adjacent treatments that are the same in an experimenta
 design layout. Lower scores indicate better separation of treatments.
 }
 \examples{
-design <- matrix(c("A", "B", "A",
-                   "B", "A", "B",
-                   "A", "B", "A"), 
-                 nrow = 3, byrow = TRUE)
-calculate_adjacency_score(design)  # Returns the number of adjacent matches
+design <- matrix(
+  c(
+    "A", "B", "A",
+    "B", "A", "B",
+    "A", "B", "A"
+  ),
+  nrow = 3, byrow = TRUE
+)
+calculate_adjacency_score(design) # Returns the number of adjacent matches
 
 }
