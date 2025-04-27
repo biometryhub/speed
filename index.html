@@ -101,12 +101,12 @@
 <span></span>
 <span><span class="co"># Optimize the design</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/speed.html">speed</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"treatment"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Iteration: 1000 Score: 2.333333 Best: 2.333333 Since Improvement: 385 </span></span>
-<span><span class="co">#&gt; Iteration: 2000 Score: 2.333333 Best: 2.333333 Since Improvement: 1385 </span></span>
-<span><span class="co">#&gt; Early stopping at iteration 2615</span></span>
+<span><span class="co">#&gt; Iteration: 1000 Score: 1 Best: 1 Since Improvement: 734 </span></span>
+<span><span class="co">#&gt; Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1734 </span></span>
+<span><span class="co">#&gt; Early stopping at iteration 2266</span></span>
 <span></span>
 <span><span class="co"># Plot the optimized design</span></span>
-<span><span class="fu"><a href="reference/plot_design.html">plot_design</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-example-1.png" width="100%"></p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
@@ -134,12 +134,13 @@
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/speed.html">speed</a></span><span class="op">(</span><span class="va">df</span>, </span>
 <span>                <span class="st">"treatment"</span>,</span>
 <span>                swap_within <span class="op">=</span> <span class="st">"block"</span>,</span>
-<span>                iterations <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 350 </span></span>
-<span><span class="co">#&gt; Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1350</span></span>
+<span>                iterations <span class="op">=</span> <span class="fl">5000</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 352 </span></span>
+<span><span class="co">#&gt; Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1352 </span></span>
+<span><span class="co">#&gt; Early stopping at iteration 2648</span></span>
 <span></span>
 <span><span class="co"># Plot the design with block boundaries</span></span>
-<span><span class="fu"><a href="reference/plot_design.html">plot_design</a></span><span class="op">(</span><span class="va">result</span>, block_var <span class="op">=</span> <span class="st">"block"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-blocks-1.png" width="100%"></p>
 </div>
 </div>
