@@ -5,7 +5,7 @@
 #' treatment adjacency and maintain treatment balance across spatial factors.
 #'
 #' @param data A data frame containing the initial design layout with spatial coordinates
-#' @param treatment_cols A column name of the treatment to be swapped (e.g., `treatment`)
+#' @param swap A column name of the treatment to be swapped (e.g., `treatment`)
 #' @param swap_within A string specifying the blocking variable that is a boundary within which to swap
 #'   treatments. Specify `"1"` or `"none"` for no boundary (default: `"1"`)
 #' @param spatial_factors A one-sided formula specifying spatial factors to consider for balance (default:
@@ -44,12 +44,12 @@
 #' )
 #'
 #' # Optimize the design
-#' result <- speed_df(df, treatment_cols = "treatment")
+#' result <- speed_df(df, swap = "treatment")
 #'
 #' @export
 speed_df <- function(
         data,
-        treatment_cols,
+        swap,
         swap_within = "1",
         spatial_factors = ~ row + col,
         iterations = 10000,
@@ -68,13 +68,13 @@ speed_df <- function(
     start_temp <- getOption("speed.start_temp", 100)
     cooling_rate <- getOption("speed.cooling_rate", 0.99)
 
-    if (!is.character(treatment_cols)) {
-        treatment_cols <- as.character(substitute(treatment_cols))
+    if (!is.character(swap)) {
+        swap <- as.character(substitute(swap))
     }
 
     .verify_speed_inputs(
         data,
-        treatment_cols,
+        swap,
         swap_within,
         spatial_factors,
         iterations,
@@ -99,7 +99,7 @@ speed_df <- function(
     }
 
     spatial_cols <- all.vars(spatial_factors)
-    treatments <- layout_df[[treatment_cols]]
+    treatments <- layout_df[[swap]]
 
     # Set seed for reproducibility
     if (is.null(seed)) {
@@ -112,7 +112,7 @@ speed_df <- function(
     best_design_df <- current_design_df
 
     # Calculate initial score
-    current_score <- obj_function(current_design_df, treatment_cols, spatial_cols)
+    current_score <- obj_function(current_design_df, swap, spatial_cols)
 
     # TODO: somehow move this to `.verify_speed_inputs`
     if (!is.numeric(current_score)) {
@@ -139,11 +139,11 @@ speed_df <- function(
         }
 
         # Generate a neighboring solution by swapping treatments
-        new_design_df <- generate_neighbor_df(current_design_df, treatment_cols, "swap_group",
+        new_design_df <- generate_neighbor_df(current_design_df, swap, "swap_group",
                                               current_swap_count, current_swap_all_blocks)
 
         # Calculate score for the new design
-        new_score <- obj_function(new_design_df, treatment_cols, spatial_cols)
+        new_score <- obj_function(new_design_df, swap, spatial_cols)
 
         # Accept or reject the new design based on simulated annealing criteria
         if (new_score < current_score || runif(1) < exp((current_score - new_score) / temp)) {
@@ -183,18 +183,22 @@ speed_df <- function(
         best_design_df$swap_group <- NULL
     }
 
-    return(list(
+    output <- list(
         design_df = best_design_df,
         score = best_score,
-        adjacency_score = calculate_adjacency_score_df(best_design_df, treatment_cols, spatial_cols),
-        balance_score = calculate_balance_score_df(best_design_df, treatment_cols, spatial_cols),
+        adjacency_score = calculate_adjacency_score_df(best_design_df, swap, spatial_cols),
+        balance_score = calculate_balance_score_df(best_design_df, swap, spatial_cols),
         scores = scores,
         temperatures = temperatures,
         iterations_run = length(scores),
         stopped_early = length(scores) < iterations,
-        treatments = stringi::stri_sort(unique(best_design_df[[treatment_cols]]), numeric = TRUE),
+        treatments = stringi::stri_sort(unique(best_design_df[[swap]]), numeric = TRUE),
         seed = seed
-    ))
+    )
+
+    class(output) <- c("design", class(output))
+
+    return(output)
 }
 
 #' Generate a Neighboring Solution by Swapping Treatments in a Data Frame
@@ -369,154 +373,3 @@ objective_function_df <- function(design_df, treatment_col, spatial_cols,
     return(adjacency_weight * adjacency_score + balance_weight * balance_score)
 }
 
-#' Verify Inputs for `speed`
-#'
-#' @description
-#' Verify inputs for the `speed` function.
-#'
-#' @param data A data frame containing the initial design layout with row and col coordinates
-#' @param treatment_cols A column name specifying the treatment variable to be permuted (e.g.,
-#'   `treatment`)
-#' @param swap_within A column name specifying the blocking factor within which to permute treatments
-#'   (default: `"1"`)
-#' @param spatial_factors A one-sided formula specifying spatial factors to consider for balance (default:
-#'   `~row + col`)
-#' @param iterations Maximum number of iterations for the simulated annealing algorithm (default: 10000)
-#' @param early_stop_iterations Number of iterations without improvement before early stopping (default: 2000)
-#' @param quiet Logical; if TRUE, suppresses progress messages (default: FALSE)
-#' @param seed A numeric value for random seed. If provided, it ensures reproducibility of results (default:
-#'   NULL).
-#' @param swap_count Number of treatment swaps per iteration (default: 1)
-#' @param swap_all_blocks Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)
-#' @param adaptive_swaps Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)
-#' @param start_temp Starting temperature for simulated annealing (default: 100)
-#' @param cooling_rate Rate at which temperature decreases (default: 0.99)
-#'
-#' @keywords internal
-.verify_speed_inputs <- function(
-        data,
-        treatment_cols,
-        swap_within,
-        spatial_factors,
-        iterations,
-        early_stop_iterations,
-        quiet,
-        seed,
-        swap_count,
-        swap_all_blocks,
-        adaptive_swaps,
-        start_temp,
-        cooling_rate) {
-    if (!is.data.frame(data)) {
-        stop("`data` must be an initial data frame of the design")
-    }
-
-    verify_column_exists(treatment_cols, data, "treatment")
-
-    # currently support only 1 constraint
-    if (swap_within != "1" && swap_within != "none") {
-        verify_column_exists(swap_within, data, "constraint")
-    }
-
-    if (!inherits(spatial_factors, "formula")) {
-        stop("spatial_factors must be a one sided formula")
-    }
-
-    for (col in all.vars(spatial_factors)) {
-        verify_column_exists(col, data, "spatial factor")
-    }
-
-    verify_positive_whole_number(iterations, early_stop_iterations, swap_count)
-    verify_non_negative_whole(start_temp)
-    verify_boolean(quiet, adaptive_swaps, swap_all_blocks)
-    verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
-    if (!is.null(seed)) {
-        verify_between(seed, lower = -.Machine$integer.max, upper = .Machine$integer.max)
-    }
-}
-
-#' Verify that a column exists in a data frame
-#'
-#' @param col_name Name of the column to check
-#' @param data Data frame to check
-#' @param type Type of column for error message
-#'
-#' @keywords internal
-verify_column_exists <- function(col_name, data, type) {
-    if (!col_name %in% names(data)) {
-        stop(sprintf("Column '%s' specified as %s not found in data", col_name, type))
-    }
-}
-
-#' Verify that values are positive whole numbers
-#'
-#' @param ... Values to check
-#'
-#' @keywords internal
-verify_positive_whole_number <- function(...) {
-    args <- list(...)
-    for (arg in args) {
-        if (!is.numeric(arg) || arg <= 0 || arg != as.integer(arg)) {
-            stop("Value must be a positive whole number")
-        }
-    }
-}
-
-#' Verify that values are non-negative whole numbers
-#'
-#' @param ... Values to check
-#'
-#' @keywords internal
-verify_non_negative_whole <- function(...) {
-    args <- list(...)
-    for (arg in args) {
-        if (!is.numeric(arg) || arg < 0 || arg != as.integer(arg)) {
-            stop("Value must be a non-negative whole number")
-        }
-    }
-}
-
-#' Verify that values are boolean
-#'
-#' @param ... Values to check
-#'
-#' @keywords internal
-verify_boolean <- function(...) {
-    args <- list(...)
-    for (arg in args) {
-        if (!is.logical(arg) || length(arg) != 1) {
-            stop("Value must be TRUE or FALSE")
-        }
-    }
-}
-
-#' Verify that values are between lower and upper bounds
-#'
-#' @param x Value to check
-#' @param lower Lower bound
-#' @param upper Upper bound
-#' @param lower_exclude Whether to exclude the lower bound
-#' @param upper_exclude Whether to exclude the upper bound
-#'
-#' @keywords internal
-verify_between <- function(x, lower = -Inf, upper = Inf, lower_exclude = FALSE, upper_exclude = FALSE) {
-    if (lower_exclude) {
-        if (x <= lower) {
-            stop(sprintf("Value must be greater than %s", lower))
-        }
-    } else {
-        if (x < lower) {
-            stop(sprintf("Value must be greater than or equal to %s", lower))
-        }
-    }
-
-    if (upper_exclude) {
-        if (x >= upper) {
-            stop(sprintf("Value must be less than %s", upper))
-        }
-    } else {
-        if (x > upper) {
-            stop(sprintf("Value must be less than or equal to %s", upper))
-        }
-    }
-}
