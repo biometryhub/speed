@@ -60,12 +60,12 @@ set.seed(42)
 
 # Optimize the design
 result <- speed(df, "treatment")
-#> Iteration: 1000 Score: 2.333333 Best: 2.333333 Since Improvement: 385 
-#> Iteration: 2000 Score: 2.333333 Best: 2.333333 Since Improvement: 1385 
-#> Early stopping at iteration 2615
+#> Iteration: 1000 Score: 1 Best: 1 Since Improvement: 734 
+#> Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1734 
+#> Early stopping at iteration 2266
 
 # Plot the optimized design
-plot_design(result)
+autoplot(result)
 ```
 
 <img src="man/figures/README-example-1.png" width="100%" />
@@ -98,12 +98,13 @@ set.seed(42)
 result <- speed(df, 
                 "treatment",
                 swap_within = "block",
-                iterations = 2000)
-#> Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 350 
-#> Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1350
+                iterations = 5000)
+#> Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 352 
+#> Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1352 
+#> Early stopping at iteration 2648
 
 # Plot the design with block boundaries
-plot_design(result, block_var = "block")
+autoplot(result)
 ```
 
 <img src="man/figures/README-blocks-1.png" width="100%" />

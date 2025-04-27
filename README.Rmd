@@ -70,7 +70,7 @@ set.seed(42)
 result <- speed(df, "treatment")
 
 # Plot the optimized design
-plot_design(result)
+autoplot(result)
 
 # View optimization progress
 plot_progress(result)
@@ -99,7 +99,7 @@ result <- speed(df,
                 iterations = 5000)
 
 # Plot the design with block boundaries
-plot_design(result, block_var = "block")
+autoplot(result)
 ```
 
 
