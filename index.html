@@ -93,17 +93,17 @@
 <span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  row <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
 <span>  col <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, times <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
-<span>  Treatment <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">LETTERS</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span></span>
+<span>  treatment <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">LETTERS</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Set seed for reproducibility</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Optimize the design</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/speed.html">speed</a></span><span class="op">(</span><span class="va">df</span>, permute <span class="op">=</span> <span class="op">~</span><span class="va">Treatment</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Iteration: 1000 Score: 1 Best: 1 Since Improvement: 359 </span></span>
-<span><span class="co">#&gt; Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1359 </span></span>
-<span><span class="co">#&gt; Early stopping at iteration 2641</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/speed.html">speed</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"treatment"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Iteration: 1000 Score: 2.333333 Best: 2.333333 Since Improvement: 385 </span></span>
+<span><span class="co">#&gt; Iteration: 2000 Score: 2.333333 Best: 2.333333 Since Improvement: 1385 </span></span>
+<span><span class="co">#&gt; Early stopping at iteration 2615</span></span>
 <span></span>
 <span><span class="co"># Plot the optimized design</span></span>
 <span><span class="fu"><a href="reference/plot_design.html">plot_design</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
@@ -123,8 +123,8 @@
 <span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  row <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, each <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
 <span>  col <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, times <span class="op">=</span> <span class="fl">6</span><span class="op">)</span>,</span>
-<span>  Treatment <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">LETTERS</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">8</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>,</span>
-<span>  Block <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, each <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span>
+<span>  treatment <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">LETTERS</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">8</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  block <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, each <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Set seed for reproducibility</span></span>
@@ -132,14 +132,14 @@
 <span></span>
 <span><span class="co"># Optimize while respecting blocks</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/speed.html">speed</a></span><span class="op">(</span><span class="va">df</span>, </span>
-<span>                permute <span class="op">=</span> <span class="op">~</span><span class="va">Treatment</span>,</span>
-<span>                swap_within <span class="op">=</span> <span class="op">~</span><span class="va">Block</span>,</span>
+<span>                <span class="st">"treatment"</span>,</span>
+<span>                swap_within <span class="op">=</span> <span class="st">"block"</span>,</span>
 <span>                iterations <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 315 </span></span>
-<span><span class="co">#&gt; Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1315</span></span>
+<span><span class="co">#&gt; Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 350 </span></span>
+<span><span class="co">#&gt; Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1350</span></span>
 <span></span>
 <span><span class="co"># Plot the design with block boundaries</span></span>
-<span><span class="fu"><a href="reference/plot_design.html">plot_design</a></span><span class="op">(</span><span class="va">result</span>, block_var <span class="op">=</span> <span class="st">"Block"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/plot_design.html">plot_design</a></span><span class="op">(</span><span class="va">result</span>, block_var <span class="op">=</span> <span class="st">"block"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-blocks-1.png" width="100%"></p>
 </div>
 </div>
