@@ -5,7 +5,7 @@
 #' treatment adjacency and maintain treatment balance across spatial factors.
 #'
 #' @param data A data frame containing the initial design layout with row and col coordinates
-#' @param treatment_cols A column name of the treatment to be swapped (e.g., `treatment`)
+#' @param swap A column name of the treatment to be swapped (e.g., `treatment`)
 #' @param swap_within A string specifying the blocking variable that is a boundary within which to swap
 #'   treatments. Specify `"1"` or `"none"` for no boundary (default: `"1"`)
 #' @param spatial_factors A one-sided formula specifying spatial factors to consider for balance (default:
@@ -45,12 +45,12 @@
 #' )
 #'
 #' # Optimize the design
-#' result <- speed(df, treatment_cols = "treatment")
+#' result <- speed(df, swap = "treatment")
 #'
 #' @export
 speed <- function(
     data,
-    treatment_cols,
+    swap,
     swap_within = "1",
     spatial_factors = ~ row + col,
     iterations = 10000,
@@ -81,11 +81,11 @@ speed <- function(
   start_temp <- getOption("speed.start_temp", 100)
   cooling_rate <- getOption("speed.cooling_rate", 0.99)
 
-  treatment_cols <- as.character(substitute(treatment_cols))
+  swap <- as.character(substitute(swap))
 
   .verify_speed_inputs(
     data,
-    treatment_cols,
+    swap,
     swap_within,
     spatial_factors,
     iterations,
@@ -107,7 +107,7 @@ speed <- function(
     swap_vals <- layout_df[[swap_within]]
   }
   spatial_cols <- all.vars(spatial_factors)
-  treatments <- layout_df[[treatment_cols]]
+  treatments <- layout_df[[swap]]
 
   # set up matrices
   # NOTE: force user to provide row and col
@@ -127,7 +127,7 @@ speed <- function(
   current_design <- initialize_design_matrix(treatment_matrix, swap_matrix)
   best_design <- current_design
 
-  current_score <- obj_function(current_design, layout_df, treatment_cols, spatial_cols)
+  current_score <- obj_function(current_design, layout_df, swap, spatial_cols)
   # TODO: somehow move this to `.verify_speed_inputs`
   if (!is.numeric(current_score)) {
     stop("Value from `objective_function` must be numeric.")
@@ -152,7 +152,7 @@ speed <- function(
     }
 
     new_design <- generate_neighbor(current_design, swap_matrix, current_swap_count, current_swap_all_blocks)
-    new_score <- obj_function(new_design, layout_df, treatment_cols, spatial_cols)
+    new_score <- obj_function(new_design, layout_df, swap, spatial_cols)
     if (new_score < current_score || runif(1) < exp((current_score - new_score) / temp)) {
       current_design <- new_design
       current_score <- new_score
@@ -179,14 +179,14 @@ speed <- function(
   }
 
   design_df <- layout_df
-  design_df[[treatment_cols]] <- as.vector(best_design)
+  design_df[[swap]] <- as.vector(best_design)
 
   return(list(
     design = best_design,
     design_df = design_df,
     score = best_score,
     adjacency_score = calculate_adjacency_score(best_design),
-    balance_score = calculate_balance_score(design_df, treatment_cols, spatial_cols),
+    balance_score = calculate_balance_score(design_df, swap, spatial_cols),
     scores = scores,
     temperatures = temperatures,
     iterations_run = length(scores),
@@ -203,7 +203,7 @@ speed <- function(
 #' Verify inputs for the `speed` function.
 #'
 #' @param data A data frame containing the initial design layout with row and col coordinates
-#' @param treatment_cols A one-sided formula specifying the treatment variable to be permuted (e.g.,
+#' @param swap A one-sided formula specifying the treatment variable to be permuted (e.g.,
 #'   `~treatment`)
 #' @param swap_within A one-sided formula specifying the blocking factor within which to permute treatments
 #'   (default: `~1`)
@@ -223,7 +223,7 @@ speed <- function(
 #' @keywords internal
 .verify_speed_inputs <- function(
     data,
-    treatment_cols,
+    swap,
     swap_within,
     spatial_factors,
     iterations,
@@ -239,7 +239,7 @@ speed <- function(
     stop("`data` must be an initial data frame of the design")
   }
 
-  verify_column_exists(treatment_cols, data, "treatment")
+  verify_column_exists(swap, data, "treatment")
 
   # currently support only 1 constraint
   if (swap_within != "1") {

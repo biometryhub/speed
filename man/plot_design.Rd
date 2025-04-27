@@ -42,7 +42,7 @@ df <- data.frame(
 )
 
 # Optimize the design
-result <- speed(df, treatment_cols = "treatment")
+result <- speed(df, "treatment")
 
 # Plot the optimized design
 plot_design(result)

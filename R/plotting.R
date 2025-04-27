@@ -25,7 +25,7 @@
 #' )
 #'
 #' # Optimize the design
-#' result <- speed(df, treatment_cols = "treatment")
+#' result <- speed(df, "treatment")
 #'
 #' # Plot the optimized design
 #' plot_design(result)
@@ -181,7 +181,7 @@ plot_design <- function(design_result, treatment_var = NULL, block_var = NULL,
 #' )
 #'
 #' # Optimize the design
-#' result <- speed(df, treatment_cols = "treatment")
+#' result <- speed(df, "treatment")
 #'
 #' # Plot optimization progress
 #' plot_progress(result)

@@ -20,7 +20,7 @@ test_that("speed works for simple design", {
 
   speed_design <- speed(
     df_initial,
-    treatment_cols = treatment,
+    treatment,
     swap_within = "1",
     spatial_factors = ~ block + row,
     iterations = ,
@@ -72,7 +72,7 @@ test_that("speed works for 2d blocking", {
 
   speed_design <- speed(
     df_initial,
-    treatment_cols = "treatment",
+    "treatment",
     swap_within = "col_block",
     spatial_factors = ~row_block,
     iterations = 1000000,

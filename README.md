@@ -52,17 +52,17 @@ library(speed)
 df <- data.frame(
   row = rep(1:4, each = 3),
   col = rep(1:3, times = 4),
-  Treatment = rep(LETTERS[1:4], 3)
+  treatment = rep(LETTERS[1:4], 3)
 )
 
 # Set seed for reproducibility
 set.seed(42)
 
 # Optimize the design
-result <- speed(df, permute = ~Treatment)
-#> Iteration: 1000 Score: 1 Best: 1 Since Improvement: 359 
-#> Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1359 
-#> Early stopping at iteration 2641
+result <- speed(df, "treatment")
+#> Iteration: 1000 Score: 2.333333 Best: 2.333333 Since Improvement: 385 
+#> Iteration: 2000 Score: 2.333333 Best: 2.333333 Since Improvement: 1385 
+#> Early stopping at iteration 2615
 
 # Plot the optimized design
 plot_design(result)
@@ -87,8 +87,8 @@ You can also optimize designs within blocks:
 df <- data.frame(
   row = rep(1:6, each = 4),
   col = rep(1:4, times = 6),
-  Treatment = rep(LETTERS[1:8], 3),
-  Block = rep(1:3, each = 8)
+  treatment = rep(LETTERS[1:8], 3),
+  block = rep(1:3, each = 8)
 )
 
 # Set seed for reproducibility
@@ -96,14 +96,14 @@ set.seed(42)
 
 # Optimize while respecting blocks
 result <- speed(df, 
-                permute = ~Treatment,
-                swap_within = ~Block,
+                "treatment",
+                swap_within = "block",
                 iterations = 2000)
-#> Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 315 
-#> Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1315
+#> Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 350 
+#> Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1350
 
 # Plot the design with block boundaries
-plot_design(result, block_var = "Block")
+plot_design(result, block_var = "block")
 ```
 
 <img src="man/figures/README-blocks-1.png" width="100%" />

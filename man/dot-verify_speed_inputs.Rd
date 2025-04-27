@@ -6,7 +6,7 @@
 \usage{
 .verify_speed_inputs(
   data,
-  treatment_cols,
+  swap,
   swap_within,
   spatial_factors,
   iterations,
@@ -23,7 +23,7 @@
 \arguments{
 \item{data}{A data frame containing the initial design layout with row and col coordinates}
 
-\item{treatment_cols}{A one-sided formula specifying the treatment variable to be permuted (e.g.,
+\item{swap}{A one-sided formula specifying the treatment variable to be permuted (e.g.,
 \code{~treatment})}
 
 \item{swap_within}{A one-sided formula specifying the blocking factor within which to permute treatments
