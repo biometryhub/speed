@@ -67,7 +67,7 @@ df <- data.frame(
 set.seed(42)
 
 # Optimize the design
-result <- speed(df, treatment_cols = "treatment")
+result <- speed(df, "treatment")
 
 # Plot the optimized design
 plot_design(result)
@@ -94,9 +94,9 @@ set.seed(42)
 
 # Optimize while respecting blocks
 result <- speed(df, 
-                treatment_cols = "treatment",
+                "treatment",
                 swap_within = "block",
-                iterations = 2000)
+                iterations = 5000)
 
 # Plot the design with block boundaries
 plot_design(result, block_var = "block")

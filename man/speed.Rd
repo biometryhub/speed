@@ -6,7 +6,7 @@
 \usage{
 speed(
   data,
-  treatment_cols,
+  swap,
   swap_within = "1",
   spatial_factors = ~row + col,
   iterations = 10000,
@@ -19,7 +19,7 @@ speed(
 \arguments{
 \item{data}{A data frame containing the initial design layout with row and col coordinates}
 
-\item{treatment_cols}{A column name of the treatment to be swapped (e.g., \code{treatment})}
+\item{swap}{A column name of the treatment to be swapped (e.g., \code{treatment})}
 
 \item{swap_within}{A string specifying the blocking variable that is a boundary within which to swap
 treatments. Specify \code{"1"} or \code{"none"} for no boundary (default: \code{"1"})}
@@ -69,6 +69,6 @@ df <- data.frame(
 )
 
 # Optimize the design
-result <- speed(df, treatment_cols = "treatment")
+result <- speed(df, swap = "treatment")
 
 }

@@ -22,7 +22,7 @@ autoplot(object, ...)
 )
 }
 \arguments{
-\item{object}{An object to create a plot for. Currently objects from the \code{\link[=multiple_comparisons]{multiple_comparisons()}} or \code{\link[=design]{design()}} functions with class "mct" or "design" respectively are supported.}
+\item{object}{An experimental design object generated from \code{\link[=speed]{speed()}}.}
 
 \item{...}{Arguments passed to methods.}
 
@@ -51,28 +51,46 @@ A \code{ggplot2} object.
 Generate plots for designs generated in speed
 }
 \examples{
-des.out <- design(type = "crd", treatments = c(1, 5, 10, 20),
-                  reps = 5, nrows = 4, ncols = 5, seed = 42, plot = FALSE)
-autoplot(des.out)
+# Create a design with blocks
+df <- data.frame(
+     row = rep(1:6, each = 4),
+     col = rep(1:4, times = 6),
+     treatment = rep(LETTERS[1:8], 3),
+     block = rep(1:3, each = 8))
+
+# Set seed for reproducibility
+set.seed(42)
+
+# Optimize while respecting blocks
+result <- speed(df,
+                "treatment",
+                swap_within = "block",
+                iterations = 5000)
+
+# Plot the design with block boundaries
+autoplot(result)
 
 # Colour blind friendly colours
-autoplot(des.out, palette = "colour-blind")
+autoplot(result, palette = "colour-blind")
 
 # Alternative colour scheme
-autoplot(des.out, palette = "plasma")
+autoplot(result, palette = "plasma")
+
+df <- data.frame(
+      row = rep(1:4, each = 3),
+      col = rep(1:3, times = 4),
+      treatment = rep(LETTERS[1:4], 3))
+
+# Set seed for reproducibility
+set.seed(42)
+
+# Optimize while respecting blocks
+result <- speed(df,
+                "treatment",
+                iterations = 5000)
 
 # Custom colour palette
-autoplot(des.out, palette = c("#ef746a", "#3fbfc5", "#81ae00", "#c37cff"))
-
-# Visualise different components of a split plot design
-des.out <- design(type = "split", treatments = c("A", "B"), sub_treatments = 1:4,
-reps = 4, nrows = 8, ncols = 4, brows = 4, bcols = 2, seed = 42)
-
-# Show the wholeplot components
-autoplot(des.out, treatments = wholeplots)
-
-# Display block level
-autoplot(des.out, treatments = block)
+autoplot(result, palette = c("#ef746a", "#3fbfc5", "#81ae00", "#c37cff"))
 }
 \seealso{
 \code{\link[=speed]{speed()}}

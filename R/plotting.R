@@ -25,7 +25,7 @@
 #' )
 #'
 #' # Optimize the design
-#' result <- speed(df, treatment_cols = "treatment", seed = 42)
+#' result <- speed(df, "treatment", seed = 42)
 #'
 #' # Plot the optimized design
 #' plot_design(result)
@@ -155,7 +155,7 @@ plot_design <- function(design_result, treatment_var = NULL, block_var = NULL,
 
 #' Generate plots for designs generated in speed
 #'
-#' @param object An object to create a plot for. Currently objects from the [multiple_comparisons()] or [design()] functions with class "mct" or "design" respectively are supported.
+#' @param object An experimental design object generated from [speed()].
 #' @param size Increase or decrease the text size within the plot for treatment labels. Numeric with default value of 4.
 #' @param rotation Rotate the x axis labels and the treatment group labels within the plot. Allows for easier reading of long axis or treatment labels. Number between 0 and 360 (inclusive) - default 0
 #' @param margin Logical (default `FALSE`). A value of `FALSE` will expand the plot to the edges of the plotting area i.e. remove white space between plot and axes.
@@ -191,34 +191,52 @@ ggplot2::autoplot
 #' @importFrom rlang check_dots_used enquo sym quo_is_null quo_name
 #' @export
 #' @examples
-#' des.out <- design(type = "crd", treatments = c(1, 5, 10, 20),
-#'                   reps = 5, nrows = 4, ncols = 5, seed = 42, plot = FALSE)
-#' autoplot(des.out)
+#' # Create a design with blocks
+#' df <- data.frame(
+#'      row = rep(1:6, each = 4),
+#'      col = rep(1:4, times = 6),
+#'      treatment = rep(LETTERS[1:8], 3),
+#'      block = rep(1:3, each = 8))
+#'
+#' # Set seed for reproducibility
+#' set.seed(42)
+#'
+#' # Optimize while respecting blocks
+#' result <- speed(df,
+#'                 "treatment",
+#'                 swap_within = "block",
+#'                 iterations = 5000)
+#'
+#' # Plot the design with block boundaries
+#' autoplot(result)
 #'
 #' # Colour blind friendly colours
-#' autoplot(des.out, palette = "colour-blind")
+#' autoplot(result, palette = "colour-blind")
 #'
 #' # Alternative colour scheme
-#' autoplot(des.out, palette = "plasma")
+#' autoplot(result, palette = "plasma")
+#'
+#' df <- data.frame(
+#'       row = rep(1:4, each = 3),
+#'       col = rep(1:3, times = 4),
+#'       treatment = rep(LETTERS[1:4], 3))
+#'
+#' # Set seed for reproducibility
+#' set.seed(42)
+#'
+#' # Optimize while respecting blocks
+#' result <- speed(df,
+#'                 "treatment",
+#'                 iterations = 5000)
 #'
 #' # Custom colour palette
-#' autoplot(des.out, palette = c("#ef746a", "#3fbfc5", "#81ae00", "#c37cff"))
-#'
-#' # Visualise different components of a split plot design
-#' des.out <- design(type = "split", treatments = c("A", "B"), sub_treatments = 1:4,
-#' reps = 4, nrows = 8, ncols = 4, brows = 4, bcols = 2, seed = 42)
-#'
-#' # Show the wholeplot components
-#' autoplot(des.out, treatments = wholeplots)
-#'
-#' # Display block level
-#' autoplot(des.out, treatments = block)
+#' autoplot(result, palette = c("#ef746a", "#3fbfc5", "#81ae00", "#c37cff"))
 autoplot.design <- function(object, rotation = 0, size = 4, margin = FALSE, palette = "default", buffer = NULL, row = NULL, column = NULL, block = NULL, treatments = NULL, ...) {
     stopifnot(inherits(object, "design"))
     rlang::check_dots_used()
 
     if(inherits(object, "list")) {
-        object <- object$design
+        object <- object$design_df
     }
 
     row_expr <- rlang::enquo(row)
@@ -237,7 +255,7 @@ autoplot.design <- function(object, rotation = 0, size = 4, margin = FALSE, pale
         block_expr <- rlang::sym("block")  # Default to the block column
     }
     if(rlang::quo_is_null(trt_expr)) {
-        trt_expr <- rlang::sym("treatments")  # Default to the treatments column
+        trt_expr <- rlang::sym("treatment")  # Default to the treatments column
     }
 
     row_expr <- rlang::quo_name(row_expr)
@@ -375,7 +393,7 @@ autoplot.design <- function(object, rotation = 0, size = 4, margin = FALSE, pale
 #' )
 #'
 #' # Optimize the design
-#' result <- speed(df, treatment_cols = "treatment")
+#' result <- speed(df, "treatment")
 #'
 #' # Plot optimization progress
 #' plot_progress(result)
