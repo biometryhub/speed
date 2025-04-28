@@ -15,7 +15,9 @@ objective_function(
 \item{bal_weight}{Weight for balance score (default: 1)}
 }
 \value{
-A function which returns numeric value representing the score of the design (lower is better)
+A function which returns numeric value representing the score of the design (lower is better) with a
+signature \verb{function(design_matrix, layout_df, treatment_cols, spatial_cols)}. See signature details in
+\link{objective_function_signature}.
 }
 \description{
 A default objective function that combines adjacency and balance scores.

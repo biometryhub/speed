@@ -57,14 +57,7 @@ speed <- function(
     early_stop_iterations = 2000,
     obj_function = objective_function(),
     quiet = FALSE,
-    seed = NULL
-    # These could probably be options
-    # swap_count = 1,
-    # swap_all_blocks = FALSE,
-    # adaptive_swaps = FALSE,
-    # start_temp = 100,
-    # cooling_rate = 0.99,
-    ) {
+    seed = NULL) {
   # Permute is for the levels of the treatment that get shuffled within the levels of the swap_within factor
   # E.g. swap_within = ~block will permute treatments within blocks, rather than the entire layout
   # E.g. permute = ~treatment will permute the levels of treatment within the blocks
@@ -75,7 +68,6 @@ speed <- function(
   adaptive_swaps <- getOption("speed.adaptive_swaps", FALSE)
   start_temp <- getOption("speed.start_temp", 100)
   cooling_rate <- getOption("speed.cooling_rate", 0.99)
-
   swap <- as.character(substitute(swap))
 
   .verify_speed_inputs(

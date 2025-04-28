@@ -14,18 +14,15 @@
 #' )
 #' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
-#' @return A function which returns numeric value representing the score of the design (lower is better)
+#' @return A function which returns numeric value representing the score of the design (lower is better) with a
+#'   signature `function(design_matrix, layout_df, treatment_cols, spatial_cols)`. See signature details in
+#'   \link{objective_function_signature}.
 #'
 #' @export
 objective_function <- function(
     adj_weight = getOption("speed.adj_weight", 1),
     bal_weight = getOption("speed.bal_weight", 1)) {
   return(
-    # TODO: move to return function signature
-    # design_matrix A design matrix
-    # layout_df A data frame representing the spatial information of the design
-    # treatment_cols A column name of the treatment
-    # spatial_cols Column names of the spatial factors
     function(design_matrix, layout_df, treatment_cols, spatial_cols) {
       layout_df[[treatment_cols]] <- as.vector(design_matrix)
       adj <- calculate_adjacency_score(design_matrix)
@@ -36,8 +33,26 @@ objective_function <- function(
   )
 }
 
-# calculate number of pairs with same neighbor
-# diagonal pairs not included
+#' Neighbor Balance Calculation
+#'
+#' @description
+#' A metric that counts the occurrence of the same adjacent pairs. Only horizontal and vertical pairs are
+#'   counted.
+#'
+#' @inheritParams objective_function_signature
+#'
+#' @examples
+#' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
+#' calculate_nb(design_matrix)
+#'
+#' @return A named list containing:
+#' \itemize{
+#'   \item nb - A named list of pairs of items and their number of occurrence
+#'   \item max_nb - The highest number of occurrence
+#'   \item max_pairs - Pairs of items with the highest number of occurrence
+#' }
+#'
+#' @export
 calculate_nb <- function(design_matrix) {
   n_rows <- dim(design_matrix)[1]
   n_cols <- dim(design_matrix)[2]
@@ -83,7 +98,7 @@ calculate_nb <- function(design_matrix) {
 }
 
 # calculate even distribution for 3 reps
-calculate_ed_3_reps <- function(edges) {
+.calculate_ed_3_reps <- function(edges) {
   # pick 2 shortest connections for 3 reps
   msts <- lapply(edges, function(x) {
     weights <- unlist(lapply(x, tail, 1))
@@ -91,68 +106,106 @@ calculate_ed_3_reps <- function(edges) {
   })
 
   min_mst <- min(unlist(msts))
-  min_treatments <- names(msts[msts == min_mst])
+  min_pairs <- names(msts[msts == min_mst])
   return(list(
     msts = msts,
     min_mst = min_mst,
-    min_treatments = min_treatments
+    min_pairs = min_pairs
   ))
 }
 
-# calculate even distribution for >3 reps
+# calculate even distribution
 calculate_ed <- function(design_matrix) {
   vertices <- get_vertices(design_matrix)
+  vertices_3_reps <- list()
   msts <- list()
   sub_graph <- list()
 
-  for (treatment in names(vertices)) {
-    reps <- as.character(length(vertices[[treatment]]))
-    if (is.null(sub_graph[[reps]])) {
-      # initialize a fully-connected graph without weights
-      # 1--2, 1--3, ..., 1--n-1, 1--n, 2--3, 2--4, ..., n-1--n
-      sub_graph[[reps]] <- igraph::graph_from_edgelist(
-        t(combn(seq_along(vertices[[treatment]]), 2)),
-        directed = FALSE
-      )
-    }
-
-    weights <- c()
-    # order matters here
-    for (i in 1:(length(vertices[[treatment]]) - 1)) {
-      for (j in (i + 1):length(vertices[[treatment]])) {
-        weights <- c(weights, sum((vertices[[treatment]][[i]] - vertices[[treatment]][[j]])^2))
+  for (item in names(vertices)) {
+    reps <- length(vertices[[item]])
+    reps_char <- as.character(reps)
+    if (reps == 2) {
+      # distance between 2 nodes for 2 reps
+      msts[[reps_char]][[item]] <- sqrt(sum((vertices[[item]][[1]] - vertices[[item]][[2]])^2))
+    } else if (reps == 3) {
+      # 3 reps will be calculated with .calculate_ed_3_reps
+      vertices_3_reps[[item]] <- vertices[[item]]
+    } else if (reps > 3) {
+      # blanket igraph for 4+ reps
+      if (is.null(sub_graph[[reps_char]])) {
+        # initialize a fully-connected graph without weights
+        # 1--2, 1--3, ..., 1--n-1, 1--n, 2--3, 2--4, ..., n-1--n
+        sub_graph[[reps_char]] <- igraph::graph_from_edgelist(
+          t(combn(seq_along(vertices[[item]]), 2)),
+          directed = FALSE
+        )
+        msts[[reps_char]] <- list()
       }
-    }
 
-    igraph::E(sub_graph[[reps]])$weight <- weights
-    msts[[treatment]] <- sum(sqrt(igraph::E(igraph::mst(sub_graph[[reps]]))$weight))
+      weights <- c()
+      # order matters here
+      for (i in 1:(length(vertices[[item]]) - 1)) {
+        for (j in (i + 1):length(vertices[[item]])) {
+          weights <- c(weights, sum((vertices[[item]][[i]] - vertices[[item]][[j]])^2))
+        }
+      }
+
+      igraph::E(sub_graph[[reps_char]])$weight <- weights
+      msts[[reps_char]][[item]] <- sum(sqrt(igraph::E(igraph::mst(sub_graph[[reps_char]]))$weight))
+    }
   }
 
-  min_mst <- min(unlist(msts))
-  min_treatments <- names(msts[msts == min_mst])
-  return(list(
-    msts = msts,
-    min_mst = min_mst,
-    min_treatments = min_treatments
-  ))
+  # summarize mst for each reps
+  msts <- lapply(msts, function(msts_by_reps) {
+    min_mst <- min(unlist(msts_by_reps))
+    min_pairs <- names(msts_by_reps[msts_by_reps == min_mst])
+
+    return(list(
+      msts = msts_by_reps,
+      min_mst = min_mst,
+      min_pairs = min_pairs
+    ))
+  })
+
+  msts_3_reps <- .calculate_ed_3_reps(get_edges(vertices_3_reps))
+  msts <- c(msts, list("3" = msts_3_reps))
+
+  return(msts)
 }
 
 get_vertices <- function(design_matrix) {
   vertices <- list()
   for (i in seq_len(nrow(design_matrix))) {
     for (j in seq_len(ncol(design_matrix))) {
-      treatment <- design_matrix[i, j]
-      design_matrix[i, j] <- treatment
+      item <- as.character(design_matrix[i, j])
 
-      if (is.null(vertices[[treatment]])) {
-        vertices[[treatment]] <- list()
+      if (is.null(vertices[[item]])) {
+        vertices[[item]] <- list()
       }
 
-      vertices[[treatment]][[length(vertices[[treatment]]) + 1]] <- c(i, j)
+      vertices[[item]][[length(vertices[[item]]) + 1]] <- c(i, j)
     }
   }
 
   return(vertices)
+}
+
+get_edges <- function(vertices) {
+  edges <- list()
+  for (item in names(vertices)) {
+    edges[[item]] <- list()
+    for (i in 1:(length(vertices[[item]]) - 1)) {
+      for (j in (i + 1):length(vertices[[item]])) {
+        edges[[item]][[length(edges[[item]]) + 1]] <- c(
+          i,
+          j,
+          sqrt(sum((vertices[[item]][[i]] - vertices[[item]][[j]])^2))
+        )
+      }
+    }
+  }
+
+  return(edges)
 }
 
 #' Calculate Adjacency Score for Experimental Design
@@ -237,4 +290,27 @@ calculate_objective <- function(design, permute_var, layout_df, spatial_fac, adj
   adj <- calculate_adjacency_score(design)
   bal <- calculate_balance_score(layout_df, permute_var, spatial_fac)
   adj_weight * adj + bal_weight * bal
+}
+
+#' Objective Function Signature
+#'
+#' @description
+#' A signature for an objective function
+#'
+#' @param design_matrix A design matrix
+#' @param layout_df A data frame representing the spatial information of the design
+#' @param treatment_cols A column name of the treatment
+#' @param spatial_cols Column names of the spatial factors
+#'
+#' @examples
+#' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
+#' layout_df <- data.frame(
+#'   row = rep(1:3, each = 3),
+#'   col = rep(1:3, times = 3)
+#' )
+#' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
+#'
+#' @return A function which returns numeric value representing the score of the design (lower is better)
+objective_function_signature <- function(design_matrix, layout_df, treatment_cols, spatial_cols) {
+  stop("This is a dummy fucntion for documentation purposes only")
 }
