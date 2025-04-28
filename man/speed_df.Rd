@@ -9,15 +9,17 @@ speed_df(
   swap,
   swap_within = "1",
   spatial_factors = ~row + col,
+  adjacency_method = "coordinate",
+  adjacency_threshold = 1.5,
   iterations = 10000,
   early_stop_iterations = 2000,
-  obj_function = objective_function_df,
+  obj_function = objective_function(),
   quiet = FALSE,
   seed = NULL
 )
 }
 \arguments{
-\item{data}{A data frame containing the initial design layout with spatial coordinates}
+\item{data}{A data frame containing the experimental design with spatial coordinates}
 
 \item{swap}{A column name of the treatment to be swapped (e.g., \code{treatment})}
 
@@ -26,6 +28,12 @@ treatments. Specify \code{"1"} or \code{"none"} for no boundary (default: \code{
 
 \item{spatial_factors}{A one-sided formula specifying spatial factors to consider for balance (default:
 \code{~row + col})}
+
+\item{adjacency_method}{Method to determine adjacent plots: "coordinate" uses Euclidean distance,
+"cardinal" uses only up/down/left/right neighbors (default: "coordinate")}
+
+\item{adjacency_threshold}{Distance threshold for considering plots adjacent when using
+"coordinate" method (default: 1.5)}
 
 \item{iterations}{Maximum number of iterations for the simulated annealing algorithm (default: 10000)}
 
@@ -51,13 +59,14 @@ A list containing:
 \item iterations_run - Total number of iterations performed
 \item stopped_early - Logical indicating if optimization stopped early
 \item treatments - Vector of unique treatments
-\item seed - Random seed used for reproducibility of the design. If not set in the function, the seed is
-set to the second element of .Random.seed.
+\item seed - Random seed used for reproducibility of the design
+\item adjacency_list - List of adjacent plots used in optimization
 }
 }
 \description{
 Optimizes the spatial layout of experimental designs using simulated annealing to minimize
-treatment adjacency and maintain treatment balance across spatial factors.
+treatment adjacency and maintain treatment balance across spatial factors. Works with
+regular or irregular spatial designs.
 }
 \examples{
 # Create a simple design with 3 replicates of 4 treatments in a 4x3 layout
