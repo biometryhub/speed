@@ -2,31 +2,31 @@
 % Please edit documentation in R/speed_df.R
 \name{generate_neighbor_df}
 \alias{generate_neighbor_df}
-\title{Generate a Neighboring Solution by Swapping Treatments in a Data Frame}
+\title{Generate a Neighbor Design by Swapping Treatments}
 \usage{
 generate_neighbor_df(
-  design_df,
-  treatment_col,
-  swap_group_col,
+  design,
+  swap,
+  swap_within,
   swap_count = 1,
   swap_all_blocks = FALSE
 )
 }
 \arguments{
-\item{design_df}{A data frame containing the current design}
+\item{design}{Data frame containing the current design}
 
-\item{treatment_col}{The column name containing treatments}
+\item{swap}{Column name of the treatment to swap}
 
-\item{swap_group_col}{The column name containing swap groups}
+\item{swap_within}{Column name defining groups within which to swap treatments}
 
 \item{swap_count}{Number of swaps to perform}
 
-\item{swap_all_blocks}{Whether to perform swaps in all blocks}
+\item{swap_all_blocks}{Whether to perform swaps in all blocks or just one}
 }
 \value{
-A data frame with the new design after swaps
+A data frame with the updated design after swapping
 }
 \description{
-Creates a new design by swapping treatments within specified swap groups.
+Generate a Neighbor Design by Swapping Treatments
 }
 \keyword{internal}

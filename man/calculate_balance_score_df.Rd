@@ -2,21 +2,21 @@
 % Please edit documentation in R/speed_df.R
 \name{calculate_balance_score_df}
 \alias{calculate_balance_score_df}
-\title{Calculate Balance Score for a Design Data Frame}
+\title{Calculate Balance Score for Design}
 \usage{
-calculate_balance_score_df(design_df, treatment_col, spatial_cols)
+calculate_balance_score_df(design, swap, spatial_cols)
 }
 \arguments{
-\item{design_df}{A data frame containing the design}
+\item{design}{Data frame containing the current design}
 
-\item{treatment_col}{The column name containing treatments}
+\item{swap}{Column name of the treatment}
 
-\item{spatial_cols}{Vector of column names for spatial factors}
+\item{spatial_cols}{Character vector of spatial factor column names}
 }
 \value{
-Numeric score for balance
+Numeric score for spatial balance (lower is better)
 }
 \description{
-Calculates a score based on how well treatments are balanced across spatial factors.
+Calculate Balance Score for Design
 }
 \keyword{internal}

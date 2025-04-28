@@ -2,22 +2,21 @@
 % Please edit documentation in R/speed_df.R
 \name{calculate_adjacency_score_df}
 \alias{calculate_adjacency_score_df}
-\title{Calculate Adjacency Score for a Design Data Frame}
+\title{Calculate Adjacency Score for Design}
 \usage{
-calculate_adjacency_score_df(design_df, treatment_col, spatial_cols)
+calculate_adjacency_score_df(design, adjacency_list, swap)
 }
 \arguments{
-\item{design_df}{A data frame containing the design}
+\item{design}{Data frame containing the current design}
 
-\item{treatment_col}{The column name containing treatments}
+\item{adjacency_list}{List of adjacent plots}
 
-\item{spatial_cols}{Vector of column names for spatial coordinates}
+\item{swap}{Column name of the treatment}
 }
 \value{
-Numeric score for adjacency
+Numeric score for treatment adjacencies (lower is better)
 }
 \description{
-Calculates a score based on treatment adjacencies, where lower scores indicate
-fewer adjacent cells with the same treatment.
+Calculate Adjacency Score for Design
 }
 \keyword{internal}
