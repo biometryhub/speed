@@ -24,12 +24,12 @@ objective_function <- function(
     # TODO: move to return function signature
     # design_matrix A design matrix
     # layout_df A data frame representing the spatial information of the design
-    # treatment_cols A column name of the treatment
+    # swap A column name of the treatment
     # spatial_cols Column names of the spatial factors
-    function(design_matrix, layout_df, treatment_cols, spatial_cols) {
-      layout_df[[treatment_cols]] <- as.vector(design_matrix)
+    function(design_matrix, layout_df, swap, spatial_cols) {
+      layout_df[[swap]] <- as.vector(design_matrix)
       adj <- calculate_adjacency_score(design_matrix)
-      bal <- calculate_balance_score(layout_df, treatment_cols, spatial_cols)
+      bal <- calculate_balance_score(layout_df, swap, spatial_cols)
 
       return(adj_weight * adj + bal_weight * bal)
     }
@@ -194,7 +194,7 @@ calculate_adjacency_score <- function(design) {
 #' across spatial factors in an experimental design. Lower scores indicate better balance.
 #'
 #' @param layout_df A data frame containing the experimental design layout
-#' @param treatment_cols A column name of the treatment
+#' @param swap A column name of the treatment
 #' @param spatial_cols Column names of the spatial factors
 #'
 #' @return Numeric value representing the total balance score. Lower values indicate
@@ -209,9 +209,9 @@ calculate_adjacency_score <- function(design) {
 #' calculate_balance_score(layout_df, "treatment", c("row", "col"))
 #'
 #' @export
-calculate_balance_score <- function(layout_df, treatment_cols, spatial_cols) {
+calculate_balance_score <- function(layout_df, swap, spatial_cols) {
   score <- sapply(spatial_cols, function(el) {
-    sum(apply(table(layout_df[[el]], layout_df[[treatment_cols]]), 1, var))
+    sum(apply(table(layout_df[[el]], layout_df[[swap]]), 1, var))
   })
   return(sum(score))
 }
