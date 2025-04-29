@@ -1,35 +1,35 @@
 # Spatial Optimal Design Implementation with Optional Block Constraints
 
-create_initial_design <- function(nrows, ncols, treatments, blocks = NULL) {
-    if (is.null(blocks)) {
-        # No blocks: create a simple random design - already vectorized
-        design <- matrix(sample(treatments, nrows * ncols, replace = TRUE),
-                         nrow = nrows, ncol = ncols)
-        return(design)
-    } else {
-        # With blocks: vectorized version
-        design <- matrix(NA, nrow = nrows, ncol = ncols)
-        block_ids <- unique(as.vector(blocks))
-
-        # Pre-allocate all treatments for all blocks at once
-        block_sizes <- sapply(block_ids, function(b) sum(blocks == b))
-        all_block_treatments <- lapply(block_sizes, function(size) {
-            if (size > length(treatments)) {
-                sample(treatments, size, replace = TRUE)
-            } else {
-                sample(treatments, size, replace = FALSE)
-            }
-        })
-
-        # Assign all treatments at once using matrix indexing
-        for (b in seq_along(block_ids)) {
-            block_mask <- blocks == block_ids[b]
-            design[block_mask] <- all_block_treatments[[b]]
-        }
-
-        return(design)
-    }
-}
+# create_initial_design <- function(nrows, ncols, treatments, blocks = NULL) {
+#     if (is.null(blocks)) {
+#         # No blocks: create a simple random design - already vectorized
+#         design <- matrix(sample(treatments, nrows * ncols, replace = TRUE),
+#                          nrow = nrows, ncol = ncols)
+#         return(design)
+#     } else {
+#         # With blocks: vectorized version
+#         design <- matrix(NA, nrow = nrows, ncol = ncols)
+#         block_ids <- unique(as.vector(blocks))
+#
+#         # Pre-allocate all treatments for all blocks at once
+#         block_sizes <- sapply(block_ids, function(b) sum(blocks == b))
+#         all_block_treatments <- lapply(block_sizes, function(size) {
+#             if (size > length(treatments)) {
+#                 sample(treatments, size, replace = TRUE)
+#             } else {
+#                 sample(treatments, size, replace = FALSE)
+#             }
+#         })
+#
+#         # Assign all treatments at once using matrix indexing
+#         for (b in seq_along(block_ids)) {
+#             block_mask <- blocks == block_ids[b]
+#             design[block_mask] <- all_block_treatments[[b]]
+#         }
+#
+#         return(design)
+#     }
+# }
 
 
 # Check if design satisfies block constraints
@@ -109,151 +109,151 @@ check_block_constraints <- function(design, blocks, treatments) {
 #   return(new_design)
 # }
 
-# Simulated annealing algorithm with early stopping
-optimize_design <- function(nrows, ncols, treatments, blocks = NULL,
-                           iterations = 10000, start_temp = 100, cooling_rate = 0.99,
-                           adj_weight = 1, bal_weight = 1,
-                           early_stop_iterations = 2000, quiet = FALSE) {
+# # Simulated annealing algorithm with early stopping
+# optimize_design <- function(nrows, ncols, treatments, blocks = NULL,
+#                            iterations = 10000, start_temp = 100, cooling_rate = 0.99,
+#                            adj_weight = 1, bal_weight = 1,
+#                            early_stop_iterations = 2000, quiet = FALSE) {
+#
+#   # Create initial design
+#   current_design <- create_initial_design(nrows, ncols, treatments, blocks)
+#   best_design <- current_design
+#
+#   # Calculate initial scores
+#   current_score <- calculate_objective(current_design, treatments, blocks,
+#                                       adj_weight, bal_weight)
+#   best_score <- current_score
+#
+#   # Set initial temperature
+#   temp <- start_temp
+#
+#   # Create vectors to track progress
+#   scores <- numeric(iterations)
+#   temperatures <- numeric(iterations)
+#
+#   # For early stopping
+#   last_improvement_iter <- 0
+#
+#   # Run simulated annealing
+#   for (iter in 1:iterations) {
+#     # Store current values
+#     scores[iter] <- current_score
+#     temperatures[iter] <- temp
+#
+#     # Create a new design by swapping positions
+#     new_design <- generate_neighbor(current_design, blocks)
+#
+#     # Calculate new score
+#     new_score <- calculate_objective(new_design, treatments, blocks,
+#                                     adj_weight, bal_weight)
+#
+#     # Decide whether to accept the new design
+#     if (new_score < current_score) {
+#       # Accept if better
+#       current_design <- new_design
+#       current_score <- new_score
+#
+#       # Update best if better
+#       if (new_score < best_score) {
+#         best_design <- new_design
+#         best_score <- new_score
+#         last_improvement_iter <- iter  # Record when we last improved
+#       }
+#     } else {
+#       # Accept with probability dependent on temperature
+#       p <- exp((current_score - new_score) / temp)
+#       if (runif(1) < p) {
+#         current_design <- new_design
+#         current_score <- new_score
+#       }
+#     }
+#
+#     # Cool down temperature
+#     temp <- temp * cooling_rate
+#
+#     # Report progress - modified to respect quiet parameter
+#         if (!quiet && iter %% 1000 == 0) {
+#             cat("Iteration:", iter, "Score:", current_score, "Best:", best_score,
+#                 "Iterations since improvement:", iter - last_improvement_iter, "\n")
+#         }
+#
+#         # Check for early stopping
+#         if (iter - last_improvement_iter >= early_stop_iterations) {
+#             if (!quiet) {
+#                 cat("Early stopping at iteration", iter,
+#                     "- No improvement for", early_stop_iterations, "iterations\n")
+#             }
+#
+#             # Trim tracking vectors to actual number of iterations run
+#             scores <- scores[1:iter]
+#             temperatures <- temperatures[1:iter]
+#             break
+#         }
+#   }
+#
+#   return(list(
+#     design = best_design,
+#     score = best_score,
+#     adjacency_score = calculate_adjacency_score(best_design),
+#     balance_score = calculate_balance_score(best_design, treatments),
+#     scores = scores,
+#     temperatures = temperatures,
+#     iterations_run = length(scores),
+#     stopped_early = length(scores) < iterations
+#   ))
+# }
 
-  # Create initial design
-  current_design <- create_initial_design(nrows, ncols, treatments, blocks)
-  best_design <- current_design
-
-  # Calculate initial scores
-  current_score <- calculate_objective(current_design, treatments, blocks,
-                                      adj_weight, bal_weight)
-  best_score <- current_score
-
-  # Set initial temperature
-  temp <- start_temp
-
-  # Create vectors to track progress
-  scores <- numeric(iterations)
-  temperatures <- numeric(iterations)
-
-  # For early stopping
-  last_improvement_iter <- 0
-
-  # Run simulated annealing
-  for (iter in 1:iterations) {
-    # Store current values
-    scores[iter] <- current_score
-    temperatures[iter] <- temp
-
-    # Create a new design by swapping positions
-    new_design <- generate_neighbor(current_design, blocks)
-
-    # Calculate new score
-    new_score <- calculate_objective(new_design, treatments, blocks,
-                                    adj_weight, bal_weight)
-
-    # Decide whether to accept the new design
-    if (new_score < current_score) {
-      # Accept if better
-      current_design <- new_design
-      current_score <- new_score
-
-      # Update best if better
-      if (new_score < best_score) {
-        best_design <- new_design
-        best_score <- new_score
-        last_improvement_iter <- iter  # Record when we last improved
-      }
-    } else {
-      # Accept with probability dependent on temperature
-      p <- exp((current_score - new_score) / temp)
-      if (runif(1) < p) {
-        current_design <- new_design
-        current_score <- new_score
-      }
-    }
-
-    # Cool down temperature
-    temp <- temp * cooling_rate
-
-    # Report progress - modified to respect quiet parameter
-        if (!quiet && iter %% 1000 == 0) {
-            cat("Iteration:", iter, "Score:", current_score, "Best:", best_score,
-                "Iterations since improvement:", iter - last_improvement_iter, "\n")
-        }
-
-        # Check for early stopping
-        if (iter - last_improvement_iter >= early_stop_iterations) {
-            if (!quiet) {
-                cat("Early stopping at iteration", iter,
-                    "- No improvement for", early_stop_iterations, "iterations\n")
-            }
-
-            # Trim tracking vectors to actual number of iterations run
-            scores <- scores[1:iter]
-            temperatures <- temperatures[1:iter]
-            break
-        }
-  }
-
-  return(list(
-    design = best_design,
-    score = best_score,
-    adjacency_score = calculate_adjacency_score(best_design),
-    balance_score = calculate_balance_score(best_design, treatments),
-    scores = scores,
-    temperatures = temperatures,
-    iterations_run = length(scores),
-    stopped_early = length(scores) < iterations
-  ))
-}
-
-# Evaluate treatment distribution - improved version using vectorization
-evaluate_distribution <- function(design, treatments) {
-  nrows <- nrow(design)
-  ncols <- ncol(design)
-
-  # Create empty result matrices
-  row_counts <- matrix(0, nrow = nrows, ncol = length(treatments),
-                      dimnames = list(paste0("Row", 1:nrows), treatments))
-
-  col_counts <- matrix(0, nrow = ncols, ncol = length(treatments),
-                      dimnames = list(paste0("Col", 1:ncols), treatments))
-
-  # Count treatments by row and column in a vectorized way
-  for (t in treatments) {
-    row_counts[, t] <- rowSums(design == t, na.rm = TRUE)
-    col_counts[, t] <- colSums(design == t, na.rm = TRUE)
-  }
-
-  return(list(row_counts = row_counts, col_counts = col_counts))
-}
-
-
-# Function to create block structure for a grid
-create_block_structure <- function(nrows, ncols, block_rows, block_cols) {
-  # Calculate number of blocks in each dimension
-  num_block_rows <- nrows / block_rows
-  num_block_cols <- ncols / block_cols
-
-  if (num_block_rows != floor(num_block_rows) || num_block_cols != floor(num_block_cols)) {
-    stop("Grid dimensions must be divisible by block dimensions")
-  }
-
-  # Initialize blocks matrix
-  blocks <- matrix(0, nrow = nrows, ncol = ncols)
-
-  # Assign block IDs
-  block_id <- 1
-  for (i in 1:num_block_rows) {
-    for (j in 1:num_block_cols) {
-      row_start <- (i - 1) * block_rows + 1
-      row_end <- i * block_rows
-      col_start <- (j - 1) * block_cols + 1
-      col_end <- j * block_cols
-
-      blocks[row_start:row_end, col_start:col_end] <- block_id
-      block_id <- block_id + 1
-    }
-  }
-
-  return(blocks)
-}
+# # Evaluate treatment distribution - improved version using vectorization
+# evaluate_distribution <- function(design, treatments) {
+#   nrows <- nrow(design)
+#   ncols <- ncol(design)
+#
+#   # Create empty result matrices
+#   row_counts <- matrix(0, nrow = nrows, ncol = length(treatments),
+#                       dimnames = list(paste0("Row", 1:nrows), treatments))
+#
+#   col_counts <- matrix(0, nrow = ncols, ncol = length(treatments),
+#                       dimnames = list(paste0("Col", 1:ncols), treatments))
+#
+#   # Count treatments by row and column in a vectorized way
+#   for (t in treatments) {
+#     row_counts[, t] <- rowSums(design == t, na.rm = TRUE)
+#     col_counts[, t] <- colSums(design == t, na.rm = TRUE)
+#   }
+#
+#   return(list(row_counts = row_counts, col_counts = col_counts))
+# }
+#
+#
+# # Function to create block structure for a grid
+# create_block_structure <- function(nrows, ncols, block_rows, block_cols) {
+#   # Calculate number of blocks in each dimension
+#   num_block_rows <- nrows / block_rows
+#   num_block_cols <- ncols / block_cols
+#
+#   if (num_block_rows != floor(num_block_rows) || num_block_cols != floor(num_block_cols)) {
+#     stop("Grid dimensions must be divisible by block dimensions")
+#   }
+#
+#   # Initialize blocks matrix
+#   blocks <- matrix(0, nrow = nrows, ncol = ncols)
+#
+#   # Assign block IDs
+#   block_id <- 1
+#   for (i in 1:num_block_rows) {
+#     for (j in 1:num_block_cols) {
+#       row_start <- (i - 1) * block_rows + 1
+#       row_end <- i * block_rows
+#       col_start <- (j - 1) * block_cols + 1
+#       col_end <- j * block_cols
+#
+#       blocks[row_start:row_end, col_start:col_end] <- block_id
+#       block_id <- block_id + 1
+#     }
+#   }
+#
+#   return(blocks)
+# }
 
 
 

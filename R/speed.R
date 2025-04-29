@@ -5,9 +5,9 @@
 #' treatment adjacency and maintain treatment balance across spatial factors.
 #'
 #' @param data A data frame containing the initial design layout with row and col coordinates
-#' @param swap A column name of the treatment to be swapped (e.g., `treatment`)
-#' @param swap_within A string specifying the blocking variable that is a boundary within which to swap
-#'   treatments. Specify `"1"` or `"none"` for no boundary (default: `"1"`)
+#' @param swap A column name of the item to be swapped (e.g., `treatment`)
+#' @param swap_within A string specifying the blocking variable that is a boundary within which to swap items.
+#'   Specify `"1"` or `"none"` for no boundary (default: `"1"`)
 #' @param spatial_factors A one-sided formula specifying spatial factors to consider for balance (default:
 #'   `~row + col`)
 #' @param iterations Maximum number of iterations for the simulated annealing algorithm (default: 10000)
@@ -194,19 +194,8 @@ speed <- function(
 #' @description
 #' Verify inputs for the `speed` function.
 #'
-#' @param data A data frame containing the initial design layout with row and col coordinates
-#' @param swap A one-sided formula specifying the treatment variable to be permuted (e.g.,
-#'   `~treatment`)
-#' @param swap_within A one-sided formula specifying the blocking factor within which to permute treatments
-#'   (default: `~1`)
-#' @param spatial_factors A one-sided formula specifying spatial factors to consider for balance (default:
-#'   `~row + col`)
-#' @param iterations Maximum number of iterations for the simulated annealing algorithm (default: 10000)
-#' @param early_stop_iterations Number of iterations without improvement before early stopping (default: 2000)
-#' @param quiet Logical; if TRUE, suppresses progress messages (default: FALSE)
-#' @param seed A numeric value for random seed. If provided, it ensures reproducibility of results (default:
-#'   NULL).
-#' @param swap_count Number of treatment swaps per iteration (default: 1)
+#' @inheritParams speed
+#' @param swap_count Number of item swaps per iteration (default: 1)
 #' @param swap_all_blocks Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)
 #' @param adaptive_swaps Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)
 #' @param start_temp Starting temperature for simulated annealing (default: 100)

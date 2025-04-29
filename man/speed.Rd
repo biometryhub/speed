@@ -19,10 +19,10 @@ speed(
 \arguments{
 \item{data}{A data frame containing the initial design layout with row and col coordinates}
 
-\item{swap}{A column name of the treatment to be swapped (e.g., \code{treatment})}
+\item{swap}{A column name of the item to be swapped (e.g., \code{treatment})}
 
-\item{swap_within}{A string specifying the blocking variable that is a boundary within which to swap
-treatments. Specify \code{"1"} or \code{"none"} for no boundary (default: \code{"1"})}
+\item{swap_within}{A string specifying the blocking variable that is a boundary within which to swap items.
+Specify \code{"1"} or \code{"none"} for no boundary (default: \code{"1"})}
 
 \item{spatial_factors}{A one-sided formula specifying spatial factors to consider for balance (default:
 \code{~row + col})}

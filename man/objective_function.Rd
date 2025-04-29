@@ -16,7 +16,7 @@ objective_function(
 }
 \value{
 A function which returns numeric value representing the score of the design (lower is better) with a
-signature \code{function(design_matrix, layout_df, treatment_cols, spatial_cols)}. See signature details in
+signature \code{function(design_matrix, layout_df, swap, spatial_cols)}. See signature details in
 \link{objective_function_signature}.
 }
 \description{

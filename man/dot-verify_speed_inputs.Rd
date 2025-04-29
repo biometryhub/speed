@@ -23,11 +23,10 @@
 \arguments{
 \item{data}{A data frame containing the initial design layout with row and col coordinates}
 
-\item{swap}{A one-sided formula specifying the treatment variable to be permuted (e.g.,
-\code{~treatment})}
+\item{swap}{A column name of the item to be swapped (e.g., \code{treatment})}
 
-\item{swap_within}{A one-sided formula specifying the blocking factor within which to permute treatments
-(default: \code{~1})}
+\item{swap_within}{A string specifying the blocking variable that is a boundary within which to swap items.
+Specify \code{"1"} or \code{"none"} for no boundary (default: \code{"1"})}
 
 \item{spatial_factors}{A one-sided formula specifying spatial factors to consider for balance (default:
 \code{~row + col})}
@@ -41,7 +40,7 @@
 \item{seed}{A numeric value for random seed. If provided, it ensures reproducibility of results (default:
 NULL).}
 
-\item{swap_count}{Number of treatment swaps per iteration (default: 1)}
+\item{swap_count}{Number of item swaps per iteration (default: 1)}
 
 \item{swap_all_blocks}{Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)}
 

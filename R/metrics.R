@@ -15,7 +15,7 @@
 #' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
 #' @return A function which returns numeric value representing the score of the design (lower is better) with a
-#'   signature \code{function(design_matrix, layout_df, treatment_cols, spatial_cols)}. See signature details in
+#'   signature \code{function(design_matrix, layout_df, swap, spatial_cols)}. See signature details in
 #'   \link{objective_function_signature}.
 #'
 #' @export
@@ -23,10 +23,10 @@ objective_function <- function(
     adj_weight = getOption("speed.adj_weight", 1),
     bal_weight = getOption("speed.bal_weight", 1)) {
   return(
-    function(design_matrix, layout_df, treatment_cols, spatial_cols) {
-      layout_df[[treatment_cols]] <- as.vector(design_matrix)
+    function(design_matrix, layout_df, swap, spatial_cols) {
+      layout_df[[swap]] <- as.vector(design_matrix)
       adj <- calculate_adjacency_score(design_matrix)
-      bal <- calculate_balance_score(layout_df, treatment_cols, spatial_cols)
+      bal <- calculate_balance_score(layout_df, swap, spatial_cols)
 
       return(adj_weight * adj + bal_weight * bal)
     }
@@ -292,13 +292,13 @@ get_edges <- function(vertices) {
 #'
 #' @description
 #' Calculates the number of adjacent treatments that are the same in an experimental
-#' design layout. Lower scores indicate better separation of treatments.
+#'   design layout. Lower scores indicate better separation of treatments.
 #'
 #' @param design A matrix containing the experimental design layout with treatments
 #'
 #' @return Numeric value representing the total number of adjacent same treatments.
-#'        The score is the sum of same treatments that are adjacent horizontally
-#'        and vertically.
+#'   The score is the sum of same treatments that are adjacent horizontally
+#'   and vertically.
 #'
 #' @examples
 #' design <- matrix(
@@ -324,14 +324,12 @@ calculate_adjacency_score <- function(design) {
 #'
 #' @description
 #' Calculates a balance score that measures how evenly treatments are distributed
-#' across spatial factors in an experimental design. Lower scores indicate better balance.
+#'   across spatial factors in an experimental design. Lower scores indicate better balance.
 #'
-#' @param layout_df A data frame containing the experimental design layout
-#' @param treatment_cols A column name of the treatment
-#' @param spatial_cols Column names of the spatial factors
+#' @inheritParams objective_function_signature
 #'
 #' @return Numeric value representing the total balance score. Lower values indicate
-#'         better balance of treatments across spatial factors.
+#'   better balance of treatments across spatial factors.
 #'
 #' @examples
 #' layout_df <- data.frame(
@@ -342,9 +340,9 @@ calculate_adjacency_score <- function(design) {
 #' calculate_balance_score(layout_df, "treatment", c("row", "col"))
 #'
 #' @export
-calculate_balance_score <- function(layout_df, treatment_cols, spatial_cols) {
+calculate_balance_score <- function(layout_df, swap, spatial_cols) {
   score <- sapply(spatial_cols, function(el) {
-    sum(apply(table(layout_df[[el]], layout_df[[treatment_cols]]), 1, var))
+    sum(apply(table(layout_df[[el]], layout_df[[swap]]), 1, var))
   })
   return(sum(score))
 }
@@ -353,7 +351,7 @@ calculate_balance_score <- function(layout_df, treatment_cols, spatial_cols) {
 #'
 #' @description
 #' Internal function that calculates a combined score based on treatment adjacency
-#' and spatial balance. Used by the optimization algorithms.
+#'   and spatial balance. Used by the optimization algorithms.
 #'
 #' @param design Matrix containing the experimental design layout
 #' @param permute_var Character string naming the treatment variable to be permuted
@@ -379,7 +377,7 @@ calculate_objective <- function(design, permute_var, layout_df, spatial_fac, adj
 #'
 #' @param design_matrix A design matrix
 #' @param layout_df A data frame representing the spatial information of the design
-#' @param treatment_cols A column name of the treatment
+#' @param swap A column name of the treatment
 #' @param spatial_cols Column names of the spatial factors
 #'
 #' @examples
@@ -391,6 +389,6 @@ calculate_objective <- function(design, permute_var, layout_df, spatial_fac, adj
 #' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
 #' @return A function which returns numeric value representing the score of the design (lower is better)
-objective_function_signature <- function(design_matrix, layout_df, treatment_cols, spatial_cols) {
+objective_function_signature <- function(design_matrix, layout_df, swap, spatial_cols) {
   stop("This is a dummy fucntion for documentation purposes only")
 }

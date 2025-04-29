@@ -4,19 +4,14 @@
 \alias{objective_function_signature}
 \title{Objective Function Signature}
 \usage{
-objective_function_signature(
-  design_matrix,
-  layout_df,
-  treatment_cols,
-  spatial_cols
-)
+objective_function_signature(design_matrix, layout_df, swap, spatial_cols)
 }
 \arguments{
 \item{design_matrix}{A design matrix}
 
 \item{layout_df}{A data frame representing the spatial information of the design}
 
-\item{treatment_cols}{A column name of the treatment}
+\item{swap}{A column name of the treatment}
 
 \item{spatial_cols}{Column names of the spatial factors}
 }
