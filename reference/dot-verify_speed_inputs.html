@@ -64,13 +64,12 @@
 
 
 <dt id="arg-swap">swap<a class="anchor" aria-label="anchor" href="#arg-swap"></a></dt>
-<dd><p>A one-sided formula specifying the treatment variable to be permuted (e.g.,
-<code>~treatment</code>)</p></dd>
+<dd><p>A column name of the item to be swapped (e.g., <code>treatment</code>)</p></dd>
 
 
 <dt id="arg-swap-within">swap_within<a class="anchor" aria-label="anchor" href="#arg-swap-within"></a></dt>
-<dd><p>A one-sided formula specifying the blocking factor within which to permute treatments
-(default: <code>~1</code>)</p></dd>
+<dd><p>A string specifying the blocking variable that is a boundary within which to swap items.
+Specify <code>"1"</code> or <code>"none"</code> for no boundary (default: <code>"1"</code>)</p></dd>
 
 
 <dt id="arg-spatial-factors">spatial_factors<a class="anchor" aria-label="anchor" href="#arg-spatial-factors"></a></dt>
@@ -96,7 +95,7 @@ NULL).</p></dd>
 
 
 <dt id="arg-swap-count">swap_count<a class="anchor" aria-label="anchor" href="#arg-swap-count"></a></dt>
-<dd><p>Number of treatment swaps per iteration (default: 1)</p></dd>
+<dd><p>Number of item swaps per iteration (default: 1)</p></dd>
 
 
 <dt id="arg-swap-all-blocks">swap_all_blocks<a class="anchor" aria-label="anchor" href="#arg-swap-all-blocks"></a></dt>
