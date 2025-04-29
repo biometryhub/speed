@@ -340,19 +340,20 @@ objective_function <- function(adjacency_weight = 1, balance_weight = 1) {
 #'
 #' @keywords internal
 calculate_adjacency_score_df <- function(design, adjacency_list, swap) {
-    n <- nrow(design)
+    # Extract treatment values
     treatment_vals <- design[[swap]]
-    same_adjacent_count <- 0
-
-    for (i in 1:n) {
+    
+    # Vectorized calculation of same-adjacent counts
+    same_adjacent_count <- sum(sapply(seq_along(adjacency_list), function(i) {
         adjacent_indices <- adjacency_list[[i]]
         if (length(adjacent_indices) > 0) {
-            # Count how many adjacent plots have the same treatment
-            same_adjacent_count <- same_adjacent_count + sum(treatment_vals[adjacent_indices] == treatment_vals[i])
+            sum(treatment_vals[adjacent_indices] == treatment_vals[i])
+        } else {
+            0
         }
-    }
-
-    # Divide by 2 because each pair is counted twice (once from each direction)
+    }))
+    
+    # Divide by 2 because each pair is counted twice
     return(same_adjacent_count / 2)
 }
 
@@ -366,26 +367,24 @@ calculate_adjacency_score_df <- function(design, adjacency_list, swap) {
 #'
 #' @keywords internal
 calculate_balance_score_df <- function(design, swap, spatial_cols) {
-    balance_score <- 0
     treatments <- unique(design[[swap]])
-
-    # Calculate balance for each spatial factor
+    factor_levels <- lapply(spatial_cols, function(factor) unique(design[[factor]]))
+    
+    # Calculate expected count for each treatment-factor combination
+    total_count <- nrow(design)
+    expected_count <- total_count / (prod(sapply(factor_levels, length)) * length(treatments))
+    
+    # Create a contingency table for each spatial factor
+    balance_score <- 0
     for (factor in spatial_cols) {
-        factor_levels <- unique(design[[factor]])
-        expected_count <- nrow(design) / (length(factor_levels) * length(treatments))
-
-        # For each combination of treatment and factor level
-        for (treatment in treatments) {
-            for (level in factor_levels) {
-                # Count occurrences of this treatment in this level
-                actual_count <- sum(design[[swap]] == treatment & design[[factor]] == level)
-
-                # Add squared deviation from expected count to balance score
-                balance_score <- balance_score + (actual_count - expected_count)^2
-            }
-        }
+        tab <- table(design[[factor]], design[[swap]])
+        actual_counts <- as.matrix(tab)
+        
+        # Calculate squared deviations from expected counts
+        deviations <- (actual_counts - expected_count)^2
+        balance_score <- balance_score + sum(deviations)
     }
-
+    
     return(balance_score)
 }
 
