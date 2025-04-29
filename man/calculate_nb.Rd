@@ -10,11 +10,11 @@ calculate_nb(design_matrix)
 \item{design_matrix}{A design matrix}
 }
 \value{
-A list containing:
+Named list containing:
 \itemize{
-\item nb - Matrix of optimized treatment layout
-\item max_nb - Data frame of optimized design
-\item max_pairs - Final optimization score
+\item nb - Named list of pairs of items and their number of occurrence
+\item max_nb - The highest number of occurrence
+\item max_pairs - Vector of pairs of items with the highest number of occurrence
 }
 }
 \description{
@@ -23,10 +23,6 @@ counted.
 }
 \examples{
 design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
-layout_df <- data.frame(
-  row = rep(1:3, each = 3),
-  col = rep(1:3, times = 3)
-)
-objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
+calculate_nb(design_matrix)
 
 }

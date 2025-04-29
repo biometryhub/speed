@@ -15,7 +15,7 @@
 #' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
 #' @return A function which returns numeric value representing the score of the design (lower is better) with a
-#'   signature `function(design_matrix, layout_df, treatment_cols, spatial_cols)`. See signature details in
+#'   signature \code{function(design_matrix, layout_df, treatment_cols, spatial_cols)}. See signature details in
 #'   \link{objective_function_signature}.
 #'
 #' @export
@@ -45,11 +45,11 @@ objective_function <- function(
 #' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
 #' calculate_nb(design_matrix)
 #'
-#' @return A named list containing:
+#' @return Named list containing:
 #' \itemize{
-#'   \item nb - A named list of pairs of items and their number of occurrence
+#'   \item nb - Named list of pairs of items and their number of occurrence
 #'   \item max_nb - The highest number of occurrence
-#'   \item max_pairs - Pairs of items with the highest number of occurrence
+#'   \item max_pairs - Vector of pairs of items with the highest number of occurrence
 #' }
 #'
 #' @export
@@ -97,24 +97,28 @@ calculate_nb <- function(design_matrix) {
   ))
 }
 
-# calculate even distribution for 3 reps
-.calculate_ed_3_reps <- function(edges) {
-  # pick 2 shortest connections for 3 reps
-  msts <- lapply(edges, function(x) {
-    weights <- unlist(lapply(x, tail, 1))
-    return(sum(weights) - max(weights))
-  })
-
-  min_mst <- min(unlist(msts))
-  min_pairs <- names(msts[msts == min_mst])
-  return(list(
-    msts = msts,
-    min_mst = min_mst,
-    min_pairs = min_pairs
-  ))
-}
-
-# calculate even distribution
+#' Even Distribution Calculation
+#'
+#' @description
+#' A metric that represents the even distribution of each item with their minimum spanning tree (mst).
+#'
+#' @inheritParams objective_function_signature
+#'
+#' @examples
+#' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
+#' calculate_nb(design_matrix)
+#'
+#' @return Named list containing:
+#' \itemize{
+#'   \item <number of replications> - Named list containing:
+#'     \itemize{
+#'       \item msts - Named list of pairs of items and their mst
+#'       \item min_mst - The lowest mst
+#'       \item min_pairs - Pairs of items with the lowest mst
+#'     }
+#' }
+#'
+#' @export
 calculate_ed <- function(design_matrix) {
   vertices <- get_vertices(design_matrix)
   vertices_3_reps <- list()
@@ -173,6 +177,25 @@ calculate_ed <- function(design_matrix) {
   return(msts)
 }
 
+#' Get Weighted Edges
+#'
+#' @description
+#' Calculate the weight of edges from vertices.
+#'
+#' @inheritParams objective_function_signature
+#'
+#' @examples
+#' design_matrix <- matrix(c(1, 2, 2, 1, 3, 2, 1, 3, 3), nrow = 3, ncol = 3)
+#' vertices <- get_vertices(design_matrix)
+#'
+#' @return Named list containing:
+#'   \itemize{
+#'     \item <item> - A list of (vertex 1, vertex 2, ...)
+#'   }
+#'
+#' @seealso [get_edges()]
+#'
+#' @export
 get_vertices <- function(design_matrix) {
   vertices <- list()
   for (i in seq_len(nrow(design_matrix))) {
@@ -190,6 +213,29 @@ get_vertices <- function(design_matrix) {
   return(vertices)
 }
 
+#' Get Weighted Edges
+#'
+#' @description
+#' Calculate the weight of edges from vertices.
+#'
+#' @param vertices Named list of vertices containing:
+#'   \itemize{
+#'     \item <item> - A list of (vertex 1, vertex 2, ...)
+#'   }
+#'
+#' @examples
+#' design_matrix <- matrix(c(1, 2, 2, 1, 3, 2, 1, 3, 3), nrow = 3, ncol = 3)
+#' vertices <- get_vertices(design_matrix)
+#' edges <- get_edges(vertices)
+#'
+#' @return Named list containing:
+#'   \itemize{
+#'     \item <item> - A list of (vertex 1, vertex 2, weight)
+#'   }
+#'
+#' @seealso [get_vertices()]
+#'
+#' @export
 get_edges <- function(vertices) {
   edges <- list()
   for (item in names(vertices)) {
@@ -206,6 +252,40 @@ get_edges <- function(vertices) {
   }
 
   return(edges)
+}
+
+#' Even Distribution Calculation for 3 Replications
+#'
+#' @description
+#' A metric that represents the even distribution of items with 3 replications with their minimum spanning tree
+#'   (mst).
+#'
+#' @param edges A list of lists of edges
+#'
+#' @return Named list containing:
+#' \itemize{
+#'   \item msts - Named list of pairs of items and their mst
+#'   \item min_mst - The lowest mst
+#'   \item min_pairs - Pairs of items with the lowest mst
+#' }
+#'
+#' @seealso [get_edges()]
+#'
+#' @keywords internal
+.calculate_ed_3_reps <- function(edges) {
+  # pick 2 shortest connections for 3 reps
+  msts <- lapply(edges, function(x) {
+    weights <- unlist(lapply(x, tail, 1))
+    return(sum(weights) - max(weights))
+  })
+
+  min_mst <- min(unlist(msts))
+  min_pairs <- names(msts[msts == min_mst])
+  return(list(
+    msts = msts,
+    min_mst = min_mst,
+    min_pairs = min_pairs
+  ))
 }
 
 #' Calculate Adjacency Score for Experimental Design

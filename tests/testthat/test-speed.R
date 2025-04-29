@@ -3,7 +3,7 @@ test_that("speed works for simple design", {
   ncols <- 5
   nblocks <- 5
   df_initial <- initialize_design_df(1:5, 5, nrows, ncols, nblocks, 1)
-  treatments <- sort(as.character(df_initial$treatment))
+  items <- sort(as.character(df_initial$treatment))
 
   iterations <- 40000
   seed <- 112
@@ -43,22 +43,22 @@ test_that("speed works for simple design", {
   expect_lt(speed_design$iterations_run, iterations)
   expect_lte(max(speed_design$temperatures), start_temp)
 
-  expect_equal(sort(speed_design$treatments), unique(treatments))
+  expect_setequal(speed_design$treatments, unique(items))
 
   # check matrix
   expect_equal(nrow(design_matrix), nrows)
   expect_equal(ncol(design_matrix), ncols)
-  expect_equal(sort(as.vector(design_matrix)), treatments)
+  expect_equal(sort(as.vector(design_matrix)), items)
 
   # check df
-  expect_equal(sort(design_df$treatment), treatments)
+  expect_equal(sort(design_df$treatment), items)
 })
 
 test_that("speed works for 2d blocking", {
   nrows <- 20
   ncols <- 20
   df_initial <- initialize_design_df(1:40, 10, nrows, ncols, 2, 2)
-  treatments <- sort(as.character(df_initial$treatment))
+  items <- sort(as.character(df_initial$treatment))
 
   options(
     speed.swap_count = 5,
@@ -95,10 +95,10 @@ test_that("speed works for 2d blocking", {
   # check matrix
   expect_equal(nrow(design_matrix), nrows)
   expect_equal(ncol(design_matrix), ncols)
-  expect_equal(sort(as.vector(design_matrix)), treatments)
+  expect_equal(sort(as.vector(design_matrix)), items)
 
   # check df
-  expect_equal(sort(design_df$treatment), treatments)
+  expect_equal(sort(design_df$treatment), items)
 })
 
 # TODO: add tests for more complex designs
