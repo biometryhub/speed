@@ -80,13 +80,6 @@ initialize_design_df <- function(treatments, reps, nrows, ncols, nrows_block = N
   }
   return(df)
 }
-# row <- factor(rep(1:20, each = 20))
-# col <- factor(rep(1:20, 20))
-# block <- factor(rep(1:10, each = 40))
-# treats <- rep(factor(paste("V", 1:40, sep = "")), 10)
-# dat <- data.frame(row = row, col = col, treat = treats, row_block = block)
-# dat <- dat[order(dat$col, dat$row), ]
-# dat$col_block <- factor(rep(1:10, each = 40))
 
 .verify_initialize_design_df <- function(treatments, reps, nrows, ncols, nrows_block, block_ncols) {
   verify_positive_whole_number(reps, nrows, ncols)

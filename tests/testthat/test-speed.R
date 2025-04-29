@@ -6,7 +6,7 @@ test_that("speed works for simple design", {
   items <- sort(as.character(df_initial$treatment))
 
   iterations <- 40000
-  early_stop_iterations <- 10000
+  early_stop_iterations <- 5000
   seed <- 112
   start_temp <- 100
   options(
@@ -56,6 +56,50 @@ test_that("speed works for simple design", {
   expect_equal(sort(design_df$treatment), items)
 })
 
+test_that("speed works for rcbd", {
+  nrows <- 4
+  ncols <- 6
+  df_initial <- initialize_design_df(1:8, 3, nrows, ncols, 4, 2)
+  items <- sort(as.character(df_initial$treatment))
+
+  options(
+    speed.swap_count = 1,
+    speed.swap_all_blocks = FALSE,
+    speed.adaptive_swaps = FALSE,
+    speed.start_temp = 100,
+    speed.cooling_rate = 0.99,
+    speed.adj_weight = 1,
+    speed.bal_weight = 1
+  )
+
+  speed_design <- speed(
+    df_initial,
+    treatment,
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    iterations = 40000,
+    early_stop_iterations = 5000,
+    quiet = TRUE,
+    seed = 112
+  )
+  design_matrix <- speed_design$design
+  design_df <- speed_design$design_df
+
+  # check quality
+  expect_equal(speed_design$adjacency_score, 0)
+  expect_equal(max(table(design_df$treatment, design_df$row)), 1)
+  expect_equal(max(table(design_df$treatment, design_df$col)), 1)
+  expect_equal(max(table(design_df$treatment, design_df$block)), 1)
+
+  # check matrix
+  expect_equal(nrow(design_matrix), nrows)
+  expect_equal(ncol(design_matrix), ncols)
+  expect_equal(sort(as.vector(design_matrix)), items)
+
+  # check df
+  expect_equal(sort(design_df$treatment), items)
+})
+
 test_that("speed works for 2d blocking", {
   nrows <- 20
   ncols <- 20
@@ -89,10 +133,10 @@ test_that("speed works for 2d blocking", {
   expect_equal(speed_design$adjacency_score, 0)
   expect_equal(speed_design$balance_score, 0)
   expect_equal(speed_design$score, 0)
-  expect_equal(max(unique(table(design_df$treatment, design_df$row))), 1)
-  expect_equal(max(unique(table(design_df$treatment, design_df$col))), 1)
-  expect_equal(max(unique(table(design_df$treatment, design_df$row_block))), 1)
-  expect_equal(max(unique(table(design_df$treatment, design_df$col_block))), 1)
+  expect_equal(max(table(design_df$treatment, design_df$row)), 1)
+  expect_equal(max(table(design_df$treatment, design_df$col)), 1)
+  expect_equal(max(table(design_df$treatment, design_df$row_block)), 1)
+  expect_equal(max(table(design_df$treatment, design_df$col_block)), 1)
 
   # check matrix
   expect_equal(nrow(design_matrix), nrows)
