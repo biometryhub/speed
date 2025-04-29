@@ -37,9 +37,22 @@ objective_function <- function(
     bal_weight = getOption("speed.bal_weight", 1)) {
   return(
     function(design_matrix, layout_df, swap, spatial_cols) {
-      layout_df[[swap]] <- as.vector(design_matrix)
-      adj <- calculate_adjacency_score(design_matrix)
-      bal <- calculate_balance_score(layout_df, swap, spatial_cols)
+      if (adj_weight != 0) {
+        adj <- calculate_adjacency_score(design_matrix)
+
+        if (bal_weight == 0) {
+          return(adj)
+        }
+      }
+
+      if (bal_weight != 0) {
+        layout_df[[swap]] <- as.vector(design_matrix)
+        bal <- calculate_balance_score(layout_df, swap, spatial_cols)
+
+        if (adj_weight == 0) {
+          return(bal)
+        }
+      }
 
       return(adj_weight * adj + bal_weight * bal)
     }
@@ -360,29 +373,6 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
     sum(apply(table(layout_df[[el]], layout_df[[swap]]), 1, var))
   })
   return(sum(score))
-}
-
-#' Calculate Combined Objective Score for Design Optimization
-#'
-#' @description
-#' Internal function that calculates a combined score based on treatment adjacency
-#'   and spatial balance. Used by the optimization algorithms.
-#'
-#' @param design Matrix containing the experimental design layout
-#' @param permute_var Character string naming the treatment variable to be permuted
-#' @param layout_df Data frame containing the full design layout
-#' @param spatial_fac Character vector of spatial factors to consider
-#' @param adj_weight Weight for adjacency score (default: 1)
-#' @param bal_weight Weight for balance score (default: 1)
-#'
-#' @return Numeric value representing the weighted sum of adjacency and balance scores
-#'
-#' @keywords internal
-calculate_objective <- function(design, permute_var, layout_df, spatial_fac, adj_weight = 1, bal_weight = 1) {
-  layout_df[[permute_var]] <- as.vector(design)
-  adj <- calculate_adjacency_score(design)
-  bal <- calculate_balance_score(layout_df, permute_var, spatial_fac)
-  adj_weight * adj + bal_weight * bal
 }
 
 #' Objective Function Signature
