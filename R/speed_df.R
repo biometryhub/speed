@@ -12,10 +12,6 @@
 #'   treatments. Specify `"1"` or `"none"` for no boundary (default: `"1"`)
 #' @param spatial_factors A one-sided formula specifying spatial factors to consider for balance (default:
 #'   `~row + col`)
-#' @param adjacency_method Method to determine adjacent plots: "coordinate" uses Euclidean distance,
-#'   "cardinal" uses only up/down/left/right neighbors (default: "coordinate")
-#' @param adjacency_threshold Distance threshold for considering plots adjacent when using
-#'   "coordinate" method (default: 1.5)
 #' @param iterations Maximum number of iterations for the simulated annealing algorithm (default: 10000)
 #' @param early_stop_iterations Number of iterations without improvement before early stopping (default: 2000)
 #' @param obj_function Objective function used to calculate score (lower is better) (default:
@@ -36,7 +32,6 @@
 #'   \item stopped_early - Logical indicating if optimization stopped early
 #'   \item treatments - Vector of unique treatments
 #'   \item seed - Random seed used for reproducibility of the design
-#'   \item adjacency_list - List of adjacent plots used in optimization
 #' }
 #'
 #' @importFrom stringi stri_sort
@@ -60,8 +55,6 @@ speed_df <- function(
         swap,
         swap_within = "1",
         spatial_factors = ~ row + col,
-        adjacency_method = "coordinate",
-        adjacency_threshold = 1.5,
         iterations = 10000,
         early_stop_iterations = 2000,
         obj_function = objective_function(),
@@ -91,9 +84,7 @@ speed_df <- function(
         swap_all_blocks,
         adaptive_swaps,
         start_temp,
-        cooling_rate,
-        adjacency_method,
-        adjacency_threshold
+        cooling_rate
     )
 
     # Handle swap_within
@@ -114,16 +105,16 @@ speed_df <- function(
     set.seed(seed)
 
     # Find adjacent plots
-    adjacency_list <- find_adjacent_plots(layout_df, spatial_cols,
-                                          method = adjacency_method,
-                                          threshold = adjacency_threshold)
+    # adjacency_list <- find_adjacent_plots(layout_df, spatial_cols,
+    #                                       method = adjacency_method,
+    #                                       threshold = adjacency_threshold)
 
     # Initialize design
     current_design <- layout_df
     best_design <- current_design
 
     # Calculate initial score
-    current_score <- obj_function(current_design, adjacency_list, swap, spatial_cols)
+    current_score <- obj_function(current_design, swap, spatial_cols)
     if (!is.numeric(current_score)) {
         stop("Value from `objective_function` must be numeric.")
     }
@@ -155,7 +146,7 @@ speed_df <- function(
                                            swap_all_blocks = current_swap_all_blocks)
 
         # Calculate new score
-        new_score <- obj_function(new_design, adjacency_list, swap, spatial_cols)
+        new_score <- obj_function(new_design, swap, spatial_cols)
 
         # Decide whether to accept the new design
         if (new_score < current_score || runif(1) < exp((current_score - new_score) / temp)) {
@@ -192,15 +183,14 @@ speed_df <- function(
     output <- list(
         design_df = best_design,
         score = best_score,
-        adjacency_score = calculate_adjacency_score_df(best_design, adjacency_list, swap),
-        balance_score = calculate_balance_score_df(best_design, swap, spatial_cols),
+        adjacency_score = calculate_adjacency_score_df(best_design, swap),
+        balance_score = calculate_balance_score(best_design, swap, spatial_cols),
         scores = scores,
         temperatures = temperatures,
         iterations_run = length(scores),
         stopped_early = length(scores) < iterations,
         treatments = stringi::stri_sort(unique(as.vector(treatments)), numeric = TRUE),
-        seed = seed,
-        adjacency_list = adjacency_list
+        seed = seed
     )
 
     class(output) <- c("design", class(output))
@@ -209,59 +199,52 @@ speed_df <- function(
 
 #' Find Adjacent Plots in Experimental Design
 #'
-#' @param data A data frame containing the experimental design with spatial coordinates
-#' @param spatial_cols Character vector of column names containing spatial coordinates
-#' @param method Method to determine adjacency: "coordinate" or "cardinal"
-#' @param threshold Distance threshold for considering plots adjacent in "coordinate" method
+#' @description
+#' Identifies adjacent plots in an experimental design based on spatial coordinates.
 #'
-#' @return A list where each element corresponds to a plot and contains indices of adjacent plots
+#' @param data A data frame containing the experimental design with spatial coordinates.
+#' @param spatial_cols Character vector of column names containing spatial coordinates.
+#' @param method Method to determine adjacency: "coordinate" (Euclidean distance) or "cardinal" (grid-based).
+#' @param threshold Distance threshold for considering plots adjacent in "coordinate" method (default: 1.5).
+#'
+#' @return A list where each element corresponds to a plot and contains indices of adjacent plots.
 #'
 #' @keywords internal
-find_adjacent_plots <- function(data, spatial_cols, method = "coordinate", threshold = 1.5) {
-    n <- nrow(data)
-    adjacency_list <- vector("list", n)
-
-    if (method == "coordinate") {
-        # Extract coordinates
-        coords <- as.matrix(data[, spatial_cols, drop = FALSE])
-
-        # Calculate pairwise distances
-        dist_matrix <- as.matrix(dist(coords))
-
-        # For each plot, find adjacent plots based on distance threshold
-        for (i in 1:n) {
-            # Plots are adjacent if distance is <= threshold and not the same plot
-            adjacency_list[[i]] <- which(dist_matrix[i, ] <= threshold & dist_matrix[i, ] > 0)
-        }
-    } else if (method == "cardinal") {
-        # Assumes spatial_cols contains "row" and "col" for traditional grid layout
-        if (!all(c("row", "col") %in% spatial_cols)) {
-            stop("Cardinal adjacency method requires 'row' and 'col' in spatial_factors")
-        }
-
-        # Convert to numeric if needed
-        row_vals <- as.numeric(as.character(data$row))
-        col_vals <- as.numeric(as.character(data$col))
-
-        # For each plot, find adjacent plots (up, down, left, right)
-        for (i in 1:n) {
-            row_i <- row_vals[i]
-            col_i <- col_vals[i]
-
-            # Find plots that are adjacent in cardinal directions
-            adjacent_indices <- which(
-                (row_vals == row_i & abs(col_vals - col_i) == 1) |  # left or right
-                    (col_vals == col_i & abs(row_vals - row_i) == 1)    # up or down
-            )
-
-            adjacency_list[[i]] <- adjacent_indices
-        }
-    } else {
-        stop("Invalid adjacency method. Use 'coordinate' or 'cardinal'.")
-    }
-
-    return(adjacency_list)
-}
+# find_adjacent_plots <- function(data, spatial_cols, method = "coordinate", threshold = 1.5) {
+#     n <- nrow(data)
+#
+#     if (method == "coordinate") {
+#         # Extract coordinates and calculate pairwise distances
+#         coords <- as.matrix(data[, spatial_cols, drop = FALSE])
+#         dist_matrix <- as.matrix(dist(coords))
+#
+#         # Identify adjacent plots based on the distance threshold
+#         adjacency_list <- lapply(seq_len(n), function(i) {
+#             which(dist_matrix[i, ] <= threshold & dist_matrix[i, ] > 0)
+#         })
+#     } else if (method == "cardinal") {
+#         # Ensure spatial_cols contains "row" and "col"
+#         if (!all(c("row", "col") %in% spatial_cols)) {
+#             stop("Cardinal adjacency method requires 'row' and 'col' in spatial_cols.")
+#         }
+#
+#         # Convert to numeric if needed
+#         row_vals <- as.numeric(data$row)
+#         col_vals <- as.numeric(data$col)
+#
+#         # Identify adjacent plots in cardinal directions
+#         adjacency_list <- lapply(seq_len(n), function(i) {
+#             which(
+#                 (row_vals == row_vals[i] & abs(col_vals - col_vals[i]) == 1) |  # Left or right
+#                 (col_vals == col_vals[i] & abs(row_vals - row_vals[i]) == 1)    # Up or down
+#             )
+#         })
+#     } else {
+#         stop("Invalid adjacency method. Use 'coordinate' or 'cardinal'.")
+#     }
+#
+#     return(adjacency_list)
+# }
 
 #' Generate a Neighbor Design by Swapping Treatments
 #'
@@ -312,7 +295,6 @@ generate_neighbor_df <- function(design, swap, swap_within, swap_count = 1, swap
 #' Default Objective Function for Design Optimization
 #'
 #' @param design Data frame containing the current design
-#' @param adjacency_list List of adjacent plots
 #' @param swap Column name of the treatment
 #' @param spatial_cols Character vector of spatial factor column names
 #' @param adjacency_weight Weight for adjacency score (default: 1)
@@ -322,9 +304,9 @@ generate_neighbor_df <- function(design, swap, swap_within, swap_count = 1, swap
 #'
 #' @export
 objective_function <- function(adjacency_weight = 1, balance_weight = 1) {
-    function(design, adjacency_list, swap, spatial_cols) {
-        adj_score <- calculate_adjacency_score_df(design, adjacency_list, swap)
-        bal_score <- calculate_balance_score_df(design, swap, spatial_cols)
+    function(design, swap, spatial_cols) {
+        adj_score <- calculate_adjacency_score_df(design, swap)
+        bal_score <- calculate_balance_score(design, swap, spatial_cols)
 
         return(adjacency_weight * adj_score + balance_weight * bal_score)
     }
@@ -332,29 +314,46 @@ objective_function <- function(adjacency_weight = 1, balance_weight = 1) {
 
 #' Calculate Adjacency Score for Design
 #'
+#' @description
+#' Calculates the adjacency score for a given experimental design. The adjacency score
+#' represents the number of adjacent plots with the same treatment. Lower scores indicate
+#' better separation of treatments.
+#'
 #' @param design Data frame containing the current design
-#' @param adjacency_list List of adjacent plots
 #' @param swap Column name of the treatment
 #'
 #' @return Numeric score for treatment adjacencies (lower is better)
 #'
+#' @examples
+#' # Example 1: Design with no adjacencies
+#' design_no_adj <- data.frame(
+#'   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
+#'   col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
+#'   treatment = c("A", "B", "A", "B", "A", "B", "A", "B", "A")
+#' )
+#'
+#' # Gives 0
+#' calculate_adjacency_score_df(design_no_adj, "treatment")
+#'
+#' # Example 2: Design with adjacencies
+#' design_with_adj <- data.frame(
+#'   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
+#'   col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
+#'   treatment = c("A", "A", "A", "B", "B", "B", "A", "A", "A")
+#' )
+#'
+#' # Gives value 6
+#' calculate_adjacency_score_df(design_with_adj, "treatment")
+#'
 #' @keywords internal
-calculate_adjacency_score_df <- function(design, adjacency_list, swap) {
-    # Extract treatment values
-    treatment_vals <- design[[swap]]
-    
-    # Vectorized calculation of same-adjacent counts
-    same_adjacent_count <- sum(sapply(seq_along(adjacency_list), function(i) {
-        adjacent_indices <- adjacency_list[[i]]
-        if (length(adjacent_indices) > 0) {
-            sum(treatment_vals[adjacent_indices] == treatment_vals[i])
-        } else {
-            0
-        }
-    }))
-    
-    # Divide by 2 because each pair is counted twice
-    return(same_adjacent_count / 2)
+calculate_adjacency_score_df <- function(design, swap) {
+    design <- matrix(design[[swap]], nrow = max(design$row), ncol = max(design$col), byrow = FALSE)
+
+    # row_adjacencies <- rowSums(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
+    # col_adjacencies <- colSums(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
+    row_adjacencies <- sum(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
+    col_adjacencies <- sum(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
+    return(row_adjacencies + col_adjacencies)
 }
 
 #' Calculate Balance Score for Design
@@ -369,22 +368,22 @@ calculate_adjacency_score_df <- function(design, adjacency_list, swap) {
 calculate_balance_score_df <- function(design, swap, spatial_cols) {
     treatments <- unique(design[[swap]])
     factor_levels <- lapply(spatial_cols, function(factor) unique(design[[factor]]))
-    
+
     # Calculate expected count for each treatment-factor combination
     total_count <- nrow(design)
     expected_count <- total_count / (prod(sapply(factor_levels, length)) * length(treatments))
-    
+
     # Create a contingency table for each spatial factor
     balance_score <- 0
     for (factor in spatial_cols) {
         tab <- table(design[[factor]], design[[swap]])
         actual_counts <- as.matrix(tab)
-        
+
         # Calculate squared deviations from expected counts
         deviations <- (actual_counts - expected_count)^2
         balance_score <- balance_score + sum(deviations)
     }
-    
+
     return(balance_score)
 }
 
@@ -403,8 +402,6 @@ calculate_balance_score_df <- function(design, swap, spatial_cols) {
 #' @param adaptive_swaps Whether to adapt number of swaps based on temperature
 #' @param start_temp Starting temperature for simulated annealing
 #' @param cooling_rate Cooling rate for temperature
-#' @param adjacency_method Method to determine adjacent plots
-#' @param adjacency_threshold Distance threshold for considering plots adjacent
 #'
 #' @return NULL (invisibly)
 #'
@@ -422,9 +419,7 @@ calculate_balance_score_df <- function(design, swap, spatial_cols) {
         swap_all_blocks,
         adaptive_swaps,
         start_temp,
-        cooling_rate,
-        adjacency_method,
-        adjacency_threshold) {
+        cooling_rate) {
     # Check data is a data frame
     if (!is.data.frame(data)) {
         stop("'data' must be a data frame")
@@ -448,20 +443,12 @@ calculate_balance_score_df <- function(design, swap, spatial_cols) {
                     paste(missing_cols, collapse = ", ")))
     }
 
-    # Check adjacency method
-    if (!adjacency_method %in% c("coordinate", "cardinal")) {
-        stop("'adjacency_method' must be either 'coordinate' or 'cardinal'")
-    }
-
     # Check numeric parameters
     if (!is.numeric(iterations) || iterations <= 0) {
         stop("'iterations' must be a positive number")
     }
     if (!is.numeric(early_stop_iterations) || early_stop_iterations <= 0) {
         stop("'early_stop_iterations' must be a positive number")
-    }
-    if (!is.numeric(adjacency_threshold) || adjacency_threshold <= 0) {
-        stop("'adjacency_threshold' must be a positive number")
     }
 
     # Check logical parameters
