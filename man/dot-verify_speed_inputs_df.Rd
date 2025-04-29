@@ -17,9 +17,7 @@
   swap_all_blocks,
   adaptive_swaps,
   start_temp,
-  cooling_rate,
-  adjacency_method,
-  adjacency_threshold
+  cooling_rate
 )
 }
 \arguments{
@@ -48,10 +46,6 @@
 \item{start_temp}{Starting temperature for simulated annealing}
 
 \item{cooling_rate}{Cooling rate for temperature}
-
-\item{adjacency_method}{Method to determine adjacent plots}
-
-\item{adjacency_threshold}{Distance threshold for considering plots adjacent}
 }
 \value{
 NULL (invisibly)

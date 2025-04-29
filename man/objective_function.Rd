@@ -19,8 +19,6 @@ objective_function(adjacency_weight = 1, balance_weight = 1)
 
 \item{design}{Data frame containing the current design}
 
-\item{adjacency_list}{List of adjacent plots}
-
 \item{swap}{Column name of the treatment}
 
 \item{spatial_cols}{Character vector of spatial factor column names}

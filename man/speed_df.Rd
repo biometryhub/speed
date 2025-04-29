@@ -9,8 +9,6 @@ speed_df(
   swap,
   swap_within = "1",
   spatial_factors = ~row + col,
-  adjacency_method = "coordinate",
-  adjacency_threshold = 1.5,
   iterations = 10000,
   early_stop_iterations = 2000,
   obj_function = objective_function(),
@@ -28,12 +26,6 @@ treatments. Specify \code{"1"} or \code{"none"} for no boundary (default: \code{
 
 \item{spatial_factors}{A one-sided formula specifying spatial factors to consider for balance (default:
 \code{~row + col})}
-
-\item{adjacency_method}{Method to determine adjacent plots: "coordinate" uses Euclidean distance,
-"cardinal" uses only up/down/left/right neighbors (default: "coordinate")}
-
-\item{adjacency_threshold}{Distance threshold for considering plots adjacent when using
-"coordinate" method (default: 1.5)}
 
 \item{iterations}{Maximum number of iterations for the simulated annealing algorithm (default: 10000)}
 
@@ -60,7 +52,6 @@ A list containing:
 \item stopped_early - Logical indicating if optimization stopped early
 \item treatments - Vector of unique treatments
 \item seed - Random seed used for reproducibility of the design
-\item adjacency_list - List of adjacent plots used in optimization
 }
 }
 \description{

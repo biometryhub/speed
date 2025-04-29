@@ -2,7 +2,7 @@
 % Please edit documentation in R/speed_df.R
 \name{generate_neighbor_df}
 \alias{generate_neighbor_df}
-\title{Generate a Neighbor Design by Swapping Treatments}
+\title{Find Adjacent Plots in Experimental Design}
 \usage{
 generate_neighbor_df(
   design,
@@ -22,11 +22,28 @@ generate_neighbor_df(
 \item{swap_count}{Number of swaps to perform}
 
 \item{swap_all_blocks}{Whether to perform swaps in all blocks or just one}
+
+\item{data}{A data frame containing the experimental design with spatial coordinates.}
+
+\item{spatial_cols}{Character vector of column names containing spatial coordinates.}
+
+\item{method}{Method to determine adjacency: "coordinate" (Euclidean distance) or "cardinal" (grid-based).}
+
+\item{threshold}{Distance threshold for considering plots adjacent in "coordinate" method (default: 1.5).}
 }
 \value{
+A list where each element corresponds to a plot and contains indices of adjacent plots.
+
 A data frame with the updated design after swapping
 }
 \description{
-Generate a Neighbor Design by Swapping Treatments
+Identifies adjacent plots in an experimental design based on spatial coordinates.
 }
+\keyword{Design}
+\keyword{Generate}
+\keyword{Neighbor}
+\keyword{Swapping}
+\keyword{Treatments}
+\keyword{a}
+\keyword{by}
 \keyword{internal}

@@ -4,12 +4,10 @@
 \alias{calculate_adjacency_score_df}
 \title{Calculate Adjacency Score for Design}
 \usage{
-calculate_adjacency_score_df(design, adjacency_list, swap)
+calculate_adjacency_score_df(design, swap)
 }
 \arguments{
 \item{design}{Data frame containing the current design}
-
-\item{adjacency_list}{List of adjacent plots}
 
 \item{swap}{Column name of the treatment}
 }
@@ -17,6 +15,30 @@ calculate_adjacency_score_df(design, adjacency_list, swap)
 Numeric score for treatment adjacencies (lower is better)
 }
 \description{
-Calculate Adjacency Score for Design
+Calculates the adjacency score for a given experimental design. The adjacency score
+represents the number of adjacent plots with the same treatment. Lower scores indicate
+better separation of treatments.
+}
+\examples{
+# Example 1: Design with no adjacencies
+design_no_adj <- data.frame(
+  row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
+  col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
+  treatment = c("A", "B", "A", "B", "A", "B", "A", "B", "A")
+)
+
+# Gives 0
+calculate_adjacency_score_df(design_no_adj, "treatment")
+
+# Example 2: Design with adjacencies
+design_with_adj <- data.frame(
+  row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
+  col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
+  treatment = c("A", "A", "A", "B", "B", "B", "A", "A", "A")
+)
+
+# Gives value 6
+calculate_adjacency_score_df(design_with_adj, "treatment")
+
 }
 \keyword{internal}

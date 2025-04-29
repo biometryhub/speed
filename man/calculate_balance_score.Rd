@@ -4,12 +4,12 @@
 \alias{calculate_balance_score}
 \title{Calculate Balance Score for Experimental Design}
 \usage{
-calculate_balance_score(layout_df, treatment_cols, spatial_cols)
+calculate_balance_score(layout_df, swap, spatial_cols)
 }
 \arguments{
 \item{layout_df}{A data frame containing the experimental design layout}
 
-\item{treatment_cols}{A column name of the treatment}
+\item{swap}{A column name of the treatment}
 
 \item{spatial_cols}{Column names of the spatial factors}
 }
