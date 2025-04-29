@@ -1,11 +1,12 @@
 test_that("speed works for simple design", {
   nrows <- 5
   ncols <- 5
-  nblocks <- 5
-  df_initial <- initialize_design_df(1:5, 5, nrows, ncols, nblocks, 1)
+  nrows_block <- 5
+  df_initial <- initialize_design_df(1:5, 5, nrows, ncols, nrows_block, 1)
   items <- sort(as.character(df_initial$treatment))
 
   iterations <- 40000
+  early_stop_iterations <- 10000
   seed <- 112
   start_temp <- 100
   options(
@@ -23,8 +24,8 @@ test_that("speed works for simple design", {
     treatment,
     swap_within = "1",
     spatial_factors = ~ block + row,
-    iterations = ,
-    early_stop_iterations = 10000,
+    iterations = iterations,
+    early_stop_iterations = early_stop_iterations,
     quiet = TRUE,
     seed = seed
   )
@@ -41,6 +42,7 @@ test_that("speed works for simple design", {
   # check simple config
   expect_equal(speed_design$seed, seed)
   expect_lt(speed_design$iterations_run, iterations)
+  expect_gt(speed_design$iterations_run, early_stop_iterations)
   expect_lte(max(speed_design$temperatures), start_temp)
 
   expect_setequal(speed_design$treatments, unique(items))

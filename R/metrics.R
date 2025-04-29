@@ -14,6 +14,19 @@
 #' )
 #' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
+#' # create an objective function including even distribution and neighbor balance introduced by Piepho 2018
+#' objective_function_piepho <- function(design_matrix, layout_df, swap, spatial_cols) {
+#'   ed <- calculate_ed(design_matrix)
+#'   ed_score <- -sum(unlist(lapply(ed, function(ed_rep) ed_rep$min_mst)))
+#'   nb_score <- calculate_nb(design_matrix)$max_nb
+#'
+#'   adj_bal_score <- objective_function()(design_matrix, layout_df, swap, spatial_cols)
+#'
+#'   return(nb_score + ed_score + adj_bal_score)
+#' }
+#' objective_function_piepho(design_matrix, layout_df, "treatment", c("row", "col"))
+#' # usage in speed, speed(..., obj_function = objective_function_piepho)
+#'
 #' @return A function which returns numeric value representing the score of the design (lower is better) with a
 #'   signature \code{function(design_matrix, layout_df, swap, spatial_cols)}. See signature details in
 #'   \link{objective_function_signature}.
@@ -106,7 +119,7 @@ calculate_nb <- function(design_matrix) {
 #'
 #' @examples
 #' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
-#' calculate_nb(design_matrix)
+#' calculate_ed(design_matrix)
 #'
 #' @return Named list containing:
 #' \itemize{
@@ -171,8 +184,10 @@ calculate_ed <- function(design_matrix) {
     ))
   })
 
-  msts_3_reps <- .calculate_ed_3_reps(get_edges(vertices_3_reps))
-  msts <- c(msts, list("3" = msts_3_reps))
+  if (length(vertices_3_reps) > 0) {
+    msts_3_reps <- .calculate_ed_3_reps(get_edges(vertices_3_reps))
+    msts <- c(msts, list("3" = msts_3_reps))
+  }
 
   return(msts)
 }
