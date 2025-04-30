@@ -58,12 +58,11 @@ generate_neighbor <- function(design_matrix, swap_matrix, swap_count, swap_all_b
 }
 
 # TODO: add doc
-# currently support only full rep
-initialize_design_df <- function(treatments, reps, nrows, ncols, nrows_block = NULL, ncols_block = NULL) {
-  # .verify_initialize_design_df(treatments, reps, nrows, ncols, nrows_block, ncols_block)
+initialize_design_df <- function(treatments, nrows, ncols, nrows_block = NULL, ncols_block = NULL) {
+  .verify_initialize_design_df(treatments, nrows, ncols, nrows_block, ncols_block)
   rows <- factor(rep(1:nrows, ncols))
   cols <- factor(rep(1:ncols, each = nrows))
-  treatments <- factor(rep(treatments, reps))
+  treatments <- factor(treatments)
   df <- data.frame(
     row = rows,
     col = cols,
@@ -81,8 +80,8 @@ initialize_design_df <- function(treatments, reps, nrows, ncols, nrows_block = N
   return(df)
 }
 
-.verify_initialize_design_df <- function(treatments, reps, nrows, ncols, nrows_block, block_ncols) {
-  verify_positive_whole_number(reps, nrows, ncols)
+.verify_initialize_design_df <- function(treatments, nrows, ncols, nrows_block, block_ncols) {
+  verify_positive_whole_number(nrows, ncols)
 
   if ((!is.null(nrows_block) && is.null(block_ncols)) || (is.null(nrows_block) && !is.null(block_ncols))) {
     stop("`block_nrows` and `block_ncols` must both be numeric or `NULL`")
