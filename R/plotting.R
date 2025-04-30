@@ -276,7 +276,8 @@ autoplot.design <- function(object, rotation = 0, size = 4, margin = FALSE, pale
     }
     else {
         if(palette == "default") {
-            colour_palette <- grDevices::colorRampPalette(scales::brewer_pal(palette = "Spectral")(11))(ntrt)
+            colour_palette <- scales::viridis_pal(option = "viridis")(ntrt)
+            # colour_palette <- grDevices::colorRampPalette(scales::brewer_pal(palette = "Spectral")(11))(ntrt)
         }
         else if(palette %in% c("BrBG", "PiYG", "PRGn", "PuOr", "RdBu", "RdGy",
                                "RdYlBu", "RdYlGn", "Spectral", "Set3", "Paired")) {
