@@ -20,6 +20,7 @@ represents the number of adjacent plots with the same treatment. Lower scores in
 better separation of treatments.
 }
 \examples{
+\dontrun{
 # Example 1: Design with no adjacencies
 design_no_adj <- data.frame(
   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
@@ -39,6 +40,6 @@ design_with_adj <- data.frame(
 
 # Gives value 6
 calculate_adjacency_score_df(design_with_adj, "treatment")
-
+}
 }
 \keyword{internal}

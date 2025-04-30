@@ -239,9 +239,6 @@ generate_neighbor_df <- function(design, swap, swap_within, swap_count = 1, swap
 
 #' Default Objective Function for Design Optimization
 #'
-#' @param design Data frame containing the current design
-#' @param swap Column name of the treatment
-#' @param spatial_cols Character vector of spatial factor column names
 #' @param adjacency_weight Weight for adjacency score (default: 1)
 #' @param balance_weight Weight for balance score (default: 1)
 #'
@@ -270,6 +267,7 @@ objective_function_df <- function(adjacency_weight = 1, balance_weight = 1) {
 #' @return Numeric score for treatment adjacencies (lower is better)
 #'
 #' @examples
+#' \dontrun{
 #' # Example 1: Design with no adjacencies
 #' design_no_adj <- data.frame(
 #'   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
@@ -289,7 +287,7 @@ objective_function_df <- function(adjacency_weight = 1, balance_weight = 1) {
 #'
 #' # Gives value 6
 #' calculate_adjacency_score_df(design_with_adj, "treatment")
-#'
+#'}
 #' @keywords internal
 calculate_adjacency_score_df <- function(design, swap) {
     design <- matrix(design[[swap]],
@@ -436,6 +434,8 @@ calculate_balance_score_df <- function(design, swap, spatial_cols) {
 #' @param x Design object returned by speed function
 #' @param ... Additional arguments passed to print
 #'
+#' @importFrom utils head
+#'
 #' @return x invisibly
 #'
 #' @export
@@ -452,7 +452,7 @@ print.design <- function(x, ...) {
 
     # Print first few rows of the optimized design
     cat("Optimized Design (first 6 rows):\n")
-    print(head(x$design_df))
+    print(utils::head(x$design_df))
 
     return(invisible(x))
 }

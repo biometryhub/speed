@@ -10,12 +10,6 @@ objective_function_df(adjacency_weight = 1, balance_weight = 1)
 \item{adjacency_weight}{Weight for adjacency score (default: 1)}
 
 \item{balance_weight}{Weight for balance score (default: 1)}
-
-\item{design}{Data frame containing the current design}
-
-\item{swap}{Column name of the treatment}
-
-\item{spatial_cols}{Character vector of spatial factor column names}
 }
 \value{
 Numeric score (lower is better)
