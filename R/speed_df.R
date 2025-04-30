@@ -239,9 +239,6 @@ generate_neighbor_df <- function(design, swap, swap_within, swap_count = 1, swap
 
 #' Default Objective Function for Design Optimization
 #'
-#' @param design Data frame containing the current design
-#' @param swap Column name of the treatment
-#' @param spatial_cols Character vector of spatial factor column names
 #' @param adjacency_weight Weight for adjacency score (default: 1)
 #' @param balance_weight Weight for balance score (default: 1)
 #'

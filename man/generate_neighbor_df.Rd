@@ -2,7 +2,7 @@
 % Please edit documentation in R/speed_df.R
 \name{generate_neighbor_df}
 \alias{generate_neighbor_df}
-\title{Generate a Neighbor Design by Swapping Treatments}
+\title{Generate a Neighbour Design by Swapping Treatments}
 \usage{
 generate_neighbor_df(
   design,
@@ -27,6 +27,6 @@ generate_neighbor_df(
 A data frame with the updated design after swapping
 }
 \description{
-Generate a Neighbor Design by Swapping Treatments
+Generate a Neighbour Design by Swapping Treatments
 }
 \keyword{internal}
