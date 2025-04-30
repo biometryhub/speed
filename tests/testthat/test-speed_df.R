@@ -190,11 +190,10 @@ test_that("speed_df handles large grid layouts", {
 # Test 11: Non-uniform treatment distribution
 test_that("speed_df handles non-uniform treatment distributions", {
 
-
     non_uniform_data <- data.frame(
         row = rep(1:8, each = 9),
         col = rep(1:9, times = 8),
-        treatment = c(rep(LETTERS[1:3], 18), rep(LETTERS[4:6], 6))
+        treatment = c(rep(LETTERS[1], 27), rep(LETTERS[2:6], 9))
     )
     result <- speed_df(
         data = non_uniform_data,
