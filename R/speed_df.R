@@ -35,8 +35,7 @@
 #' }
 #'
 #' @importFrom stringi stri_sort
-#' @importFrom dplyr %>% filter mutate select group_by ungroup
-#' @importFrom stats dist runif
+#' @importFrom stats runif
 #'
 #' @examples
 #' # Create a simple design with 3 replicates of 4 treatments in a 4x3 layout
@@ -293,7 +292,9 @@ objective_function_df <- function(adjacency_weight = 1, balance_weight = 1) {
 #'
 #' @keywords internal
 calculate_adjacency_score_df <- function(design, swap) {
-    design <- matrix(design[[swap]], nrow = max(design$row), ncol = max(design$col), byrow = FALSE)
+    design <- matrix(design[[swap]],
+                     nrow = max(as.numeric(as.character(design$row))),
+                     ncol = max(as.numeric(as.character(design$col))), byrow = FALSE)
 
     # row_adjacencies <- rowSums(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
     # col_adjacencies <- colSums(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
