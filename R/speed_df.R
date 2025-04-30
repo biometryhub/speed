@@ -191,7 +191,7 @@ speed_df <- function(
     return(output)
 }
 
-#' Generate a Neighbor Design by Swapping Treatments
+#' Generate a Neighbour Design by Swapping Treatments
 #'
 #' @param design Data frame containing the current design
 #' @param swap Column name of the treatment to swap
@@ -219,7 +219,7 @@ generate_neighbor_df <- function(design, swap, swap_within, swap_count = 1, swap
     # Perform swaps in selected blocks
     for (block in blocks_to_swap) {
         # Get indices of plots in this block
-        block_indices <- which(design[[swap_within]] == block)
+        block_indices <- which(design[[swap_within]] == block & !is.na(design[[swap]]))
 
         if (length(block_indices) >= 2) {  # Need at least 2 plots to swap
             for (i in 1:swap_count) {
@@ -239,6 +239,9 @@ generate_neighbor_df <- function(design, swap, swap_within, swap_count = 1, swap
 
 #' Default Objective Function for Design Optimization
 #'
+#' @param design Data frame containing the current design
+#' @param swap Column name of the treatment
+#' @param spatial_cols Character vector of spatial factor column names
 #' @param adjacency_weight Weight for adjacency score (default: 1)
 #' @param balance_weight Weight for balance score (default: 1)
 #'
@@ -291,8 +294,9 @@ objective_function_df <- function(adjacency_weight = 1, balance_weight = 1) {
 #' @keywords internal
 calculate_adjacency_score_df <- function(design, swap) {
     design <- matrix(design[[swap]],
-                     nrow = max(as.numeric(as.character(design$row))),
-                     ncol = max(as.numeric(as.character(design$col))), byrow = FALSE)
+                     nrow = max(as.numeric(as.character(design$row)), na.rm = TRUE),
+                     ncol = max(as.numeric(as.character(design$col)), na.rm = TRUE),
+                     byrow = FALSE)
 
     # row_adjacencies <- rowSums(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
     # col_adjacencies <- colSums(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
