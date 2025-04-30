@@ -8,3 +8,4 @@ matsums.cpp
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+Jules_example_cases.R
