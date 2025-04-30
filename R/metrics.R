@@ -166,10 +166,8 @@ calculate_ed <- function(design_matrix) {
       if (is.null(sub_graph[[reps_char]])) {
         # initialize a fully-connected graph without weights
         # 1--2, 1--3, ..., 1--n-1, 1--n, 2--3, 2--4, ..., n-1--n
-        sub_graph[[reps_char]] <- igraph::graph_from_edgelist(
-          t(combn(seq_along(vertices[[item]]), 2)),
-          directed = FALSE
-        )
+        edge_table <- t(combn(1:reps, 2))
+        sub_graph[[reps_char]] <- igraph::graph_from_edgelist(edge_table, directed = FALSE)
         msts[[reps_char]] <- list()
       }
 
@@ -226,20 +224,16 @@ calculate_ed <- function(design_matrix) {
 #'
 #' @export
 get_vertices <- function(design_matrix) {
-  vertices <- list()
-  for (i in seq_len(nrow(design_matrix))) {
-    for (j in seq_len(ncol(design_matrix))) {
-      item <- as.character(design_matrix[i, j])
+  # Create vectors of row, col indices and corresponding values
+  rows <- row(design_matrix)
+  cols <- col(design_matrix)
+  items <- as.character(design_matrix)
 
-      if (is.null(vertices[[item]])) {
-        vertices[[item]] <- list()
-      }
+  # Combine row and col into coordinates
+  coords <- Map(c, as.vector(rows), as.vector(cols))
 
-      vertices[[item]][[length(vertices[[item]]) + 1]] <- c(i, j)
-    }
-  }
-
-  return(vertices)
+  # Use split to group coordinates by item
+  return(split(coords, items))
 }
 
 #' Get Weighted Edges
@@ -266,18 +260,29 @@ get_vertices <- function(design_matrix) {
 #'
 #' @export
 get_edges <- function(vertices) {
-  edges <- list()
+  edges <- vector("list", length(vertices))
+  names(edges) <- names(vertices)
+
   for (item in names(vertices)) {
-    edges[[item]] <- list()
-    for (i in 1:(length(vertices[[item]]) - 1)) {
-      for (j in (i + 1):length(vertices[[item]])) {
-        edges[[item]][[length(edges[[item]]) + 1]] <- c(
-          i,
-          j,
-          sqrt(sum((vertices[[item]][[i]] - vertices[[item]][[j]])^2))
-        )
+    coords <- vertices[[item]]
+    n_vertices <- length(coords)
+    if (n_vertices < 2) {
+      edges[[item]] <- list()
+      next
+    }
+
+    # Preallocate list to hold all edges
+    edge_list <- vector("list", n_vertices * (n_vertices - 1) / 2)
+    idx <- 1
+
+    for (i in 1:(n_vertices - 1)) {
+      for (j in (i + 1):n_vertices) {
+        edge_list[[idx]] <- c(i, j, sqrt(sum((coords[[i]] - coords[[j]])^2)))
+        idx <- idx + 1
       }
     }
+
+    edges[[item]] <- edge_list
   }
 
   return(edges)
@@ -303,8 +308,8 @@ get_edges <- function(vertices) {
 #' @keywords internal
 .calculate_ed_3_reps <- function(edges) {
   # pick 2 shortest connections for 3 reps
-  msts <- lapply(edges, function(x) {
-    weights <- unlist(lapply(x, tail, 1))
+  msts <- lapply(edges, function(item_edges) {
+    weights <- unlist(lapply(item_edges, function(edge) edge[[3]]))
     return(sum(weights) - max(weights))
   })
 
