@@ -30,7 +30,8 @@ layout_df <- data.frame(
 )
 objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
 
-# create an objective function including even distribution and neighbor balance introduced by Piepho 2018
+# create an objective function including even distribution and neighbor
+# balance introduced by Piepho 2018
 objective_function_piepho <- function(design_matrix, layout_df, swap, spatial_cols) {
   ed <- calculate_ed(design_matrix)
   ed_score <- -sum(unlist(lapply(ed, function(ed_rep) ed_rep$min_mst)))
