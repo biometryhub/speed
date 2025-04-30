@@ -69,6 +69,7 @@ speed <- function(
   start_temp <- getOption("speed.start_temp", 100)
   cooling_rate <- getOption("speed.cooling_rate", 0.99)
   swap <- as.character(substitute(swap))
+  swap_within <- as.character(substitute(swap_within))
 
   .verify_speed_inputs(
     data,
