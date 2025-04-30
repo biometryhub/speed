@@ -323,3 +323,9 @@ test_that("speed_df handles irregular layouts with 250 unique plots", {
     expect_true(nrow(result$design_df) <= 250) # Ensure no more than 250 unique plots
     expect_true(all(!duplicated(result$design_df[c("row", "col")]))) # Ensure unique row-column combinations
 })
+
+
+# TODO: Test cases to add/update
+# - Add more detailed checking of current designs
+# - NSE
+# - different designs

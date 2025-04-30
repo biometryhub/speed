@@ -11,7 +11,7 @@ speed_df(
   spatial_factors = ~row + col,
   iterations = 10000,
   early_stop_iterations = 2000,
-  obj_function = objective_function(),
+  obj_function = objective_function_df(),
   quiet = FALSE,
   seed = NULL
 )
