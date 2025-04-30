@@ -57,7 +57,7 @@ speed_df <- function(
         spatial_factors = ~ row + col,
         iterations = 10000,
         early_stop_iterations = 2000,
-        obj_function = objective_function(),
+        obj_function = objective_function_df(),
         quiet = FALSE,
         seed = NULL) {
 
@@ -103,11 +103,6 @@ speed_df <- function(
         seed <- .Random.seed[3]
     }
     set.seed(seed)
-
-    # Find adjacent plots
-    # adjacency_list <- find_adjacent_plots(layout_df, spatial_cols,
-    #                                       method = adjacency_method,
-    #                                       threshold = adjacency_threshold)
 
     # Initialize design
     current_design <- layout_df
@@ -197,55 +192,6 @@ speed_df <- function(
     return(output)
 }
 
-#' Find Adjacent Plots in Experimental Design
-#'
-#' @description
-#' Identifies adjacent plots in an experimental design based on spatial coordinates.
-#'
-#' @param data A data frame containing the experimental design with spatial coordinates.
-#' @param spatial_cols Character vector of column names containing spatial coordinates.
-#' @param method Method to determine adjacency: "coordinate" (Euclidean distance) or "cardinal" (grid-based).
-#' @param threshold Distance threshold for considering plots adjacent in "coordinate" method (default: 1.5).
-#'
-#' @return A list where each element corresponds to a plot and contains indices of adjacent plots.
-#'
-#' @keywords internal
-# find_adjacent_plots <- function(data, spatial_cols, method = "coordinate", threshold = 1.5) {
-#     n <- nrow(data)
-#
-#     if (method == "coordinate") {
-#         # Extract coordinates and calculate pairwise distances
-#         coords <- as.matrix(data[, spatial_cols, drop = FALSE])
-#         dist_matrix <- as.matrix(dist(coords))
-#
-#         # Identify adjacent plots based on the distance threshold
-#         adjacency_list <- lapply(seq_len(n), function(i) {
-#             which(dist_matrix[i, ] <= threshold & dist_matrix[i, ] > 0)
-#         })
-#     } else if (method == "cardinal") {
-#         # Ensure spatial_cols contains "row" and "col"
-#         if (!all(c("row", "col") %in% spatial_cols)) {
-#             stop("Cardinal adjacency method requires 'row' and 'col' in spatial_cols.")
-#         }
-#
-#         # Convert to numeric if needed
-#         row_vals <- as.numeric(data$row)
-#         col_vals <- as.numeric(data$col)
-#
-#         # Identify adjacent plots in cardinal directions
-#         adjacency_list <- lapply(seq_len(n), function(i) {
-#             which(
-#                 (row_vals == row_vals[i] & abs(col_vals - col_vals[i]) == 1) |  # Left or right
-#                 (col_vals == col_vals[i] & abs(row_vals - row_vals[i]) == 1)    # Up or down
-#             )
-#         })
-#     } else {
-#         stop("Invalid adjacency method. Use 'coordinate' or 'cardinal'.")
-#     }
-#
-#     return(adjacency_list)
-# }
-
 #' Generate a Neighbor Design by Swapping Treatments
 #'
 #' @param design Data frame containing the current design
@@ -303,7 +249,7 @@ generate_neighbor_df <- function(design, swap, swap_within, swap_count = 1, swap
 #' @return Numeric score (lower is better)
 #'
 #' @export
-objective_function <- function(adjacency_weight = 1, balance_weight = 1) {
+objective_function_df <- function(adjacency_weight = 1, balance_weight = 1) {
     function(design, swap, spatial_cols) {
         adj_score <- calculate_adjacency_score_df(design, swap)
         bal_score <- calculate_balance_score(design, swap, spatial_cols)
