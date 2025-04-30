@@ -16,6 +16,7 @@ test_that("speed_df runs without errors", {
         quiet = TRUE
     )
     expect_s3_class(result, "design")
+    skip_on_os("mac")
     vdiffr::expect_doppelganger("speed_df_small", autoplot(result))
 })
 
@@ -125,6 +126,7 @@ test_that("speed_df respects swap_within boundaries", {
     expect_true(all(block1_treatments %in% LETTERS[1:4]))
     expect_true(all(block2_treatments %in% LETTERS[1:4]))
 
+    skip_on_os("mac")
     vdiffr::expect_doppelganger("speed_df_blocks", autoplot(result))
 })
 

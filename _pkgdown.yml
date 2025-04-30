@@ -14,8 +14,9 @@ reference:
   - starts_with("objective")
   - get_edges
   - get_vertices
-- title: Plotting
-  desc: Functions for plotting designs.
+- title: Plotting and printing
+  desc: Functions for displaying designs.
 - contents:
   - autoplot
   - starts_with("plot")
+  - print.design
