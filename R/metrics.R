@@ -67,10 +67,54 @@ objective_function <- function(
 #'   counted.
 #'
 #' @inheritParams objective_function_signature
+#' @param pair_mapping A named vector of pairs generated from \link{create_pair_mapping}
 #'
 #' @examples
 #' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
 #' calculate_nb(design_matrix)
+#'
+#' @return Named list containing:
+#' \itemize{
+#'   \item nb - Table of pairs of items and their number of occurrence
+#'   \item max_nb - The highest number of occurrence
+#'   \item max_pairs - Vector of pairs of items with the highest number of occurrence
+#' }
+#'
+#' @export
+calculate_nb <- function(design_matrix, pair_mapping = NULL) {
+  if (is.null(pair_mapping)) {
+    return(.calculate_nb(design_matrix))
+  }
+
+  lefts <- design_matrix[, -ncol(design_matrix)]
+  rights <- design_matrix[, -1]
+  tops <- design_matrix[-nrow(design_matrix), ]
+  bottoms <- design_matrix[-1, ]
+  lr_pairs <- paste(lefts, rights, sep = ",")
+  tb_pairs <- paste(tops, bottoms, sep = ",")
+
+  pairs <- c(lr_pairs, tb_pairs)
+  is_sorted <- pairs %in% pair_mapping
+  sorted_pairs <- c(pairs[is_sorted], pair_mapping[pairs[!is_sorted]])
+
+  nb <- table(sorted_pairs)
+  max_nb <- max(nb)
+  max_pairs <- names(nb[nb == max_nb])
+  return(list(
+    nb = nb,
+    max_nb = max_nb,
+    max_pairs = max_pairs
+  ))
+}
+
+# TODO: check function overloading
+#' Neighbor Balance Calculation without Pair Mapping
+#'
+#' @description
+#' A metric that counts the occurrence of the same adjacent pairs. Only horizontal and vertical pairs are
+#'   counted.
+#'
+#' @inheritParams objective_function_signature
 #'
 #' @return Named list containing:
 #' \itemize{
@@ -79,14 +123,13 @@ objective_function <- function(
 #'   \item max_pairs - Vector of pairs of items with the highest number of occurrence
 #' }
 #'
-#' @export
-calculate_nb <- function(design_matrix) {
+#' @keywords internal
+.calculate_nb <- function(design_matrix) {
   n_rows <- dim(design_matrix)[1]
   n_cols <- dim(design_matrix)[2]
-  # TODO: check whether to use env or list
+  # env is faster than list
   nb <- new.env()
 
-  # TODO: check for vectorization
   for (row_ in 1:n_rows) {
     for (col_ in 1:n_cols) {
       node <- design_matrix[row_, col_]
@@ -152,6 +195,7 @@ calculate_ed <- function(design_matrix) {
   msts <- list()
   sub_graph <- list()
 
+  # TODO: try vectorization
   for (item in names(vertices)) {
     reps <- length(vertices[[item]])
     reps_char <- as.character(reps)
@@ -368,6 +412,51 @@ calculate_adjacency_score <- function(design) {
   row_adjacencies <- sum(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
   col_adjacencies <- sum(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
   return(row_adjacencies + col_adjacencies)
+}
+
+#' Create Pair Mapping
+#'
+#' @description
+#' Create an item pair mapping for \link{calculate_nb}.
+#'
+#' @param items Vector of items for the design
+#'
+#' @examples
+#' treatments <- c(rep(1:10, 4), rep(11:16, 3), rep(17:27, 2))
+#' create_pair_mapping(treatments)
+#'
+#' @return Named vector of item pairs as a character separated by `","`:
+#' \itemize{
+#'   \item "<item 2>,<item 1>" - "<item 1>,<item 2>"
+#'   \item "<item 3>,<item 1>" - "<item 1>,<item 3>"
+#'   \item ...
+#'   \item "<item n-1>,<item 1>" - "<item 1>,<item n-1>"
+#'   \item "<item n>,<item 1>" - "<item 1>,<item n>"
+#'   \item "<item 3>,<item 2>" - "<item 2>,<item 3>"
+#'   \item "<item 4>,<item 2>" - "<item 2>,<item 4>"
+#'   \item ...
+#'   \item "<item n-1>,<item 2>" - "<item 2>,<item n-1>"
+#'   \item "<item n>,<item 2>" - "<item 2>,<item n>"
+#'   \item ...
+#'   \item "<item n>,<item n-1>" - "<item n-1>,<item n>"
+#'   \item "<item 1>,<item 1>" - "<item 1>,<item 1>"
+#'   \item "<item 2>,<item 2>" - "<item 2>,<item 2>"
+#'   \item ...
+#'   \item "<item n-1>,<item n-1>" - "<item n-1>,<item n-1>"
+#'   \item "<item n>,<item n>" - "<item n>,<item n>"
+#' }
+#'
+#' @export
+create_pair_mapping <- function(items) {
+  items <- unique(items)
+  combinations <- combn(sort(items), 2)
+
+  identical_pairs <- paste(items, items, sep = ",")
+  pairs <- paste(combinations[1, ], combinations[2, ], sep = ",")
+  pairs_r <- sapply(pairs, function(k) paste(rev(strsplit(k, ",")[[1]]), collapse = ","))
+
+  pair_mapping <- setNames(c(pairs, identical_pairs), c(pairs_r, identical_pairs))
+  return(pair_mapping)
 }
 
 #' Calculate Balance Score for Experimental Design
