@@ -98,7 +98,7 @@ speed_df <- function(
 
     # Set seed for reproducibility
     if (is.null(seed)) {
-        dummy_seed <- runif(1)
+        # dummy_seed <- runif(1)
         seed <- .Random.seed[3]
     }
     set.seed(seed)
