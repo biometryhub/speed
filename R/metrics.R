@@ -260,32 +260,45 @@ get_vertices <- function(design_matrix) {
 #'
 #' @export
 get_edges <- function(vertices) {
-  edges <- vector("list", length(vertices))
-  names(edges) <- names(vertices)
-
-  for (item in names(vertices)) {
-    coords <- vertices[[item]]
-    n_vertices <- length(coords)
-    if (n_vertices < 2) {
-      edges[[item]] <- list()
-      next
+  # faster for large designs, no nodes returned
+  lapply(vertices, function(item_vertices) {
+    if (length(item_vertices) >= 2) {
+      return(unlist(lapply(
+        combn(item_vertices, 2, simplify = FALSE),
+        function(coords) sqrt(sum((coords[[1]] - coords[[2]])^2))
+      )))
+    } else {
+      return(c())
     }
+  })
 
-    # Preallocate list to hold all edges
-    edge_list <- vector("list", n_vertices * (n_vertices - 1) / 2)
-    idx <- 1
-
-    for (i in 1:(n_vertices - 1)) {
-      for (j in (i + 1):n_vertices) {
-        edge_list[[idx]] <- c(i, j, sqrt(sum((coords[[i]] - coords[[j]])^2)))
-        idx <- idx + 1
-      }
-    }
-
-    edges[[item]] <- edge_list
-  }
-
-  return(edges)
+  # # faster for small designs, nodes returned
+  # edges <- vector("list", length(vertices))
+  # names(edges) <- names(vertices)
+  #
+  # for (item in names(vertices)) {
+  #   coords <- vertices[[item]]
+  #   n_vertices <- length(coords)
+  #   if (n_vertices < 2) {
+  #     edges[[item]] <- list()
+  #     next
+  #   }
+  #
+  #   # Preallocate list to hold all edges
+  #   edge_list <- vector("list", n_vertices * (n_vertices - 1) / 2)
+  #   idx <- 1
+  #
+  #   for (i in 1:(n_vertices - 1)) {
+  #     for (j in (i + 1):n_vertices) {
+  #       edge_list[[idx]] <- c(i, j, sqrt(sum((coords[[i]] - coords[[j]])^2)))
+  #       idx <- idx + 1
+  #     }
+  #   }
+  #
+  #   edges[[item]] <- edge_list
+  # }
+  #
+  # return(edges)
 }
 
 #' Even Distribution Calculation for 3 Replications
@@ -308,10 +321,13 @@ get_edges <- function(vertices) {
 #' @keywords internal
 .calculate_ed_3_reps <- function(edges) {
   # pick 2 shortest connections for 3 reps
-  msts <- lapply(edges, function(item_edges) {
-    weights <- unlist(lapply(item_edges, function(edge) edge[[3]]))
-    return(sum(weights) - max(weights))
-  })
+  msts <- lapply(
+    edges, function(weights) {
+      sum(weights) - max(weights)
+    }
+    # weights <- unlist(lapply(item_edges, function(edge) edge[[3]]))
+    # return(sum(weights) - max(weights))
+  )
 
   min_mst <- min(unlist(msts))
   min_pairs <- names(msts[msts == min_mst])
