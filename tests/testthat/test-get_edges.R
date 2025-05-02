@@ -1,7 +1,6 @@
 test_that("get_vertices works", {
-  # TODO: manually calculate the actual variance
   design_matrix <- matrix(c(
-    1, 1, 1,
+    1, 1, 4,
     2, 3, 3,
     2, 3, 3
   ), ncol = 3) |>
@@ -11,12 +10,14 @@ test_that("get_vertices works", {
   edges <- get_edges(vertices)
 
   expected_edges <- list(
-    "1" = list(c(1, 2, 1), c(1, 3, 2), c(2, 3, 1)),
-    "2" = list(c(1, 2, 1)),
-    "3" = list(c(1, 2, 1), c(1, 3, 1), c(1, 4, sqrt(2)), c(2, 3, sqrt(2)), c(2, 4, 1), c(3, 4, 1))
+    "1" = c(1),
+    "2" = c(1),
+    "3" = c(1, 1, sqrt(2), sqrt(2), 1, 1),
+    "4" = c()
   )
 
+  # order matters
   for (item in names(expected_edges)) {
-    expect_setequal(edges[[item]], expected_edges[[item]])
+    expect_equal(edges[[item]], expected_edges[[item]])
   }
 })

@@ -3,19 +3,20 @@ template:
   bootstrap: 5
 
 reference:
-- title: Design
-  desc: Functions to help with the design of experiments.
-- contents:
-  - starts_with("speed")
-- title: Metrics
-  desc: Functions to optimise designs in different ways.
-- contents:
-  - starts_with("calculate")
-  - starts_with("objective")
-  - get_edges
-  - get_vertices
-- title: Plotting
-  desc: Functions for plotting designs.
-- contents:
-  - autoplot
-  - starts_with("plot")
+  - title: Design
+    desc: Functions to help with the design of experiments.
+  - contents:
+      - starts_with("speed")
+  - title: Metrics
+    desc: Functions to optimise designs in different ways.
+  - contents:
+      - starts_with("calculate")
+      - starts_with("objective")
+      - get_edges
+      - get_vertices
+      - create_pair_mapping
+  - title: Plotting
+    desc: Functions for plotting designs.
+  - contents:
+      - autoplot
+      - starts_with("plot")

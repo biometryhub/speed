@@ -5,19 +5,20 @@
 \title{Default Objective Function}
 \usage{
 objective_function(
-  adj_weight = getOption("speed.adj_weight", 1),
+  adj_weight = getOption("speed.adj_weight", 0),
   bal_weight = getOption("speed.bal_weight", 1)
 )
 }
 \arguments{
-\item{adj_weight}{Weight for adjacency score (default: 1)}
+\item{adj_weight}{Weight for adjacency score (default: 0)}
 
 \item{bal_weight}{Weight for balance score (default: 1)}
 }
 \value{
-A function which returns numeric value representing the score of the design (lower is better) with a
-signature \code{function(design_matrix, layout_df, swap, spatial_cols)}. See signature details in
-\link{objective_function_signature}.
+A function which returns a named list of numeric values with one required name \code{score} representing
+the score of the design (lower is better) with a signature
+\verb{function(design_matrix, layout_df, swap, spatial_cols, previous_score, swapped_items)}. See signature
+details in \link{objective_function_signature}.
 }
 \description{
 A default objective function that combines adjacency and balance scores.
@@ -30,18 +31,7 @@ layout_df <- data.frame(
 )
 objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
 
-# create an objective function including even distribution and neighbor
-# balance introduced by Piepho 2018
-objective_function_piepho <- function(design_matrix, layout_df, swap, spatial_cols) {
-  ed <- calculate_ed(design_matrix)
-  ed_score <- -sum(unlist(lapply(ed, function(ed_rep) ed_rep$min_mst)))
-  nb_score <- calculate_nb(design_matrix)$max_nb
-
-  adj_bal_score <- objective_function()(design_matrix, layout_df, swap, spatial_cols)
-
-  return(nb_score + ed_score + adj_bal_score)
 }
-objective_function_piepho(design_matrix, layout_df, "treatment", c("row", "col"))
-# usage in speed, speed(..., obj_function = objective_function_piepho)
-
+\seealso{
+\code{\link[=objective_function_piepho]{objective_function_piepho()}}
 }

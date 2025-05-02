@@ -10,6 +10,8 @@
 #'   \item{`speed.adaptive_swaps`}{Logical; if `TRUE`, adjusts swap parameters based on temperature (default: `FALSE`).}
 #'   \item{`speed.start_temp`}{Starting temperature for simulated annealing (default: 100).}
 #'   \item{`speed.cooling_rate`}{Rate at which temperature decreases for simulated annealing (default: 0.99).}
+#'   \item{`speed.adj_weight`}{Weight for adjacency score (default: 0).}
+#'   \item{`speed.bal_weight`}{Weight for balance score (default: 1).}
 #' }
 #'
 #' @section Setting options:
