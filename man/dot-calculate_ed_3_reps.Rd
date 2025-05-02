@@ -4,17 +4,17 @@
 \alias{.calculate_ed_3_reps}
 \title{Even Distribution Calculation for 3 Replications}
 \usage{
-.calculate_ed_3_reps(edges)
+.calculate_ed_3_reps(edges, previous_ed = NULL)
 }
 \arguments{
-\item{edges}{A list of lists of edges}
+\item{edges}{A list of vectors of edge weights}
 }
 \value{
 Named list containing:
 \itemize{
 \item msts - Named list of pairs of items and their mst
 \item min_mst - The lowest mst
-\item min_pairs - Pairs of items with the lowest mst
+\item min_items - Pairs of items with the lowest mst
 }
 }
 \description{

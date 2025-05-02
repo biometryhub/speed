@@ -4,19 +4,32 @@
 \alias{objective_function_signature}
 \title{Objective Function Signature}
 \usage{
-objective_function_signature(design_matrix, layout_df, swap, spatial_cols)
+objective_function_signature(
+  design_matrix,
+  layout_df,
+  swap,
+  spatial_cols,
+  previous_score,
+  swapped_items
+)
 }
 \arguments{
 \item{design_matrix}{A design matrix}
 
 \item{layout_df}{A data frame representing the spatial information of the design}
 
-\item{swap}{A column name of the treatment}
+\item{swap}{A column name of the items}
 
 \item{spatial_cols}{Column names of the spatial factors}
+
+\item{previous_score}{A named list of numeric values with one required name \code{score} representing the score of
+the design (lower is better)}
+
+\item{swapped_items}{Items which were swapped during the current iteration}
 }
 \value{
-A function which returns numeric value representing the score of the design (lower is better)
+A named list of numeric values with one required name \code{score} representing the score of the design
+(lower is better)
 }
 \description{
 A signature for an objective function

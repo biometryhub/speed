@@ -28,3 +28,6 @@ design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
 calculate_nb(design_matrix)
 
 }
+\seealso{
+\code{\link[=objective_function_piepho]{objective_function_piepho()}}
+}

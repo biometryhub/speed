@@ -58,11 +58,6 @@ speed <- function(
     obj_function = objective_function(),
     quiet = FALSE,
     seed = NULL) {
-  # Permute is for the levels of the treatment that get shuffled within the levels of the swap_within factor
-  # E.g. swap_within = ~block will permute treatments within blocks, rather than the entire layout
-  # E.g. permute = ~treatment will permute the levels of treatment within the blocks
-
-  # NOTE: weights moved to cost function
   swap_count <- getOption("speed.swap_count", 1)
   swap_all_blocks <- getOption("speed.swap_all_blocks", FALSE)
   adaptive_swaps <- getOption("speed.adaptive_swaps", FALSE)
@@ -116,10 +111,11 @@ speed <- function(
   current_design <- initialize_design_matrix(treatment_matrix, swap_matrix)
   best_design <- current_design
 
-  current_score <- obj_function(current_design, layout_df, swap, spatial_cols)
+  current_score_obj <- obj_function(current_design, layout_df, swap, spatial_cols)
+  current_score <- current_score_obj$score
   # TODO: somehow move this to `.verify_speed_inputs`
   if (!is.numeric(current_score)) {
-    stop("Value from `objective_function` must be numeric.")
+    stop("<output>$score from `objective_function` must be numeric.")
   }
 
   best_score <- current_score
@@ -141,12 +137,23 @@ speed <- function(
     }
 
     new_design <- generate_neighbor(current_design, swap_matrix, current_swap_count, current_swap_all_blocks)
-    new_score <- obj_function(new_design$new_design, layout_df, swap, spatial_cols, new_design$swapped_items)
+    new_score_obj <- obj_function(
+      new_design$new_design,
+      layout_df,
+      swap,
+      spatial_cols,
+      current_score_obj,
+      new_design$swapped_items
+    )
+    new_score <- new_score_obj$score
     if (new_score < current_score || runif(1) < exp((current_score - new_score) / temp)) {
       current_design <- new_design$new_design
+      current_score_obj <- new_score_obj
       current_score <- new_score
       if (new_score < best_score) {
         best_design <- new_design$new_design
+        # TODO: we might want to return best score as a list and remove adjacency and balance scores
+        best_score_obj <- new_score_obj
         best_score <- new_score
         last_improvement_iter <- iter
       }

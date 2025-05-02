@@ -14,9 +14,11 @@
 #' )
 #' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
-#' @return A function which returns numeric value representing the score of the design (lower is better) with a
-#'   signature `function(design_matrix, layout_df, swap, spatial_cols, swapped_items)`. See signature details in
-#'   [objective_function_signature].
+
+#' @return A function which returns a named list of numeric values with one required name `score` representing
+#'   the score of the design (lower is better) with a signature
+#'   `function(design_matrix, layout_df, swap, spatial_cols, previous_score, swapped_items)`. See signature
+#'   details in [objective_function_signature].
 #'
 #' @seealso [objective_function_piepho()]
 #'
@@ -30,7 +32,7 @@ objective_function <- function(
         adj <- calculate_adjacency_score(design_matrix)
 
         if (bal_weight == 0) {
-          return(adj)
+          return(list(score = adj))
         }
       }
 
@@ -39,11 +41,11 @@ objective_function <- function(
         bal <- calculate_balance_score(layout_df, swap, spatial_cols)
 
         if (adj_weight == 0) {
-          return(bal)
+          return(list(score = bal))
         }
       }
 
-      return(adj_weight * adj + bal_weight * bal)
+      return(list(score = adj_weight * adj + bal_weight * bal))
     }
   )
 }
@@ -69,22 +71,23 @@ objective_function <- function(
 #' }
 #' # usage in speed, speed(..., obj_function = obj_function_piepho)
 #'
-#' @return A function which returns numeric value representing the score of the design (lower is better) with a
-#'   signature `function(design_matrix, layout_df, swap, spatial_cols)`. See signature details in
-#'   [objective_function_signature].
+#' @return A function which returns a named list of numeric values with one required name `score` representing
+#'   the score of the design (lower is better) with a signature
+#'   `function(design_matrix, layout_df, swap, spatial_cols, previous_score, swapped_items)`. See signature
+#'   details in [objective_function_signature].
 #'
 #' @seealso [objective_function()], [create_pair_mapping()]
 #'
 #' @export
 objective_function_piepho <- function(pair_mapping = NULL) {
   return(
-    function(design_matrix, layout_df, swap, spatial_cols, swapped_items) {
-      ed <- calculate_ed(design_matrix)
+    function(design_matrix, layout_df, swap, spatial_cols, previous_score = NULL, swapped_items = NULL) {
+      ed <- calculate_ed(design_matrix, previous_score$ed, swapped_items)
       ed_score <- -sum(vapply(ed, function(ed_rep) ed_rep$min_mst, numeric(1)))
       nb_score <- calculate_nb(design_matrix, pair_mapping)$max_nb
       bal_score <- calculate_balance_score(layout_df, swap, spatial_cols)
 
-      return(nb_score + ed_score + bal_score)
+      return(list(score = nb_score + ed_score + bal_score, ed = ed))
     }
   )
 }
@@ -108,6 +111,8 @@ objective_function_piepho <- function(pair_mapping = NULL) {
 #'   \item max_nb - The highest number of occurrence
 #'   \item max_pairs - Vector of pairs of items with the highest number of occurrence
 #' }
+#'
+#' @seealso [objective_function_piepho()]
 #'
 #' @export
 calculate_nb <- function(design_matrix, pair_mapping = NULL) {
@@ -202,6 +207,7 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #' A metric that represents the even distribution of each item with their minimum spanning tree (mst).
 #'
 #' @inheritParams objective_function_signature
+#' @param previous_ed Named list of the previous ed calculation
 #'
 #' @examples
 #' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
@@ -217,13 +223,21 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #'     }
 #' }
 #'
+#' @seealso [objective_function_piepho()]
+#'
 #' @export
-calculate_ed <- function(design_matrix, previous_msts = NULL, swapped_items = NULL) {
+calculate_ed <- function(design_matrix, previous_ed = NULL, swapped_items = NULL) {
+  if (!is.null(swapped_items)) {
+    design_matrix[!(design_matrix %in% swapped_items)] <- NA
+    msts <- lapply(previous_ed, function(ed_by_rep) ed_by_rep$msts)
+  } else {
+    msts <- list()
+  }
+
   vertices <- get_vertices(design_matrix)
   edges <- get_edges(vertices)
 
   edges_3_reps <- list()
-  msts <- list()
   sub_graph <- list()
 
   for (item in names(vertices)) {
@@ -242,7 +256,6 @@ calculate_ed <- function(design_matrix, previous_msts = NULL, swapped_items = NU
         # 1--2, 1--3, ..., 1--n-1, 1--n, 2--3, 2--4, ..., n-1--n
         edge_table <- t(combn(1:reps, 2))
         sub_graph[[reps_char]] <- igraph::graph_from_edgelist(edge_table, directed = FALSE)
-        msts[[reps_char]] <- list()
       }
 
       igraph::E(sub_graph[[reps_char]])$weight <- edges[[item]]
@@ -251,7 +264,7 @@ calculate_ed <- function(design_matrix, previous_msts = NULL, swapped_items = NU
   }
 
   # summarize mst for each reps
-  msts <- lapply(msts, function(msts_by_reps) {
+  ed <- lapply(msts, function(msts_by_reps) {
     min_mst <- min(unlist(msts_by_reps))
     min_items <- names(msts_by_reps[msts_by_reps == min_mst])
 
@@ -263,11 +276,10 @@ calculate_ed <- function(design_matrix, previous_msts = NULL, swapped_items = NU
   })
 
   if (length(edges_3_reps) > 0) {
-    msts_3_reps <- .calculate_ed_3_reps(edges_3_reps)
-    msts <- c(msts, list("3" = msts_3_reps))
+    ed$`3` <- .calculate_ed_3_reps(edges_3_reps, previous_ed)
   }
 
-  return(msts)
+  return(ed)
 }
 
 #' Get Vertices of Each Item
@@ -372,18 +384,22 @@ get_edges <- function(vertices) {
 #' @seealso [get_edges()]
 #'
 #' @keywords internal
-.calculate_ed_3_reps <- function(edges) {
+.calculate_ed_3_reps <- function(edges, previous_ed = NULL) {
   # pick 2 shortest connections for 3 reps
-  msts <- lapply(
+  ed <- lapply(
     edges, function(weights) {
       sum(weights) - max(weights)
     }
   )
 
-  min_mst <- min(unlist(msts))
-  min_items <- names(msts[msts == min_mst])
+  if (!is.null(previous_ed)) {
+    ed <- modifyList(previous_ed$`3`$msts, ed)
+  }
+
+  min_mst <- min(unlist(ed))
+  min_items <- names(ed[ed == min_mst])
   return(list(
-    msts = msts,
+    msts = ed,
     min_mst = min_mst,
     min_items = min_items
   ))
@@ -502,6 +518,8 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #' @param layout_df A data frame representing the spatial information of the design
 #' @param swap A column name of the items
 #' @param spatial_cols Column names of the spatial factors
+#' @param previous_score A named list of numeric values with one required name `score` representing the score of
+#'   the design (lower is better)
 #' @param swapped_items Items which were swapped during the current iteration
 #'
 #' @examples
@@ -512,7 +530,14 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #' )
 #' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
-#' @return A function which returns numeric value representing the score of the design (lower is better)
-objective_function_signature <- function(design_matrix, layout_df, swap, spatial_cols, swapped_items) {
+#' @return A named list of numeric values with one required name `score` representing the score of the design
+#'   (lower is better)
+objective_function_signature <- function(
+    design_matrix,
+    layout_df,
+    swap,
+    spatial_cols,
+    previous_score,
+    swapped_items) {
   stop("This is a dummy fucntion for documentation purposes only")
 }

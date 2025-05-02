@@ -10,9 +10,10 @@ objective_function_piepho(pair_mapping = NULL)
 \item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
 }
 \value{
-A function which returns numeric value representing the score of the design (lower is better) with a
-signature \verb{function(design_matrix, layout_df, swap, spatial_cols)}. See signature details in
-\link{objective_function_signature}.
+A function which returns a named list of numeric values with one required name \code{score} representing
+the score of the design (lower is better) with a signature
+\verb{function(design_matrix, layout_df, swap, spatial_cols, previous_score, swapped_items)}. See signature
+details in \link{objective_function_signature}.
 }
 \description{
 Create an objective function including even distribution and neighbor balance introduced by Piepho 2018.
