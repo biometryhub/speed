@@ -41,7 +41,7 @@ counted.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">calculate_nb</span><span class="op">(</span><span class="va">design_matrix</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">calculate_nb</span><span class="op">(</span><span class="va">design_matrix</span>, pair_mapping <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -51,13 +51,21 @@ counted.</p>
 <dl><dt id="arg-design-matrix">design_matrix<a class="anchor" aria-label="anchor" href="#arg-design-matrix"></a></dt>
 <dd><p>A design matrix</p></dd>
 
+
+<dt id="arg-pair-mapping">pair_mapping<a class="anchor" aria-label="anchor" href="#arg-pair-mapping"></a></dt>
+<dd><p>A named vector of pairs generated from <a href="create_pair_mapping.html">create_pair_mapping</a></p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Named list containing:</p><ul><li><p>nb - Named list of pairs of items and their number of occurrence</p></li>
+    <p>Named list containing:</p><ul><li><p>nb - Table of pairs of items and their number of occurrence</p></li>
 <li><p>max_nb - The highest number of occurrence</p></li>
 <li><p>max_pairs - Vector of pairs of items with the highest number of occurrence</p></li>
 </ul></div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="objective_function_piepho.html">objective_function_piepho()</a></code></p></div>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>

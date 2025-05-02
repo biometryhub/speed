@@ -39,7 +39,7 @@
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">objective_function</span><span class="op">(</span></span>
-<span>  adj_weight <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"speed.adj_weight"</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>  adj_weight <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"speed.adj_weight"</span>, <span class="fl">0</span><span class="op">)</span>,</span>
 <span>  bal_weight <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"speed.bal_weight"</span>, <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -49,7 +49,7 @@
 
 
 <dl><dt id="arg-adj-weight">adj_weight<a class="anchor" aria-label="anchor" href="#arg-adj-weight"></a></dt>
-<dd><p>Weight for adjacency score (default: 1)</p></dd>
+<dd><p>Weight for adjacency score (default: 0)</p></dd>
 
 
 <dt id="arg-bal-weight">bal_weight<a class="anchor" aria-label="anchor" href="#arg-bal-weight"></a></dt>
@@ -58,9 +58,14 @@
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A function which returns numeric value representing the score of the design (lower is better) with a
-signature <code>function(design_matrix, layout_df, swap, spatial_cols)</code>. See signature details in
-<a href="objective_function_signature.html">objective_function_signature</a>.</p>
+    <p>A function which returns a named list of numeric values with one required name <code>score</code> representing
+the score of the design (lower is better) with a signature
+<code>function(design_matrix, layout_df, swap, spatial_cols, previous_score, swapped_items)</code>. See signature
+details in <a href="objective_function_signature.html">objective_function_signature</a>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="objective_function_piepho.html">objective_function_piepho()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -71,22 +76,9 @@ signature <code>function(design_matrix, layout_df, swap, spatial_cols)</code>. S
 <span class="r-in"><span>  col <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, times <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">objective_function</span><span class="op">(</span><span class="op">)</span><span class="op">(</span><span class="va">design_matrix</span>, <span class="va">layout_df</span>, <span class="st">"treatment"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row"</span>, <span class="st">"col"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 15</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># create an objective function including even distribution and neighbor</span></span></span>
-<span class="r-in"><span><span class="co"># balance introduced by Piepho 2018</span></span></span>
-<span class="r-in"><span><span class="va">objective_function_piepho</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">design_matrix</span>, <span class="va">layout_df</span>, <span class="va">swap</span>, <span class="va">spatial_cols</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>  <span class="va">ed</span> <span class="op">&lt;-</span> <span class="fu"><a href="calculate_ed.html">calculate_ed</a></span><span class="op">(</span><span class="va">design_matrix</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">ed_score</span> <span class="op">&lt;-</span> <span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">ed</span>, <span class="kw">function</span><span class="op">(</span><span class="va">ed_rep</span><span class="op">)</span> <span class="va">ed_rep</span><span class="op">$</span><span class="va">min_mst</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">nb_score</span> <span class="op">&lt;-</span> <span class="fu"><a href="calculate_nb.html">calculate_nb</a></span><span class="op">(</span><span class="va">design_matrix</span><span class="op">)</span><span class="op">$</span><span class="va">max_nb</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span>  <span class="va">adj_bal_score</span> <span class="op">&lt;-</span> <span class="fu">objective_function</span><span class="op">(</span><span class="op">)</span><span class="op">(</span><span class="va">design_matrix</span>, <span class="va">layout_df</span>, <span class="va">swap</span>, <span class="va">spatial_cols</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">nb_score</span> <span class="op">+</span> <span class="va">ed_score</span> <span class="op">+</span> <span class="va">adj_bal_score</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-in"><span><span class="fu">objective_function_piepho</span><span class="op">(</span><span class="va">design_matrix</span>, <span class="va">layout_df</span>, <span class="st">"treatment"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row"</span>, <span class="st">"col"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 13</span>
-<span class="r-in"><span><span class="co"># usage in speed, speed(..., obj_function = objective_function_piepho)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $score</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

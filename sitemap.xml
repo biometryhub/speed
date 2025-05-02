@@ -9,7 +9,9 @@
 <url><loc>https://biometryhub.github.io/speed/reference/calculate_balance_score.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/calculate_ed.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/calculate_nb.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/create_pair_mapping.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-calculate_ed_3_reps.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/dot-calculate_nb.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-verify_speed_inputs.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/env_add_one.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/generate_neighbor.html</loc></url>
@@ -18,6 +20,7 @@
 <url><loc>https://biometryhub.github.io/speed/reference/index.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/initialize_design_matrix.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/objective_function.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/objective_function_piepho.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/objective_function_signature.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/plot_design.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/plot_progress.html</loc></url>

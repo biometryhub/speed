@@ -41,7 +41,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">.calculate_ed_3_reps</span><span class="op">(</span><span class="va">edges</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">.calculate_ed_3_reps</span><span class="op">(</span><span class="va">edges</span>, previous_ed <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -49,14 +49,14 @@
 
 
 <dl><dt id="arg-edges">edges<a class="anchor" aria-label="anchor" href="#arg-edges"></a></dt>
-<dd><p>A list of lists of edges</p></dd>
+<dd><p>A list of vectors of edge weights</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>Named list containing:</p><ul><li><p>msts - Named list of pairs of items and their mst</p></li>
 <li><p>min_mst - The lowest mst</p></li>
-<li><p>min_pairs - Pairs of items with the lowest mst</p></li>
+<li><p>min_items - Pairs of items with the lowest mst</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
