@@ -15,7 +15,7 @@
 #' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
 #' @return A function which returns numeric value representing the score of the design (lower is better) with a
-#'   signature `function(design_matrix, layout_df, swap, spatial_cols)`. See signature details in
+#'   signature `function(design_matrix, layout_df, swap, spatial_cols, swapped_items)`. See signature details in
 #'   [objective_function_signature].
 #'
 #' @seealso [objective_function_piepho()]
@@ -25,7 +25,7 @@ objective_function <- function(
     adj_weight = getOption("speed.adj_weight", 0),
     bal_weight = getOption("speed.bal_weight", 1)) {
   return(
-    function(design_matrix, layout_df, swap, spatial_cols) {
+    function(design_matrix, layout_df, swap, spatial_cols, ...) {
       if (adj_weight != 0) {
         adj <- calculate_adjacency_score(design_matrix)
 
@@ -78,9 +78,9 @@ objective_function <- function(
 #' @export
 objective_function_piepho <- function(pair_mapping = NULL) {
   return(
-    function(design_matrix, layout_df, swap, spatial_cols) {
+    function(design_matrix, layout_df, swap, spatial_cols, swapped_items) {
       ed <- calculate_ed(design_matrix)
-      ed_score <- -sum(unlist(lapply(ed, function(ed_rep) ed_rep$min_mst)))
+      ed_score <- -sum(vapply(ed, function(ed_rep) ed_rep$min_mst, numeric(1)))
       nb_score <- calculate_nb(design_matrix, pair_mapping)$max_nb
       bal_score <- calculate_balance_score(layout_df, swap, spatial_cols)
 
@@ -211,14 +211,14 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #' \itemize{
 #'   \item <number of replications> - Named list containing:
 #'     \itemize{
-#'       \item msts - Named list of pairs of items and their mst
+#'       \item msts - Named list of items and their mst
 #'       \item min_mst - The lowest mst
-#'       \item min_pairs - Pairs of items with the lowest mst
+#'       \item min_items - Pairs of items with the lowest mst
 #'     }
 #' }
 #'
 #' @export
-calculate_ed <- function(design_matrix) {
+calculate_ed <- function(design_matrix, previous_msts = NULL, swapped_items = NULL) {
   vertices <- get_vertices(design_matrix)
   edges <- get_edges(vertices)
 
@@ -253,12 +253,12 @@ calculate_ed <- function(design_matrix) {
   # summarize mst for each reps
   msts <- lapply(msts, function(msts_by_reps) {
     min_mst <- min(unlist(msts_by_reps))
-    min_pairs <- names(msts_by_reps[msts_by_reps == min_mst])
+    min_items <- names(msts_by_reps[msts_by_reps == min_mst])
 
     return(list(
       msts = msts_by_reps,
       min_mst = min_mst,
-      min_pairs = min_pairs
+      min_items = min_items
     ))
   })
 
@@ -270,10 +270,10 @@ calculate_ed <- function(design_matrix) {
   return(msts)
 }
 
-#' Get Weighted Edges
+#' Get Vertices of Each Item
 #'
 #' @description
-#' Calculate the weight of edges from vertices.
+#' Get the vertices of each item in a design matrix.
 #'
 #' @inheritParams objective_function_signature
 #'
@@ -360,13 +360,13 @@ get_edges <- function(vertices) {
 #' A metric that represents the even distribution of items with 3 replications with their minimum spanning tree
 #'   (mst).
 #'
-#' @param edges A list of lists of edges
+#' @param edges A list of vectors of edge weights
 #'
 #' @return Named list containing:
 #' \itemize{
 #'   \item msts - Named list of pairs of items and their mst
 #'   \item min_mst - The lowest mst
-#'   \item min_pairs - Pairs of items with the lowest mst
+#'   \item min_items - Pairs of items with the lowest mst
 #' }
 #'
 #' @seealso [get_edges()]
@@ -378,16 +378,14 @@ get_edges <- function(vertices) {
     edges, function(weights) {
       sum(weights) - max(weights)
     }
-    # weights <- unlist(lapply(item_edges, function(edge) edge[[3]]))
-    # return(sum(weights) - max(weights))
   )
 
   min_mst <- min(unlist(msts))
-  min_pairs <- names(msts[msts == min_mst])
+  min_items <- names(msts[msts == min_mst])
   return(list(
     msts = msts,
     min_mst = min_mst,
-    min_pairs = min_pairs
+    min_items = min_items
   ))
 }
 
@@ -502,8 +500,9 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #'
 #' @param design_matrix A design matrix
 #' @param layout_df A data frame representing the spatial information of the design
-#' @param swap A column name of the treatment
+#' @param swap A column name of the items
 #' @param spatial_cols Column names of the spatial factors
+#' @param swapped_items Items which were swapped during the current iteration
 #'
 #' @examples
 #' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
@@ -514,6 +513,6 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
 #' @return A function which returns numeric value representing the score of the design (lower is better)
-objective_function_signature <- function(design_matrix, layout_df, swap, spatial_cols) {
+objective_function_signature <- function(design_matrix, layout_df, swap, spatial_cols, swapped_items) {
   stop("This is a dummy fucntion for documentation purposes only")
 }

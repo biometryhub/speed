@@ -13,7 +13,7 @@
 #' @param iterations Maximum number of iterations for the simulated annealing algorithm (default: 10000)
 #' @param early_stop_iterations Number of iterations without improvement before early stopping (default: 2000)
 #' @param obj_function Objective function used to calculate score (lower is better) (default:
-#'   \link{objective_function})
+#'   [objective_function])
 #' @param quiet Logical; if TRUE, suppresses progress messages (default: FALSE)
 #' @param seed A numeric value for random seed. If provided, it ensures reproducibility of results (default:
 #'   NULL).
@@ -141,12 +141,12 @@ speed <- function(
     }
 
     new_design <- generate_neighbor(current_design, swap_matrix, current_swap_count, current_swap_all_blocks)
-    new_score <- obj_function(new_design, layout_df, swap, spatial_cols)
+    new_score <- obj_function(new_design$new_design, layout_df, swap, spatial_cols, new_design$swapped_items)
     if (new_score < current_score || runif(1) < exp((current_score - new_score) / temp)) {
-      current_design <- new_design
+      current_design <- new_design$new_design
       current_score <- new_score
       if (new_score < best_score) {
-        best_design <- new_design
+        best_design <- new_design$new_design
         best_score <- new_score
         last_improvement_iter <- iter
       }

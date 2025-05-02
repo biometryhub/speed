@@ -15,7 +15,7 @@ test_that("calculate_ed works for partial replications", {
         "6" = 1
       ),
       min_mst = 1,
-      min_pairs = c("2", "6")
+      min_items = c("2", "6")
     ),
     "3" = list(
       msts = list(
@@ -23,12 +23,12 @@ test_that("calculate_ed works for partial replications", {
         "4" = 3
       ),
       min_mst = 2,
-      min_pairs = c("1")
+      min_items = c("1")
     ),
     "4" = list(
       msts = list("3" = 3),
       min_mst = 3,
-      min_pairs = c("3")
+      min_items = c("3")
     )
   )
 

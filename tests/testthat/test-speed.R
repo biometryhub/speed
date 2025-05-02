@@ -1,3 +1,5 @@
+# TODO: add tests to ensure that objective functions are not too strict where all optimal solutions are
+# mathematically equivalent, e.g., compare results from different seeds
 test_that("speed works for simple design", {
   nrows <- 5
   ncols <- 5

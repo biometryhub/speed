@@ -32,11 +32,12 @@ initialize_design_matrix <- function(treatment_matrix, swap_matrix) {
 #'
 #' @param design_matrix A design matrix
 #' @param swap_matrix A matrix that constrains swap boundaries
-#' @param swap_count Number of treatment swaps per iteration
+#' @param swap_count Number of swaps per iteration
 #' @param swap_all_blocks Logical; if TRUE, performs swaps in all blocks at each iteration
 #'
 #' @keywords internal
 generate_neighbor <- function(design_matrix, swap_matrix, swap_count, swap_all_blocks) {
+  swapped_items <- character(2 * swap_count)
   new_design <- design_matrix
   swap_levels <- unique(as.vector(swap_matrix))
   if (!swap_all_blocks) swap_levels <- sample(swap_levels, 1)
@@ -52,9 +53,12 @@ generate_neighbor <- function(design_matrix, swap_matrix, swap_count, swap_all_b
       tmp <- new_design[pos1[1], pos1[2]]
       new_design[pos1[1], pos1[2]] <- new_design[pos2[1], pos2[2]]
       new_design[pos2[1], pos2[2]] <- tmp
+
+      swapped_items[2 * i] <- new_design[pos1[1], pos1[2]]
+      swapped_items[2 * i + 1] <- tmp
     }
   }
-  return(new_design)
+  return(list(new_design = new_design, swapped_items = swapped_items))
 }
 
 # TODO: add doc
