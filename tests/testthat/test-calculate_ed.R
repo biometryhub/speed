@@ -1,5 +1,4 @@
 test_that("calculate_ed works for partial replications", {
-  # TODO: manually calculate the actual variance
   design_matrix <- matrix(c(
     1, 1, 1, 4,
     2, 3, 3, 4,

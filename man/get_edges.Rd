@@ -15,7 +15,7 @@ get_edges(vertices)
 \value{
 Named list containing:
 \itemize{
-\item \if{html}{\out{<item>}} - A list of (vertex 1, vertex 2, weight)
+\item \if{html}{\out{<item>}} - A vector of edge weights
 }
 }
 \description{

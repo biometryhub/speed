@@ -1,5 +1,4 @@
 test_that("get_vertices works", {
-  # TODO: manually calculate the actual variance
   design_matrix <- matrix(c(
     1, 1, 1,
     2, 3, 3,

@@ -14,23 +14,11 @@
 #' )
 #' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
-#' # create an objective function including even distribution and neighbor
-#' # balance introduced by Piepho 2018
-#' objective_function_piepho <- function(design_matrix, layout_df, swap, spatial_cols) {
-#'   ed <- calculate_ed(design_matrix)
-#'   ed_score <- -sum(unlist(lapply(ed, function(ed_rep) ed_rep$min_mst)))
-#'   nb_score <- calculate_nb(design_matrix)$max_nb
-#'
-#'   adj_bal_score <- objective_function()(design_matrix, layout_df, swap, spatial_cols)
-#'
-#'   return(nb_score + ed_score + adj_bal_score)
-#' }
-#' objective_function_piepho(design_matrix, layout_df, "treatment", c("row", "col"))
-#' # usage in speed, speed(..., obj_function = objective_function_piepho)
-#'
 #' @return A function which returns numeric value representing the score of the design (lower is better) with a
-#'   signature \code{function(design_matrix, layout_df, swap, spatial_cols)}. See signature details in
-#'   \link{objective_function_signature}.
+#'   signature `function(design_matrix, layout_df, swap, spatial_cols)`. See signature details in
+#'   [objective_function_signature].
+#'
+#' @seealso [objective_function_piepho()]
 #'
 #' @export
 objective_function <- function(
@@ -60,6 +48,47 @@ objective_function <- function(
   )
 }
 
+#' Objective Function with Metric from Piepho
+#'
+#' @description
+#' Create an objective function including even distribution and neighbor balance introduced by Piepho 2018.
+#'
+#' @inheritParams calculate_nb
+#'
+#' @examples
+#' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
+#' layout_df <- data.frame(
+#'   row = rep(1:3, each = 3),
+#'   col = rep(1:3, times = 3)
+#' )
+#' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
+#'
+#' pair_mapping <- create_pair_mapping(c(design_matrix))
+#' obj_function_piepho <- function(pair_mapping) {
+#'   obj_function_piepho(design_matrix, layout_df, "treatment", c("row", "col"))
+#' }
+#' # usage in speed, speed(..., obj_function = obj_function_piepho)
+#'
+#' @return A function which returns numeric value representing the score of the design (lower is better) with a
+#'   signature `function(design_matrix, layout_df, swap, spatial_cols)`. See signature details in
+#'   [objective_function_signature].
+#'
+#' @seealso [objective_function()], [create_pair_mapping()]
+#'
+#' @export
+objective_function_piepho <- function(pair_mapping = NULL) {
+  return(
+    function(design_matrix, layout_df, swap, spatial_cols) {
+      ed <- calculate_ed(design_matrix)
+      ed_score <- -sum(unlist(lapply(ed, function(ed_rep) ed_rep$min_mst)))
+      nb_score <- calculate_nb(design_matrix, pair_mapping)$max_nb
+      bal_score <- calculate_balance_score(layout_df, swap, spatial_cols)
+
+      return(nb_score + ed_score + bal_score)
+    }
+  )
+}
+
 #' Neighbor Balance Calculation
 #'
 #' @description
@@ -67,7 +96,7 @@ objective_function <- function(
 #'   counted.
 #'
 #' @inheritParams objective_function_signature
-#' @param pair_mapping A named vector of pairs generated from \link{create_pair_mapping}
+#' @param pair_mapping A named vector of pairs generated from [create_pair_mapping]
 #'
 #' @examples
 #' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
@@ -107,7 +136,6 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
   ))
 }
 
-# TODO: check function overloading
 #' Neighbor Balance Calculation without Pair Mapping
 #'
 #' @description
@@ -125,6 +153,7 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #'
 #' @keywords internal
 .calculate_nb <- function(design_matrix) {
+  # TODO: check function overloading
   n_rows <- dim(design_matrix)[1]
   n_cols <- dim(design_matrix)[2]
   # env is faster than list
@@ -191,20 +220,21 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #' @export
 calculate_ed <- function(design_matrix) {
   vertices <- get_vertices(design_matrix)
-  vertices_3_reps <- list()
+  edges <- get_edges(vertices)
+
+  edges_3_reps <- list()
   msts <- list()
   sub_graph <- list()
 
-  # TODO: try vectorization
   for (item in names(vertices)) {
     reps <- length(vertices[[item]])
     reps_char <- as.character(reps)
     if (reps == 2) {
       # distance between 2 nodes for 2 reps
-      msts[[reps_char]][[item]] <- sqrt(sum((vertices[[item]][[1]] - vertices[[item]][[2]])^2))
+      msts[[reps_char]][[item]] <- edges[[item]]
     } else if (reps == 3) {
       # 3 reps will be calculated with .calculate_ed_3_reps
-      vertices_3_reps[[item]] <- vertices[[item]]
+      edges_3_reps[[item]] <- edges[[item]]
     } else if (reps > 3) {
       # blanket igraph for 4+ reps
       if (is.null(sub_graph[[reps_char]])) {
@@ -215,16 +245,8 @@ calculate_ed <- function(design_matrix) {
         msts[[reps_char]] <- list()
       }
 
-      weights <- c()
-      # order matters here
-      for (i in 1:(length(vertices[[item]]) - 1)) {
-        for (j in (i + 1):length(vertices[[item]])) {
-          weights <- c(weights, sum((vertices[[item]][[i]] - vertices[[item]][[j]])^2))
-        }
-      }
-
-      igraph::E(sub_graph[[reps_char]])$weight <- weights
-      msts[[reps_char]][[item]] <- sum(sqrt(igraph::E(igraph::mst(sub_graph[[reps_char]]))$weight))
+      igraph::E(sub_graph[[reps_char]])$weight <- edges[[item]]
+      msts[[reps_char]][[item]] <- sum(igraph::E(igraph::mst(sub_graph[[reps_char]]))$weight)
     }
   }
 
@@ -240,8 +262,8 @@ calculate_ed <- function(design_matrix) {
     ))
   })
 
-  if (length(vertices_3_reps) > 0) {
-    msts_3_reps <- .calculate_ed_3_reps(get_edges(vertices_3_reps))
+  if (length(edges_3_reps) > 0) {
+    msts_3_reps <- .calculate_ed_3_reps(edges_3_reps)
     msts <- c(msts, list("3" = msts_3_reps))
   }
 
@@ -297,52 +319,39 @@ get_vertices <- function(design_matrix) {
 #'
 #' @return Named list containing:
 #'   \itemize{
-#'     \item <item> - A list of (vertex 1, vertex 2, weight)
+#'     \item <item> - A vector of edge weights
 #'   }
 #'
 #' @seealso [get_vertices()]
 #'
 #' @export
 get_edges <- function(vertices) {
-  # faster for large designs, no nodes returned
-  lapply(vertices, function(item_vertices) {
-    if (length(item_vertices) >= 2) {
-      return(unlist(lapply(
-        combn(item_vertices, 2, simplify = FALSE),
-        function(coords) sqrt(sum((coords[[1]] - coords[[2]])^2))
-      )))
-    } else {
-      return(c())
-    }
-  })
+  edges <- vector("list", length(vertices))
+  names(edges) <- names(vertices)
 
-  # # faster for small designs, nodes returned
-  # edges <- vector("list", length(vertices))
-  # names(edges) <- names(vertices)
-  #
-  # for (item in names(vertices)) {
-  #   coords <- vertices[[item]]
-  #   n_vertices <- length(coords)
-  #   if (n_vertices < 2) {
-  #     edges[[item]] <- list()
-  #     next
-  #   }
-  #
-  #   # Preallocate list to hold all edges
-  #   edge_list <- vector("list", n_vertices * (n_vertices - 1) / 2)
-  #   idx <- 1
-  #
-  #   for (i in 1:(n_vertices - 1)) {
-  #     for (j in (i + 1):n_vertices) {
-  #       edge_list[[idx]] <- c(i, j, sqrt(sum((coords[[i]] - coords[[j]])^2)))
-  #       idx <- idx + 1
-  #     }
-  #   }
-  #
-  #   edges[[item]] <- edge_list
-  # }
-  #
-  # return(edges)
+  for (item in names(vertices)) {
+    coords <- vertices[[item]]
+    n_vertices <- length(coords)
+    if (n_vertices < 2) {
+      edges[[item]] <- c()
+      next
+    }
+
+    # Preallocate vector to hold all edges
+    item_edges <- numeric(n_vertices * (n_vertices - 1) / 2)
+    idx <- 1
+
+    for (i in 1:(n_vertices - 1)) {
+      for (j in (i + 1):n_vertices) {
+        item_edges[[idx]] <- sqrt(sum((coords[[i]] - coords[[j]])^2))
+        idx <- idx + 1
+      }
+    }
+
+    edges[[item]] <- item_edges
+  }
+
+  return(edges)
 }
 
 #' Even Distribution Calculation for 3 Replications
@@ -417,7 +426,7 @@ calculate_adjacency_score <- function(design) {
 #' Create Pair Mapping
 #'
 #' @description
-#' Create an item pair mapping for \link{calculate_nb}.
+#' Create an item pair mapping for [calculate_nb].
 #'
 #' @param items Vector of items for the design
 #'
