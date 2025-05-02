@@ -3,7 +3,7 @@
 #' @description
 #' A default objective function that combines adjacency and balance scores.
 #'
-#' @param adj_weight Weight for adjacency score (default: 1)
+#' @param adj_weight Weight for adjacency score (default: 0)
 #' @param bal_weight Weight for balance score (default: 1)
 #'
 #' @examples
@@ -22,7 +22,7 @@
 #'
 #' @export
 objective_function <- function(
-    adj_weight = getOption("speed.adj_weight", 1),
+    adj_weight = getOption("speed.adj_weight", 0),
     bal_weight = getOption("speed.bal_weight", 1)) {
   return(
     function(design_matrix, layout_df, swap, spatial_cols) {

@@ -5,12 +5,12 @@
 \title{Default Objective Function}
 \usage{
 objective_function(
-  adj_weight = getOption("speed.adj_weight", 1),
+  adj_weight = getOption("speed.adj_weight", 0),
   bal_weight = getOption("speed.bal_weight", 1)
 )
 }
 \arguments{
-\item{adj_weight}{Weight for adjacency score (default: 1)}
+\item{adj_weight}{Weight for adjacency score (default: 0)}
 
 \item{bal_weight}{Weight for balance score (default: 1)}
 }

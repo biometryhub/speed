@@ -15,6 +15,8 @@ behaviour of the optimisation algorithm.
 \item{\code{speed.adaptive_swaps}}{Logical; if \code{TRUE}, adjusts swap parameters based on temperature (default: \code{FALSE}).}
 \item{\code{speed.start_temp}}{Starting temperature for simulated annealing (default: 100).}
 \item{\code{speed.cooling_rate}}{Rate at which temperature decreases for simulated annealing (default: 0.99).}
+\item{\code{speed.adj_weight}}{Weight for adjacency score (default: 0).}
+\item{\code{speed.bal_weight}}{Weight for balance score (default: 1).}
 }
 }
 \section{Setting options}{
