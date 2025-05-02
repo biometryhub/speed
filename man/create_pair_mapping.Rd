@@ -14,19 +14,19 @@ Named vector of item pairs as a character separated by \code{","}:
 \itemize{
 \item "<item 2>,<item 1>" - "<item 1>,<item 2>"
 \item "<item 3>,<item 1>" - "<item 1>,<item 3>"
-\item "..."
+\item ...
 \item "\if{html}{\out{<item n-1>}},<item 1>" - "<item 1>,\if{html}{\out{<item n-1>}}"
 \item "\if{html}{\out{<item n>}},<item 1>" - "<item 1>,\if{html}{\out{<item n>}}"
 \item "<item 3>,<item 2>" - "<item 2>,<item 3>"
 \item "<item 4>,<item 2>" - "<item 2>,<item 4>"
-\item "..."
+\item ...
 \item "\if{html}{\out{<item n-1>}},<item 2>" - "<item 2>,\if{html}{\out{<item n-1>}}"
 \item "\if{html}{\out{<item n>}},<item 2>" - "<item 2>,\if{html}{\out{<item n>}}"
-\item "..."
+\item ...
 \item "\if{html}{\out{<item n>}},\if{html}{\out{<item n-1>}}" - "\if{html}{\out{<item n-1>}},\if{html}{\out{<item n>}}"
 \item "<item 1>,<item 1>" - "<item 1>,<item 1>"
 \item "<item 2>,<item 2>" - "<item 2>,<item 2>"
-\item "..."
+\item ...
 \item "\if{html}{\out{<item n-1>}},\if{html}{\out{<item n-1>}}" - "\if{html}{\out{<item n-1>}},\if{html}{\out{<item n-1>}}"
 \item "\if{html}{\out{<item n>}},\if{html}{\out{<item n>}}" - "\if{html}{\out{<item n>}},\if{html}{\out{<item n>}}"
 }

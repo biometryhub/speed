@@ -452,19 +452,19 @@ calculate_adjacency_score <- function(design) {
 #' \itemize{
 #'   \item "<item 2>,<item 1>" - "<item 1>,<item 2>"
 #'   \item "<item 3>,<item 1>" - "<item 1>,<item 3>"
-#'   \item "..."
+#'   \item ...
 #'   \item "<item n-1>,<item 1>" - "<item 1>,<item n-1>"
 #'   \item "<item n>,<item 1>" - "<item 1>,<item n>"
 #'   \item "<item 3>,<item 2>" - "<item 2>,<item 3>"
 #'   \item "<item 4>,<item 2>" - "<item 2>,<item 4>"
-#'   \item "..."
+#'   \item ...
 #'   \item "<item n-1>,<item 2>" - "<item 2>,<item n-1>"
 #'   \item "<item n>,<item 2>" - "<item 2>,<item n>"
-#'   \item "..."
+#'   \item ...
 #'   \item "<item n>,<item n-1>" - "<item n-1>,<item n>"
 #'   \item "<item 1>,<item 1>" - "<item 1>,<item 1>"
 #'   \item "<item 2>,<item 2>" - "<item 2>,<item 2>"
-#'   \item "..."
+#'   \item ...
 #'   \item "<item n-1>,<item n-1>" - "<item n-1>,<item n-1>"
 #'   \item "<item n>,<item n>" - "<item n>,<item n>"
 #' }
