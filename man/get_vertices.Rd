@@ -2,7 +2,7 @@
 % Please edit documentation in R/metrics.R
 \name{get_vertices}
 \alias{get_vertices}
-\title{Get Weighted Edges}
+\title{Get Vertices of Each Item}
 \usage{
 get_vertices(design_matrix)
 }
@@ -16,7 +16,7 @@ Named list containing:
 }
 }
 \description{
-Calculate the weight of edges from vertices.
+Get the vertices of each item in a design matrix.
 }
 \examples{
 design_matrix <- matrix(c(1, 2, 2, 1, 3, 2, 1, 3, 3), nrow = 3, ncol = 3)

@@ -11,7 +11,7 @@ generate_neighbor(design_matrix, swap_matrix, swap_count, swap_all_blocks)
 
 \item{swap_matrix}{A matrix that constrains swap boundaries}
 
-\item{swap_count}{Number of treatment swaps per iteration}
+\item{swap_count}{Number of swaps per iteration}
 
 \item{swap_all_blocks}{Logical; if TRUE, performs swaps in all blocks at each iteration}
 }
