@@ -4,15 +4,17 @@
 \alias{calculate_nb}
 \title{Neighbour Balance Calculation}
 \usage{
-calculate_nb(design_matrix)
+calculate_nb(design_matrix, pair_mapping = NULL)
 }
 \arguments{
 \item{design_matrix}{A design matrix}
+
+\item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
 }
 \value{
 Named list containing:
 \itemize{
-\item nb - Named list of pairs of items and their number of occurrence
+\item nb - Table of pairs of items and their number of occurrence
 \item max_nb - The highest number of occurrence
 \item max_pairs - Vector of pairs of items with the highest number of occurrence
 }
@@ -25,4 +27,7 @@ counted.
 design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
 calculate_nb(design_matrix)
 
+}
+\seealso{
+\code{\link[=objective_function_piepho]{objective_function_piepho()}}
 }

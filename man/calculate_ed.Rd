@@ -4,19 +4,23 @@
 \alias{calculate_ed}
 \title{Even Distribution Calculation}
 \usage{
-calculate_ed(design_matrix)
+calculate_ed(design_matrix, previous_ed = NULL, swapped_items = NULL)
 }
 \arguments{
 \item{design_matrix}{A design matrix}
+
+\item{previous_ed}{Named list of the previous ed calculation}
+
+\item{swapped_items}{Items which were swapped during the current iteration}
 }
 \value{
 Named list containing:
 \itemize{
 \item \if{html}{\out{<number of replications>}} - Named list containing:
 \itemize{
-\item msts - Named list of pairs of items and their mst
+\item msts - Named list of items and their mst
 \item min_mst - The lowest mst
-\item min_pairs - Pairs of items with the lowest mst
+\item min_items - Pairs of items with the lowest mst
 }
 }
 }
@@ -27,4 +31,7 @@ A metric that represents the even distribution of each item with their minimum s
 design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
 calculate_ed(design_matrix)
 
+}
+\seealso{
+\code{\link[=objective_function_piepho]{objective_function_piepho()}}
 }

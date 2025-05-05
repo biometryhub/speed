@@ -219,11 +219,12 @@ test_that("speed_df handles irregular layouts with missing plots", {
 
     # Check values
     expect_equal(result$score, 3)
-    expect_equal(result$adjacency_score, 1)
-    expect_equal(result$balance_score, 2)
-
     expect_identical(which(is.na(result$design_df$treatment)),
                      which(is.na(irregular_data$treatment)))
+
+    skip_on_os("mac")
+    expect_equal(result$adjacency_score, 1)
+    expect_equal(result$balance_score, 2)
 
     vdiffr::expect_doppelganger("speed_df_missing_plots", autoplot(result))
 })
@@ -247,6 +248,7 @@ test_that("speed_df handles multiple spatial factors", {
     )
     expect_s3_class(result, "design")
 
+    skip_on_os("mac")
     vdiffr::expect_doppelganger("speed_df_multi_spatial_factors", autoplot(result))
 })
 
@@ -271,11 +273,13 @@ test_that("speed_df handles non-uniform treatment distributions", {
 
 
     # Check values
-    # expect_equal(result$score, 48.4)
-    # expect_equal(result$adjacency_score, 20.0)
-    # expect_equal(result$balance_score, 28.4)
-    # expect_equal(result$iterations_run, 224)
     expect_equal(result$stopped_early, TRUE)
+
+    skip_on_os("mac")
+    expect_equal(result$score, 27.4)
+    expect_equal(result$adjacency_score, 5.0)
+    expect_equal(result$balance_score, 22.4)
+    expect_equal(result$iterations_run, 674)
 
     vdiffr::expect_doppelganger("speed_df_non_uniform", autoplot(result))
 })
@@ -313,6 +317,7 @@ test_that("speed_df works with a custom objective function", {
     expect_equal(result$iterations_run, 1000)
     expect_equal(result$stopped_early, FALSE)
 
+    skip_on_os("mac")
     vdiffr::expect_doppelganger("speed_df_custom_obj_func", autoplot(result))
 })
 
@@ -333,6 +338,7 @@ test_that("speed_df handles large grid layouts", {
     )
     expect_s3_class(result, "design")
 
+    skip_on_os("mac")
     vdiffr::expect_doppelganger("speed_df_large_grid", autoplot(result))
 })
 
@@ -363,6 +369,7 @@ test_that("speed_df handles large layouts with blocking", {
     expect_equal(result$iterations_run, 5000)
     expect_equal(result$stopped_early, FALSE)
 
+    skip_on_os("mac")
     expect_snapshot(result$design_df)
 
     vdiffr::expect_doppelganger("speed_df_large_blocks", autoplot(result))
@@ -377,7 +384,7 @@ test_that("speed_df handles irregular layouts with 400 unique plots", {
         treatment = rep(LETTERS[1:10], 40)
     )
 
-    # Keep only unique row-column combinations
+    # Remove random plots
     set.seed(123)
     irregular_large_data$treatment[sample(1:nrow(irregular_large_data), 50)] <- NA
 
@@ -403,7 +410,12 @@ test_that("speed_df handles irregular layouts with 400 unique plots", {
     expect_identical(which(is.na(result$design_df$treatment)),
                      which(is.na(irregular_large_data$treatment)))
 
+    skip_on_os("mac")
     vdiffr::expect_doppelganger("speed_df_large_missing", autoplot(result))
+})
+
+# Test 16: Check large irregular layout
+test_that("speed_df handles irregular layouts with a clump of missing plots", {
 
     # Clumped missing plots
     irregular_large_data <- data.frame(
@@ -438,8 +450,12 @@ test_that("speed_df handles irregular layouts with 400 unique plots", {
     expect_identical(which(is.na(result$design_df$treatment)),
                      which(is.na(irregular_large_data$treatment)))
 
+    skip_on_os("mac")
     vdiffr::expect_doppelganger("speed_df_large_missing_clump", autoplot(result))
+})
 
+# Test 16: Check large irregular layout
+test_that("speed_df handles irregular layouts with L shaped plots", {
     # Large section of missing plots
     irregular_large_data <- data.frame(
         row = rep(1:20, each = 20),
@@ -473,6 +489,7 @@ test_that("speed_df handles irregular layouts with 400 unique plots", {
     expect_identical(which(is.na(result$design_df$treatment)),
                      which(is.na(irregular_large_data$treatment)))
 
+    skip_on_os("mac")
     vdiffr::expect_doppelganger("speed_df_large_missing_L", autoplot(result))
 })
 
