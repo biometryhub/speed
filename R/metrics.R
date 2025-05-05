@@ -14,7 +14,6 @@
 #' )
 #' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
-
 #' @return A function which returns a named list of numeric values with one required name `score` representing
 #'   the score of the design (lower is better) with a signature
 #'   `function(design_matrix, layout_df, swap, spatial_cols, previous_score, swapped_items)`. See signature
