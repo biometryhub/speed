@@ -101,7 +101,7 @@ speed_df <- function(
         # dummy_seed <- runif(1)
         seed <- .Random.seed[3]
     }
-    withr::local_seed(seed)
+    set.seed(seed)
 
     # Initialize design
     current_design <- layout_df
