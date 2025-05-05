@@ -540,3 +540,111 @@ objective_function_signature <- function(
     swapped_items) {
   stop("This is a dummy fucntion for documentation purposes only")
 }
+
+
+
+
+
+#' Custom Objective Function for Multi-site Treatment Allocation
+#'
+#' @param connectivity_weight Weight for cross-site connectivity score (default: 1)
+#' @param replication_weight Weight for within-site replication score (default: 1)
+#'
+#' @return A function that calculates the optimization score (lower is better)
+#'
+#' @export
+objective_function_multisite <- function(connectivity_weight = 1, replication_weight = 1) {
+    function(design, swap, spatial_cols) {
+        # Calculate cross-site connectivity score (negative because we want to maximize)
+        connectivity_score <- calculate_connectivity_score(design, swap, spatial_cols)
+
+        # Calculate within-site replication score
+        replication_score <- calculate_replication_score(design, swap)
+
+        # Combine scores (lower is better for the optimization algorithm)
+        return(connectivity_weight * (1/connectivity_score) + replication_weight * replication_score)
+    }
+}
+
+#' Calculate Cross-site Connectivity Score
+#'
+#' @description
+#' Calculates a score representing how well items are distributed across sites.
+#' Higher scores indicate better cross-site connectivity.
+#'
+#' @param design Data frame containing the current design
+#' @param swap Column name of the items
+#'
+#' @return Numeric score for cross-site connectivity (higher is better)
+#'
+#' @keywords internal
+calculate_connectivity_score <- function(design, swap, spatial_cols) {
+    # Get unique treatments and sites
+    treatments <- unique(design[[swap]])
+    sites <- unique(design[[spatial_cols]])
+
+    # Count number of sites each treatment appears in
+    connectivity_matrix <- table(design[[spatial_cols]], design[[swap]])
+    connectivity_matrix <- ifelse(connectivity_matrix > 0, 1, 0)
+    sites_per_treatment <- colSums(connectivity_matrix)
+
+    # Calculate the mean number of sites per treatment
+    # Using mean rather than total to avoid bias toward fewer treatments
+    mean_sites_per_treatment <- mean(sites_per_treatment)
+
+    # Calculate the variance of sites per treatment (lower is better)
+    variance_sites_per_treatment <- var(sites_per_treatment)
+
+    # Final connectivity score: higher mean and lower variance is better
+    connectivity_score <- mean_sites_per_treatment - 0.5 * sqrt(variance_sites_per_treatment)
+
+    return(connectivity_score)
+}
+
+#' Calculate Within-site Replication Score
+#'
+#' @description
+#' Calculates a score representing how well treatments are replicated within sites.
+#' Lower scores indicate better within-site replication balance.
+#'
+#' @param design Data frame containing the current design
+#' @param swap Column name of the treatment
+#'
+#' @return Numeric score for within-site replication balance (lower is better)
+#'
+#' @keywords internal
+calculate_replication_score <- function(design, swap) {
+    # Get unique treatments and sites
+    treatments <- unique(design[[swap]])
+    sites <- unique(design$site)
+
+    # Calculate ideal replication for each site
+    replication_score <- 0
+
+    for (site_val in sites) {
+        # Get plots in this site
+        site_plots <- design[design$site == site_val, ]
+
+        # Calculate ideal replication (plots per treatment) for this site
+        ideal_rep <- nrow(site_plots) / length(treatments)
+
+        # Calculate actual replications per treatment
+        actual_reps <- table(site_plots[[swap]])
+
+        # Fill in zeros for missing treatments
+        actual_reps_complete <- numeric(length(treatments))
+        names(actual_reps_complete) <- treatments
+        actual_reps_complete[names(actual_reps)] <- actual_reps
+
+        # Calculate squared deviations from ideal
+        deviations <- (actual_reps_complete - ideal_rep)^2
+
+        # Sum squared deviations for this site
+        site_score <- sum(deviations)
+
+        # Add to total score
+        replication_score <- replication_score + site_score
+    }
+
+    return(replication_score)
+}

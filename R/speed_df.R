@@ -101,7 +101,7 @@ speed_df <- function(
         # dummy_seed <- runif(1)
         seed <- .Random.seed[3]
     }
-    withr::local_seed(seed)
+    set.seed(seed)
 
     # Initialize design
     current_design <- layout_df
@@ -111,6 +111,11 @@ speed_df <- function(
     current_score <- obj_function(current_design, swap, spatial_cols)
     if (!is.numeric(current_score)) {
         stop("Value from `objective_function` must be numeric.")
+    }
+
+    # Progress reporting
+    if (!quiet) {
+        cat("Iteration: 1", "Score:", current_score, "\n")
     }
 
     best_score <- current_score
@@ -176,9 +181,9 @@ speed_df <- function(
     # Finalize output
     output <- list(
         design_df = best_design,
-        score = best_score,
-        adjacency_score = calculate_adjacency_score_df(best_design, swap),
-        balance_score = calculate_balance_score(best_design, swap, spatial_cols),
+        best_score = best_score,
+        # adjacency_score = calculate_adjacency_score_df(best_design, swap),
+        # balance_score = calculate_balance_score(best_design, swap, spatial_cols),
         scores = scores,
         temperatures = temperatures,
         iterations_run = length(scores),
