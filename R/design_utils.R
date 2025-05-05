@@ -61,7 +61,39 @@ generate_neighbor <- function(design_matrix, swap_matrix, swap_count, swap_all_b
   return(list(new_design = new_design, swapped_items = swapped_items))
 }
 
-# TODO: add doc
+#' Initialize Design Data Frame
+#'
+#' @description
+#' Initialize a design data frame with or without blocking.
+#'
+#' @param treatments All treatments to be allocated in the design
+#' @param nrows Number of rows in the design
+#' @param ncols Number of columns in the design
+#' @param nrows_block Number of rows in each block (default: `NULL`)
+#' @param ncols_block Number of columns in each block (default: `NULL`)
+#'
+#' @examples
+#' nrows <- 20
+#' ncols <- 6
+#' treatments <- rep(1:40, 3)
+#'
+#' # without blocks
+#' initialize_design_df(treatments, nrows, ncols)
+#'
+#' # with blocks
+#' initialize_design_df(treatments, nrows, ncols, 20, 2)
+#'
+#' @return A data frame containing these columns:
+#' \itemize{
+#'   \item row - Factor of rows
+#'   \item col - Factor of columns
+#'   \item treatment - Factor of treatments
+#'   \item row_block - Factor of rows of blocks
+#'   \item col_block - Factor of columns of blocks
+#'   \item block - Factor of blocks
+#' }
+#'
+#' @export
 initialize_design_df <- function(treatments, nrows, ncols, nrows_block = NULL, ncols_block = NULL) {
   .verify_initialize_design_df(treatments, nrows, ncols, nrows_block, ncols_block)
   rows <- factor(rep(1:nrows, ncols))
@@ -84,8 +116,20 @@ initialize_design_df <- function(treatments, nrows, ncols, nrows_block = NULL, n
   return(df)
 }
 
+#' Verify `initialize_design_df` Inputs
+#'
+#' @description
+#' Verify inputs for [initialize_design_df].
+#'
+#' @inheritParams initialize_design_df
+#'
+#' @keywords internal
 .verify_initialize_design_df <- function(treatments, nrows, ncols, nrows_block, block_ncols) {
   verify_positive_whole_number(nrows, ncols)
+
+  if (length(treatments) != nrows * ncols) {
+    stop("`treatments` must be a vector of length `nrows * ncols`")
+  }
 
   if ((!is.null(nrows_block) && is.null(block_ncols)) || (is.null(nrows_block) && !is.null(block_ncols))) {
     stop("`block_nrows` and `block_ncols` must both be numeric or `NULL`")
