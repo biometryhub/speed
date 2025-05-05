@@ -19,7 +19,7 @@ speed_df(
 \arguments{
 \item{data}{A data frame containing the experimental design with spatial coordinates}
 
-\item{swap}{A column name of the treatment to be swapped (e.g., \code{treatment})}
+\item{swap}{A column name of the items to be swapped (e.g., \code{treatment}, \code{variety}, \code{genotype}, etc)}
 
 \item{swap_within}{A string specifying the blocking variable that is a boundary within which to swap
 treatments. Specify \code{"1"} or \code{"none"} for no boundary (default: \code{"1"})}

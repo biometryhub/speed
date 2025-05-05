@@ -12,7 +12,7 @@ dat$colBlock <- rep(1:10, each = 40)
 
 des <- speed_df(dat, swap = "treat", swap_within = "rowBlock",
                 spatial_factors = ~ colBlock, iterations = 40000,
-                early_stop_iterations = 3000)
+                early_stop_iterations = 10000)
 
 ## check design
 

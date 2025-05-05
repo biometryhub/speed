@@ -7,7 +7,7 @@
 #' regular or irregular spatial designs.
 #'
 #' @param data A data frame containing the experimental design with spatial coordinates
-#' @param swap A column name of the treatment to be swapped (e.g., `treatment`)
+#' @param swap A column name of the items to be swapped (e.g., `treatment`, `variety`, `genotype`, etc)
 #' @param swap_within A string specifying the blocking variable that is a boundary within which to swap
 #'   treatments. Specify `"1"` or `"none"` for no boundary (default: `"1"`)
 #' @param spatial_factors A one-sided formula specifying spatial factors to consider for balance (default:
@@ -101,7 +101,7 @@ speed_df <- function(
         # dummy_seed <- runif(1)
         seed <- .Random.seed[3]
     }
-    set.seed(seed)
+    withr::local_seed(seed)
 
     # Initialize design
     current_design <- layout_df
@@ -441,7 +441,7 @@ calculate_balance_score_df <- function(design, swap, spatial_cols) {
 #'
 #' @export
 print.design <- function(x, ...) {
-    cat("Optimized Experimental Design\n")
+    cat("Optimised Experimental Design\n")
     cat("----------------------------\n")
     cat("Score:", x$score, "\n")
     cat("Adjacency Score:", x$adjacency_score, "\n")
@@ -452,8 +452,8 @@ print.design <- function(x, ...) {
     cat("Seed:", x$seed, "\n\n")
 
     # Print first few rows of the optimized design
-    cat("Optimized Design (first 6 rows):\n")
-    print(utils::head(x$design_df))
+    # cat("Optimized Design (first 6 rows):\n")
+    # print(utils::head(x$design_df))
 
     return(invisible(x))
 }

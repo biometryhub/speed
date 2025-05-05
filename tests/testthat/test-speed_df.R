@@ -1,12 +1,15 @@
-# Sample data for testing
-test_data <- data.frame(
-    row = rep(1:5, times = 4),
-    col = rep(1:4, each = 5),
-    treatment = rep(LETTERS[1:4], 5)
-)
+
 
 # Test 1: Check if the function runs without errors
 test_that("speed_df runs without errors", {
+
+    # Sample data for testing
+    test_data <- data.frame(
+        row = rep(1:5, times = 4),
+        col = rep(1:4, each = 5),
+        treatment = rep(LETTERS[1:4], 5)
+    )
+
     result <- speed_df(
         data = test_data,
         swap = "treatment",
@@ -20,6 +23,13 @@ test_that("speed_df runs without errors", {
 
 # Test 2: Validate output structure
 test_that("speed_df returns correct output structure", {
+    # Sample data for testing
+    test_data <- data.frame(
+        row = rep(1:5, times = 4),
+        col = rep(1:4, each = 5),
+        treatment = rep(LETTERS[1:4], 5)
+    )
+
     result <- speed_df(
         data = test_data,
         swap = "treatment",
@@ -62,6 +72,13 @@ test_that("speed_df returns correct output structure", {
 
 # Test 3: Check input validation for missing columns
 test_that("speed_df throws error for missing columns", {
+    # Sample data for testing
+    test_data <- data.frame(
+        row = rep(1:5, times = 4),
+        col = rep(1:4, each = 5),
+        treatment = rep(LETTERS[1:4], 5)
+    )
+
     expect_error(
         speed_df(
             data = test_data,
@@ -76,6 +93,13 @@ test_that("speed_df throws error for missing columns", {
 
 # Test 4: Check input validation for invalid spatial factors
 test_that("speed_df throws error for invalid spatial factors", {
+    # Sample data for testing
+    test_data <- data.frame(
+        row = rep(1:5, times = 4),
+        col = rep(1:4, each = 5),
+        treatment = rep(LETTERS[1:4], 5)
+    )
+
     expect_error(
         speed_df(
             data = test_data,
@@ -90,6 +114,13 @@ test_that("speed_df throws error for invalid spatial factors", {
 
 # Test 5: Check early stopping behaviour
 test_that("speed_df stops early when no improvement", {
+    # Sample data for testing
+    test_data <- data.frame(
+        row = rep(1:5, times = 4),
+        col = rep(1:4, each = 5),
+        treatment = rep(LETTERS[1:4], 5)
+    )
+
     result <- speed_df(
         data = test_data,
         swap = "treatment",
@@ -105,6 +136,13 @@ test_that("speed_df stops early when no improvement", {
 
 # Test 6: Check reproducibility with seed
 test_that("speed_df produces reproducible results with seed", {
+    # Sample data for testing
+    test_data <- data.frame(
+        row = rep(1:5, times = 4),
+        col = rep(1:4, each = 5),
+        treatment = rep(LETTERS[1:4], 5)
+    )
+
     result1 <- speed_df(
         data = test_data,
         swap = "treatment",
@@ -128,8 +166,14 @@ test_that("speed_df produces reproducible results with seed", {
 
 # Test 7: Check behaviour with swap_within boundaries
 test_that("speed_df respects swap_within boundaries", {
-    test_data$block <- rep(1:2, each = 10)
-    test_data$treatment <- c(rep(LETTERS[1:5], each = 2), rep(LETTERS[6:10], each = 2))
+    # Sample data for testing
+    test_data <- data.frame(
+        row = rep(1:5, times = 4),
+        col = rep(1:4, each = 5),
+        treatment = c(rep(LETTERS[1:5], each = 2), rep(LETTERS[6:10], each = 2)),
+        block = rep(1:2, each = 10)
+    )
+
     result <- speed_df(
         data = test_data,
         swap = "treatment",
@@ -139,6 +183,7 @@ test_that("speed_df respects swap_within boundaries", {
         seed = 42,
         quiet = TRUE
     )
+
     # Ensure treatments are swapped only within blocks
     block1_treatments <- unique(result$design_df$treatment[result$design_df$block == 1])
     block2_treatments <- unique(result$design_df$treatment[result$design_df$block == 2])
