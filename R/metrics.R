@@ -85,6 +85,8 @@ objective_function_piepho <- function(pair_mapping = NULL) {
       ed <- calculate_ed(design_matrix, previous_score$ed, swapped_items)
       ed_score <- -sum(vapply(ed, function(ed_rep) ed_rep$min_mst, numeric(1)))
       nb_score <- calculate_nb(design_matrix, pair_mapping)$max_nb
+
+      layout_df[[swap]] <- as.vector(design_matrix)
       bal_score <- calculate_balance_score(layout_df, swap, spatial_cols)
 
       return(list(score = nb_score + ed_score + bal_score, ed = ed))
