@@ -93,7 +93,7 @@ objective_function_piepho <- function(pair_mapping = NULL) {
   )
 }
 
-#' Neighbor Balance Calculation
+#' Neighbour Balance Calculation
 #'
 #' @description
 #' A metric that counts the occurrence of the same adjacent pairs. Only horizontal and vertical pairs are
@@ -505,7 +505,7 @@ create_pair_mapping <- function(items) {
 #' @export
 calculate_balance_score <- function(layout_df, swap, spatial_cols) {
   score <- sapply(spatial_cols, function(el) {
-    sum(apply(table(layout_df[[el]], layout_df[[swap]]), 1, var))
+    sum(apply(table(layout_df[[el]], layout_df[[swap]]), 1, var, na.rm = TRUE), na.rm = TRUE)
   })
   return(sum(score))
 }

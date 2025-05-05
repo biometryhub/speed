@@ -2,7 +2,7 @@
 % Please edit documentation in R/metrics.R
 \name{calculate_nb}
 \alias{calculate_nb}
-\title{Neighbor Balance Calculation}
+\title{Neighbour Balance Calculation}
 \usage{
 calculate_nb(design_matrix, pair_mapping = NULL)
 }
