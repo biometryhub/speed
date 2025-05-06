@@ -11,7 +11,7 @@ speed_matrix(
   spatial_factors = ~row + col,
   iterations = 10000,
   early_stop_iterations = 2000,
-  obj_function = objective_function(),
+  obj_function = objective_function_matrix(),
   quiet = FALSE,
   seed = NULL
 )
@@ -32,7 +32,7 @@ Specify \code{"1"} or \code{"none"} for no boundary (default: \code{"1"})}
 \item{early_stop_iterations}{Number of iterations without improvement before early stopping (default: 2000)}
 
 \item{obj_function}{Objective function used to calculate score (lower is better) (default:
-\link{objective_function})}
+\link{objective_function_matrix})}
 
 \item{quiet}{Logical; if TRUE, suppresses progress messages (default: FALSE)}
 
@@ -53,7 +53,7 @@ A list containing:
 \item stopped_early - Logical indicating if optimization stopped early
 \item treatments - Vector of unique treatments
 \item seed - Random seed used for reproducibility of the design. If not set in the function, the seed is
-set to the second element of .Random.seed.
+set to the third element of .Random.seed.
 }
 }
 \description{

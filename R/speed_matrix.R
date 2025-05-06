@@ -13,7 +13,7 @@
 #' @param iterations Maximum number of iterations for the simulated annealing algorithm (default: 10000)
 #' @param early_stop_iterations Number of iterations without improvement before early stopping (default: 2000)
 #' @param obj_function Objective function used to calculate score (lower is better) (default:
-#'   [objective_function])
+#'   [objective_function_matrix])
 #' @param quiet Logical; if TRUE, suppresses progress messages (default: FALSE)
 #' @param seed A numeric value for random seed. If provided, it ensures reproducibility of results (default:
 #'   NULL).
@@ -31,7 +31,7 @@
 #'   \item stopped_early - Logical indicating if optimization stopped early
 #'   \item treatments - Vector of unique treatments
 #'   \item seed - Random seed used for reproducibility of the design. If not set in the function, the seed is
-#'      set to the second element of .Random.seed.
+#'      set to the third element of .Random.seed.
 #' }
 #'
 #' @importFrom stringi stri_sort

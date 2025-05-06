@@ -31,7 +31,8 @@
 #'   \item iterations_run - Total number of iterations performed
 #'   \item stopped_early - Logical indicating if optimization stopped early
 #'   \item treatments - Vector of unique treatments
-#'   \item seed - Random seed used for reproducibility of the design
+#'   \item seed - Random seed used for reproducibility of the design. If not set in the function, the seed is
+#'      set to the third element of .Random.seed.
 #' }
 #'
 #' @importFrom stringi stri_sort
