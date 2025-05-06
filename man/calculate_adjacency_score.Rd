@@ -29,7 +29,7 @@ design_no_adj <- data.frame(
 )
 
 # Gives 0
-calculate_adjacency_score_df(design_no_adj, "treatment")
+calculate_adjacency_score(design_no_adj, "treatment")
 
 # Example 2: Design with adjacencies
 design_with_adj <- data.frame(
@@ -39,7 +39,7 @@ design_with_adj <- data.frame(
 )
 
 # Gives value 6
-calculate_adjacency_score_df(design_with_adj, "treatment")
+calculate_adjacency_score(design_with_adj, "treatment")
 }
 }
 \keyword{internal}
