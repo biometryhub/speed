@@ -17,12 +17,12 @@ speed(
 )
 }
 \arguments{
-\item{data}{A data frame containing the initial design layout with row and col coordinates}
+\item{data}{A data frame containing the experimental design with spatial coordinates}
 
-\item{swap}{A column name of the item to be swapped (e.g., \code{treatment})}
+\item{swap}{A column name of the items to be swapped (e.g., \code{treatment}, \code{variety}, \code{genotype}, etc)}
 
-\item{swap_within}{A string specifying the blocking variable that is a boundary within which to swap items.
-Specify \code{"1"} or \code{"none"} for no boundary (default: \code{"1"})}
+\item{swap_within}{A string specifying the blocking variable that is a boundary within which to swap
+treatments. Specify \code{"1"} or \code{"none"} for no boundary (default: \code{"1"})}
 
 \item{spatial_factors}{A one-sided formula specifying spatial factors to consider for balance (default:
 \code{~row + col})}
@@ -42,7 +42,6 @@ NULL).}
 \value{
 A list containing:
 \itemize{
-\item design - Matrix of optimized treatment layout
 \item design_df - Data frame of optimized design
 \item score - Final optimization score
 \item adjacency_score - Score for treatment adjacencies
@@ -52,13 +51,13 @@ A list containing:
 \item iterations_run - Total number of iterations performed
 \item stopped_early - Logical indicating if optimization stopped early
 \item treatments - Vector of unique treatments
-\item seed - Random seed used for reproducibility of the design. If not set in the function, the seed is
-set to the second element of .Random.seed.
+\item seed - Random seed used for reproducibility of the design
 }
 }
 \description{
 Optimizes the spatial layout of experimental designs using simulated annealing to minimize
-treatment adjacency and maintain treatment balance across spatial factors.
+treatment adjacency and maintain treatment balance across spatial factors. Works with
+regular or irregular spatial designs.
 }
 \examples{
 # Create a simple design with 3 replicates of 4 treatments in a 4x3 layout

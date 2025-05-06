@@ -40,6 +40,6 @@ layout_df <- data.frame(
   row = rep(1:3, each = 3),
   col = rep(1:3, times = 3)
 )
-objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
+objective_function_matrix()(design_matrix, layout_df, "treatment", c("row", "col"))
 
 }
