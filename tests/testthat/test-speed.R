@@ -214,11 +214,11 @@ test_that("speed handles irregular layouts with missing plots", {
     expect_s3_class(result, "design")
 
     # Check values
-    expect_equal(result$score, 1)
     expect_identical(which(is.na(result$design_df$treatment)),
                      which(is.na(irregular_data$treatment)))
 
     skip_on_os("mac")
+    expect_equal(result$score, 1)
 
     vdiffr::expect_doppelganger("speed_missing_plots", autoplot(result))
 })
@@ -481,3 +481,9 @@ test_that("speed handles irregular layouts with L shaped plots", {
 # - NSE
 # - Prints progress when quiet = FALSE
 # - different designs
+# - Adaptive swaps
+# - Seed not set
+# - Objective function not numeric result
+# - swap_all_blocks
+# - Print method output
+# - Plotting

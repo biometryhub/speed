@@ -97,13 +97,6 @@ speed <- function(
     spatial_cols <- all.vars(spatial_factors)
     treatments <- layout_df[[swap]]
 
-    # Set seed for reproducibility
-    if (is.null(seed)) {
-        # dummy_seed <- runif(1)
-        seed <- .Random.seed[3]
-    }
-    set.seed(seed)
-
     # Initialize design
     current_design <- layout_df
     best_design <- current_design
@@ -119,6 +112,13 @@ speed <- function(
     scores <- numeric(iterations)
     temperatures <- numeric(iterations)
     last_improvement_iter <- 0
+
+    # Set seed for reproducibility
+    if (is.null(seed)) {
+        # dummy_seed <- runif(1)
+        seed <- .GlobalEnv$.Random.seed
+    }
+    set.seed(seed)
 
     # Main optimization loop
     for (iter in 1:iterations) {
@@ -291,7 +291,7 @@ objective_function <- function(adj_weight = getOption("speed.adj_weight", 0),
 #' )
 #'
 #' # Gives 0
-#' calculate_adjacency_score_df(design_no_adj, "treatment")
+#' calculate_adjacency_score(design_no_adj, "treatment")
 #'
 #' # Example 2: Design with adjacencies
 #' design_with_adj <- data.frame(
@@ -301,7 +301,7 @@ objective_function <- function(adj_weight = getOption("speed.adj_weight", 0),
 #' )
 #'
 #' # Gives value 6
-#' calculate_adjacency_score_df(design_with_adj, "treatment")
+#' calculate_adjacency_score(design_with_adj, "treatment")
 #'}
 #' @keywords internal
 calculate_adjacency_score <- function(design, swap) {
@@ -310,45 +310,10 @@ calculate_adjacency_score <- function(design, swap) {
                      ncol = max(as.numeric(as.character(design$col)), na.rm = TRUE),
                      byrow = FALSE)
 
-    # row_adjacencies <- rowSums(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
-    # col_adjacencies <- colSums(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
     row_adjacencies <- sum(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
     col_adjacencies <- sum(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
     return(row_adjacencies + col_adjacencies)
 }
-
-#' Calculate Balance Score for Design
-#'
-#' @param design Data frame containing the current design
-#' @param swap Column name of the treatment
-#' @param spatial_cols Character vector of spatial factor column names
-#'
-#' @return Numeric score for spatial balance (lower is better)
-#'
-#' @keywords internal
-calculate_balance_score_df <- function(design, swap, spatial_cols) {
-    treatments <- unique(design[[swap]])
-    factor_levels <- lapply(spatial_cols, function(factor) unique(design[[factor]]))
-
-    # Calculate expected count for each treatment-factor combination
-    total_count <- nrow(design)
-    expected_count <- total_count / (prod(sapply(factor_levels, length)) * length(treatments))
-
-    # Create a contingency table for each spatial factor
-    balance_score <- 0
-    for (factor in spatial_cols) {
-        tab <- table(design[[factor]], design[[swap]])
-        actual_counts <- as.matrix(tab)
-
-        # Calculate squared deviations from expected counts
-        deviations <- (actual_counts - expected_count)^2
-        balance_score <- balance_score + sum(deviations)
-    }
-
-    return(balance_score)
-}
-
-
 
 #' Print method for speed design objects
 #'

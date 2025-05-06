@@ -60,14 +60,11 @@ library(speed)
 df <- data.frame(
   row = rep(1:4, each = 3),
   col = rep(1:3, times = 4),
-  treatment = rep(LETTERS[1:4], 3)
+  treatment = rep(LETTERS[1:4], each = 3)
 )
 
-# Set seed for reproducibility
-set.seed(42)
-
-# Optimize the design
-result <- speed(df, "treatment")
+# Optimize the design with seed for reproducibility
+result <- speed(df, "treatment", seed = 42)
 
 # Plot the optimized design
 autoplot(result)
@@ -89,14 +86,12 @@ df <- data.frame(
   block = rep(1:3, each = 8)
 )
 
-# Set seed for reproducibility
-set.seed(42)
-
 # Optimize while respecting blocks
 result <- speed(df, 
                 "treatment",
                 swap_within = "block",
-                iterations = 5000)
+                iterations = 5000,
+                seed = 42)
 
 # Plot the design with block boundaries
 autoplot(result)
