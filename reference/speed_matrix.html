@@ -48,7 +48,7 @@ treatment adjacency and maintain treatment balance across spatial factors.</p>
 <span>  spatial_factors <span class="op">=</span> <span class="op">~</span><span class="va">row</span> <span class="op">+</span> <span class="va">col</span>,</span>
 <span>  iterations <span class="op">=</span> <span class="fl">10000</span>,</span>
 <span>  early_stop_iterations <span class="op">=</span> <span class="fl">2000</span>,</span>
-<span>  obj_function <span class="op">=</span> <span class="fu"><a href="objective_function.html">objective_function</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  obj_function <span class="op">=</span> <span class="fu"><a href="objective_function_matrix.html">objective_function_matrix</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -86,7 +86,7 @@ Specify <code>"1"</code> or <code>"none"</code> for no boundary (default: <code>
 
 <dt id="arg-obj-function">obj_function<a class="anchor" aria-label="anchor" href="#arg-obj-function"></a></dt>
 <dd><p>Objective function used to calculate score (lower is better) (default:
-<a href="objective_function.html">objective_function</a>)</p></dd>
+<a href="objective_function_matrix.html">objective_function_matrix</a>)</p></dd>
 
 
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
@@ -111,7 +111,7 @@ NULL).</p></dd>
 <li><p>stopped_early - Logical indicating if optimization stopped early</p></li>
 <li><p>treatments - Vector of unique treatments</p></li>
 <li><p>seed - Random seed used for reproducibility of the design. If not set in the function, the seed is
-set to the second element of .Random.seed.</p></li>
+set to the third element of .Random.seed.</p></li>
 </ul></div>
 
     <div class="section level2">
