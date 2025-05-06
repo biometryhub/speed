@@ -48,9 +48,9 @@ plot_design <- function(design_result, treatment_var = NULL, block_var = NULL,
       possible_treatments <- setdiff(names(design_df), c(row_var, col_var, block_var))
       if (length(possible_treatments) == 1) {
         treatment_var <- possible_treatments[1]
-      } else if ("permute" %in% names(design_result)) {
+      } else if ("swap" %in% names(design_result)) {
         # Extract treatment variable from the permute formula
-        treatment_var <- all.vars(design_result$permute)[1]
+        treatment_var <- all.vars(design_result$swap)[1]
       } else {
         stop("Treatment variable cannot be automatically determined. Please specify treatment_var.")
       }
@@ -88,7 +88,7 @@ plot_design <- function(design_result, treatment_var = NULL, block_var = NULL,
     ggplot2::geom_tile(color = "black") +
     ggplot2::geom_text(ggplot2::aes(label = .data[[treatment_var]]), size = 3) +
     ggplot2::scale_fill_viridis_d() +
-    ggplot2::labs(title = title, fill = treatment_var) +
+    ggplot2::labs(title = title, fill = treatment_var, y = row_var) +
     ggplot2::theme_minimal() +
     ggplot2::theme(axis.text = ggplot2::element_text(size = 10),
                    axis.title = ggplot2::element_text(size = 12),
