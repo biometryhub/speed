@@ -36,7 +36,7 @@ initialize_design_matrix <- function(treatment_matrix, swap_matrix) {
 #' @param swap_all_blocks Logical; if TRUE, performs swaps in all blocks at each iteration
 #'
 #' @keywords internal
-generate_neighbor <- function(design_matrix, swap_matrix, swap_count, swap_all_blocks) {
+generate_neighbor_matrix <- function(design_matrix, swap_matrix, swap_count, swap_all_blocks) {
   swapped_items <- character(2 * swap_count)
   new_design <- design_matrix
   swap_levels <- unique(as.vector(swap_matrix))
@@ -64,9 +64,9 @@ generate_neighbor <- function(design_matrix, swap_matrix, swap_count, swap_all_b
 # TODO: add doc
 initialize_design_df <- function(treatments, nrows, ncols, nrows_block = NULL, ncols_block = NULL) {
   .verify_initialize_design_df(treatments, nrows, ncols, nrows_block, ncols_block)
-  rows <- factor(rep(1:nrows, ncols))
-  cols <- factor(rep(1:ncols, each = nrows))
-  treatments <- factor(treatments)
+  rows <- rep(1:nrows, ncols)
+  cols <- rep(1:ncols, each = nrows)
+  treatments <- treatments
   df <- data.frame(
     row = rows,
     col = cols,
@@ -77,9 +77,9 @@ initialize_design_df <- function(treatments, nrows, ncols, nrows_block = NULL, n
     nblocks_row <- nrows / nrows_block
     nblocks_col <- ncols / ncols_block
 
-    df$row_block <- factor(rep(1:nblocks_row, ncols, each = nrows_block))
-    df$col_block <- factor(rep(1:nblocks_col, each = nrows * ncols_block))
-    df$block <- factor(as.numeric(df$row_block) + nblocks_row * (as.numeric(df$col_block) - 1))
+    df$row_block <- rep(1:nblocks_row, ncols, each = nrows_block)
+    df$col_block <- rep(1:nblocks_col, each = nrows * ncols_block)
+    df$block <- as.numeric(df$row_block) + nblocks_row * (as.numeric(df$col_block) - 1)
   }
   return(df)
 }

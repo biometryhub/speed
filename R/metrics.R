@@ -12,7 +12,7 @@
 #'   row = rep(1:3, each = 3),
 #'   col = rep(1:3, times = 3)
 #' )
-#' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
+#' objective_function_matrix()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
 #' @return A function which returns a named list of numeric values with one required name `score` representing
 #'   the score of the design (lower is better) with a signature
@@ -22,13 +22,13 @@
 #' @seealso [objective_function_piepho()]
 #'
 #' @export
-objective_function <- function(
+objective_function_matrix <- function(
     adj_weight = getOption("speed.adj_weight", 0),
     bal_weight = getOption("speed.bal_weight", 1)) {
   return(
     function(design_matrix, layout_df, swap, spatial_cols, ...) {
       if (adj_weight != 0) {
-        adj <- calculate_adjacency_score(design_matrix)
+        adj <- calculate_adjacency_score_matrix(design_matrix)
 
         if (bal_weight == 0) {
           return(list(score = adj))
@@ -62,7 +62,7 @@ objective_function <- function(
 #'   row = rep(1:3, each = 3),
 #'   col = rep(1:3, times = 3)
 #' )
-#' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
+#' objective_function_matrix()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
 #' pair_mapping <- create_pair_mapping(c(design_matrix))
 #' obj_function_piepho <- function(pair_mapping) {
@@ -84,6 +84,8 @@ objective_function_piepho <- function(pair_mapping = NULL) {
       ed <- calculate_ed(design_matrix, previous_score$ed, swapped_items)
       ed_score <- -sum(vapply(ed, function(ed_rep) ed_rep$min_mst, numeric(1)))
       nb_score <- calculate_nb(design_matrix, pair_mapping)$max_nb
+
+      layout_df[[swap]] <- as.vector(design_matrix)
       bal_score <- calculate_balance_score(layout_df, swap, spatial_cols)
 
       return(list(score = nb_score + ed_score + bal_score, ed = ed))
@@ -373,6 +375,8 @@ get_edges <- function(vertices) {
 #'
 #' @param edges A list of vectors of edge weights
 #'
+#' @importFrom utils modifyList
+#'
 #' @return Named list containing:
 #' \itemize{
 #'   \item msts - Named list of pairs of items and their mst
@@ -425,10 +429,10 @@ get_edges <- function(vertices) {
 #'   ),
 #'   nrow = 3, byrow = TRUE
 #' )
-#' calculate_adjacency_score(design) # Returns the number of adjacent matches
+#' calculate_adjacency_score_matrix(design) # Returns the number of adjacent matches
 #'
 #' @export
-calculate_adjacency_score <- function(design) {
+calculate_adjacency_score_matrix <- function(design) {
   # row_adjacencies <- rowSums(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
   # col_adjacencies <- colSums(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
   row_adjacencies <- sum(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
@@ -442,6 +446,8 @@ calculate_adjacency_score <- function(design) {
 #' Create an item pair mapping for [calculate_nb].
 #'
 #' @param items Vector of items for the design
+#'
+#' @importFrom stats setNames
 #'
 #' @examples
 #' treatments <- c(rep(1:10, 4), rep(11:16, 3), rep(17:27, 2))
@@ -527,7 +533,7 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #'   row = rep(1:3, each = 3),
 #'   col = rep(1:3, times = 3)
 #' )
-#' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
+#' objective_function_matrix()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
 #' @return A named list of numeric values with one required name `score` representing the score of the design
 #'   (lower is better)

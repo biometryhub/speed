@@ -52,17 +52,14 @@ library(speed)
 df <- data.frame(
   row = rep(1:4, each = 3),
   col = rep(1:3, times = 4),
-  treatment = rep(LETTERS[1:4], 3)
+  treatment = rep(LETTERS[1:4], each = 3)
 )
 
-# Set seed for reproducibility
-set.seed(42)
-
-# Optimize the design
-result <- speed(df, "treatment")
-#> Iteration: 1000 Score: 1 Best: 1 Since Improvement: 734 
-#> Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1734 
-#> Early stopping at iteration 2266
+# Optimize the design with seed for reproducibility
+result <- speed(df, "treatment", seed = 42)
+#> Iteration: 1000 Score: 1 Best: 1 Since Improvement: 526 
+#> Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1526 
+#> Early stopping at iteration 2474
 
 # Plot the optimized design
 autoplot(result)
@@ -91,17 +88,15 @@ df <- data.frame(
   block = rep(1:3, each = 8)
 )
 
-# Set seed for reproducibility
-set.seed(42)
-
 # Optimize while respecting blocks
 result <- speed(df, 
                 "treatment",
                 swap_within = "block",
-                iterations = 5000)
-#> Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 352 
-#> Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1352 
-#> Early stopping at iteration 2648
+                iterations = 5000,
+                seed = 42)
+#> Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 394 
+#> Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1394 
+#> Early stopping at iteration 2606
 
 # Plot the design with block boundaries
 autoplot(result)
