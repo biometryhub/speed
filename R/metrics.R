@@ -572,30 +572,35 @@ objective_function_multisite <- function(connectivity_weight = 1, replication_we
     }
 }
 
-#' Calculate Cross-site Connectivity Score
+#' Calculate Cross-site Connectivity Score with Replication Constraints
 #'
 #' @description
-#' Calculates a score representing how well items are distributed across sites.
+#' Calculates a score representing how well treatments are distributed across sites,
+#' taking into account minimum replication requirements.
 #' Higher scores indicate better cross-site connectivity.
 #'
 #' @param design Data frame containing the current design
-#' @param swap Column name of the items
+#' @param swap Column name of the treatment
+#' @param min_replication Minimum replicates required per site (default: 2)
 #'
 #' @return Numeric score for cross-site connectivity (higher is better)
 #'
 #' @keywords internal
-calculate_connectivity_score <- function(design, swap, spatial_cols) {
+calculate_connectivity_score <- function(design, swap, spatial_factors, min_replication = 2) {
     # Get unique treatments and sites
     treatments <- unique(design[[swap]])
-    sites <- unique(design[[spatial_cols]])
+    sites <- unique(design[[spatial_factors]])
 
-    # Count number of sites each treatment appears in
-    connectivity_matrix <- table(design[[spatial_cols]], design[[swap]])
-    connectivity_matrix <- ifelse(connectivity_matrix > 0, 1, 0)
-    sites_per_treatment <- colSums(connectivity_matrix)
+    # Create a matrix of treatment counts per site
+    connectivity_matrix <- table(design[[spatial_factors]], design[[swap]])
+
+    # A treatment is considered "present" in a site only if it has at least min_replication
+    valid_connectivity <- ifelse(connectivity_matrix >= min_replication, 1, 0)
+
+    # Count number of sites each treatment appears in (with sufficient replication)
+    sites_per_treatment <- colSums(valid_connectivity)
 
     # Calculate the mean number of sites per treatment
-    # Using mean rather than total to avoid bias toward fewer treatments
     mean_sites_per_treatment <- mean(sites_per_treatment)
 
     # Calculate the variance of sites per treatment (lower is better)
@@ -607,22 +612,27 @@ calculate_connectivity_score <- function(design, swap, spatial_cols) {
     return(connectivity_score)
 }
 
-#' Calculate Within-site Replication Score
+
+#' Calculate Within-site Replication Score with Minimum Replication Requirement
 #'
 #' @description
 #' Calculates a score representing how well treatments are replicated within sites.
+#' Heavily penalizes treatments that appear only once in a site.
 #' Lower scores indicate better within-site replication balance.
 #'
 #' @param design Data frame containing the current design
 #' @param swap Column name of the treatment
+#' @param min_replication Minimum desired replication within a site (default: 2)
+#' @param single_replicate_penalty Penalty for treatments with only 1 replicate (default: 100)
 #'
 #' @return Numeric score for within-site replication balance (lower is better)
 #'
 #' @keywords internal
-calculate_replication_score <- function(design, swap) {
+calculate_replication_score <- function(design, swap, min_replication = 2,
+                                        single_replicate_penalty = 100) {
     # Get unique treatments and sites
     treatments <- unique(design[[swap]])
-    sites <- unique(design$site)
+    sites <- unique(design[[spatial_factors]])
 
     # Calculate ideal replication for each site
     replication_score <- 0
@@ -632,21 +642,26 @@ calculate_replication_score <- function(design, swap) {
         site_plots <- design[design$site == site_val, ]
 
         # Calculate ideal replication (plots per treatment) for this site
-        ideal_rep <- nrow(site_plots) / length(treatments)
+        # ideal_rep <- nrow(site_plots) / length(treatments)
 
         # Calculate actual replications per treatment
         actual_reps <- table(site_plots[[swap]])
+
+        # Apply heavy penalty for treatments with less than min_replication
+        single_rep_count <- sum(actual_reps < min_replication)
+        single_rep_penalty <- single_rep_count * single_replicate_penalty
 
         # Fill in zeros for missing treatments
         actual_reps_complete <- numeric(length(treatments))
         names(actual_reps_complete) <- treatments
         actual_reps_complete[names(actual_reps)] <- actual_reps
 
-        # Calculate squared deviations from ideal
-        deviations <- (actual_reps_complete - ideal_rep)^2
+        # Calculate squared deviations from ideal (for treatments that exist in this site)
+        present_treatments <- names(actual_reps)[actual_reps > 0]
+        deviations <- (actual_reps_complete[present_treatments] - ideal_rep)^2
 
         # Sum squared deviations for this site
-        site_score <- sum(deviations)
+        site_score <- sum(deviations) + single_rep_penalty
 
         # Add to total score
         replication_score <- replication_score + site_score
@@ -654,3 +669,4 @@ calculate_replication_score <- function(design, swap) {
 
     return(replication_score)
 }
+

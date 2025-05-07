@@ -1,26 +1,33 @@
 # Set up parameters
-sites <- c(rep("S1", 18), rep("S2", 20), rep("S3", 24))
-plot_ids <- paste0(sites, "_", c(1:18, 1:20, 1:24))
-treatments <- paste0("V", 1:15)
+sites <- c(rep("S1", 54), rep("S2", 60), rep("S3", 72), rep("S4", 66), rep("S5", 60))
+plot_ids <- paste0(sites, "_", c(1:54, 1:60, 1:72, 1:66, 1:60))
+treatments <- paste0("V", 1:45)
+
 
 # Create initial data frame with random treatment allocation
 set.seed(42) # For reproducibility
 initial_design <- data.frame(
     site = sites,
     plot = plot_ids,
-    row = c(rep(1:6, each = 3), rep(1:5, each = 4), rep(1:6, each = 4)),
-    col = c(rep(1:3, times = 6), rep(1:4, times = 5), rep(1:4, times = 6)),
-    treatment = sample(treatments, 62, replace = TRUE)
+    row = c(rep(1:9, each = 6), rep(1:10, each = 6), rep(1:9, each = 8), rep(1:11, each = 6),rep(1:10, each = 6)),
+    col = c(rep(1:6, times = 9), rep(1:6, times = 10), rep(1:8, times = 9), rep(1:6, times = 11), rep(1:6, times = 10))
 )
+trt_reps <- c()
+for(i in 1:length(treatments)) {
+    trt_reps <- c(trt_reps, rep(treatments[i], times = sample(2:8, 1)))
+}
+trt_reps <- c(trt_reps, sample(treatments, size = nrow(initial_design)-length(trt_reps), replace = T))
+
+initial_design$treatment <- trt_reps
 
 # Check counts
 table(initial_design$site)
-# S1 S2 S3
-# 18 20 24
+# S1 S2 S3 S4 S5
+# 54 60 72 66 60
 
 # Check initial treatment distribution
 table(initial_design$treatment)
-# Treatment counts should be approximately 4-5 each (62 plots / 15 treatments ≈ 4.13)
+# Treatment counts between 2 and 12
 
 # Check initial site distribution per treatment
 site_treatment_table <- table(initial_design$site, initial_design$treatment)
@@ -35,12 +42,12 @@ treatment_site_counts
 
 initial_design <- initial_design[order(initial_design$treatment),]
 
-result <- speed_df(
+result <- speed(
     data = initial_design,
     swap = "treatment",
-    swap_within = "none",  # Allow treatments to be swapped across sites
+    swap_within = "1",  # Allow treatments to be swapped across sites
     spatial_factors = ~ site,
-    obj_function = objective_function_multisite(connectivity_weight = 1, replication_weight = 2),
+    obj_function = objective_function(adj_weight = 0),
     quiet = FALSE
 )
 
@@ -52,21 +59,36 @@ treatment_site_incidence <- table(result$design_df$treatment, result$design_df$s
 treatment_site_incidence
 
 
+result <- speed(
+    data = initial_design,
+    swap = "treatment",
+    swap_within = "1",  # Allow treatments to be swapped across sites
+    spatial_factors = ~ site,
+    obj_function = objective_function_multisite(),
+    quiet = FALSE
+)
+
+site_treatment_incidence <- table(result$design_df$site, result$design_df$treatment)
+site_treatment_incidence
+apply(site_treatment_incidence > 0, 2, sum)
+
+treatment_site_incidence <- table(result$design_df$treatment, result$design_df$site)
+treatment_site_incidence
 
 # Example 1: Basic multisite design with balanced replication
 df_balanced <- data.frame(
-  site = rep(1:3, each = 6),
-  row = rep(1:2, times = 9),
-  col = rep(rep(1:3, each = 2), times = 3),
-  treatment = rep(LETTERS[1:3], each = 6)
+    site = rep(1:3, each = 6),
+    row = rep(1:2, times = 9),
+    col = rep(rep(1:3, each = 2), times = 3),
+    treatment = rep(LETTERS[1:3], each = 6)
 )
 
 # Example 2: Unbalanced multisite design
 df_unbalanced <- data.frame(
-  site = rep(1:3, each = 6),
-  row = rep(1:2, times = 9),
-  col = rep(rep(1:3, each = 2), times = 3),
-  treatment = c(rep("A", 8), rep("B", 6), rep("C", 4))
+    site = rep(1:3, each = 6),
+    row = rep(1:2, times = 9),
+    col = rep(rep(1:3, each = 2), times = 3),
+    treatment = c(rep("A", 8), rep("B", 6), rep("C", 4))
 )
 
 # Test connectivity score
