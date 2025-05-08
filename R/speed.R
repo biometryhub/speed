@@ -136,7 +136,7 @@ speed <- function(
         }
 
         # Generate new design by swapping treatments
-        new_design <- generate_neighbor(current_design,
+        new_design <- generate_neighbour(current_design,
                                         swap,
                                         swap_within,
                                         swap_count = current_swap_count,
@@ -198,55 +198,6 @@ speed <- function(
     return(output)
 }
 
-#' Generate a Neighbour Design by Swapping Treatments
-#'
-#' @param design Data frame containing the current design
-#' @param swap Column name of the treatment to swap
-#' @param swap_within Column name defining groups within which to swap treatments
-#' @param swap_count Number of swaps to perform
-#' @param swap_all_blocks Whether to perform swaps in all blocks or just one
-#'
-#' @return A data frame with the updated design after swapping
-#'
-#' @keywords internal
-generate_neighbor <- function(design,
-                              swap,
-                              swap_within,
-                              swap_count = getOption("speed.swap_count", 1),
-                              swap_all_blocks = getOption("speed.swap_all_blocks", FALSE)) {
-    new_design <- design
-
-    # Get unique blocks
-    blocks <- unique(design[[swap_within]])
-
-    if (swap_all_blocks) {
-        # Swap in all blocks
-        blocks_to_swap <- blocks
-    } else {
-        # Pick a random block
-        blocks_to_swap <- sample(blocks, 1)
-    }
-
-    # Perform swaps in selected blocks
-    for (block in blocks_to_swap) {
-        # Get indices of plots in this block
-        block_indices <- which(design[[swap_within]] == block & !is.na(design[[swap]]))
-
-        if (length(block_indices) >= 2) {  # Need at least 2 plots to swap
-            for (i in 1:swap_count) {
-                # Select two random plots in this block
-                swap_pair <- sample(block_indices, 2)
-
-                # Swap treatments
-                temp <- new_design[[swap]][swap_pair[1]]
-                new_design[[swap]][swap_pair[1]] <- new_design[[swap]][swap_pair[2]]
-                new_design[[swap]][swap_pair[2]] <- temp
-            }
-        }
-    }
-
-    return(new_design)
-}
 
 
 
