@@ -1,7 +1,63 @@
+#' Objective Function Signature
+#'
+#' @description
+#' A signature for an objective function
+#'
+#' @rdname objective_functions
+#'
+#' @param layout_df A data frame representing the spatial information of the design
+#' @param swap A column name of the items to be swapped
+#' @param spatial_cols Column name(s) of the spatial factors
+#'
+#' @examples
+#' # TODO: Update this
+#' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
+#' layout_df <- data.frame(
+#'   row = rep(1:3, each = 3),
+#'   col = rep(1:3, times = 3)
+#' )
+#' objective_function_matrix()(design_matrix, layout_df, "treatment", c("row", "col"))
+#'
+#' @return A numeric value representing the score of the design (lower is better)
+#' @export
+objective_function_signature <- function(
+        design_matrix,
+        layout_df,
+        swap,
+        ...) {
+    stop("This is a dummy fucntion for documentation purposes only")
+}
+
+
+#' Default Objective Function for Design Optimization
+#'
+#' @inheritParams objective_function_signature
+#' @param adj_weight Weight for adjacency score (default: 0)
+#' @param bal_weight Weight for balance score (default: 1)
+#'
+#' @rdname objective_functions
+#' @export
+objective_function <- function(adj_weight = getOption("speed.adj_weight", 0),
+                               bal_weight = getOption("speed.bal_weight", 1)) {
+    function(design, swap, spatial_cols) {
+        adj_score <- ifelse(adj_weight != 0,
+                            calculate_adjacency_score(design, swap),
+                            0)
+
+        bal_score <- ifelse(bal_weight != 0,
+                            calculate_balance_score(design, swap, spatial_cols),
+                            0)
+
+        return(adj_weight * adj_score + bal_weight * bal_score)
+    }
+}
+
 #' Default Objective Function
 #'
 #' @description
 #' A default objective function that combines adjacency and balance scores.
+#'
+#' @inheritParams objective_function_signature
 #'
 #' @param adj_weight Weight for adjacency score (default: 0)
 #' @param bal_weight Weight for balance score (default: 1)
@@ -22,31 +78,30 @@
 #' @seealso [objective_function_piepho()]
 #'
 #' @export
-objective_function_matrix <- function(
-    adj_weight = getOption("speed.adj_weight", 0),
-    bal_weight = getOption("speed.bal_weight", 1)) {
-  return(
-    function(design_matrix, layout_df, swap, spatial_cols, ...) {
-      if (adj_weight != 0) {
+objective_function_matrix <- function(design_matrix,
+                                      layout_df,
+                                      swap,
+                                      spatial_cols,
+                                      adj_weight = getOption("speed.adj_weight", 0),
+                                      bal_weight = getOption("speed.bal_weight", 1)) {
+    if (adj_weight != 0) {
         adj <- calculate_adjacency_score_matrix(design_matrix)
 
         if (bal_weight == 0) {
-          return(list(score = adj))
+            return(list(score = adj))
         }
-      }
+    }
 
-      if (bal_weight != 0) {
+    if (bal_weight != 0) {
         layout_df[[swap]] <- as.vector(design_matrix)
         bal <- calculate_balance_score(layout_df, swap, spatial_cols)
 
         if (adj_weight == 0) {
-          return(list(score = bal))
+            return(list(score = bal))
         }
-      }
-
-      return(list(score = adj_weight * adj + bal_weight * bal))
     }
-  )
+
+    return(list(score = adj_weight * adj + bal_weight * bal))
 }
 
 #' Objective Function with Metric from Piepho
@@ -78,19 +133,15 @@ objective_function_matrix <- function(
 #' @seealso [objective_function()], [create_pair_mapping()]
 #'
 #' @export
-objective_function_piepho <- function(pair_mapping = NULL) {
-  return(
-    function(design_matrix, layout_df, swap, spatial_cols, previous_score = NULL, swapped_items = NULL) {
-      ed <- calculate_ed(design_matrix, previous_score$ed, swapped_items)
-      ed_score <- -sum(vapply(ed, function(ed_rep) ed_rep$min_mst, numeric(1)))
-      nb_score <- calculate_nb(design_matrix, pair_mapping)$max_nb
+objective_function_piepho <- function(layout_df, swap, spatial_cols, previous_score = NULL, swapped_items = NULL, pair_mapping = NULL) {
+    ed <- calculate_ed(design_matrix, previous_score$ed, swapped_items)
+    ed_score <- -sum(vapply(ed, function(ed_rep) ed_rep$min_mst, numeric(1)))
+    nb_score <- calculate_nb(design_matrix, pair_mapping)$max_nb
 
-      layout_df[[swap]] <- as.vector(design_matrix)
-      bal_score <- calculate_balance_score(layout_df, swap, spatial_cols)
+    layout_df[[swap]] <- as.vector(design_matrix)
+    bal_score <- calculate_balance_score(layout_df, swap, spatial_cols)
 
-      return(list(score = nb_score + ed_score + bal_score, ed = ed))
-    }
-  )
+    return(list(score = nb_score + ed_score + bal_score, ed = ed))
 }
 
 #' Neighbour Balance Calculation
@@ -117,29 +168,29 @@ objective_function_piepho <- function(pair_mapping = NULL) {
 #'
 #' @export
 calculate_nb <- function(design_matrix, pair_mapping = NULL) {
-  if (is.null(pair_mapping)) {
-    return(.calculate_nb(design_matrix))
-  }
+    if (is.null(pair_mapping)) {
+        return(.calculate_nb(design_matrix))
+    }
 
-  lefts <- design_matrix[, -ncol(design_matrix)]
-  rights <- design_matrix[, -1]
-  tops <- design_matrix[-nrow(design_matrix), ]
-  bottoms <- design_matrix[-1, ]
-  lr_pairs <- paste(lefts, rights, sep = ",")
-  tb_pairs <- paste(tops, bottoms, sep = ",")
+    lefts <- design_matrix[, -ncol(design_matrix)]
+    rights <- design_matrix[, -1]
+    tops <- design_matrix[-nrow(design_matrix), ]
+    bottoms <- design_matrix[-1, ]
+    lr_pairs <- paste(lefts, rights, sep = ",")
+    tb_pairs <- paste(tops, bottoms, sep = ",")
 
-  pairs <- c(lr_pairs, tb_pairs)
-  is_sorted <- pairs %in% pair_mapping
-  sorted_pairs <- c(pairs[is_sorted], pair_mapping[pairs[!is_sorted]])
+    pairs <- c(lr_pairs, tb_pairs)
+    is_sorted <- pairs %in% pair_mapping
+    sorted_pairs <- c(pairs[is_sorted], pair_mapping[pairs[!is_sorted]])
 
-  nb <- table(sorted_pairs)
-  max_nb <- max(nb)
-  max_pairs <- names(nb[nb == max_nb])
-  return(list(
-    nb = nb,
-    max_nb = max_nb,
-    max_pairs = max_pairs
-  ))
+    nb <- table(sorted_pairs)
+    max_nb <- max(nb)
+    max_pairs <- names(nb[nb == max_nb])
+    return(list(
+        nb = nb,
+        max_nb = max_nb,
+        max_pairs = max_pairs
+    ))
 }
 
 #' Neighbor Balance Calculation without Pair Mapping
@@ -159,47 +210,47 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #'
 #' @keywords internal
 .calculate_nb <- function(design_matrix) {
-  # TODO: check function overloading
-  n_rows <- dim(design_matrix)[1]
-  n_cols <- dim(design_matrix)[2]
-  # env is faster than list
-  nb <- new.env()
+    # TODO: check function overloading
+    n_rows <- dim(design_matrix)[1]
+    n_cols <- dim(design_matrix)[2]
+    # env is faster than list
+    nb <- new.env()
 
-  for (row_ in 1:n_rows) {
-    for (col_ in 1:n_cols) {
-      node <- design_matrix[row_, col_]
-      if (row_ < n_rows) {
-        bottom <- design_matrix[row_ + 1, col_]
-        if (node < bottom) {
-          pair_str <- paste0(node, ",", bottom)
-        } else {
-          pair_str <- paste0(bottom, ",", node)
+    for (row_ in 1:n_rows) {
+        for (col_ in 1:n_cols) {
+            node <- design_matrix[row_, col_]
+            if (row_ < n_rows) {
+                bottom <- design_matrix[row_ + 1, col_]
+                if (node < bottom) {
+                    pair_str <- paste0(node, ",", bottom)
+                } else {
+                    pair_str <- paste0(bottom, ",", node)
+                }
+
+                env_add_one(nb, pair_str)
+            }
+
+            if (col_ < n_cols) {
+                right <- design_matrix[row_, col_ + 1]
+                if (node < right) {
+                    pair_str <- paste0(node, ",", right)
+                } else {
+                    pair_str <- paste0(right, ",", node)
+                }
+
+                env_add_one(nb, pair_str)
+            }
         }
-
-        env_add_one(nb, pair_str)
-      }
-
-      if (col_ < n_cols) {
-        right <- design_matrix[row_, col_ + 1]
-        if (node < right) {
-          pair_str <- paste0(node, ",", right)
-        } else {
-          pair_str <- paste0(right, ",", node)
-        }
-
-        env_add_one(nb, pair_str)
-      }
     }
-  }
 
-  nb <- as.list(nb)
-  max_nb <- max(unlist(nb))
-  max_pairs <- names(nb[nb == max_nb])
-  return(list(
-    nb = nb,
-    max_nb = max_nb,
-    max_pairs = max_pairs
-  ))
+    nb <- as.list(nb)
+    max_nb <- max(unlist(nb))
+    max_pairs <- names(nb[nb == max_nb])
+    return(list(
+        nb = nb,
+        max_nb = max_nb,
+        max_pairs = max_pairs
+    ))
 }
 
 #' Even Distribution Calculation
@@ -228,59 +279,59 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #'
 #' @export
 calculate_ed <- function(design_matrix, previous_ed = NULL, swapped_items = NULL) {
-  if (!is.null(swapped_items)) {
-    design_matrix[!(design_matrix %in% swapped_items)] <- NA
-    msts <- lapply(previous_ed, function(ed_by_rep) ed_by_rep$msts)
-  } else {
-    msts <- list()
-  }
-
-  vertices <- get_vertices(design_matrix)
-  edges <- get_edges(vertices)
-
-  edges_3_reps <- list()
-  sub_graph <- list()
-
-  for (item in names(vertices)) {
-    reps <- length(vertices[[item]])
-    reps_char <- as.character(reps)
-    if (reps == 2) {
-      # distance between 2 nodes for 2 reps
-      msts[[reps_char]][[item]] <- edges[[item]]
-    } else if (reps == 3) {
-      # 3 reps will be calculated with .calculate_ed_3_reps
-      edges_3_reps[[item]] <- edges[[item]]
-    } else if (reps > 3) {
-      # blanket igraph for 4+ reps
-      if (is.null(sub_graph[[reps_char]])) {
-        # initialize a fully-connected graph without weights
-        # 1--2, 1--3, ..., 1--n-1, 1--n, 2--3, 2--4, ..., n-1--n
-        edge_table <- t(combn(1:reps, 2))
-        sub_graph[[reps_char]] <- igraph::graph_from_edgelist(edge_table, directed = FALSE)
-      }
-
-      igraph::E(sub_graph[[reps_char]])$weight <- edges[[item]]
-      msts[[reps_char]][[item]] <- sum(igraph::E(igraph::mst(sub_graph[[reps_char]]))$weight)
+    if (!is.null(swapped_items)) {
+        design_matrix[!(design_matrix %in% swapped_items)] <- NA
+        msts <- lapply(previous_ed, function(ed_by_rep) ed_by_rep$msts)
+    } else {
+        msts <- list()
     }
-  }
 
-  # summarize mst for each reps
-  ed <- lapply(msts, function(msts_by_reps) {
-    min_mst <- min(unlist(msts_by_reps))
-    min_items <- names(msts_by_reps[msts_by_reps == min_mst])
+    vertices <- get_vertices(design_matrix)
+    edges <- get_edges(vertices)
 
-    return(list(
-      msts = msts_by_reps,
-      min_mst = min_mst,
-      min_items = min_items
-    ))
-  })
+    edges_3_reps <- list()
+    sub_graph <- list()
 
-  if (length(edges_3_reps) > 0) {
-    ed$`3` <- .calculate_ed_3_reps(edges_3_reps, previous_ed)
-  }
+    for (item in names(vertices)) {
+        reps <- length(vertices[[item]])
+        reps_char <- as.character(reps)
+        if (reps == 2) {
+            # distance between 2 nodes for 2 reps
+            msts[[reps_char]][[item]] <- edges[[item]]
+        } else if (reps == 3) {
+            # 3 reps will be calculated with .calculate_ed_3_reps
+            edges_3_reps[[item]] <- edges[[item]]
+        } else if (reps > 3) {
+            # blanket igraph for 4+ reps
+            if (is.null(sub_graph[[reps_char]])) {
+                # initialize a fully-connected graph without weights
+                # 1--2, 1--3, ..., 1--n-1, 1--n, 2--3, 2--4, ..., n-1--n
+                edge_table <- t(combn(1:reps, 2))
+                sub_graph[[reps_char]] <- igraph::graph_from_edgelist(edge_table, directed = FALSE)
+            }
 
-  return(ed)
+            igraph::E(sub_graph[[reps_char]])$weight <- edges[[item]]
+            msts[[reps_char]][[item]] <- sum(igraph::E(igraph::mst(sub_graph[[reps_char]]))$weight)
+        }
+    }
+
+    # summarize mst for each reps
+    ed <- lapply(msts, function(msts_by_reps) {
+        min_mst <- min(unlist(msts_by_reps))
+        min_items <- names(msts_by_reps[msts_by_reps == min_mst])
+
+        return(list(
+            msts = msts_by_reps,
+            min_mst = min_mst,
+            min_items = min_items
+        ))
+    })
+
+    if (length(edges_3_reps) > 0) {
+        ed$`3` <- .calculate_ed_3_reps(edges_3_reps, previous_ed)
+    }
+
+    return(ed)
 }
 
 #' Get Vertices of Each Item
@@ -303,16 +354,16 @@ calculate_ed <- function(design_matrix, previous_ed = NULL, swapped_items = NULL
 #'
 #' @export
 get_vertices <- function(design_matrix) {
-  # Create vectors of row, col indices and corresponding values
-  rows <- row(design_matrix)
-  cols <- col(design_matrix)
-  items <- as.character(design_matrix)
+    # Create vectors of row, col indices and corresponding values
+    rows <- row(design_matrix)
+    cols <- col(design_matrix)
+    items <- as.character(design_matrix)
 
-  # Combine row and col into coordinates
-  coords <- Map(c, as.vector(rows), as.vector(cols))
+    # Combine row and col into coordinates
+    coords <- Map(c, as.vector(rows), as.vector(cols))
 
-  # Use split to group coordinates by item
-  return(split(coords, items))
+    # Use split to group coordinates by item
+    return(split(coords, items))
 }
 
 #' Get Weighted Edges
@@ -339,32 +390,32 @@ get_vertices <- function(design_matrix) {
 #'
 #' @export
 get_edges <- function(vertices) {
-  edges <- vector("list", length(vertices))
-  names(edges) <- names(vertices)
+    edges <- vector("list", length(vertices))
+    names(edges) <- names(vertices)
 
-  for (item in names(vertices)) {
-    coords <- vertices[[item]]
-    n_vertices <- length(coords)
-    if (n_vertices < 2) {
-      edges[[item]] <- c()
-      next
+    for (item in names(vertices)) {
+        coords <- vertices[[item]]
+        n_vertices <- length(coords)
+        if (n_vertices < 2) {
+            edges[[item]] <- c()
+            next
+        }
+
+        # Preallocate vector to hold all edges
+        item_edges <- numeric(n_vertices * (n_vertices - 1) / 2)
+        idx <- 1
+
+        for (i in 1:(n_vertices - 1)) {
+            for (j in (i + 1):n_vertices) {
+                item_edges[[idx]] <- sqrt(sum((coords[[i]] - coords[[j]])^2))
+                idx <- idx + 1
+            }
+        }
+
+        edges[[item]] <- item_edges
     }
 
-    # Preallocate vector to hold all edges
-    item_edges <- numeric(n_vertices * (n_vertices - 1) / 2)
-    idx <- 1
-
-    for (i in 1:(n_vertices - 1)) {
-      for (j in (i + 1):n_vertices) {
-        item_edges[[idx]] <- sqrt(sum((coords[[i]] - coords[[j]])^2))
-        idx <- idx + 1
-      }
-    }
-
-    edges[[item]] <- item_edges
-  }
-
-  return(edges)
+    return(edges)
 }
 
 #' Even Distribution Calculation for 3 Replications
@@ -388,24 +439,24 @@ get_edges <- function(vertices) {
 #'
 #' @keywords internal
 .calculate_ed_3_reps <- function(edges, previous_ed = NULL) {
-  # pick 2 shortest connections for 3 reps
-  ed <- lapply(
-    edges, function(weights) {
-      sum(weights) - max(weights)
+    # pick 2 shortest connections for 3 reps
+    ed <- lapply(
+        edges, function(weights) {
+            sum(weights) - max(weights)
+        }
+    )
+
+    if (!is.null(previous_ed)) {
+        ed <- modifyList(previous_ed$`3`$msts, ed)
     }
-  )
 
-  if (!is.null(previous_ed)) {
-    ed <- modifyList(previous_ed$`3`$msts, ed)
-  }
-
-  min_mst <- min(unlist(ed))
-  min_items <- names(ed[ed == min_mst])
-  return(list(
-    msts = ed,
-    min_mst = min_mst,
-    min_items = min_items
-  ))
+    min_mst <- min(unlist(ed))
+    min_items <- names(ed[ed == min_mst])
+    return(list(
+        msts = ed,
+        min_mst = min_mst,
+        min_items = min_items
+    ))
 }
 
 #' Calculate Adjacency Score for Experimental Design
@@ -433,11 +484,11 @@ get_edges <- function(vertices) {
 #'
 #' @export
 calculate_adjacency_score_matrix <- function(design) {
-  # row_adjacencies <- rowSums(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
-  # col_adjacencies <- colSums(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
-  row_adjacencies <- sum(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
-  col_adjacencies <- sum(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
-  return(row_adjacencies + col_adjacencies)
+    # row_adjacencies <- rowSums(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
+    # col_adjacencies <- colSums(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
+    row_adjacencies <- sum(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
+    col_adjacencies <- sum(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
+    return(row_adjacencies + col_adjacencies)
 }
 
 #' Create Pair Mapping
@@ -476,15 +527,15 @@ calculate_adjacency_score_matrix <- function(design) {
 #'
 #' @export
 create_pair_mapping <- function(items) {
-  items <- unique(items)
-  combinations <- combn(sort(items), 2)
+    items <- unique(items)
+    combinations <- combn(sort(items), 2)
 
-  identical_pairs <- paste(items, items, sep = ",")
-  pairs <- paste(combinations[1, ], combinations[2, ], sep = ",")
-  pairs_r <- sapply(pairs, function(k) paste(rev(strsplit(k, ",")[[1]]), collapse = ","))
+    identical_pairs <- paste(items, items, sep = ",")
+    pairs <- paste(combinations[1, ], combinations[2, ], sep = ",")
+    pairs_r <- sapply(pairs, function(k) paste(rev(strsplit(k, ",")[[1]]), collapse = ","))
 
-  pair_mapping <- setNames(c(pairs, identical_pairs), c(pairs_r, identical_pairs))
-  return(pair_mapping)
+    pair_mapping <- setNames(c(pairs, identical_pairs), c(pairs_r, identical_pairs))
+    return(pair_mapping)
 }
 
 #' Calculate Balance Score for Experimental Design
@@ -508,41 +559,10 @@ create_pair_mapping <- function(items) {
 #'
 #' @export
 calculate_balance_score <- function(layout_df, swap, spatial_cols) {
-  score <- sapply(spatial_cols, function(el) {
-    sum(apply(table(layout_df[[el]], layout_df[[swap]]), 1, var, na.rm = TRUE), na.rm = TRUE)
-  })
-  return(sum(score))
+    score <- sapply(spatial_cols, function(el) {
+        sum(apply(table(layout_df[[el]], layout_df[[swap]]), 1, var, na.rm = TRUE), na.rm = TRUE)
+    })
+    return(sum(score))
 }
 
-#' Objective Function Signature
-#'
-#' @description
-#' A signature for an objective function
-#'
-#' @param design_matrix A design matrix
-#' @param layout_df A data frame representing the spatial information of the design
-#' @param swap A column name of the items
-#' @param spatial_cols Column names of the spatial factors
-#' @param previous_score A named list of numeric values with one required name `score` representing the score of
-#'   the design (lower is better)
-#' @param swapped_items Items which were swapped during the current iteration
-#'
-#' @examples
-#' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
-#' layout_df <- data.frame(
-#'   row = rep(1:3, each = 3),
-#'   col = rep(1:3, times = 3)
-#' )
-#' objective_function_matrix()(design_matrix, layout_df, "treatment", c("row", "col"))
-#'
-#' @return A named list of numeric values with one required name `score` representing the score of the design
-#'   (lower is better)
-objective_function_signature <- function(
-    design_matrix,
-    layout_df,
-    swap,
-    spatial_cols,
-    previous_score,
-    swapped_items) {
-  stop("This is a dummy fucntion for documentation purposes only")
-}
+

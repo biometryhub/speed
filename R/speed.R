@@ -19,6 +19,7 @@
 #' @param quiet Logical; if TRUE, suppresses progress messages (default: FALSE)
 #' @param seed A numeric value for random seed. If provided, it ensures reproducibility of results (default:
 #'   NULL).
+#' @param ... Other arguments passed through to objective functions.
 #'
 #' @return A list containing:
 #' \itemize{
@@ -57,9 +58,10 @@ speed <- function(
         spatial_factors = ~ row + col,
         iterations = 10000,
         early_stop_iterations = 2000,
-        obj_function = objective_function(),
+        obj_function = objective_function,
         quiet = FALSE,
-        seed = NULL) {
+        seed = NULL,
+        ...) {
 
     # Extract options
     swap_count <- getOption("speed.swap_count", 1)
@@ -102,7 +104,7 @@ speed <- function(
     best_design <- current_design
 
     # Calculate initial score
-    current_score <- obj_function(current_design, swap, spatial_cols)
+    current_score <- obj_function(current_design, swap, spatial_cols, ...)
     if (!is.numeric(current_score)) {
         stop("Value from `objective_function` must be numeric.")
     }
@@ -141,7 +143,7 @@ speed <- function(
                                         swap_all_blocks = current_swap_all_blocks)
 
         # Calculate new score
-        new_score <- obj_function(new_design, swap, spatial_cols)
+        new_score <- obj_function(new_design, swap, spatial_cols, ...)
 
         # Decide whether to accept the new design
         if (new_score < current_score || runif(1) < exp((current_score - new_score) / temp)) {
