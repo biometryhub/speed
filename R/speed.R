@@ -248,74 +248,8 @@ generate_neighbor <- function(design,
     return(new_design)
 }
 
-#' Default Objective Function for Design Optimization
-#'
-#' @param adj_weight Weight for adjacency score (default: 0)
-#' @param bal_weight Weight for balance score (default: 1)
-#'
-#' @return Numeric score (lower is better)
-#'
-#' @export
-objective_function <- function(adj_weight = getOption("speed.adj_weight", 0),
-                               bal_weight = getOption("speed.bal_weight", 1)) {
-    function(design, swap, spatial_cols) {
-        adj_score <- ifelse(adj_weight != 0,
-                            calculate_adjacency_score(design, swap),
-                            0)
 
-        bal_score <- ifelse(bal_weight != 0,
-                            calculate_balance_score(design, swap, spatial_cols),
-                            0)
 
-        return(adj_weight * adj_score + bal_weight * bal_score)
-    }
-}
-
-#' Calculate Adjacency Score for Design
-#'
-#' @description
-#' Calculates the adjacency score for a given experimental design. The adjacency score
-#' represents the number of adjacent plots with the same treatment. Lower scores indicate
-#' better separation of treatments.
-#'
-#' @param design Data frame containing the current design
-#' @param swap Column name of the treatment
-#'
-#' @return Numeric score for treatment adjacencies (lower is better)
-#'
-#' @examples
-#' \dontrun{
-#' # Example 1: Design with no adjacencies
-#' design_no_adj <- data.frame(
-#'   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
-#'   col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
-#'   treatment = c("A", "B", "A", "B", "A", "B", "A", "B", "A")
-#' )
-#'
-#' # Gives 0
-#' calculate_adjacency_score(design_no_adj, "treatment")
-#'
-#' # Example 2: Design with adjacencies
-#' design_with_adj <- data.frame(
-#'   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
-#'   col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
-#'   treatment = c("A", "A", "A", "B", "B", "B", "A", "A", "A")
-#' )
-#'
-#' # Gives value 6
-#' calculate_adjacency_score(design_with_adj, "treatment")
-#'}
-#' @keywords internal
-calculate_adjacency_score <- function(design, swap) {
-    design <- matrix(design[[swap]],
-                     nrow = max(as.numeric(as.character(design$row)), na.rm = TRUE),
-                     ncol = max(as.numeric(as.character(design$col)), na.rm = TRUE),
-                     byrow = FALSE)
-
-    row_adjacencies <- sum(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
-    col_adjacencies <- sum(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
-    return(row_adjacencies + col_adjacencies)
-}
 
 #' Print method for speed design objects
 #'

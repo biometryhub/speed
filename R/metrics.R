@@ -21,9 +21,9 @@
 #' @return A numeric value representing the score of the design (lower is better)
 #' @export
 objective_function_signature <- function(
-        design_matrix,
         layout_df,
         swap,
+        spatial_cols,
         ...) {
     stop("This is a dummy fucntion for documentation purposes only")
 }
@@ -37,20 +37,103 @@ objective_function_signature <- function(
 #'
 #' @rdname objective_functions
 #' @export
-objective_function <- function(adj_weight = getOption("speed.adj_weight", 0),
+objective_function <- function(design, swap, spatial_cols,
+                               adj_weight = getOption("speed.adj_weight", 0),
                                bal_weight = getOption("speed.bal_weight", 1)) {
-    function(design, swap, spatial_cols) {
-        adj_score <- ifelse(adj_weight != 0,
-                            calculate_adjacency_score(design, swap),
-                            0)
 
-        bal_score <- ifelse(bal_weight != 0,
-                            calculate_balance_score(design, swap, spatial_cols),
-                            0)
+    adj_score <- ifelse(adj_weight != 0,
+                        calculate_adjacency_score(design, swap),
+                        0)
 
-        return(adj_weight * adj_score + bal_weight * bal_score)
-    }
+    bal_score <- ifelse(bal_weight != 0,
+                        calculate_balance_score(design, swap, spatial_cols),
+                        0)
+
+    return(adj_weight * adj_score + bal_weight * bal_score)
 }
+
+
+
+#' Calculate Balance Score for Experimental Design
+#'
+#' @description
+#' Calculates a balance score that measures how evenly treatments are distributed
+#'   across spatial factors in an experimental design. Lower scores indicate better balance.
+#'
+#' @inheritParams objective_function_signature
+#'
+#' @return Numeric value representing the total balance score. Lower values indicate
+#'   better balance of treatments across spatial factors.
+#'
+#' @examples
+#' layout_df <- data.frame(
+#'   row = rep(1:3, each = 3),
+#'   col = rep(1:3, times = 3),
+#'   treatment = rep(letters[1:3], 3)
+#' )
+#' calculate_balance_score(layout_df, "treatment", c("row", "col"))
+#'
+#' @export
+calculate_balance_score <- function(layout_df, swap, spatial_cols) {
+    score <- sapply(spatial_cols, function(el) {
+        sum(apply(table(layout_df[[el]], layout_df[[swap]]), 1, var, na.rm = TRUE), na.rm = TRUE)
+    })
+    return(sum(score))
+}
+
+#' Calculate Adjacency Score for Design
+#'
+#' @description
+#' Calculates the adjacency score for a given experimental design. The adjacency score
+#' represents the number of adjacent plots with the same treatment. Lower scores indicate
+#' better separation of treatments.
+#'
+#' @param design Data frame containing the current design
+#' @param swap Column name of the treatment
+#'
+#' @return Numeric score for treatment adjacencies (lower is better)
+#'
+#' @examples
+#' \dontrun{
+#' # Example 1: Design with no adjacencies
+#' design_no_adj <- data.frame(
+#'   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
+#'   col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
+#'   treatment = c("A", "B", "A", "B", "A", "B", "A", "B", "A")
+#' )
+#'
+#' # Gives 0
+#' calculate_adjacency_score(design_no_adj, "treatment")
+#'
+#' # Example 2: Design with adjacencies
+#' design_with_adj <- data.frame(
+#'   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
+#'   col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
+#'   treatment = c("A", "A", "A", "B", "B", "B", "A", "A", "A")
+#' )
+#'
+#' # Gives value 6
+#' calculate_adjacency_score(design_with_adj, "treatment")
+#'}
+#' @keywords internal
+calculate_adjacency_score <- function(design, swap, spatial_cols) {
+    design <- matrix(design[[swap]],
+                     nrow = max(as.numeric(as.character(design$row)), na.rm = TRUE),
+                     ncol = max(as.numeric(as.character(design$col)), na.rm = TRUE),
+                     byrow = FALSE)
+
+    row_adjacencies <- sum(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
+    col_adjacencies <- sum(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
+    return(row_adjacencies + col_adjacencies)
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -409,37 +492,6 @@ get_edges <- function(vertices) {
     ))
 }
 
-#' Calculate Adjacency Score for Experimental Design
-#'
-#' @description
-#' Calculates the number of adjacent treatments that are the same in an experimental
-#'   design layout. Lower scores indicate better separation of treatments.
-#'
-#' @param design A matrix containing the experimental design layout with treatments
-#'
-#' @return Numeric value representing the total number of adjacent same treatments.
-#'   The score is the sum of same treatments that are adjacent horizontally
-#'   and vertically.
-#'
-#' @examples
-#' design <- matrix(
-#'   c(
-#'     "A", "B", "A",
-#'     "B", "A", "B",
-#'     "A", "B", "A"
-#'   ),
-#'   nrow = 3, byrow = TRUE
-#' )
-#' calculate_adjacency_score_matrix(design) # Returns the number of adjacent matches
-#'
-#' @export
-calculate_adjacency_score_matrix <- function(design) {
-    # row_adjacencies <- rowSums(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
-    # col_adjacencies <- colSums(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
-    row_adjacencies <- sum(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
-    col_adjacencies <- sum(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
-    return(row_adjacencies + col_adjacencies)
-}
 
 #' Create Pair Mapping
 #'
@@ -488,31 +540,6 @@ create_pair_mapping <- function(items) {
     return(pair_mapping)
 }
 
-#' Calculate Balance Score for Experimental Design
-#'
-#' @description
-#' Calculates a balance score that measures how evenly treatments are distributed
-#'   across spatial factors in an experimental design. Lower scores indicate better balance.
-#'
-#' @inheritParams objective_function_signature
-#'
-#' @return Numeric value representing the total balance score. Lower values indicate
-#'   better balance of treatments across spatial factors.
-#'
-#' @examples
-#' layout_df <- data.frame(
-#'   row = rep(1:3, each = 3),
-#'   col = rep(1:3, times = 3),
-#'   treatment = rep(letters[1:3], 3)
-#' )
-#' calculate_balance_score(layout_df, "treatment", c("row", "col"))
-#'
-#' @export
-calculate_balance_score <- function(layout_df, swap, spatial_cols) {
-    score <- sapply(spatial_cols, function(el) {
-        sum(apply(table(layout_df[[el]], layout_df[[swap]]), 1, var, na.rm = TRUE), na.rm = TRUE)
-    })
-    return(sum(score))
-}
+
 
 
