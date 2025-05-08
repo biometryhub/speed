@@ -94,7 +94,6 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #' @return Numeric score for treatment adjacencies (lower is better)
 #'
 #' @examples
-#' \dontrun{
 #' # Example 1: Design with no adjacencies
 #' design_no_adj <- data.frame(
 #'   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
@@ -114,8 +113,7 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #'
 #' # Gives value 6
 #' calculate_adjacency_score(design_with_adj, "treatment")
-#'}
-#' @keywords internal
+#' @export
 calculate_adjacency_score <- function(design, swap, spatial_cols) {
     design <- matrix(design[[swap]],
                      nrow = max(as.numeric(as.character(design$row)), na.rm = TRUE),
@@ -162,6 +160,8 @@ calculate_adjacency_score <- function(design, swap, spatial_cols) {
 #'   the score of the design (lower is better) with a signature
 #'   `function(design_matrix, layout_df, swap, spatial_cols, previous_score, swapped_items)`. See signature
 #'   details in [objective_function_signature].
+#'
+#' @references Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of distribution of treatment replications in row-column designs. Biometrical journal. Biometrische Zeitschrift, 60(6), 1172–1189. <https://doi.org/10.1002/bimj.201800013>
 #'
 #' @seealso [objective_function()], [create_pair_mapping()]
 #'

@@ -38,6 +38,7 @@
 #'
 #' @importFrom stringi stri_sort
 #' @importFrom stats runif
+#' @importFrom rlang check_dots_used
 #'
 #' @examples
 #' # Create a simple design with 3 replicates of 4 treatments in a 4x3 layout
@@ -88,6 +89,7 @@ speed <- function(
         start_temp,
         cooling_rate
     )
+    rlang::check_dots_used()
 
     # Handle swap_within
     layout_df <- data
