@@ -3,7 +3,7 @@
 \name{objective_function_signature}
 \alias{objective_function_signature}
 \alias{objective_function}
-\title{Objective Function Signature}
+\title{Default objective functions}
 \usage{
 objective_function_signature(layout_df, swap, spatial_cols, ...)
 
@@ -30,15 +30,14 @@ objective_function(
 A numeric value representing the score of the design (lower is better)
 }
 \description{
-A signature for an objective function
+Default Objective Function for Design Optimization
 }
 \examples{
-# TODO: Update this
-design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
 layout_df <- data.frame(
   row = rep(1:3, each = 3),
-  col = rep(1:3, times = 3)
+  col = rep(1:3, times = 3),
+  treatment = rep(letters[1:3], 3)
 )
-objective_function_matrix()(design_matrix, layout_df, "treatment", c("row", "col"))
+objective_function(layout_df, "treatment", c("row", "col"))
 
 }

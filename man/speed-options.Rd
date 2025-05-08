@@ -28,4 +28,3 @@ or within your code:
 }\if{html}{\out{</div>}}
 }
 
-\keyword{internal}

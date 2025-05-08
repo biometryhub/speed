@@ -120,7 +120,7 @@ speed <- function(
     # Set seed for reproducibility
     if (is.null(seed)) {
         # dummy_seed <- runif(1)
-        seed <- .GlobalEnv$.Random.seed
+        seed <- .GlobalEnv$.Random.seed[3]
     }
     set.seed(seed)
 

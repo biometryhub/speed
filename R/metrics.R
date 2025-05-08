@@ -1,7 +1,7 @@
-#' Objective Function Signature
+#' Default objective functions
 #'
 #' @description
-#' A signature for an objective function
+#' Default Objective Function for Design Optimization
 #'
 #' @rdname objective_functions
 #'
@@ -10,13 +10,12 @@
 #' @param spatial_cols Column name(s) of the spatial factors
 #'
 #' @examples
-#' # TODO: Update this
-#' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
 #' layout_df <- data.frame(
 #'   row = rep(1:3, each = 3),
-#'   col = rep(1:3, times = 3)
+#'   col = rep(1:3, times = 3),
+#'   treatment = rep(letters[1:3], 3)
 #' )
-#' objective_function_matrix()(design_matrix, layout_df, "treatment", c("row", "col"))
+#' objective_function(layout_df, "treatment", c("row", "col"))
 #'
 #' @return A numeric value representing the score of the design (lower is better)
 #' @export
