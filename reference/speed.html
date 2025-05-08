@@ -51,9 +51,10 @@ regular or irregular spatial designs.</p>
 <span>  spatial_factors <span class="op">=</span> <span class="op">~</span><span class="va">row</span> <span class="op">+</span> <span class="va">col</span>,</span>
 <span>  iterations <span class="op">=</span> <span class="fl">10000</span>,</span>
 <span>  early_stop_iterations <span class="op">=</span> <span class="fl">2000</span>,</span>
-<span>  obj_function <span class="op">=</span> <span class="fu"><a href="objective_function.html">objective_function</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  obj_function <span class="op">=</span> <span class="va">objective_function</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  seed <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -89,7 +90,7 @@ treatments. Specify <code>"1"</code> or <code>"none"</code> for no boundary (def
 
 <dt id="arg-obj-function">obj_function<a class="anchor" aria-label="anchor" href="#arg-obj-function"></a></dt>
 <dd><p>Objective function used to calculate score (lower is better) (default:
-<a href="objective_function.html">objective_function</a>)</p></dd>
+<a href="objective_functions.html">objective_function</a>)</p></dd>
 
 
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
@@ -99,6 +100,10 @@ treatments. Specify <code>"1"</code> or <code>"none"</code> for no boundary (def
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>A numeric value for random seed. If provided, it ensures reproducibility of results (default:
 NULL).</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Other arguments passed through to objective functions.</p></dd>
 
 </dl></div>
     <div class="section level2">
