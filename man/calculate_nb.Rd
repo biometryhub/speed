@@ -7,8 +7,6 @@
 calculate_nb(design_matrix, pair_mapping = NULL)
 }
 \arguments{
-\item{design_matrix}{A design matrix}
-
 \item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
 }
 \value{

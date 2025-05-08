@@ -11,9 +11,10 @@ speed(
   spatial_factors = ~row + col,
   iterations = 10000,
   early_stop_iterations = 2000,
-  obj_function = objective_function(),
+  obj_function = objective_function,
   quiet = FALSE,
-  seed = NULL
+  seed = NULL,
+  ...
 )
 }
 \arguments{
@@ -38,6 +39,8 @@ treatments. Specify \code{"1"} or \code{"none"} for no boundary (default: \code{
 
 \item{seed}{A numeric value for random seed. If provided, it ensures reproducibility of results (default:
 NULL).}
+
+\item{...}{Other arguments passed through to objective functions.}
 }
 \value{
 A list containing:

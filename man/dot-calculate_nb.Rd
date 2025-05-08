@@ -6,9 +6,6 @@
 \usage{
 .calculate_nb(design_matrix)
 }
-\arguments{
-\item{design_matrix}{A design matrix}
-}
 \value{
 Named list containing:
 \itemize{
