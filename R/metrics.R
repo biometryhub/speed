@@ -52,57 +52,7 @@ objective_function <- function(adj_weight = getOption("speed.adj_weight", 0),
     }
 }
 
-#' Default Objective Function
-#'
-#' @description
-#' A default objective function that combines adjacency and balance scores.
-#'
-#' @inheritParams objective_function_signature
-#'
-#' @param adj_weight Weight for adjacency score (default: 0)
-#' @param bal_weight Weight for balance score (default: 1)
-#'
-#' @examples
-#' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
-#' layout_df <- data.frame(
-#'   row = rep(1:3, each = 3),
-#'   col = rep(1:3, times = 3)
-#' )
-#' objective_function_matrix()(design_matrix, layout_df, "treatment", c("row", "col"))
-#'
-#' @return A function which returns a named list of numeric values with one required name `score` representing
-#'   the score of the design (lower is better) with a signature
-#'   `function(design_matrix, layout_df, swap, spatial_cols, previous_score, swapped_items)`. See signature
-#'   details in [objective_function_signature].
-#'
-#' @seealso [objective_function_piepho()]
-#'
-#' @export
-objective_function_matrix <- function(design_matrix,
-                                      layout_df,
-                                      swap,
-                                      spatial_cols,
-                                      adj_weight = getOption("speed.adj_weight", 0),
-                                      bal_weight = getOption("speed.bal_weight", 1)) {
-    if (adj_weight != 0) {
-        adj <- calculate_adjacency_score_matrix(design_matrix)
 
-        if (bal_weight == 0) {
-            return(list(score = adj))
-        }
-    }
-
-    if (bal_weight != 0) {
-        layout_df[[swap]] <- as.vector(design_matrix)
-        bal <- calculate_balance_score(layout_df, swap, spatial_cols)
-
-        if (adj_weight == 0) {
-            return(list(score = bal))
-        }
-    }
-
-    return(list(score = adj_weight * adj + bal_weight * bal))
-}
 
 #' Objective Function with Metric from Piepho
 #'
