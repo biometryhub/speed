@@ -101,11 +101,11 @@ print(paste("Connectivity score (unbalanced):", con_score_unbalanced))
 # Should be lower due to uneven distribution
 
 # Test replication score
-rep_score_balanced <- calculate_replication_score(df_balanced, "treatment")
+rep_score_balanced <- calculate_replication_score(df_balanced, "treatment", "site")
 print(paste("Replication score (balanced):", rep_score_balanced))
 # Should be low (better) as treatments are evenly replicated
 
-rep_score_unbalanced <- calculate_replication_score(df_unbalanced, "treatment")
+rep_score_unbalanced <- calculate_replication_score(df_unbalanced, "treatment", "site")
 print(paste("Replication score (unbalanced):", rep_score_unbalanced))
 # Should be higher (worse) due to uneven replication
 

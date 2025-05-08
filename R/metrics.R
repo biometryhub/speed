@@ -565,7 +565,7 @@ objective_function_multisite <- function(connectivity_weight = 1, replication_we
         connectivity_score <- calculate_connectivity_score(design, swap, spatial_cols)
 
         # Calculate within-site replication score
-        replication_score <- calculate_replication_score(design, swap)
+        replication_score <- calculate_replication_score(design, swap, spatial_cols)
 
         # Combine scores (lower is better for the optimization algorithm)
         return(connectivity_weight * (1/connectivity_score) + replication_weight * replication_score)
@@ -581,91 +581,82 @@ objective_function_multisite <- function(connectivity_weight = 1, replication_we
 #'
 #' @param design Data frame containing the current design
 #' @param swap Column name of the treatment
+#' @param spatial_factors Column name of the spatial factors
 #' @param min_replication Minimum replicates required per site (default: 2)
 #'
 #' @return Numeric score for cross-site connectivity (higher is better)
 #'
 #' @keywords internal
 calculate_connectivity_score <- function(design, swap, spatial_factors, min_replication = 2) {
-    # Get unique treatments and sites
-    treatments <- unique(design[[swap]])
-    sites <- unique(design[[spatial_factors]])
-
     # Create a matrix of treatment counts per site
     connectivity_matrix <- table(design[[spatial_factors]], design[[swap]])
-
+    
     # A treatment is considered "present" in a site only if it has at least min_replication
-    valid_connectivity <- ifelse(connectivity_matrix >= min_replication, 1, 0)
-
+    valid_connectivity <- (connectivity_matrix >= min_replication)
+    
     # Count number of sites each treatment appears in (with sufficient replication)
     sites_per_treatment <- colSums(valid_connectivity)
-
+    
     # Calculate the mean number of sites per treatment
-    mean_sites_per_treatment <- mean(sites_per_treatment)
-
+    mean_sites <- mean(sites_per_treatment)
+    
     # Calculate the variance of sites per treatment (lower is better)
-    variance_sites_per_treatment <- var(sites_per_treatment)
-
+    variance_sites <- var(sites_per_treatment)
+    
     # Final connectivity score: higher mean and lower variance is better
-    connectivity_score <- mean_sites_per_treatment - 0.5 * sqrt(variance_sites_per_treatment)
+    result <- mean_sites - 0.5 * sqrt(variance_sites)
 
-    return(connectivity_score)
+    return(result)
 }
 
 
-#' Calculate Within-site Replication Score with Minimum Replication Requirement
+#' Calculate Within-site Replication Score
 #'
 #' @description
 #' Calculates a score representing how well treatments are replicated within sites.
-#' Heavily penalizes treatments that appear only once in a site.
+#' Penalizes treatments with fewer than the minimum desired replicates.
 #' Lower scores indicate better within-site replication balance.
 #'
 #' @param design Data frame containing the current design
 #' @param swap Column name of the treatment
+#' @param spatial_cols Column name of the spatial factors
 #' @param min_replication Minimum desired replication within a site (default: 2)
-#' @param single_replicate_penalty Penalty for treatments with only 1 replicate (default: 100)
+#' @param single_replicate_penalty Penalty for treatments with fewer replicates (default: 100)
 #'
 #' @return Numeric score for within-site replication balance (lower is better)
 #'
+#' @examples
+#' # Example with equal replication
+#' design1 <- data.frame(
+#'   site = rep(1:2, each = 6),
+#'   treatment = rep(LETTERS[1:3], times = 4)
+#' )
+#' calculate_replication_score(design1, "treatment", "site")  # Should be 0
+#'
+#' # Example with unequal replication
+#' design2 <- data.frame(
+#'   site = rep(1:2, each = 6),
+#'   treatment = c(rep("A", 4), rep("B", 5), rep("C", 3))
+#' )
+#' calculate_replication_score(design2, "treatment", "site")  # Should be > 0
+#'
 #' @keywords internal
-calculate_replication_score <- function(design, swap, min_replication = 2,
+calculate_replication_score <- function(design, swap, spatial_cols, min_replication = 2,
                                         single_replicate_penalty = 100) {
-    # Get unique treatments and sites
-    treatments <- unique(design[[swap]])
-    sites <- unique(design[[spatial_factors]])
+    # Calculate actual replications per treatment within each site
+    actual_reps <- table(design[[spatial_cols]], design[[swap]])
 
     # Calculate ideal replication for each site
-    replication_score <- 0
+    ideal_rep <- nrow(design) / (length(unique(design[[spatial_cols]])) * length(unique(design[[swap]])))
 
-    for (site_val in sites) {
-        # Get plots in this site
-        site_plots <- design[design$site == site_val, ]
+    # Calculate squared deviations from ideal replication
+    deviations <- (actual_reps - ideal_rep)^2
 
-        # Calculate ideal replication (plots per treatment) for this site
-        # ideal_rep <- nrow(site_plots) / length(treatments)
+    # Apply penalty for treatments with less than min_replication
+    single_rep_penalty <- sum(actual_reps < min_replication) * single_replicate_penalty
 
-        # Calculate actual replications per treatment
-        actual_reps <- table(site_plots[[swap]])
-
-        # Apply heavy penalty for treatments with less than min_replication
-        single_rep_count <- sum(actual_reps < min_replication)
-        single_rep_penalty <- single_rep_count * single_replicate_penalty
-
-        # Fill in zeros for missing treatments
-        actual_reps_complete <- numeric(length(treatments))
-        names(actual_reps_complete) <- treatments
-        actual_reps_complete[names(actual_reps)] <- actual_reps
-
-        # Calculate squared deviations from ideal (for treatments that exist in this site)
-        present_treatments <- names(actual_reps)[actual_reps > 0]
-        deviations <- (actual_reps_complete[present_treatments] - ideal_rep)^2
-
-        # Sum squared deviations for this site
-        site_score <- sum(deviations) + single_rep_penalty
-
-        # Add to total score
-        replication_score <- replication_score + site_score
-    }
+    # Calculate total replication score
+    replication_score <- sum(deviations) + single_rep_penalty
 
     return(replication_score)
 }
