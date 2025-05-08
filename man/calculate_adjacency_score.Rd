@@ -4,12 +4,14 @@
 \alias{calculate_adjacency_score}
 \title{Calculate Adjacency Score for Design}
 \usage{
-calculate_adjacency_score(design, swap, spatial_cols)
+calculate_adjacency_score(layout_df, swap, spatial_cols)
 }
 \arguments{
-\item{design}{Data frame containing the current design}
+\item{layout_df}{A data frame representing the spatial information of the design}
 
-\item{swap}{Column name of the treatment}
+\item{swap}{A column name of the items to be swapped}
+
+\item{spatial_cols}{Column name(s) of the spatial factors}
 }
 \value{
 Numeric score for treatment adjacencies (lower is better)

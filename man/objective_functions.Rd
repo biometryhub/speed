@@ -8,7 +8,7 @@
 objective_function_signature(layout_df, swap, spatial_cols, ...)
 
 objective_function(
-  design,
+  layout_df,
   swap,
   spatial_cols,
   adj_weight = getOption("speed.adj_weight", 0),

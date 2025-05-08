@@ -8,8 +8,8 @@
 #'
 #' @param data A data frame containing the experimental design with spatial coordinates
 #' @param swap A column name of the items to be swapped (e.g., `treatment`, `variety`, `genotype`, etc)
-#' @param swap_within A string specifying the blocking variable that is a boundary within which to swap
-#'   treatments. Specify `"1"` or `"none"` for no boundary (default: `"1"`)
+#' @param swap_within A string specifying the variable that defines a boundary within which to swap
+#'   treatments. Specify `"1"` or `"none"` for no boundary (default: `"1"`). Other examples might be `"block"` or `"replicate"` or even `"site"`.
 #' @param spatial_factors A one-sided formula specifying spatial factors to consider for balance (default:
 #'   `~row + col`)
 #' @param iterations Maximum number of iterations for the simulated annealing algorithm (default: 10000)
