@@ -58,21 +58,21 @@ objective_function_matrix <- function(
 #'
 #' @examples
 #' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
-#' layout_df <- data.frame(
+#' design_df <- data.frame(
 #'   row = rep(1:3, each = 3),
 #'   col = rep(1:3, times = 3)
 #' )
-#' objective_function_matrix()(design_matrix, layout_df, "treatment", c("row", "col"))
+#' objective_function_matrix()(design_df, "treatment", c("row", "col"))
 #'
 #' pair_mapping <- create_pair_mapping(c(design_matrix))
 #' obj_function_piepho <- function(pair_mapping) {
-#'   obj_function_piepho(design_matrix, layout_df, "treatment", c("row", "col"))
+#'   obj_function_piepho(design_matrix, design_df, "treatment", c("row", "col"))
 #' }
 #' # usage in speed, speed(..., obj_function = obj_function_piepho)
 #'
 #' @return A function which returns a named list of numeric values with one required name `score` representing
 #'   the score of the design (lower is better) with a signature
-#'   `function(design_matrix, layout_df, swap, spatial_cols, previous_score, swapped_items)`. See signature
+#'   `function(design_matrix, design_df, swap, spatial_cols, previous_score, swapped_items)`. See signature
 #'   details in [objective_function_signature].
 #'
 #' @seealso [objective_function()], [create_pair_mapping()]
@@ -80,15 +80,19 @@ objective_function_matrix <- function(
 #' @export
 objective_function_piepho <- function(pair_mapping = NULL) {
   return(
-    function(design_matrix, layout_df, swap, spatial_cols, previous_score = NULL, swapped_items = NULL) {
+    function(design, swap, spatial_cols, previous_score = NULL, swapped_items = NULL) {
+      design_matrix <- matrix(design[[swap]], nrow = max(design$row), ncol = max(design$col))
+
       ed <- calculate_ed(design_matrix, previous_score$ed, swapped_items)
-      ed_score <- -sum(vapply(ed, function(ed_rep) ed_rep$min_mst, numeric(1)))
-      nb_score <- calculate_nb(design_matrix, pair_mapping)$max_nb
+      # sum(1/) or 1/sum
+      ed_score <- 1 / sum(vapply(ed, function(ed_rep) ed_rep$min_mst, numeric(1)))
+      nb <- calculate_nb(design_matrix, pair_mapping)
+      nb_score <- nb$var
 
-      layout_df[[swap]] <- as.vector(design_matrix)
-      bal_score <- calculate_balance_score(layout_df, swap, spatial_cols)
+      design[[swap]] <- as.vector(design_matrix)
+      bal_score <- calculate_balance_score(design, swap, spatial_cols)
 
-      return(list(score = nb_score + ed_score + bal_score, ed = ed))
+      return(list(score = nb_score + ed_score + bal_score, ed = ed, bal = bal_score, nb = nb))
     }
   )
 }
@@ -138,7 +142,8 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
   return(list(
     nb = nb,
     max_nb = max_nb,
-    max_pairs = max_pairs
+    max_pairs = max_pairs,
+    var = var(nb)
   ))
 }
 
@@ -229,6 +234,10 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #' @export
 calculate_ed <- function(design_matrix, previous_ed = NULL, swapped_items = NULL) {
   if (!is.null(swapped_items)) {
+    if (length(unique(swapped_items)) == 1) {
+      return(previous_ed)
+    }
+
     design_matrix[!(design_matrix %in% swapped_items)] <- NA
     msts <- lapply(previous_ed, function(ed_by_rep) ed_by_rep$msts)
   } else {

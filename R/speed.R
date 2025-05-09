@@ -102,11 +102,13 @@ speed <- function(
     best_design <- current_design
 
     # Calculate initial score
-    current_score <- obj_function(current_design, swap, spatial_cols)
+    current_score_obj <- obj_function(current_design, swap, spatial_cols)
+    current_score = current_score_obj$score
     if (!is.numeric(current_score)) {
         stop("Value from `objective_function` must be numeric.")
     }
 
+    best_score_obj <- current_score_obj
     best_score <- current_score
     temp <- start_temp
     scores <- numeric(iterations)
@@ -141,14 +143,17 @@ speed <- function(
                                         swap_all_blocks = current_swap_all_blocks)
 
         # Calculate new score
-        new_score <- obj_function(new_design, swap, spatial_cols)
+        new_score_obj <- obj_function(new_design$design, swap, spatial_cols, current_score_obj, new_design$swapped_items)
+        new_score <- new_score_obj$score
 
         # Decide whether to accept the new design
         if (new_score < current_score || runif(1) < exp((current_score - new_score) / temp)) {
-            current_design <- new_design
+            current_design <- new_design$design
             current_score <- new_score
+            current_score_obj <- new_score_obj
             if (new_score < best_score) {
-                best_design <- new_design
+                best_design <- new_design$design
+                best_score_obj <- new_score_obj
                 best_score <- new_score
                 last_improvement_iter <- iter
             }
@@ -182,8 +187,7 @@ speed <- function(
     output <- list(
         design_df = best_design,
         score = best_score,
-        # adjacency_score = calculate_adjacency_score_df(best_design, swap),
-        # balance_score = calculate_balance_score(best_design, swap, spatial_cols),
+        score_obj = best_score_obj,
         scores = scores,
         temperatures = temperatures,
         iterations_run = length(scores),
@@ -225,6 +229,9 @@ generate_neighbor <- function(design,
         blocks_to_swap <- sample(blocks, 1)
     }
 
+    swapped_idx <- 1
+    swapped_items <- character(2 * swap_count * length(blocks_to_swap))
+
     # Perform swaps in selected blocks
     for (block in blocks_to_swap) {
         # Get indices of plots in this block
@@ -233,17 +240,22 @@ generate_neighbor <- function(design,
         if (length(block_indices) >= 2) {  # Need at least 2 plots to swap
             for (i in 1:swap_count) {
                 # Select two random plots in this block
+                # FIX: this can swap the same items
                 swap_pair <- sample(block_indices, 2)
 
                 # Swap treatments
                 temp <- new_design[[swap]][swap_pair[1]]
                 new_design[[swap]][swap_pair[1]] <- new_design[[swap]][swap_pair[2]]
                 new_design[[swap]][swap_pair[2]] <- temp
+
+                swapped_items[swapped_idx] <- new_design[[swap]][swap_pair[1]]
+                swapped_items[swapped_idx + 1] <- new_design[[swap]][swap_pair[2]]
+                swapped_idx <- swapped_idx + 2
             }
         }
     }
 
-    return(new_design)
+    return(list(design = new_design, swapped_items = swapped_items))
 }
 
 #' Default Objective Function for Design Optimization
@@ -256,7 +268,7 @@ generate_neighbor <- function(design,
 #' @export
 objective_function <- function(adj_weight = getOption("speed.adj_weight", 0),
                                bal_weight = getOption("speed.bal_weight", 1)) {
-    function(design, swap, spatial_cols) {
+    function(design, swap, spatial_cols, ...) {
         adj_score <- ifelse(adj_weight != 0,
                             calculate_adjacency_score(design, swap),
                             0)
