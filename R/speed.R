@@ -8,8 +8,8 @@
 #'
 #' @param data A data frame containing the experimental design with spatial coordinates
 #' @param swap A column name of the items to be swapped (e.g., `treatment`, `variety`, `genotype`, etc)
-#' @param swap_within A string specifying the blocking variable that is a boundary within which to swap
-#'   treatments. Specify `"1"` or `"none"` for no boundary (default: `"1"`)
+#' @param swap_within A string specifying the variable that defines a boundary within which to swap
+#'   treatments. Specify `"1"` or `"none"` for no boundary (default: `"1"`). Other examples might be `"block"` or `"replicate"` or even `"site"`.
 #' @param spatial_factors A one-sided formula specifying spatial factors to consider for balance (default:
 #'   `~row + col`)
 #' @param iterations Maximum number of iterations for the simulated annealing algorithm (default: 10000)
@@ -19,6 +19,7 @@
 #' @param quiet Logical; if TRUE, suppresses progress messages (default: FALSE)
 #' @param seed A numeric value for random seed. If provided, it ensures reproducibility of results (default:
 #'   NULL).
+#' @param ... Other arguments passed through to objective functions.
 #'
 #' @return A list containing:
 #' \itemize{
@@ -37,6 +38,7 @@
 #'
 #' @importFrom stringi stri_sort
 #' @importFrom stats runif
+#' @importFrom rlang check_dots_used
 #'
 #' @examples
 #' # Create a simple design with 3 replicates of 4 treatments in a 4x3 layout
@@ -57,9 +59,10 @@ speed <- function(
         spatial_factors = ~ row + col,
         iterations = 10000,
         early_stop_iterations = 2000,
-        obj_function = objective_function(),
+        obj_function = objective_function,
         quiet = FALSE,
-        seed = NULL) {
+        seed = NULL,
+        ...) {
 
     # Extract options
     swap_count <- getOption("speed.swap_count", 1)
@@ -86,6 +89,7 @@ speed <- function(
         start_temp,
         cooling_rate
     )
+    rlang::check_dots_used()
 
     # Handle swap_within
     layout_df <- data
@@ -102,7 +106,7 @@ speed <- function(
     best_design <- current_design
 
     # Calculate initial score
-    current_score_obj <- obj_function(current_design, swap, spatial_cols)
+    current_score_obj <- obj_function(current_design, swap, spatial_cols, ...)
     current_score = current_score_obj$score
     if (!is.numeric(current_score)) {
         stop("Value from `objective_function` must be numeric.")
@@ -118,7 +122,7 @@ speed <- function(
     # Set seed for reproducibility
     if (is.null(seed)) {
         # dummy_seed <- runif(1)
-        seed <- .GlobalEnv$.Random.seed
+        seed <- .GlobalEnv$.Random.seed[3]
     }
     set.seed(seed)
 
@@ -136,14 +140,18 @@ speed <- function(
         }
 
         # Generate new design by swapping treatments
-        new_design <- generate_neighbor(current_design,
+        new_design <- generate_neighbour(current_design,
                                         swap,
                                         swap_within,
                                         swap_count = current_swap_count,
                                         swap_all_blocks = current_swap_all_blocks)
 
         # Calculate new score
-        new_score_obj <- obj_function(new_design$design, swap, spatial_cols, current_score_obj, new_design$swapped_items)
+        new_score_obj <- obj_function(new_design$design, 
+                                      swap, spatial_cols, 
+                                      current_score_obj = current_score_obj, 
+                                      swapped_items = new_design$swapped_items, 
+                                      ...)
         new_score <- new_score_obj$score
 
         # Decide whether to accept the new design
@@ -187,7 +195,6 @@ speed <- function(
     output <- list(
         design_df = best_design,
         score = best_score,
-        score_obj = best_score_obj,
         scores = scores,
         temperatures = temperatures,
         iterations_run = length(scores),
@@ -200,132 +207,9 @@ speed <- function(
     return(output)
 }
 
-#' Generate a Neighbour Design by Swapping Treatments
-#'
-#' @param design Data frame containing the current design
-#' @param swap Column name of the treatment to swap
-#' @param swap_within Column name defining groups within which to swap treatments
-#' @param swap_count Number of swaps to perform
-#' @param swap_all_blocks Whether to perform swaps in all blocks or just one
-#'
-#' @return A data frame with the updated design after swapping
-#'
-#' @keywords internal
-generate_neighbor <- function(design,
-                              swap,
-                              swap_within,
-                              swap_count = getOption("speed.swap_count", 1),
-                              swap_all_blocks = getOption("speed.swap_all_blocks", FALSE)) {
-    new_design <- design
 
-    # Get unique blocks
-    blocks <- unique(design[[swap_within]])
 
-    if (swap_all_blocks) {
-        # Swap in all blocks
-        blocks_to_swap <- blocks
-    } else {
-        # Pick a random block
-        blocks_to_swap <- sample(blocks, 1)
-    }
 
-    swapped_idx <- 1
-    swapped_items <- character(2 * swap_count * length(blocks_to_swap))
-
-    # Perform swaps in selected blocks
-    for (block in blocks_to_swap) {
-        # Get indices of plots in this block
-        block_indices <- which(design[[swap_within]] == block & !is.na(design[[swap]]))
-
-        if (length(block_indices) >= 2) {  # Need at least 2 plots to swap
-            for (i in 1:swap_count) {
-                # Select two random plots in this block
-                # FIX: this can swap the same items
-                swap_pair <- sample(block_indices, 2)
-
-                # Swap treatments
-                temp <- new_design[[swap]][swap_pair[1]]
-                new_design[[swap]][swap_pair[1]] <- new_design[[swap]][swap_pair[2]]
-                new_design[[swap]][swap_pair[2]] <- temp
-
-                swapped_items[swapped_idx] <- new_design[[swap]][swap_pair[1]]
-                swapped_items[swapped_idx + 1] <- new_design[[swap]][swap_pair[2]]
-                swapped_idx <- swapped_idx + 2
-            }
-        }
-    }
-
-    return(list(design = new_design, swapped_items = swapped_items))
-}
-
-#' Default Objective Function for Design Optimization
-#'
-#' @param adj_weight Weight for adjacency score (default: 0)
-#' @param bal_weight Weight for balance score (default: 1)
-#'
-#' @return Numeric score (lower is better)
-#'
-#' @export
-objective_function <- function(adj_weight = getOption("speed.adj_weight", 0),
-                               bal_weight = getOption("speed.bal_weight", 1)) {
-    function(design, swap, spatial_cols, ...) {
-        adj_score <- ifelse(adj_weight != 0,
-                            calculate_adjacency_score(design, swap),
-                            0)
-
-        bal_score <- ifelse(bal_weight != 0,
-                            calculate_balance_score(design, swap, spatial_cols),
-                            0)
-
-        return(adj_weight * adj_score + bal_weight * bal_score)
-    }
-}
-
-#' Calculate Adjacency Score for Design
-#'
-#' @description
-#' Calculates the adjacency score for a given experimental design. The adjacency score
-#' represents the number of adjacent plots with the same treatment. Lower scores indicate
-#' better separation of treatments.
-#'
-#' @param design Data frame containing the current design
-#' @param swap Column name of the treatment
-#'
-#' @return Numeric score for treatment adjacencies (lower is better)
-#'
-#' @examples
-#' \dontrun{
-#' # Example 1: Design with no adjacencies
-#' design_no_adj <- data.frame(
-#'   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
-#'   col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
-#'   treatment = c("A", "B", "A", "B", "A", "B", "A", "B", "A")
-#' )
-#'
-#' # Gives 0
-#' calculate_adjacency_score(design_no_adj, "treatment")
-#'
-#' # Example 2: Design with adjacencies
-#' design_with_adj <- data.frame(
-#'   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
-#'   col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
-#'   treatment = c("A", "A", "A", "B", "B", "B", "A", "A", "A")
-#' )
-#'
-#' # Gives value 6
-#' calculate_adjacency_score(design_with_adj, "treatment")
-#'}
-#' @keywords internal
-calculate_adjacency_score <- function(design, swap) {
-    design <- matrix(design[[swap]],
-                     nrow = max(as.numeric(as.character(design$row)), na.rm = TRUE),
-                     ncol = max(as.numeric(as.character(design$col)), na.rm = TRUE),
-                     byrow = FALSE)
-
-    row_adjacencies <- sum(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
-    col_adjacencies <- sum(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
-    return(row_adjacencies + col_adjacencies)
-}
 
 #' Print method for speed design objects
 #'

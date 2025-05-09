@@ -6,18 +6,25 @@ reference:
   - title: Design
     desc: Functions to help with the design of experiments.
   - contents:
-      - starts_with("speed")
+      - speed
   - title: Metrics
     desc: Functions to optimise designs in different ways.
+  - subtitle: Objective functions
+  - contents:
+      - starts_with("objective_function")
+  - subtitle: Calculation functions
+    desc: Functions that calculate values for the objective functions
   - contents:
       - starts_with("calculate")
-      - starts_with("objective")
       - get_edges
       - get_vertices
       - create_pair_mapping
   - title: Plotting
-    desc: Functions for plotting designs.
+    desc: Functions for checking designs.
   - contents:
       - autoplot
       - starts_with("plot")
       - print.design
+  - title: Advanced options
+  - contents:
+      - speed-options

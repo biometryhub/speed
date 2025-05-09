@@ -4,7 +4,14 @@
 \alias{objective_function_piepho}
 \title{Objective Function with Metric from Piepho}
 \usage{
-objective_function_piepho(pair_mapping = NULL)
+objective_function_piepho(
+  layout_df,
+  swap,
+  spatial_cols,
+  previous_score = NULL,
+  swapped_items = NULL,
+  pair_mapping = NULL
+)
 }
 \arguments{
 \item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
@@ -32,6 +39,9 @@ obj_function_piepho <- function(pair_mapping) {
 }
 # usage in speed, speed(..., obj_function = obj_function_piepho)
 
+}
+\references{
+Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of distribution of treatment replications in row-column designs. Biometrical journal. Biometrische Zeitschrift, 60(6), 1172–1189. \url{https://doi.org/10.1002/bimj.201800013}
 }
 \seealso{
 \code{\link[=objective_function]{objective_function()}}, \code{\link[=create_pair_mapping]{create_pair_mapping()}}

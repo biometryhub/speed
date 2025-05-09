@@ -22,6 +22,5 @@
 #' options(speed.swap_count = 5, speed.swap_all_blocks = TRUE)
 #' ```
 #'
-#' @keywords internal
 #' @name speed-options
 NULL
