@@ -4,14 +4,7 @@
 \alias{objective_function_piepho}
 \title{Objective Function with Metric from Piepho}
 \usage{
-objective_function_piepho(
-  layout_df,
-  swap,
-  spatial_cols,
-  previous_score = NULL,
-  swapped_items = NULL,
-  pair_mapping = NULL
-)
+objective_function_piepho(pair_mapping = NULL)
 }
 \arguments{
 \item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
@@ -19,29 +12,29 @@ objective_function_piepho(
 \value{
 A function which returns a named list of numeric values with one required name \code{score} representing
 the score of the design (lower is better) with a signature
-\verb{function(design_matrix, layout_df, swap, spatial_cols, previous_score, swapped_items)}. See signature
+\verb{function(design_matrix, design_df, swap, spatial_cols, previous_score, swapped_items)}. See signature
 details in \link{objective_function_signature}.
 }
 \description{
 Create an objective function including even distribution and neighbor balance introduced by Piepho 2018.
 }
 \examples{
-design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
-layout_df <- data.frame(
-  row = rep(1:3, each = 3),
-  col = rep(1:3, times = 3)
+design_df <- speed::initialize_design_df(
+  treatments = c(1, 2, 2, 1, 3, 3, 1, 3, 3),
+  row = 3,
+  col = 3
 )
-objective_function_matrix()(design_matrix, layout_df, "treatment", c("row", "col"))
 
 pair_mapping <- create_pair_mapping(c(design_matrix))
-obj_function_piepho <- function(pair_mapping) {
-  obj_function_piepho(design_matrix, layout_df, "treatment", c("row", "col"))
-}
+obj_function_piepho <- objective_function_piepho(pair_mapping)
+piepho_score <- obj_function_piepho(design_df, "treatment", c("row", "col"))
 # usage in speed, speed(..., obj_function = obj_function_piepho)
 
 }
 \references{
-Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of distribution of treatment replications in row-column designs. Biometrical journal. Biometrische Zeitschrift, 60(6), 1172–1189. \url{https://doi.org/10.1002/bimj.201800013}
+Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of distribution
+of treatment replications in row-column designs. Biometrical journal. Biometrische Zeitschrift, 60(6),
+1172–1189. \url{https://doi.org/10.1002/bimj.201800013}
 }
 \seealso{
 \code{\link[=objective_function]{objective_function()}}, \code{\link[=create_pair_mapping]{create_pair_mapping()}}

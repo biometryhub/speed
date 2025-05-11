@@ -8,21 +8,21 @@
 #'
 #' @keywords internal
 initialize_design_matrix <- function(treatment_matrix, swap_matrix) {
-  nrows <- nrow(treatment_matrix)
-  ncols <- ncol(treatment_matrix)
-  design_matrix <- matrix(NA, nrow = nrows, ncol = ncols)
+    nrows <- nrow(treatment_matrix)
+    ncols <- ncol(treatment_matrix)
+    design_matrix <- matrix(NA, nrow = nrows, ncol = ncols)
 
-  if (is.null(swap_matrix)) {
-    design_matrix[] <- sample(as.vector(treatment_matrix))
-  } else {
-    for (level in unique(as.vector(swap_matrix))) {
-      mask <- which(swap_matrix == level, arr.ind = TRUE)
-      vals <- treatment_matrix[mask]
-      design_matrix[mask] <- sample(vals)
+    if (is.null(swap_matrix)) {
+        design_matrix[] <- sample(as.vector(treatment_matrix))
+    } else {
+        for (level in unique(as.vector(swap_matrix))) {
+            mask <- which(swap_matrix == level, arr.ind = TRUE)
+            vals <- treatment_matrix[mask]
+            design_matrix[mask] <- sample(vals)
+        }
     }
-  }
 
-  return(design_matrix)
+    return(design_matrix)
 }
 
 #' Generate a Neighbour Design by Swapping Treatments
@@ -62,9 +62,10 @@ generate_neighbour <- function(design,
         # Get indices of plots in this block
         block_indices <- which(design[[swap_within]] == block & !is.na(design[[swap]]))
 
-        if (length(block_indices) >= 2) {  # Need at least 2 plots to swap
+        if (length(block_indices) >= 2) { # Need at least 2 plots to swap
             for (i in 1:swap_count) {
                 # Select two random plots in this block
+                # FIX: this can swap the same items
                 swap_pair <- sample(block_indices, 2)
 
                 # Swap treatments
@@ -82,66 +83,41 @@ generate_neighbour <- function(design,
     return(list(design = new_design, swapped_items = swapped_items))
 }
 
-#
-#     # Perform swaps in selected blocks
-#     for (block in blocks_to_swap) {
-#         # Get indices of plots in this block
-#         block_indices <- which(design[[swap_within]] == block & !is.na(design[[swap]]))
-#
-#         if (length(block_indices) >= 2) {  # Need at least 2 plots to swap
-#             for (i in 1:swap_count) {
-#                 # Select two random plots in this block
-#                 # FIX: this can swap the same items
-#                 swap_pair <- sample(block_indices, 2)
-#
-#                 # Swap treatments
-#                 temp <- new_design[[swap]][swap_pair[1]]
-#                 new_design[[swap]][swap_pair[1]] <- new_design[[swap]][swap_pair[2]]
-#                 new_design[[swap]][swap_pair[2]] <- temp
-#
-#             }
-#         }
-#     }
-#
-#     return(list(design = new_design))
-# }
-
-
 # TODO: add doc
 initialize_design_df <- function(treatments, nrows, ncols, nrows_block = NULL, ncols_block = NULL) {
-  .verify_initialize_design_df(treatments, nrows, ncols, nrows_block, ncols_block)
-  rows <- rep(1:nrows, ncols)
-  cols <- rep(1:ncols, each = nrows)
-  treatments <- treatments
-  df <- data.frame(
-    row = rows,
-    col = cols,
-    treatment = treatments
-  )
+    .verify_initialize_design_df(treatments, nrows, ncols, nrows_block, ncols_block)
+    rows <- rep(1:nrows, ncols)
+    cols <- rep(1:ncols, each = nrows)
+    treatments <- treatments
+    df <- data.frame(
+        row = rows,
+        col = cols,
+        treatment = treatments
+    )
 
-  if (!is.null(nrows_block)) {
-    nblocks_row <- nrows / nrows_block
-    nblocks_col <- ncols / ncols_block
+    if (!is.null(nrows_block)) {
+        nblocks_row <- nrows / nrows_block
+        nblocks_col <- ncols / ncols_block
 
-    df$row_block <- rep(1:nblocks_row, ncols, each = nrows_block)
-    df$col_block <- rep(1:nblocks_col, each = nrows * ncols_block)
-    df$block <- as.numeric(df$row_block) + nblocks_row * (as.numeric(df$col_block) - 1)
-  }
-  return(df)
+        df$row_block <- rep(1:nblocks_row, ncols, each = nrows_block)
+        df$col_block <- rep(1:nblocks_col, each = nrows * ncols_block)
+        df$block <- as.numeric(df$row_block) + nblocks_row * (as.numeric(df$col_block) - 1)
+    }
+    return(df)
 }
 
 .verify_initialize_design_df <- function(treatments, nrows, ncols, nrows_block, block_ncols) {
-  verify_positive_whole_number(nrows, ncols)
+    verify_positive_whole_number(nrows, ncols)
 
-  if ((!is.null(nrows_block) && is.null(block_ncols)) || (is.null(nrows_block) && !is.null(block_ncols))) {
-    stop("`block_nrows` and `block_ncols` must both be numeric or `NULL`")
-  }
+    if ((!is.null(nrows_block) && is.null(block_ncols)) || (is.null(nrows_block) && !is.null(block_ncols))) {
+        stop("`block_nrows` and `block_ncols` must both be numeric or `NULL`")
+    }
 
-  if (!is.null(nrows_block)) {
-    verify_positive_whole_number(nrows_block)
-    verify_positive_whole_number(block_ncols)
+    if (!is.null(nrows_block)) {
+        verify_positive_whole_number(nrows_block)
+        verify_positive_whole_number(block_ncols)
 
-    verify_multiple_of(nrows, nrows_block)
-    verify_multiple_of(ncols, block_ncols)
-  }
+        verify_multiple_of(nrows, nrows_block)
+        verify_multiple_of(ncols, block_ncols)
+    }
 }
