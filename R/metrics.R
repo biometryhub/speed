@@ -141,17 +141,15 @@ calculate_adjacency_score <- function(layout_df, swap, spatial_cols) {
 #' @inheritParams calculate_nb
 #'
 #' @examples
-#' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
-#' layout_df <- data.frame(
-#'   row = rep(1:3, each = 3),
-#'   col = rep(1:3, times = 3)
+#' design_df <- speed::initialize_design_df(
+#'   treatments = c(1, 2, 2, 1, 3, 3, 1, 3, 3),
+#'   row = 3,
+#'   col = 3
 #' )
-#' objective_function_matrix()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
 #' pair_mapping <- create_pair_mapping(c(design_matrix))
-#' obj_function_piepho <- function(pair_mapping) {
-#'   obj_function_piepho(design_matrix, layout_df, "treatment", c("row", "col"))
-#' }
+#' obj_function_piepho <- objective_function_piepho(pair_mapping)
+#' piepho_score <- obj_function_piepho(design_df, "treatment", c("row", "col"))
 #' # usage in speed, speed(..., obj_function = obj_function_piepho)
 #'
 #' @return A function which returns a named list of numeric values with one required name `score` representing
