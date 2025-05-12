@@ -142,12 +142,12 @@ calculate_adjacency_score <- function(layout_df, swap, spatial_cols) {
 #'
 #' @examples
 #' design_df <- speed::initialize_design_df(
-#'   treatments = c(1, 2, 2, 1, 3, 3, 1, 3, 3),
-#'   row = 3,
-#'   col = 3
+#'   items = c(1, 2, 2, 1, 3, 3, 1, 3, 3),
+#'   nrows = 3,
+#'   ncols = 3
 #' )
 #'
-#' pair_mapping <- create_pair_mapping(c(design_matrix))
+#' pair_mapping <- create_pair_mapping(design_df$treatment)
 #' obj_function_piepho <- objective_function_piepho(pair_mapping)
 #' piepho_score <- obj_function_piepho(design_df, "treatment", c("row", "col"))
 #' # usage in speed, speed(..., obj_function = obj_function_piepho)
@@ -163,6 +163,8 @@ calculate_adjacency_score <- function(layout_df, swap, spatial_cols) {
 #'
 #' @export
 objective_function_piepho <- function(layout_df, swap, spatial_cols, previous_score = NULL, swapped_items = NULL, pair_mapping = NULL) {
+    design_matrix <- matrix(layout_df[[swap]], nrow = max(layout_df$row), ncol = max(layout_df$col))
+
     ed <- calculate_ed(design_matrix, previous_score$ed, swapped_items)
     ed_score <- -sum(vapply(ed, function(ed_rep) ed_rep$min_mst, numeric(1)))
     nb_score <- calculate_nb(design_matrix, pair_mapping)$max_nb
