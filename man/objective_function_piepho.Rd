@@ -14,6 +14,16 @@ objective_function_piepho(
 )
 }
 \arguments{
+\item{layout_df}{A data frame representing the spatial information of the design}
+
+\item{swap}{A column name of the items to be swapped}
+
+\item{spatial_cols}{Column name(s) of the spatial factors}
+
+\item{previous_score}{Previous score object}
+
+\item{swapped_items}{The items that had just been swapped}
+
 \item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
 }
 \value{
@@ -26,18 +36,14 @@ details in \link{objective_function_signature}.
 Create an objective function including even distribution and neighbor balance introduced by Piepho 2018.
 }
 \examples{
-design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
-layout_df <- data.frame(
-  row = rep(1:3, each = 3),
-  col = rep(1:3, times = 3)
+design_df <- speed::initialize_design_df(
+  items = c(1, 2, 2, 1, 3, 3, 1, 3, 3),
+  nrows = 3,
+  ncols = 3
 )
-objective_function_matrix()(design_matrix, layout_df, "treatment", c("row", "col"))
 
-pair_mapping <- create_pair_mapping(c(design_matrix))
-obj_function_piepho <- function(pair_mapping) {
-  obj_function_piepho(design_matrix, layout_df, "treatment", c("row", "col"))
-}
-# usage in speed, speed(..., obj_function = obj_function_piepho)
+pair_mapping <- create_pair_mapping(design_df$treatment)
+objective_function_piepho(design_df, "treatment", c("row", "col"), pair_mapping = pair_mapping)
 
 }
 \references{

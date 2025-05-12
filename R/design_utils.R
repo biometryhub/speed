@@ -76,16 +76,35 @@ generate_neighbour <- function(design,
 }
 
 
-# TODO: add doc
-initialize_design_df <- function(treatments, nrows, ncols, nrows_block = NULL, ncols_block = NULL) {
-  .verify_initialize_design_df(treatments, nrows, ncols, nrows_block, ncols_block)
+#' Initialize Design Data Frame
+#'
+#' @description
+#' Initialize a design data frame with or without blocking.
+#'
+#' @param items Items to be placed in the design
+#' @param nrows Number of rows in the design
+#' @param ncols Number of columns in the design
+#' @param nrows_block Number of rows in each block
+#' @param ncols_block Number of columns in each block
+#'
+#' @return A data frame containing the design
+#'
+#' @examples
+#' initialize_design_df(
+#'   items = c(1, 2, 2, 1, 3, 3, 1, 3, 3),
+#'   nrows = 3,
+#'   ncols = 3
+#' )
+#'
+#' @export
+initialize_design_df <- function(items, nrows, ncols, nrows_block = NULL, ncols_block = NULL) {
+  .verify_initialize_design_df(items, nrows, ncols, nrows_block, ncols_block)
   rows <- rep(1:nrows, ncols)
   cols <- rep(1:ncols, each = nrows)
-  treatments <- treatments
   df <- data.frame(
     row = rows,
     col = cols,
-    treatment = treatments
+    treatment = items
   )
 
   if (!is.null(nrows_block)) {
@@ -99,7 +118,7 @@ initialize_design_df <- function(treatments, nrows, ncols, nrows_block = NULL, n
   return(df)
 }
 
-.verify_initialize_design_df <- function(treatments, nrows, ncols, nrows_block, block_ncols) {
+.verify_initialize_design_df <- function(items, nrows, ncols, nrows_block, block_ncols) {
   verify_positive_whole_number(nrows, ncols)
 
   if ((!is.null(nrows_block) && is.null(block_ncols)) || (is.null(nrows_block) && !is.null(block_ncols))) {

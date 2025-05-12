@@ -19,6 +19,7 @@ reference:
       - get_edges
       - get_vertices
       - create_pair_mapping
+      - initialize_design_df
   - title: Plotting
     desc: Functions for checking designs.
   - contents:
