@@ -48,7 +48,7 @@ objective_function <- function(layout_df, swap, spatial_cols,
                         calculate_balance_score(layout_df, swap, spatial_cols),
                         0)
 
-    return(adj_weight * adj_score + bal_weight * bal_score)
+    return(round(adj_weight * adj_score + bal_weight * bal_score, 10))
 }
 
 
@@ -74,9 +74,9 @@ objective_function <- function(layout_df, swap, spatial_cols,
 #'
 #' @export
 calculate_balance_score <- function(layout_df, swap, spatial_cols) {
-    score <- sapply(spatial_cols, function(el) {
-        sum(apply(table(layout_df[[el]], layout_df[[swap]]), 1, var, na.rm = TRUE), na.rm = TRUE)
-    })
+    score <- vapply(spatial_cols, function(el) {
+                    sum(matrixStats::rowVars(table(layout_df[[el]], layout_df[[swap]]), na.rm = TRUE), na.rm = TRUE)
+    }, numeric(1))
     return(sum(score))
 }
 
