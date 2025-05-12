@@ -62,7 +62,7 @@ test_that("speed returns correct output structure", {
     expect_equal(result$stopped_early, FALSE)
     expect_equal(result$treatments, c("A", "B", "C", "D"))
 
-    skip_on_os("mac")
+    # skip_on_os("mac")
     vdiffr::expect_doppelganger("speed_small", autoplot(result))
 })
 
@@ -188,7 +188,7 @@ test_that("speed respects swap_within boundaries", {
     expect_false(any(block1_treatments %in% block2_treatments))
     expect_false(any(block2_treatments %in% block1_treatments))
 
-    skip_on_os("mac")
+    # skip_on_os("mac")
     vdiffr::expect_doppelganger("speed_blocks", autoplot(result))
 })
 
@@ -217,7 +217,7 @@ test_that("speed handles irregular layouts with missing plots", {
     expect_identical(which(is.na(result$design_df$treatment)),
                      which(is.na(irregular_data$treatment)))
 
-    skip_on_os("mac")
+    # skip_on_os("mac")
     expect_equal(result$score, 1)
 
     vdiffr::expect_doppelganger("speed_missing_plots", autoplot(result))
@@ -242,13 +242,12 @@ test_that("speed handles multiple spatial factors", {
     )
     expect_s3_class(result, "design")
 
-    skip_on_os("mac")
+    # skip_on_os("mac")
     vdiffr::expect_doppelganger("speed_multi_spatial_factors", autoplot(result))
 })
 
 # Test 11: Non-uniform treatment distribution
 test_that("speed handles non-uniform treatment distributions", {
-
     non_uniform_data <- data.frame(
         row = rep(1:8, each = 9),
         col = rep(1:9, times = 8),
@@ -259,7 +258,7 @@ test_that("speed handles non-uniform treatment distributions", {
         swap = "treatment",
         spatial_factors = ~ row + col,
         iterations = 2000,
-        early_stop_iterations = 200,
+        early_stop_iterations = 400,
         seed = 42,
         quiet = TRUE
     )
@@ -269,9 +268,9 @@ test_that("speed handles non-uniform treatment distributions", {
     # Check values
     expect_equal(result$stopped_early, TRUE)
 
-    skip_on_os("mac")
+    # skip_on_os("mac")
     expect_equal(result$score, 16.8)
-    expect_equal(result$iterations_run,  1006)
+    expect_equal(result$iterations_run, 1458)
 
     vdiffr::expect_doppelganger("speed_non_uniform", autoplot(result))
 })
@@ -307,7 +306,7 @@ test_that("speed works with a custom objective function", {
     expect_equal(result$iterations_run, 1000)
     expect_equal(result$stopped_early, FALSE)
 
-    skip_on_os("mac")
+    # skip_on_os("mac")
     vdiffr::expect_doppelganger("speed_custom_obj_func", autoplot(result))
 })
 
@@ -328,7 +327,7 @@ test_that("speed handles large grid layouts", {
     )
     expect_s3_class(result, "design")
 
-    skip_on_os("mac")
+    # skip_on_os("mac")
     vdiffr::expect_doppelganger("speed_large_grid", autoplot(result))
 })
 
@@ -357,7 +356,7 @@ test_that("speed handles large layouts with blocking", {
     expect_equal(result$iterations_run, 5000)
     expect_equal(result$stopped_early, FALSE)
 
-    skip_on_os("mac")
+    # skip_on_os("mac")
     expect_snapshot(result$design_df)
 
     vdiffr::expect_doppelganger("speed_large_blocks", autoplot(result))
@@ -396,7 +395,7 @@ test_that("speed handles irregular layouts with 400 unique plots", {
     expect_identical(which(is.na(result$design_df$treatment)),
                      which(is.na(irregular_large_data$treatment)))
 
-    skip_on_os("mac")
+    # skip_on_os("mac")
     vdiffr::expect_doppelganger("speed_large_missing", autoplot(result))
 })
 
@@ -434,7 +433,7 @@ test_that("speed handles irregular layouts with a clump of missing plots", {
     expect_identical(which(is.na(result$design_df$treatment)),
                      which(is.na(irregular_large_data$treatment)))
 
-    skip_on_os("mac")
+    # skip_on_os("mac")
     vdiffr::expect_doppelganger("speed_large_missing_clump", autoplot(result))
 })
 
@@ -471,7 +470,7 @@ test_that("speed handles irregular layouts with L shaped plots", {
     expect_identical(which(is.na(result$design_df$treatment)),
                      which(is.na(irregular_large_data$treatment)))
 
-    skip_on_os("mac")
+    # skip_on_os("mac")
     vdiffr::expect_doppelganger("speed_large_missing_L", autoplot(result))
 })
 

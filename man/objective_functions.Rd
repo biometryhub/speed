@@ -23,6 +23,8 @@ objective_function(
 
 \item{spatial_cols}{Column name(s) of the spatial factors}
 
+\item{...}{Parameters extra parameters passed from \link{speed}}
+
 \item{adj_weight}{Weight for adjacency score (default: 0)}
 
 \item{bal_weight}{Weight for balance score (default: 1)}

@@ -39,6 +39,7 @@ Imports:
     farver,
     ggplot2,
     igraph,
+    matrixStats,
     rlang,
     scales,
     stringi

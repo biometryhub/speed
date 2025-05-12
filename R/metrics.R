@@ -8,6 +8,7 @@
 #' @param layout_df A data frame representing the spatial information of the design
 #' @param swap A column name of the items to be swapped
 #' @param spatial_cols Column name(s) of the spatial factors
+#' @param ... Parameters extra parameters passed from [speed]
 #'
 #' @examples
 #' layout_df <- data.frame(
@@ -48,7 +49,7 @@ objective_function <- function(layout_df, swap, spatial_cols,
                       calculate_balance_score(layout_df, swap, spatial_cols),
                       0)
 
-  return(list(score = adj_weight * adj_score + bal_weight * bal_score))
+  return(list(score = round(adj_weight * adj_score + bal_weight * bal_score, 10)))
 }
 
 #' Calculate Balance Score for Experimental Design
@@ -73,7 +74,7 @@ objective_function <- function(layout_df, swap, spatial_cols,
 #' @export
 calculate_balance_score <- function(layout_df, swap, spatial_cols) {
   score <- sapply(spatial_cols, function(el) {
-    sum(apply(table(layout_df[[el]], layout_df[[swap]]), 1, var, na.rm = TRUE), na.rm = TRUE)
+    sum(matrixStats::rowVars(table(layout_df[[el]], layout_df[[swap]]), na.rm = TRUE), na.rm = TRUE)
   })
   return(sum(score))
 }
@@ -128,16 +129,19 @@ calculate_adjacency_score <- function(layout_df, swap, spatial_cols) {
 #' @description
 #' Create an objective function including even distribution and neighbor balance introduced by Piepho 2018.
 #'
+#' @inheritParams objective_function_signature
 #' @inheritParams calculate_nb
+#' @inheritParams calculate_ed
+#' @param previous_score Previous score object
 #'
 #' @examples
 #' design_df <- speed::initialize_design_df(
-#'   treatments = c(1, 2, 2, 1, 3, 3, 1, 3, 3),
-#'   row = 3,
-#'   col = 3
+#'   items = c(1, 2, 2, 1, 3, 3, 1, 3, 3),
+#'   nrows = 3,
+#'   ncols = 3
 #' )
 #'
-#' pair_mapping <- create_pair_mapping(c(design_matrix))
+#' pair_mapping <- create_pair_mapping(design_df$treatment)
 #' obj_function_piepho <- objective_function_piepho(pair_mapping)
 #' piepho_score <- obj_function_piepho(design_df, "treatment", c("row", "col"))
 #' # usage in speed, speed(..., obj_function = obj_function_piepho)
@@ -179,7 +183,7 @@ objective_function_piepho <- function(pair_mapping = NULL) {
 #' A metric that counts the occurrence of the same adjacent pairs. Only horizontal and vertical pairs are
 #'   counted.
 #'
-#' @inheritParams objective_function_signature
+#' @param design_matrix A matrix representing the design
 #' @param pair_mapping A named vector of pairs generated from [create_pair_mapping]
 #'
 #' @examples
@@ -229,7 +233,7 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #' A metric that counts the occurrence of the same adjacent pairs. Only horizontal and vertical pairs are
 #'   counted.
 #'
-#' @inheritParams objective_function_signature
+#' @inheritParams calculate_nb
 #'
 #' @return Named list containing:
 #' \itemize{
@@ -288,8 +292,9 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #' @description
 #' A metric that represents the even distribution of each item with their minimum spanning tree (mst).
 #'
-#' @inheritParams objective_function_signature
+#' @inheritParams calculate_nb
 #' @param previous_ed Named list of the previous ed calculation
+#' @param swapped_items The items that had just been swapped
 #'
 #' @examples
 #' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
@@ -373,7 +378,7 @@ calculate_ed <- function(design_matrix, previous_ed = NULL, swapped_items = NULL
 #' @description
 #' Get the vertices of each item in a design matrix.
 #'
-#' @inheritParams objective_function_signature
+#' @inheritParams calculate_nb
 #'
 #' @examples
 #' design_matrix <- matrix(c(1, 2, 2, 1, 3, 2, 1, 3, 3), nrow = 3, ncol = 3)

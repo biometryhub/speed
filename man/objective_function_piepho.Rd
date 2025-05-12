@@ -8,6 +8,8 @@ objective_function_piepho(pair_mapping = NULL)
 }
 \arguments{
 \item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
+
+\item{previous_score}{Previous score object}
 }
 \value{
 A function which returns a named list of numeric values with one required name \code{score} representing
@@ -20,12 +22,12 @@ Create an objective function including even distribution and neighbor balance in
 }
 \examples{
 design_df <- speed::initialize_design_df(
-  treatments = c(1, 2, 2, 1, 3, 3, 1, 3, 3),
-  row = 3,
-  col = 3
+  items = c(1, 2, 2, 1, 3, 3, 1, 3, 3),
+  nrows = 3,
+  ncols = 3
 )
 
-pair_mapping <- create_pair_mapping(c(design_matrix))
+pair_mapping <- create_pair_mapping(design_df$treatment)
 obj_function_piepho <- objective_function_piepho(pair_mapping)
 piepho_score <- obj_function_piepho(design_df, "treatment", c("row", "col"))
 # usage in speed, speed(..., obj_function = obj_function_piepho)
