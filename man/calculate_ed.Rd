@@ -7,7 +7,11 @@
 calculate_ed(design_matrix, previous_ed = NULL, swapped_items = NULL)
 }
 \arguments{
+\item{design_matrix}{A matrix representing the design}
+
 \item{previous_ed}{Named list of the previous ed calculation}
+
+\item{swapped_items}{The items that had just been swapped}
 }
 \value{
 Named list containing:

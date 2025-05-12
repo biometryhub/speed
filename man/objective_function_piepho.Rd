@@ -14,6 +14,16 @@ objective_function_piepho(
 )
 }
 \arguments{
+\item{layout_df}{A data frame representing the spatial information of the design}
+
+\item{swap}{A column name of the items to be swapped}
+
+\item{spatial_cols}{Column name(s) of the spatial factors}
+
+\item{previous_score}{Previous score object}
+
+\item{swapped_items}{The items that had just been swapped}
+
 \item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
 }
 \value{

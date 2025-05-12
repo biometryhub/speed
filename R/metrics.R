@@ -8,6 +8,7 @@
 #' @param layout_df A data frame representing the spatial information of the design
 #' @param swap A column name of the items to be swapped
 #' @param spatial_cols Column name(s) of the spatial factors
+#' @param ... Parameters extra parameters passed from [speed]
 #'
 #' @examples
 #' layout_df <- data.frame(
@@ -138,7 +139,10 @@ calculate_adjacency_score <- function(layout_df, swap, spatial_cols) {
 #' @description
 #' Create an objective function including even distribution and neighbor balance introduced by Piepho 2018.
 #'
+#' @inheritParams objective_function_signature
 #' @inheritParams calculate_nb
+#' @inheritParams calculate_ed
+#' @param previous_score Previous score object
 #'
 #' @examples
 #' design_df <- speed::initialize_design_df(
@@ -179,7 +183,7 @@ objective_function_piepho <- function(layout_df, swap, spatial_cols, previous_sc
 #' A metric that counts the occurrence of the same adjacent pairs. Only horizontal and vertical pairs are
 #'   counted.
 #'
-#' @inheritParams objective_function_signature
+#' @param design_matrix A matrix representing the design
 #' @param pair_mapping A named vector of pairs generated from [create_pair_mapping]
 #'
 #' @examples
@@ -228,7 +232,7 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #' A metric that counts the occurrence of the same adjacent pairs. Only horizontal and vertical pairs are
 #'   counted.
 #'
-#' @inheritParams objective_function_signature
+#' @inheritParams calculate_nb
 #'
 #' @return Named list containing:
 #' \itemize{
@@ -287,8 +291,9 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #' @description
 #' A metric that represents the even distribution of each item with their minimum spanning tree (mst).
 #'
-#' @inheritParams objective_function_signature
+#' @inheritParams calculate_nb
 #' @param previous_ed Named list of the previous ed calculation
+#' @param swapped_items The items that had just been swapped
 #'
 #' @examples
 #' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
@@ -368,7 +373,7 @@ calculate_ed <- function(design_matrix, previous_ed = NULL, swapped_items = NULL
 #' @description
 #' Get the vertices of each item in a design matrix.
 #'
-#' @inheritParams objective_function_signature
+#' @inheritParams calculate_nb
 #'
 #' @examples
 #' design_matrix <- matrix(c(1, 2, 2, 1, 3, 2, 1, 3, 3), nrow = 3, ncol = 3)

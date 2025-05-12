@@ -6,6 +6,9 @@
 \usage{
 get_vertices(design_matrix)
 }
+\arguments{
+\item{design_matrix}{A matrix representing the design}
+}
 \value{
 Named list containing:
 \itemize{
