@@ -148,9 +148,7 @@ calculate_adjacency_score <- function(layout_df, swap, spatial_cols) {
 #' )
 #'
 #' pair_mapping <- create_pair_mapping(design_df$treatment)
-#' obj_function_piepho <- objective_function_piepho(pair_mapping)
-#' piepho_score <- obj_function_piepho(design_df, "treatment", c("row", "col"))
-#' # usage in speed, speed(..., obj_function = obj_function_piepho)
+#' objective_function_piepho(design_df, "treatment", c("row", "col"), pair_mapping = pair_mapping)
 #'
 #' @return A function which returns a named list of numeric values with one required name `score` representing
 #'   the score of the design (lower is better) with a signature

@@ -33,9 +33,7 @@ design_df <- speed::initialize_design_df(
 )
 
 pair_mapping <- create_pair_mapping(design_df$treatment)
-obj_function_piepho <- objective_function_piepho(pair_mapping)
-piepho_score <- obj_function_piepho(design_df, "treatment", c("row", "col"))
-# usage in speed, speed(..., obj_function = obj_function_piepho)
+objective_function_piepho(design_df, "treatment", c("row", "col"), pair_mapping = pair_mapping)
 
 }
 \references{
