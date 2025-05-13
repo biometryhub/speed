@@ -129,10 +129,7 @@ calculate_adjacency_score <- function(layout_df, swap, spatial_cols) {
 #' @description
 #' Create an objective function including even distribution and neighbor balance introduced by Piepho 2018.
 #'
-#' @inheritParams objective_function_signature
 #' @inheritParams calculate_nb
-#' @inheritParams calculate_ed
-#' @param previous_score Previous score object
 #'
 #' @examples
 #' design_df <- speed::initialize_design_df(
@@ -147,8 +144,8 @@ calculate_adjacency_score <- function(layout_df, swap, spatial_cols) {
 #' # usage in speed, speed(..., obj_function = obj_function_piepho)
 #'
 #' @return A function which returns a named list of numeric values with one required name `score` representing
-#'   the score of the design (lower is better) with a signature
-#'   `function(design_matrix, design_df, swap, spatial_cols, previous_score, swapped_items)`. See signature
+#'   the score of the design (lower is better) with a signature `function(design_df, swap, spatial_cols, ...)`.
+#'   See signature
 #'   details in [objective_function_signature].
 #'
 #' @references Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of distribution
@@ -244,7 +241,6 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #'
 #' @keywords internal
 .calculate_nb <- function(design_matrix) {
-  # TODO: check function overloading
   n_rows <- dim(design_matrix)[1]
   n_cols <- dim(design_matrix)[2]
   # env is faster than list
@@ -278,12 +274,14 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
   }
 
   nb <- as.list(nb)
-  max_nb <- max(unlist(nb))
+  nb_values <- unlist(nb)
+  max_nb <- max(nb_values)
   max_pairs <- names(nb[nb == max_nb])
   return(list(
     nb = nb,
     max_nb = max_nb,
-    max_pairs = max_pairs
+    max_pairs = max_pairs,
+    var = var(nb_values)
   ))
 }
 
@@ -293,7 +291,7 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #' A metric that represents the even distribution of each item with their minimum spanning tree (mst).
 #'
 #' @inheritParams calculate_nb
-#' @param previous_ed Named list of the previous ed calculation
+#' @param current_ed Named list of the current ed calculation
 #' @param swapped_items The items that had just been swapped
 #'
 #' @examples
@@ -313,14 +311,14 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #' @seealso [objective_function_piepho()]
 #'
 #' @export
-calculate_ed <- function(design_matrix, previous_ed = NULL, swapped_items = NULL) {
+calculate_ed <- function(design_matrix, current_ed = NULL, swapped_items = NULL) {
   if (!is.null(swapped_items)) {
     if (length(unique(swapped_items)) == 1) {
-      return(previous_ed)
+      return(current_ed)
     }
 
     design_matrix[!(design_matrix %in% swapped_items)] <- NA
-    msts <- lapply(previous_ed, function(ed_by_rep) ed_by_rep$msts)
+    msts <- lapply(current_ed, function(ed_by_rep) ed_by_rep$msts)
   } else {
     msts <- list()
   }
@@ -367,7 +365,7 @@ calculate_ed <- function(design_matrix, previous_ed = NULL, swapped_items = NULL
   })
 
   if (length(edges_3_reps) > 0) {
-    ed$`3` <- .calculate_ed_3_reps(edges_3_reps, previous_ed)
+    ed$`3` <- .calculate_ed_3_reps(edges_3_reps, current_ed)
   }
 
   return(ed)
@@ -477,7 +475,7 @@ get_edges <- function(vertices) {
 #' @seealso [get_edges()]
 #'
 #' @keywords internal
-.calculate_ed_3_reps <- function(edges, previous_ed = NULL) {
+.calculate_ed_3_reps <- function(edges, current_ed = NULL) {
   # pick 2 shortest connections for 3 reps
   ed <- lapply(
     edges,
@@ -486,8 +484,8 @@ get_edges <- function(vertices) {
     }
   )
 
-  if (!is.null(previous_ed)) {
-    ed <- modifyList(previous_ed$`3`$msts, ed)
+  if (!is.null(current_ed)) {
+    ed <- modifyList(current_ed$`3`$msts, ed)
   }
 
   min_mst <- min(unlist(ed))

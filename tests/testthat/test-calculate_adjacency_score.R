@@ -1,7 +1,7 @@
 test_that("calculate_adjacency_score works as expected", {
   # 1 2
   # 1 2
-  # design <- matrix(c(1, 1, 1, 2, 2, 2, 3, 3, 3), nrow = 3, ncol = 3)
+  # fmt: skip
   design <- data.frame(row = rep(1:3, times = 3),
                        col = rep(1:3, each = 3),
                        swap = rep(1:3, each = 3))
