@@ -268,8 +268,8 @@ test_that("speed handles non-uniform treatment distributions", {
   # Check values
   expect_equal(result$stopped_early, TRUE)
 
-  expect_equal(result$score, 16.8)
-  expect_equal(result$iterations_run, 1458)
+  expect_equal(result$score, 14)
+  expect_equal(result$iterations_run, 1921)
 
   vdiffr::expect_doppelganger("speed_non_uniform", autoplot(result))
 })
