@@ -85,8 +85,12 @@ generate_neighbour <- function(design,
 #' initialize_design_df(rep(1:8, 4), 8, 4, 2, 2)
 #'
 #' @export
-initialize_design_df <- function(items, nrows, ncols, nrows_block = NULL, ncols_block = NULL) {
-  # NOTE: do we want factor?
+# fmt: skip
+initialize_design_df <- function(items,
+                                 nrows,
+                                 ncols,
+                                 nrows_block = NULL,
+                                 ncols_block = NULL) {
   .verify_initialize_design_df(items, nrows, ncols, nrows_block, ncols_block)
   rows <- rep(1:nrows, ncols)
   cols <- rep(1:ncols, each = nrows)
@@ -101,15 +105,24 @@ initialize_design_df <- function(items, nrows, ncols, nrows_block = NULL, ncols_
 
     df$row_block <- rep(1:nblocks_row, ncols, each = nrows_block)
     df$col_block <- rep(1:nblocks_col, each = nrows * ncols_block)
-    df$block <- as.numeric(df$row_block) + nblocks_row * (as.numeric(df$col_block) - 1)
+    df$block <- as.numeric(df$row_block) +
+      nblocks_row * (as.numeric(df$col_block) - 1)
   }
   return(df)
 }
 
-.verify_initialize_design_df <- function(items, nrows, ncols, nrows_block, block_ncols) {
+# fmt: skip
+.verify_initialize_design_df <- function(items,
+                                         nrows,
+                                         ncols,
+                                         nrows_block,
+                                         block_ncols) {
   verify_positive_whole_number(nrows, ncols)
 
-  if ((!is.null(nrows_block) && is.null(block_ncols)) || (is.null(nrows_block) && !is.null(block_ncols))) {
+  if (
+    (!is.null(nrows_block) && is.null(block_ncols)) ||
+      (is.null(nrows_block) && !is.null(block_ncols))
+  ) {
     stop("`block_nrows` and `block_ncols` must both be numeric or `NULL`")
   }
 
