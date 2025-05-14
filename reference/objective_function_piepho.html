@@ -39,12 +39,13 @@
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">objective_function_piepho</span><span class="op">(</span></span>
-<span>  <span class="va">layout_df</span>,</span>
+<span>  <span class="va">design</span>,</span>
 <span>  <span class="va">swap</span>,</span>
 <span>  <span class="va">spatial_cols</span>,</span>
-<span>  previous_score <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  current_score_obj <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  swapped_items <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  pair_mapping <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  pair_mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -52,7 +53,7 @@
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-layout-df">layout_df<a class="anchor" aria-label="anchor" href="#arg-layout-df"></a></dt>
+<dl><dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
 <dd><p>A data frame representing the spatial information of the design</p></dd>
 
 
@@ -64,8 +65,8 @@
 <dd><p>Column name(s) of the spatial factors</p></dd>
 
 
-<dt id="arg-previous-score">previous_score<a class="anchor" aria-label="anchor" href="#arg-previous-score"></a></dt>
-<dd><p>Previous score object</p></dd>
+<dt id="arg-current-score-obj">current_score_obj<a class="anchor" aria-label="anchor" href="#arg-current-score-obj"></a></dt>
+<dd><p>A named list containing the current score</p></dd>
 
 
 <dt id="arg-swapped-items">swapped_items<a class="anchor" aria-label="anchor" href="#arg-swapped-items"></a></dt>
@@ -75,17 +76,23 @@
 <dt id="arg-pair-mapping">pair_mapping<a class="anchor" aria-label="anchor" href="#arg-pair-mapping"></a></dt>
 <dd><p>A named vector of pairs generated from <a href="create_pair_mapping.html">create_pair_mapping</a></p></dd>
 
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Parameters extra parameters passed from <a href="speed.html">speed</a></p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A function which returns a named list of numeric values with one required name <code>score</code> representing
-the score of the design (lower is better) with a signature
-<code>function(design_matrix, layout_df, swap, spatial_cols, previous_score, swapped_items)</code>. See signature
+the score of the design (lower is better) with a signature <code>function(design_df, swap, spatial_cols, ...)</code>.
+See signature
 details in <a href="objective_functions.html">objective_function_signature</a>.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Piepho, H. P., Michel, V., &amp; Williams, E. (2018). Neighbor balance and evenness of distribution of treatment replications in row-column designs. Biometrical journal. Biometrische Zeitschrift, 60(6), 1172–1189. <a href="https://doi.org/10.1002/bimj.201800013" class="external-link">https://doi.org/10.1002/bimj.201800013</a></p>
+    <p>Piepho, H. P., Michel, V., &amp; Williams, E. (2018). Neighbor balance and evenness of distribution
+of treatment replications in row-column designs. Biometrical journal. Biometrische Zeitschrift, 60(6),
+1172–1189. <a href="https://doi.org/10.1002/bimj.201800013" class="external-link">https://doi.org/10.1002/bimj.201800013</a></p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -103,7 +110,7 @@ details in <a href="objective_functions.html">objective_function_signature</a>.<
 <span class="r-in"><span><span class="va">pair_mapping</span> <span class="op">&lt;-</span> <span class="fu"><a href="create_pair_mapping.html">create_pair_mapping</a></span><span class="op">(</span><span class="va">design_df</span><span class="op">$</span><span class="va">treatment</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">objective_function_piepho</span><span class="op">(</span><span class="va">design_df</span>, <span class="st">"treatment"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row"</span>, <span class="st">"col"</span><span class="op">)</span>, pair_mapping <span class="op">=</span> <span class="va">pair_mapping</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $score</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 6</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 9.366667</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $ed</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $ed$`2`</span>
@@ -146,6 +153,26 @@ details in <a href="objective_functions.html">objective_function_signature</a>.<
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $bal</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $nb</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $nb$nb</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sorted_pairs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1,1 1,2 1,3 2,2 2,3 3,3 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2   1   2   1   2   4 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $nb$max_nb</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $nb$max_pairs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "3,3"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $nb$var</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span><span class="co"># usage in speed, speed(..., obj_function = objective_function_piepho, pair_mapping = pair_mapping)</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
