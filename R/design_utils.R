@@ -44,12 +44,8 @@ generate_neighbour <- function(design,
         # Select two random plots in this block
         swap_pair <- sample(block_indices, 2)
         if (design[[swap]][swap_pair[1]] == design[[swap]][swap_pair[2]]) {
-          swap_pair[[2]] <- sample(
-            block_indices[
-              design[[swap]][block_indices] != design[[swap]][swap_pair[1]]
-            ],
-            1
-          )
+          no_dupe_filter = design[[swap]][block_indices] != design[[swap]][swap_pair[1]]
+          swap_pair[[2]] <- sample(block_indices[no_dupe_filter], 1)
         }
 
         # Swap treatments
