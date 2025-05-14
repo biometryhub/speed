@@ -4,10 +4,30 @@
 \alias{objective_function_piepho}
 \title{Objective Function with Metric from Piepho}
 \usage{
-objective_function_piepho(pair_mapping = NULL)
+objective_function_piepho(
+  design,
+  swap,
+  spatial_cols,
+  current_score_obj = NULL,
+  swapped_items = NULL,
+  pair_mapping = NULL,
+  ...
+)
 }
 \arguments{
+\item{design}{A data frame representing the spatial information of the design}
+
+\item{swap}{A column name of the items to be swapped}
+
+\item{spatial_cols}{Column name(s) of the spatial factors}
+
+\item{current_score_obj}{A named list containing the current score}
+
+\item{swapped_items}{The items that had just been swapped}
+
 \item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
+
+\item{...}{Parameters extra parameters passed from \link{speed}}
 }
 \value{
 A function which returns a named list of numeric values with one required name \code{score} representing
@@ -26,9 +46,8 @@ design_df <- speed::initialize_design_df(
 )
 
 pair_mapping <- create_pair_mapping(design_df$treatment)
-obj_function_piepho <- objective_function_piepho(pair_mapping)
-piepho_score <- obj_function_piepho(design_df, "treatment", c("row", "col"))
-# usage in speed, speed(..., obj_function = obj_function_piepho)
+objective_function_piepho(design_df, "treatment", c("row", "col"), pair_mapping = pair_mapping)
+# usage in speed, speed(..., obj_function = objective_function_piepho, pair_mapping = pair_mapping)
 
 }
 \references{

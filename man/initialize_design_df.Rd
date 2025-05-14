@@ -36,4 +36,7 @@ initialize_design_df(
   ncols = 3
 )
 
+# blocking
+initialize_design_df(rep(1:8, 4), 8, 4, 2, 2)
+
 }

@@ -37,7 +37,9 @@ objective_function_signature <- function(layout_df,
 #' @rdname objective_functions
 #' @export
 # fmt: skip
-objective_function <- function(layout_df, swap, spatial_cols,
+objective_function <- function(layout_df,
+                               swap,
+                               spatial_cols,
                                adj_weight = getOption("speed.adj_weight", 0),
                                bal_weight = getOption("speed.bal_weight", 1),
                                ...) {
@@ -49,7 +51,9 @@ objective_function <- function(layout_df, swap, spatial_cols,
                       calculate_balance_score(layout_df, swap, spatial_cols),
                       0)
 
-  return(list(score = round(adj_weight * adj_score + bal_weight * bal_score, 10)))
+  return(list(
+    score = round(adj_weight * adj_score + bal_weight * bal_score, 10)
+  ))
 }
 
 #' Calculate Balance Score for Experimental Design
@@ -74,7 +78,13 @@ objective_function <- function(layout_df, swap, spatial_cols,
 #' @export
 calculate_balance_score <- function(layout_df, swap, spatial_cols) {
   score <- sapply(spatial_cols, function(el) {
-    sum(matrixStats::rowVars(table(layout_df[[el]], layout_df[[swap]]), na.rm = TRUE), na.rm = TRUE)
+    sum(
+      matrixStats::rowVars(
+        table(layout_df[[el]], layout_df[[swap]]),
+        na.rm = TRUE
+      ),
+      na.rm = TRUE
+    )
   })
   return(sum(score))
 }
@@ -119,8 +129,14 @@ calculate_adjacency_score <- function(layout_df, swap, spatial_cols) {
     byrow = FALSE
   )
 
-  row_adjacencies <- sum(layout_df[, -ncol(layout_df)] == layout_df[, -1], na.rm = TRUE)
-  col_adjacencies <- sum(layout_df[-nrow(layout_df), ] == layout_df[-1, ], na.rm = TRUE)
+  row_adjacencies <- sum(
+    layout_df[, -ncol(layout_df)] == layout_df[, -1],
+    na.rm = TRUE
+  )
+  col_adjacencies <- sum(
+    layout_df[-nrow(layout_df), ] == layout_df[-1, ],
+    na.rm = TRUE
+  )
   return(row_adjacencies + col_adjacencies)
 }
 
@@ -129,7 +145,11 @@ calculate_adjacency_score <- function(layout_df, swap, spatial_cols) {
 #' @description
 #' Create an objective function including even distribution and neighbor balance introduced by Piepho 2018.
 #'
+#' @inheritParams objective_function_signature
 #' @inheritParams calculate_nb
+#' @inheritParams calculate_ed
+#' @param design A data frame representing the spatial information of the design
+#' @param current_score_obj A named list containing the current score
 #'
 #' @examples
 #' design_df <- speed::initialize_design_df(
@@ -139,9 +159,8 @@ calculate_adjacency_score <- function(layout_df, swap, spatial_cols) {
 #' )
 #'
 #' pair_mapping <- create_pair_mapping(design_df$treatment)
-#' obj_function_piepho <- objective_function_piepho(pair_mapping)
-#' piepho_score <- obj_function_piepho(design_df, "treatment", c("row", "col"))
-#' # usage in speed, speed(..., obj_function = obj_function_piepho)
+#' objective_function_piepho(design_df, "treatment", c("row", "col"), pair_mapping = pair_mapping)
+#' # usage in speed, speed(..., obj_function = objective_function_piepho, pair_mapping = pair_mapping)
 #'
 #' @return A function which returns a named list of numeric values with one required name `score` representing
 #'   the score of the design (lower is better) with a signature `function(design_df, swap, spatial_cols, ...)`.
@@ -155,23 +174,36 @@ calculate_adjacency_score <- function(layout_df, swap, spatial_cols) {
 #' @seealso [objective_function()], [create_pair_mapping()]
 #'
 #' @export
-objective_function_piepho <- function(pair_mapping = NULL) {
-  return(
-    function(design, swap, spatial_cols, current_score_obj = NULL, swapped_items = NULL, ...) {
-      design_matrix <- matrix(design[[swap]], nrow = max(design$row), ncol = max(design$col))
-
-      ed <- calculate_ed(design_matrix, current_score_obj$ed, swapped_items)
-      # sum(1/) or 1/sum
-      ed_score <- 1 / sum(vapply(ed, function(ed_rep) ed_rep$min_mst, numeric(1)))
-      nb <- calculate_nb(design_matrix, pair_mapping)
-      nb_score <- nb$var
-
-      design[[swap]] <- as.vector(design_matrix)
-      bal_score <- calculate_balance_score(design, swap, spatial_cols)
-
-      return(list(score = round(nb_score + ed_score + bal_score, 10), ed = ed, bal = bal_score, nb = nb))
-    }
+# fmt: skip
+objective_function_piepho <- function(design,
+                                      swap,
+                                      spatial_cols,
+                                      current_score_obj = NULL,
+                                      swapped_items = NULL,
+                                      pair_mapping = NULL,
+                                      ...) {
+  design_matrix <- matrix(
+    design[[swap]],
+    nrow = max(design$row),
+    ncol = max(design$col)
   )
+
+  ed <- calculate_ed(design_matrix, current_score_obj$ed, swapped_items)
+  # sum(1/) or 1/sum
+  ed_score <- 1 /
+    sum(vapply(ed, function(ed_rep) ed_rep$min_mst, numeric(1)))
+  nb <- calculate_nb(design_matrix, pair_mapping)
+  nb_score <- nb$var
+
+  design[[swap]] <- as.vector(design_matrix)
+  bal_score <- calculate_balance_score(design, swap, spatial_cols)
+
+  return(list(
+    score = round(nb_score + ed_score + bal_score, 10),
+    ed = ed,
+    bal = bal_score,
+    nb = nb
+  ))
 }
 
 #' Neighbour Balance Calculation
@@ -311,7 +343,11 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #' @seealso [objective_function_piepho()]
 #'
 #' @export
-calculate_ed <- function(design_matrix, current_ed = NULL, swapped_items = NULL) {
+calculate_ed <- function(
+  design_matrix,
+  current_ed = NULL,
+  swapped_items = NULL
+) {
   if (!is.null(swapped_items)) {
     if (length(unique(swapped_items)) == 1) {
       return(current_ed)
@@ -344,11 +380,16 @@ calculate_ed <- function(design_matrix, current_ed = NULL, swapped_items = NULL)
         # initialize a fully-connected graph without weights
         # 1--2, 1--3, ..., 1--n-1, 1--n, 2--3, 2--4, ..., n-1--n
         edge_table <- t(combn(1:reps, 2))
-        sub_graph[[reps_char]] <- igraph::graph_from_edgelist(edge_table, directed = FALSE)
+        sub_graph[[reps_char]] <- igraph::graph_from_edgelist(
+          edge_table,
+          directed = FALSE
+        )
       }
 
       igraph::E(sub_graph[[reps_char]])$weight <- edges[[item]]
-      msts[[reps_char]][[item]] <- sum(igraph::E(igraph::mst(sub_graph[[reps_char]]))$weight)
+      msts[[reps_char]][[item]] <- sum(
+        igraph::E(igraph::mst(sub_graph[[reps_char]]))$weight
+      )
     }
   }
 
@@ -538,8 +579,14 @@ create_pair_mapping <- function(items) {
 
   identical_pairs <- paste(items, items, sep = ",")
   pairs <- paste(combinations[1, ], combinations[2, ], sep = ",")
-  pairs_r <- sapply(pairs, function(k) paste(rev(strsplit(k, ",")[[1]]), collapse = ","))
+  pairs_r <- sapply(
+    pairs,
+    function(k) paste(rev(strsplit(k, ",")[[1]]), collapse = ",")
+  )
 
-  pair_mapping <- setNames(c(pairs, identical_pairs), c(pairs_r, identical_pairs))
+  pair_mapping <- setNames(
+    c(pairs, identical_pairs),
+    c(pairs_r, identical_pairs)
+  )
   return(pair_mapping)
 }
