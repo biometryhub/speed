@@ -349,10 +349,6 @@ calculate_ed <- function(
   swapped_items = NULL
 ) {
   if (!is.null(swapped_items)) {
-    if (length(unique(swapped_items)) == 1) {
-      return(current_ed)
-    }
-
     design_matrix[!(design_matrix %in% swapped_items)] <- NA
     msts <- lapply(current_ed, function(ed_by_rep) ed_by_rep$msts)
   } else {

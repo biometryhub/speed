@@ -34,14 +34,19 @@ generate_neighbour <- function(design,
   # Perform swaps in selected blocks
   for (block in blocks_to_swap) {
     # Get indices of plots in this block
-    block_indices <- which(design[[swap_within]] == block & !is.na(design[[swap]]))
+    block_indices <- which(
+      design[[swap_within]] == block & !is.na(design[[swap]])
+    )
 
     if (length(block_indices) >= 2) {
       # Need at least 2 plots to swap
       for (i in 1:swap_count) {
         # Select two random plots in this block
-        # FIX: this can swap the same items
         swap_pair <- sample(block_indices, 2)
+        if (design[[swap]][swap_pair[1]] == design[[swap]][swap_pair[2]]) {
+          no_dupe_filter = design[[swap]][block_indices] != design[[swap]][swap_pair[1]]
+          swap_pair[[2]] <- sample(block_indices[no_dupe_filter], 1)
+        }
 
         # Swap treatments
         temp <- new_design[[swap]][swap_pair[1]]
