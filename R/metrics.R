@@ -169,7 +169,7 @@ objective_function_piepho <- function(pair_mapping = NULL) {
       design[[swap]] <- as.vector(design_matrix)
       bal_score <- calculate_balance_score(design, swap, spatial_cols)
 
-      return(list(score = nb_score + ed_score + bal_score, ed = ed, bal = bal_score, nb = nb))
+      return(list(score = round(nb_score + ed_score + bal_score, 10), ed = ed, bal = bal_score, nb = nb))
     }
   )
 }
