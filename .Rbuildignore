@@ -9,3 +9,4 @@ matsums.cpp
 ^docs$
 ^pkgdown$
 Jules_example_cases.R
+air.toml

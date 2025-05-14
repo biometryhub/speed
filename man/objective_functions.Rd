@@ -12,7 +12,8 @@ objective_function(
   swap,
   spatial_cols,
   adj_weight = getOption("speed.adj_weight", 0),
-  bal_weight = getOption("speed.bal_weight", 1)
+  bal_weight = getOption("speed.bal_weight", 1),
+  ...
 )
 }
 \arguments{

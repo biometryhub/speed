@@ -5,31 +5,34 @@
 \title{Objective Function with Metric from Piepho}
 \usage{
 objective_function_piepho(
-  layout_df,
+  design,
   swap,
   spatial_cols,
-  previous_score = NULL,
+  current_score_obj = NULL,
   swapped_items = NULL,
-  pair_mapping = NULL
+  pair_mapping = NULL,
+  ...
 )
 }
 \arguments{
-\item{layout_df}{A data frame representing the spatial information of the design}
+\item{design}{A data frame representing the spatial information of the design}
 
 \item{swap}{A column name of the items to be swapped}
 
 \item{spatial_cols}{Column name(s) of the spatial factors}
 
-\item{previous_score}{Previous score object}
+\item{current_score_obj}{A named list containing the current score}
 
 \item{swapped_items}{The items that had just been swapped}
 
 \item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
+
+\item{...}{Parameters extra parameters passed from \link{speed}}
 }
 \value{
 A function which returns a named list of numeric values with one required name \code{score} representing
-the score of the design (lower is better) with a signature
-\verb{function(design_matrix, layout_df, swap, spatial_cols, previous_score, swapped_items)}. See signature
+the score of the design (lower is better) with a signature \verb{function(design_df, swap, spatial_cols, ...)}.
+See signature
 details in \link{objective_function_signature}.
 }
 \description{
@@ -44,10 +47,13 @@ design_df <- speed::initialize_design_df(
 
 pair_mapping <- create_pair_mapping(design_df$treatment)
 objective_function_piepho(design_df, "treatment", c("row", "col"), pair_mapping = pair_mapping)
+# usage in speed, speed(..., obj_function = objective_function_piepho, pair_mapping = pair_mapping)
 
 }
 \references{
-Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of distribution of treatment replications in row-column designs. Biometrical journal. Biometrische Zeitschrift, 60(6), 1172–1189. \url{https://doi.org/10.1002/bimj.201800013}
+Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of distribution
+of treatment replications in row-column designs. Biometrical journal. Biometrische Zeitschrift, 60(6),
+1172–1189. \url{https://doi.org/10.1002/bimj.201800013}
 }
 \seealso{
 \code{\link[=objective_function]{objective_function()}}, \code{\link[=create_pair_mapping]{create_pair_mapping()}}

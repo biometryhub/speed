@@ -26,7 +26,8 @@
 \item{swap}{A column name of the items to be swapped (e.g., \code{treatment}, \code{variety}, \code{genotype}, etc)}
 
 \item{swap_within}{A string specifying the variable that defines a boundary within which to swap
-treatments. Specify \code{"1"} or \code{"none"} for no boundary (default: \code{"1"}). Other examples might be \code{"block"} or \code{"replicate"} or even \code{"site"}.}
+treatments. Specify \code{"1"} or \code{"none"} for no boundary (default: \code{"1"}). Other examples might be \code{"block"}
+or \code{"replicate"} or even \code{"site"}.}
 
 \item{spatial_factors}{A one-sided formula specifying spatial factors to consider for balance (default:
 \code{~row + col})}

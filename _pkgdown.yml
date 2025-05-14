@@ -18,14 +18,17 @@ reference:
       - starts_with("calculate")
       - get_edges
       - get_vertices
-      - create_pair_mapping
-      - initialize_design_df
   - title: Plotting
     desc: Functions for checking designs.
   - contents:
       - autoplot
       - starts_with("plot")
       - print.design
+  - title: Helper Functions
+    desc: Utility functions to initialize objects.
+  - contents:
+      - create_pair_mapping
+      - initialize_design_df
   - title: Advanced options
   - contents:
       - speed-options
