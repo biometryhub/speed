@@ -11,46 +11,45 @@
 #' @param cooling_rate Rate at which temperature decreases (default: 0.99)
 #'
 #' @keywords internal
-.verify_speed_inputs <- function(
-        data,
-        swap,
-        swap_within,
-        spatial_factors,
-        iterations,
-        early_stop_iterations,
-        quiet,
-        seed,
-        swap_count,
-        swap_all_blocks,
-        adaptive_swaps,
-        start_temp,
-        cooling_rate) {
-    if (!is.data.frame(data)) {
-        stop("`data` must be an initial data frame of the design")
-    }
+.verify_speed_inputs <- function(data,
+                                 swap,
+                                 swap_within,
+                                 spatial_factors,
+                                 iterations,
+                                 early_stop_iterations,
+                                 quiet,
+                                 seed,
+                                 swap_count,
+                                 swap_all_blocks,
+                                 adaptive_swaps,
+                                 start_temp,
+                                 cooling_rate) {
+  if (!is.data.frame(data)) {
+    stop("`data` must be an initial data frame of the design")
+  }
 
-    verify_column_exists(swap, data, "treatment")
+  verify_column_exists(swap, data, "treatment")
 
-    # currently support only 1 constraint
-    if (swap_within != "1") {
-        verify_column_exists(swap_within, data, "constraint")
-    }
+  # currently support only 1 constraint
+  if (swap_within != "1") {
+    verify_column_exists(swap_within, data, "constraint")
+  }
 
-    if (!inherits(spatial_factors, "formula")) {
-        stop("spatial_factors must be a one sided formula", call. = FALSE)
-    }
+  if (!inherits(spatial_factors, "formula")) {
+    stop("spatial_factors must be a one sided formula", call. = FALSE)
+  }
 
-    for (col in all.vars(spatial_factors)) {
-        verify_column_exists(col, data, "spatial factor")
-    }
+  for (col in all.vars(spatial_factors)) {
+    verify_column_exists(col, data, "spatial factor")
+  }
 
-    verify_positive_whole_number(iterations, early_stop_iterations, swap_count)
-    verify_non_negative_whole(start_temp)
-    verify_boolean(quiet, adaptive_swaps, swap_all_blocks)
-    verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
-    if (!is.null(seed)) {
-        verify_between(seed, lower = -.Machine$integer.max, upper = .Machine$integer.max)
-    }
+  verify_positive_whole_number(iterations, early_stop_iterations, swap_count)
+  verify_non_negative_whole(start_temp)
+  verify_boolean(quiet, adaptive_swaps, swap_all_blocks)
+  verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
+  if (!is.null(seed)) {
+    verify_between(seed, lower = -.Machine$integer.max, upper = .Machine$integer.max)
+  }
 }
 
 
@@ -84,7 +83,7 @@ is_boolean <- function(v) {
 }
 
 is_non_negative_whole_number <- function(x, tol = default_tolerance) {
-  return(is_whole_number(x, tol) && x >= 0)
+  return(is_whole_number(x, tol) & x >= 0)
 }
 
 is_multiple_of <- function(x, y) {
@@ -92,7 +91,7 @@ is_multiple_of <- function(x, y) {
 }
 
 is_positive_whole_number <- function(x, tol = default_tolerance) {
-  return(is_whole_number(x, tol) && x > 0)
+  return(is_whole_number(x, tol) & x > 0)
 }
 
 is_whole_number <- function(x, tol = default_tolerance) {
@@ -104,10 +103,8 @@ is_whole_number <- function(x, tol = default_tolerance) {
 }
 
 is_positive_whole_numbers <- function(x, tol = default_tolerance) {
-  for (i in x) {
-    if (!is_positive_whole_number(i, tol)) {
-      return(FALSE)
-    }
+  if (!all(is_positive_whole_number(x, tol))) {
+    return(FALSE)
   }
   return(TRUE)
 }
