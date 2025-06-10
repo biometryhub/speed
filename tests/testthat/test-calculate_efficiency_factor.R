@@ -53,24 +53,6 @@ test_that("calculate_efficiency_factor provides the same results as the paper", 
   )
 })
 
-# TODO: check if this should be true
-# test_that("calculate_efficiency_factor provides the same results for transposed designs", {
-#   # fmt: skip
-#   design_matrix <- matrix(c(
-#     7, 5, 6, 9, 4, 1, 3, 2, 8,
-#     5, 6, 3, 1, 7, 8, 2, 4, 9,
-#     8, 9, 5, 6, 3, 4, 1, 7, 2,
-#     1, 8, 2, 7, 6, 3, 9, 5, 4
-#   ), nrow = 4, byrow = TRUE)
-#   df_design1 <- initialize_design_df(c(design_matrix), 4, 9)
-#   df_design2 <- initialize_design_df(c(t(design_matrix)), 9, 4)
-#
-#   expect_equal(
-#     calculate_efficiency_factor(df_design1, "treatment"),
-#     calculate_efficiency_factor(df_design2, "treatment")
-#   )
-# })
-
 test_that("calculate_efficiency_factor provides better result for an optimized design", {
   # fmt: skip
   df_design_initial <- initialize_design_df(c(
