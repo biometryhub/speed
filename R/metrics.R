@@ -592,7 +592,7 @@ create_pair_mapping <- function(items) {
 #' @description
 #' Calculates an efficiency factor of a design according to Piepho 2015.
 #'
-#' @param design A data frame containing the experimental design with spatial coordinates
+#' @param design_df A data frame containing the experimental design with spatial coordinates
 #' @param item A column name of the items in the design (e.g., `treatment`, `variety`, `genotype`, etc)
 #'
 #' @examples
@@ -607,10 +607,8 @@ create_pair_mapping <- function(items) {
 #' @return A numeric value representing the efficiency factor of the design
 #'
 #' @references Piepho, H. P., Williams, E., & Michel, V. (2015). Nonresolvable Row-Column Designs with an Even
-#'   Distribution of Treatment Replications. Journal of Agricultural, Biological, and Environmental Statistics
+#'   Distribution of Treatment Replications. Journal of Agricultural, Biological, and Environmental Statistics,
 #'   21, 227-242 (2016). <https://doi.org/10.1007/s13253-015-0241-2>
-#'
-#' @seealso [objective_function()], [create_pair_mapping()]
 #'
 #' @export
 calculate_efficiency_factor <- function(design_df, item) {
@@ -618,7 +616,7 @@ calculate_efficiency_factor <- function(design_df, item) {
 
   # Design parameters
   encoded_items <- as.factor(design_df[[item]]) |> as.integer()
-  n_treatments <- length(unique(design_df[[item]]))
+  n_treatments <- length(unique(encoded_items))
   n_rows <- max(design_df$row)
   n_cols <- max(design_df$col)
   n_plots <- nrow(design_df)
