@@ -586,3 +586,104 @@ create_pair_mapping <- function(items) {
   )
   return(pair_mapping)
 }
+
+#' Calculate Efficiency Factor according Piepho
+#'
+#' @description
+#' Calculates an efficiency factor of a design according to Piepho 2015.
+#'
+#' @param design_df A data frame containing the experimental design with spatial coordinates
+#' @param item A column name of the items in the design (e.g., `treatment`, `variety`, `genotype`, etc)
+#'
+#' @examples
+#' df_design <- initialize_design_df(c(
+#'   "a", "b", "d", "c",
+#'   "e", "a", "f", "b",
+#'   "c", "f", "e", "d"
+#' ), 3, 4)
+#'
+#' calculate_efficiency_factor(df_design, "treatment")
+#'
+#' @return A numeric value representing the efficiency factor of the design
+#'
+#' @references Piepho, H. P., Williams, E., & Michel, V. (2015). Nonresolvable Row-Column Designs with an Even
+#'   Distribution of Treatment Replications. Journal of Agricultural, Biological, and Environmental Statistics,
+#'   21, 227-242 (2016). <https://doi.org/10.1007/s13253-015-0241-2>
+#'
+#' @export
+calculate_efficiency_factor <- function(design_df, item) {
+  item <- as.character(substitute(item))
+
+  # Design parameters
+  encoded_items <- as.factor(design_df[[item]]) |> as.integer()
+  n_treatments <- length(unique(encoded_items))
+  n_rows <- max(design_df$row)
+  n_cols <- max(design_df$col)
+  n_plots <- nrow(design_df)
+
+  # Create design matrix X for treatments
+  X <- matrix(0, nrow = n_plots, ncol = n_treatments)
+  for (i in 1:n_plots) {
+    X[i, encoded_items[i]] <- 1
+  }
+
+  # Create design matrix Z for rows and columns
+  # Row and col effects (excluding last row and col to avoid singularity)
+  Z_row <- matrix(0, nrow = n_plots, ncol = n_rows - 1)
+  Z_col <- matrix(0, nrow = n_plots, ncol = n_cols - 1)
+  plot_index <- 1
+  for (i in 1:n_rows) {
+    for (j in 1:n_cols) {
+      if (i < n_rows) {
+        Z_row[plot_index, i] <- 1
+      }
+      if (j < n_cols) {
+        Z_col[plot_index, j] <- 1
+      }
+      plot_index <- plot_index + 1
+    }
+  }
+
+  # Combine row and column design matrices
+  Z <- cbind(Z_row, Z_col)
+
+  # Check if Z^TZ is invertible
+  ZtZ <- t(Z) %*% Z
+  condition_number <- kappa(ZtZ)
+
+  # Use Moore-Penrose inverse if matrix is near singular
+  if (condition_number > 1e12) {
+    ZtZ_inv <- pseudo_inverse(ZtZ)
+  } else {
+    ZtZ_inv <- solve(ZtZ)
+  }
+
+  # Calculate treatment information matrix A_RC
+  # A_RC = X^T (I - P_Z) X
+  P_Z <- Z %*% ZtZ_inv %*% t(Z)
+  I_n <- diag(n_plots)
+  A_RC <- t(X) %*% (I_n - P_Z) %*% X
+
+  # Calculate Moore-Penrose inverse of A_RC, variance matrix
+  V <- pseudo_inverse(A_RC)
+
+  # Calculate average pairwise variance (apv)
+  apv <- 0
+  count <- 0
+  for (i in 1:(n_treatments - 1)) {
+    for (j in (i + 1):n_treatments) {
+      pairwise_var <- V[i, i] + V[j, j] - 2 * V[i, j]
+      apv <- apv + pairwise_var
+      count <- count + 1
+    }
+  }
+  apv <- apv / count
+
+  # Calculate harmonic means of replications
+  r_i <- colSums(X)
+  r_h <- length(r_i) / sum(1 / r_i)
+
+  # Calculate average efficiency factor
+  f_A <- (2 / r_h) / apv
+  return(f_A)
+}
