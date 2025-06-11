@@ -8,6 +8,7 @@
 <url><loc>https://biometryhub.github.io/speed/reference/calculate_adjacency_score.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/calculate_balance_score.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/calculate_ed.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/calculate_efficiency_factor.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/calculate_nb.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/create_pair_mapping.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-calculate_ed_3_reps.html</loc></url>
@@ -23,6 +24,7 @@
 <url><loc>https://biometryhub.github.io/speed/reference/objective_functions.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/plot_progress.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/print.design.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/pseudo_inverse.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/speed-options.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/speed-package.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/speed.html</loc></url>
