@@ -10,3 +10,4 @@ matsums.cpp
 ^pkgdown$
 Jules_example_cases.R
 air.toml
+^codecov\.yml$

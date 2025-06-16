@@ -5,7 +5,14 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/biometryhub/speed-sam/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/biometryhub/speed-sam/actions/workflows/R-CMD-check.yaml)
+[![Project Status: Active: The project has reached a stable, usable
+state and is being actively
+developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![R-CMD-check](https://github.com/biometryhub/speed/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/biometryhub/speed/actions/workflows/R-CMD-check.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/biometryhub/speed/graph/badge.svg)](https://app.codecov.io/gh/biometryhub/speed)
+[![Licence](https://img.shields.io/github/license/mashape/apistatus.svg)](https://choosealicense.com/licenses/mit/)
+![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fbiometryhub.github.io%2Fspeed&label=Hits&icon=arrow-down-circle&color=%23198754)
 <!-- badges: end -->
 
 ## Overview
@@ -57,9 +64,9 @@ df <- data.frame(
 
 # Optimize the design with seed for reproducibility
 result <- speed(df, "treatment", seed = 42)
-#> Iteration: 1000 Score: 1 Best: 1 Since Improvement: 526 
-#> Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1526 
-#> Early stopping at iteration 2474
+#> Iteration: 1000 Score: 1 Best: 1 Since Improvement: 975 
+#> Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1975 
+#> Early stopping at iteration 2025
 
 # Plot the optimized design
 autoplot(result)
