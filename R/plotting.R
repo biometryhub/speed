@@ -14,7 +14,7 @@
 #'
 #' @name autoplot
 #'
-#' @returns A `ggplot2` object.
+#' @return A `ggplot2` object.
 #' @seealso [speed()]
 #'
 NULL
