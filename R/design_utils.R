@@ -68,11 +68,12 @@ generate_neighbour <- function(design,
 #' @description
 #' Initialize a design data frame with or without blocking.
 #'
-#' @param items Items to be placed in the design
+#' @param items Items to be placed in the design. Either a single numeric value (the number of 
+#' equally replicated items), or a vector of items.
 #' @param nrows Number of rows in the design
 #' @param ncols Number of columns in the design
-#' @param nrows_block Number of rows in each block
-#' @param ncols_block Number of columns in each block
+#' @param block_nrows Number of rows in each block
+#' @param block_ncols Number of columns in each block
 #'
 #' @return A data frame containing the design
 #'
@@ -91,9 +92,15 @@ generate_neighbour <- function(design,
 initialize_design_df <- function(items,
                                  nrows,
                                  ncols,
-                                 nrows_block = NULL,
-                                 ncols_block = NULL) {
-  .verify_initialize_design_df(items, nrows, ncols, nrows_block, ncols_block)
+                                 block_nrows = NULL,
+                                 block_ncols = NULL) {
+  .verify_initialize_design_df(nrows, ncols, block_nrows, block_ncols)
+
+  # If items is a single numeric value, take it as the number of equally replicated treatments
+  if (length(items) == 1 && is.numeric(items)) {
+    items <- paste0("T", 1:items)
+  }
+
   rows <- rep(1:nrows, ncols)
   cols <- rep(1:ncols, each = nrows)
   df <- data.frame(
@@ -101,12 +108,12 @@ initialize_design_df <- function(items,
     col = cols,
     treatment = items
   )
-  if (!is.null(nrows_block)) {
-    nblocks_row <- nrows / nrows_block
-    nblocks_col <- ncols / ncols_block
+  if (!is.null(block_nrows)) {
+    nblocks_row <- nrows / block_nrows
+    nblocks_col <- ncols / block_ncols
 
-    df$row_block <- rep(1:nblocks_row, ncols, each = nrows_block)
-    df$col_block <- rep(1:nblocks_col, each = nrows * ncols_block)
+    df$row_block <- rep(1:nblocks_row, ncols, each = block_nrows)
+    df$col_block <- rep(1:nblocks_col, each = nrows * block_ncols)
     df$block <- as.numeric(df$row_block) +
       nblocks_row * (as.numeric(df$col_block) - 1)
   }
@@ -114,25 +121,24 @@ initialize_design_df <- function(items,
 }
 
 # fmt: skip
-.verify_initialize_design_df <- function(items,
-                                         nrows,
+.verify_initialize_design_df <- function(nrows,
                                          ncols,
-                                         nrows_block,
+                                         block_nrows,
                                          block_ncols) {
   verify_positive_whole_number(nrows, ncols)
 
   if (
-    (!is.null(nrows_block) && is.null(block_ncols)) ||
-      (is.null(nrows_block) && !is.null(block_ncols))
+    (!is.null(block_nrows) && is.null(block_ncols)) ||
+    (is.null(block_nrows) && !is.null(block_ncols))
   ) {
     stop("`block_nrows` and `block_ncols` must both be numeric or `NULL`")
   }
 
-  if (!is.null(nrows_block)) {
-    verify_positive_whole_number(nrows_block)
+  if (!is.null(block_nrows)) {
+    verify_positive_whole_number(block_nrows)
     verify_positive_whole_number(block_ncols)
 
-    verify_multiple_of(nrows, nrows_block)
+    verify_multiple_of(nrows, block_nrows)
     verify_multiple_of(ncols, block_ncols)
   }
 }
