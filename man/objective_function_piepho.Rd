@@ -27,7 +27,7 @@ objective_function_piepho(
 
 \item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
 
-\item{...}{Parameters extra parameters passed from \link{speed}}
+\item{...}{Extra parameters passed from \link{speed}}
 }
 \value{
 A function which returns a named list of numeric values with one required name \code{score} representing

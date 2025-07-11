@@ -8,7 +8,7 @@
 #' @param layout_df A data frame representing the spatial information of the design
 #' @param swap A column name of the items to be swapped
 #' @param spatial_cols Column name(s) of the spatial factors
-#' @param ... Parameters extra parameters passed from [speed]
+#' @param ... Extra parameters passed from [speed]
 #'
 #' @examples
 #' layout_df <- data.frame(
@@ -30,7 +30,6 @@ objective_function_signature <- function(layout_df,
 
 #' Default Objective Function for Design Optimization
 #'
-#' @inheritParams objective_function_signature
 #' @param adj_weight Weight for adjacency score (default: 0)
 #' @param bal_weight Weight for balance score (default: 1)
 #'
