@@ -187,7 +187,7 @@ speed <- function(data,
     }
 
     # Early stopping
-    if (iter - last_improvement_iter >= early_stop_iterations) {
+    if (iter - last_improvement_iter >= early_stop_iterations || new_score == 0) {
       if (!quiet) cat("Early stopping at iteration", iter, "\n")
       scores <- scores[1:iter]
       temperatures <- temperatures[1:iter]
