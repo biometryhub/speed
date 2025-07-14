@@ -9,10 +9,10 @@ dat <- dat[order(dat$col, dat$row),]
 dat$colBlock <- rep(1:10, each = 40)
 
 ## swap in rowBlocks and also balance across colBlocks
-
-des <- speed_df(dat, swap = "treat", swap_within = "rowBlock",
-                spatial_factors = ~ colBlock, iterations = 40000,
-                early_stop_iterations = 10000)
+options(speed.swap_count = 5, speed.swap_all_blocks = TRUE, speed.adaptive_swaps = TRUE, speed.cooling_rate = 0.99)
+des <- speed(dat, swap = "treat", swap_within = "rowBlock",
+                spatial_factors = ~ colBlock, iterations = 150000,
+                early_stop_iterations = 50000, seed = 123)
 
 ## check design
 
@@ -46,7 +46,7 @@ datb <- data.frame(row, col, treat, block)
 ## swap in Blocks and balance across rows and cols
 op <- options()
 options(speed.swap_count = 3, speed.adaptive_swaps = TRUE)
-des <- speed_df(datb, swap = treat, swap_within = "block", iterations = 50000, early_stop_iterations = 2000)
+des <- speed(datb, swap = treat, swap_within = "block", iterations = 50000, early_stop_iterations = 2000)
 
 desd <- des$design_df
 table(desd$treat, desd$row)
@@ -71,7 +71,7 @@ datp <- data.frame(row, col, treat, block)
 
 ## swap in Blocks and balance across rows and cols
 
-des <- speed_df(datp, swap = treat, swap_within = "block", spatial_factors = ~ row + col, iterations = 30000, early_stop_iterations = 5000)
+des <- speed(datp, swap = treat, swap_within = "block", spatial_factors = ~ row + col, iterations = 30000, early_stop_iterations = 5000)
 
 desd <- des$design_df
 table(desd$treat, desd$row)
@@ -92,7 +92,7 @@ dath <- data.frame(row, col, treat, block)
 ## swap in Blocks and balance across rows and cols
 options(speed.swap_count = 10)
 set.seed(42)
-des <- speed_df(dath, swap = treat, swap_within = "block", spatial_factors = ~ row + col,
+des <- speed(dath, swap = treat, swap_within = "block", spatial_factors = ~ row + col,
              iterations = 20000, early_stop_iterations = 4000)
 
 desd <- des$design_df
@@ -100,7 +100,6 @@ unique(c(table(desd$treat, desd$row)))
 unique(c(table(desd$treat, desd$col)))
 
 autoplot(des, treatments = "treat") + theme(legend.position="none")
-plot_design(des, "treat")
 
 options(op)
 
