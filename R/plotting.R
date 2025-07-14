@@ -46,7 +46,7 @@ ggplot2::autoplot
 #' # Set seed for reproducibility
 #' set.seed(42)
 #'
-#' # Optimize while respecting blocks
+#' # Optimise while respecting blocks
 #' result <- speed(df,
 #'                 "treatment",
 #'                 swap_within = "block",
@@ -69,7 +69,7 @@ ggplot2::autoplot
 #' # Set seed for reproducibility
 #' set.seed(42)
 #'
-#' # Optimize while respecting blocks
+#' # Optimise while respecting blocks
 #' result <- speed(df,
 #'                 "treatment",
 #'                 iterations = 5000)
@@ -238,7 +238,7 @@ autoplot.design <- function(object, rotation = 0, size = 4, margin = FALSE, pale
 #'   treatment = rep(LETTERS[1:3], 3)
 #' )
 #'
-#' # Optimize the design
+#' # Optimise the design
 #' result <- speed(df, "treatment")
 #'
 #' # Plot optimization progress

@@ -53,7 +53,7 @@ test_that("calculate_efficiency_factor provides the same results as the paper", 
   )
 })
 
-test_that("calculate_efficiency_factor provides better result for an optimized design", {
+test_that("calculate_efficiency_factor provides better result for an optimised design", {
   # fmt: skip
   df_design_initial <- initialise_design_df(c(
     1, 1, 2, 2,
@@ -62,14 +62,14 @@ test_that("calculate_efficiency_factor provides better result for an optimized d
   ), 3, 4)
 
   # fmt: skip
-  df_design_optimized <- initialise_design_df(c(
+  df_design_optimised <- initialise_design_df(c(
     1, 2, 4, 3,
     5, 1, 6, 2,
     3, 6, 5, 4
   ), 3, 4)
 
   expect_lt(
-    abs(1 - calculate_efficiency_factor(df_design_optimized, "treatment")),
+    abs(1 - calculate_efficiency_factor(df_design_optimised, "treatment")),
     abs(1 - calculate_efficiency_factor(df_design_initial, "treatment"))
   )
 })

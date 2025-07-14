@@ -144,4 +144,5 @@ initialise_design_df <- function(items,
 }
 
 # Alias for the function to maintain backward compatibility
+#' @rdname initialise_design_df
 initialize_design_df <- initialise_design_df

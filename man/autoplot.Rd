@@ -61,7 +61,7 @@ df <- data.frame(
 # Set seed for reproducibility
 set.seed(42)
 
-# Optimize while respecting blocks
+# Optimise while respecting blocks
 result <- speed(df,
                 "treatment",
                 swap_within = "block",
@@ -84,7 +84,7 @@ df <- data.frame(
 # Set seed for reproducibility
 set.seed(42)
 
-# Optimize while respecting blocks
+# Optimise while respecting blocks
 result <- speed(df,
                 "treatment",
                 iterations = 5000)

@@ -371,7 +371,7 @@ test_that("speed handles irregular layouts with 400 unique plots", {
   set.seed(123)
   irregular_large_data$treatment[sample(1:nrow(irregular_large_data), 50)] <- NA
 
-  # Optimize the design
+  # Optimise the design
   result <- speed(
     data = irregular_large_data,
     swap = "treatment",
@@ -408,7 +408,7 @@ test_that("speed handles irregular layouts with a clump of missing plots", {
     "treatment"
   ] <- NA
 
-  # Optimize the design
+  # Optimise the design
   result <- speed(
     data = irregular_large_data,
     swap = "treatment",
@@ -445,7 +445,7 @@ test_that("speed handles irregular layouts with L shaped plots", {
     "treatment"
   ] <- NA
 
-  # Optimize the design
+  # Optimise the design
   result <- speed(
     data = irregular_large_data,
     swap = "treatment",

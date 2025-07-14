@@ -2,9 +2,18 @@
 % Please edit documentation in R/design_utils.R
 \name{initialise_design_df}
 \alias{initialise_design_df}
+\alias{initialize_design_df}
 \title{Initialize Design Data Frame}
 \usage{
 initialise_design_df(
+  items,
+  nrows,
+  ncols,
+  block_nrows = NULL,
+  block_ncols = NULL
+)
+
+initialize_design_df(
   items,
   nrows,
   ncols,

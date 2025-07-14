@@ -1,7 +1,7 @@
-#' Optimize Experimental Design Layout Using Simulated Annealing
+#' Optimise Experimental Design Layout Using Simulated Annealing
 #'
 #' @description
-#' Optimizes the spatial layout of experimental designs using simulated annealing to minimize
+#' Optimises the spatial layout of experimental designs using simulated annealing to minimize
 #' treatment adjacency and maintain treatment balance across spatial factors. Works with
 #' regular or irregular spatial designs.
 #'
@@ -23,7 +23,7 @@
 #'
 #' @return A list containing:
 #' \itemize{
-#'   \item design_df - Data frame of optimized design
+#'   \item design_df - Data frame of optimised design
 #'   \item score - Final optimization score
 #'   \item adjacency_score - Score for treatment adjacencies
 #'   \item balance_score - Score for spatial balance
@@ -48,7 +48,7 @@
 #'   treatment = rep(LETTERS[1:4], 3)
 #' )
 #'
-#' # Optimize the design
+#' # Optimise the design
 #' result <- speed(df, swap = "treatment")
 #'
 #' @export
@@ -237,8 +237,8 @@ print.design <- function(x, ...) {
   cat("Treatments:", paste(x$treatments, collapse = ", "), "\n")
   cat("Seed:", x$seed, "\n\n")
 
-  # Print first few rows of the optimized design
-  # cat("Optimized Design (first 6 rows):\n")
+  # Print first few rows of the optimised design
+  # cat("Optimised Design (first 6 rows):\n")
   # print(utils::head(x$design_df))
 
   return(invisible(x))

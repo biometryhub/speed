@@ -17,7 +17,7 @@ coverage](https://codecov.io/gh/biometryhub/speed/graph/badge.svg)](https://app.
 
 ## Overview
 
-The `speed` package optimizes spatial experimental designs by
+The `speed` package optimises spatial experimental designs by
 rearranging treatments to improve statistical efficiency while
 maintaining statistical validity. It uses simulated annealing to:
 
@@ -62,13 +62,13 @@ df <- data.frame(
   treatment = rep(LETTERS[1:4], each = 3)
 )
 
-# Optimize the design with seed for reproducibility
+# Optimise the design with seed for reproducibility
 result <- speed(df, "treatment", seed = 42)
 #> Iteration: 1000 Score: 1 Best: 1 Since Improvement: 975 
 #> Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1975 
 #> Early stopping at iteration 2025
 
-# Plot the optimized design
+# Plot the optimised design
 autoplot(result)
 ```
 
@@ -84,7 +84,7 @@ plot_progress(result)
 
 ## Blocked design
 
-You can also optimize designs within blocks:
+You can also optimise designs within blocks:
 
 ``` r
 # Create a design with blocks
@@ -95,7 +95,7 @@ df <- data.frame(
   block = rep(1:3, each = 8)
 )
 
-# Optimize while respecting blocks
+# Optimise while respecting blocks
 result <- speed(df, 
                 "treatment",
                 swap_within = "block",

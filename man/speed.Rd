@@ -2,7 +2,7 @@
 % Please edit documentation in R/speed.R
 \name{speed}
 \alias{speed}
-\title{Optimize Experimental Design Layout Using Simulated Annealing}
+\title{Optimise Experimental Design Layout Using Simulated Annealing}
 \usage{
 speed(
   data,
@@ -46,7 +46,7 @@ NULL).}
 \value{
 A list containing:
 \itemize{
-\item design_df - Data frame of optimized design
+\item design_df - Data frame of optimised design
 \item score - Final optimization score
 \item adjacency_score - Score for treatment adjacencies
 \item balance_score - Score for spatial balance
@@ -60,7 +60,7 @@ set to the third element of .Random.seed.
 }
 }
 \description{
-Optimizes the spatial layout of experimental designs using simulated annealing to minimize
+Optimises the spatial layout of experimental designs using simulated annealing to minimize
 treatment adjacency and maintain treatment balance across spatial factors. Works with
 regular or irregular spatial designs.
 }
@@ -72,7 +72,7 @@ df <- data.frame(
   treatment = rep(LETTERS[1:4], 3)
 )
 
-# Optimize the design
+# Optimise the design
 result <- speed(df, swap = "treatment")
 
 }

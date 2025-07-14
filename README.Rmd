@@ -26,7 +26,7 @@ knitr::opts_chunk$set(
 
 ## Overview
 
-The `speed` package optimizes spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It uses simulated annealing to:
+The `speed` package optimises spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It uses simulated annealing to:
 
 - Minimize treatment adjacency (reducing neighbor effects)
 - Maintain spatial balance across rows and columns
@@ -67,10 +67,10 @@ df <- data.frame(
   treatment = rep(LETTERS[1:4], each = 3)
 )
 
-# Optimize the design with seed for reproducibility
+# Optimise the design with seed for reproducibility
 result <- speed(df, "treatment", seed = 42)
 
-# Plot the optimized design
+# Plot the optimised design
 autoplot(result)
 
 # View optimization progress
@@ -79,7 +79,7 @@ plot_progress(result)
 
 ## Blocked design
 
-You can also optimize designs within blocks:
+You can also optimise designs within blocks:
 
 ```{r blocks}
 # Create a design with blocks
@@ -90,7 +90,7 @@ df <- data.frame(
   block = rep(1:3, each = 8)
 )
 
-# Optimize while respecting blocks
+# Optimise while respecting blocks
 result <- speed(df, 
                 "treatment",
                 swap_within = "block",
@@ -100,5 +100,4 @@ result <- speed(df,
 # Plot the design with block boundaries
 autoplot(result)
 ```
-
 
