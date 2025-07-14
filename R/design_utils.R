@@ -78,23 +78,23 @@ generate_neighbour <- function(design,
 #' @return A data frame containing the design
 #'
 #' @examples
-#' initialize_design_df(
+#' initialise_design_df(
 #'   items = c(1, 2, 2, 1, 3, 3, 1, 3, 3),
 #'   nrows = 3,
 #'   ncols = 3
 #' )
 #'
 #' # blocking
-#' initialize_design_df(rep(1:8, 4), 8, 4, 2, 2)
+#' initialise_design_df(rep(1:8, 4), 8, 4, 2, 2)
 #'
 #' @export
 # fmt: skip
-initialize_design_df <- function(items,
+initialise_design_df <- function(items,
                                  nrows,
                                  ncols,
                                  block_nrows = NULL,
                                  block_ncols = NULL) {
-  .verify_initialize_design_df(nrows, ncols, block_nrows, block_ncols)
+  .verify_initialise_design_df(nrows, ncols, block_nrows, block_ncols)
 
   # If items is a single numeric value, take it as the number of equally replicated treatments
   if (length(items) == 1 && is.numeric(items)) {
@@ -121,7 +121,7 @@ initialize_design_df <- function(items,
 }
 
 # fmt: skip
-.verify_initialize_design_df <- function(nrows,
+.verify_initialise_design_df <- function(nrows,
                                          ncols,
                                          block_nrows,
                                          block_ncols) {
@@ -142,3 +142,6 @@ initialize_design_df <- function(items,
     verify_multiple_of(ncols, block_ncols)
   }
 }
+
+# Alias for the function to maintain backward compatibility
+initialize_design_df <- initialise_design_df
