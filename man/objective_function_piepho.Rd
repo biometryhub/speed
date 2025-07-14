@@ -39,7 +39,7 @@ details in \link{objective_function_signature}.
 Create an objective function including even distribution and neighbor balance introduced by Piepho 2018.
 }
 \examples{
-design_df <- speed::initialize_design_df(
+design_df <- initialise_design_df(
   items = c(1, 2, 2, 1, 3, 3, 1, 3, 3),
   nrows = 3,
   ncols = 3

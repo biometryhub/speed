@@ -151,7 +151,7 @@ calculate_adjacency_score <- function(layout_df, swap, spatial_cols) {
 #' @param current_score_obj A named list containing the current score
 #'
 #' @examples
-#' design_df <- speed::initialize_design_df(
+#' design_df <- initialise_design_df(
 #'   items = c(1, 2, 2, 1, 3, 3, 1, 3, 3),
 #'   nrows = 3,
 #'   ncols = 3
@@ -595,7 +595,7 @@ create_pair_mapping <- function(items) {
 #' @param item A column name of the items in the design (e.g., `treatment`, `variety`, `genotype`, etc)
 #'
 #' @examples
-#' df_design <- initialize_design_df(c(
+#' df_design <- initialise_design_df(c(
 #'   "a", "b", "d", "c",
 #'   "e", "a", "f", "b",
 #'   "c", "f", "e", "d"

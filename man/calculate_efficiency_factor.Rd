@@ -18,7 +18,7 @@ A numeric value representing the efficiency factor of the design
 Calculates an efficiency factor of a design according to Piepho 2015.
 }
 \examples{
-df_design <- initialize_design_df(c(
+df_design <- initialise_design_df(c(
   "a", "b", "d", "c",
   "e", "a", "f", "b",
   "c", "f", "e", "d"
