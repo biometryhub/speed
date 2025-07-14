@@ -2,6 +2,7 @@
 
 library(bench)
 library(dplyr)
+library(odw)
 library(speed)
 
 row <- rep(1:20, each = 20)
@@ -29,7 +30,6 @@ table(desd$treat, desd$col)
 
 calculate_efficiency_factor(des$design_df, treat)
 
-library(odw)
 
 str(dat)
 dat <- dat |> mutate(across(1:5, factor))
@@ -66,7 +66,7 @@ table(desd$treat, desd$col)
 
 calculate_efficiency_factor(twod.od$design, treat)
 
-bench::mark(check = FALSE,
+bench::mark(check = FALSE, iterations = 10,
             speed = speed(dat, swap = "treat", swap_within = "rowBlock",
                           spatial_factors = ~ colBlock, iterations = 150000,
                           early_stop_iterations = 50000, seed = 123, quiet = TRUE),
@@ -85,19 +85,34 @@ result <- speed(df, swap = "treatment", seed = 42)
 autoplot(result)
 
 
-rcb.odi <- odw(random = ~treatment + block,
-               data = dat,
-               permute = ~treatment,
-               swap = ~block,
-               search = "tabu+rw", maxit = 10, start.values = TRUE)
+df_od <- df |> mutate(across(1:6, factor))
+rcb_od <- function() {
+  rcb.odi <- odw(random = ~treatment + block + row,
+                 data = df_od,
+                 permute = ~treatment,
+                 swap = ~block,
+                 search = "tabu+rw", maxit = 10, start.values = TRUE, trace = FALSE)
 
-pars.init <- rcb.odi$vparameters.table
-rcb.odi[2,2] <- 100
+  pars.init <- rcb.odi$vparameters.table
+  pars.init[3,2] <- 100
 
-rcb.od <- odw(random = ~treatment + block,
-              data = dat,
-              permute = ~treatment,
-              swap = ~block,
-              search = "tabu+rw",
-              G.param = pars.init, R.param = pars.init,
-              maxit = 10)
+  rcb.od <- odw(random = ~treatment + block + row,
+                data = df_od,
+                permute = ~treatment,
+                swap = ~block,
+                search = "tabu+rw",
+                G.param = pars.init, R.param = pars.init,
+                maxit = 10, trace = FALSE)
+}
+
+des <- rcb.od$design
+des$row <- as.numeric(des$row)
+des$col <- as.numeric(des$col)
+class(des) <- c(class(des), "design")
+autoplot(des)
+
+
+res <- bench::mark(check = FALSE, iterations = 10,
+            speed = speed(df, swap = "treatment", seed = 42, quiet = T),
+            odw = rcb_od())
+autoplot(res, type = "boxplot")
