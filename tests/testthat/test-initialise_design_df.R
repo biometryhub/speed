@@ -1,9 +1,9 @@
-test_that("initialize_design_df works", {
+test_that("initialise_design_df works", {
   items <- c(1, 2, 2, 1, 3, 3, 1, 3, 3)
   nrows <- 3
   ncols <- 3
 
-  design_df <- initialize_design_df(items, nrows, ncols)
+  design_df <- initialise_design_df(items, nrows, ncols)
 
   expect_setequal(names(design_df), c("row", "col", "treatment"))
   expect_equal(nrow(design_df), nrows * ncols)
@@ -12,7 +12,7 @@ test_that("initialize_design_df works", {
   expect_equal(sort(design_df$col), sort(rep(1:ncols, nrows)))
 })
 
-test_that("initialize_design_df works with blocking", {
+test_that("initialise_design_df works with blocking", {
   items <- rep(1:8, 4)
   nrows <- 8
   ncols <- 4
@@ -21,7 +21,7 @@ test_that("initialize_design_df works with blocking", {
 
   n_items <- length(items)
 
-  design_df <- initialize_design_df(items, nrows, ncols, nrows_block, ncols_block)
+  design_df <- initialise_design_df(items, nrows, ncols, nrows_block, ncols_block)
 
   expect_setequal(names(design_df), c("row", "col", "treatment", "row_block", "col_block", "block"))
   expect_equal(nrow(design_df), n_items)
@@ -37,28 +37,28 @@ test_that("initialize_design_df works with blocking", {
   expect_equal(sort(design_df$block), sort(rep(1:n_blocks, n_items / n_blocks)))
 })
 
-test_that("initialize_design_df converts single numeric to treatment labels", {
+test_that("initialise_design_df converts single numeric to treatment labels", {
   # Test the specific line: if (length(items) == 1 && is.numeric(items))
-  result <- initialize_design_df(items = 3, nrows = 3, ncols = 3)
+  result <- initialise_design_df(items = 3, nrows = 3, ncols = 3)
   
   # Check that treatments are converted to "T1", "T2", "T3"
   expect_equal(result$treatment, rep(c("T1", "T2", "T3"), times = 3))
   
   # Test with different numbers
-  result2 <- initialize_design_df(items = 2, nrows = 2, ncols = 2)
+  result2 <- initialise_design_df(items = 2, nrows = 2, ncols = 2)
   expected_treatments2 <- c("T1", "T2", "T1", "T2")
   expect_equal(result2$treatment, expected_treatments2)
   
   # Test with single item
-  result3 <- initialize_design_df(items = 1, nrows = 2, ncols = 2)
+  result3 <- initialise_design_df(items = 1, nrows = 2, ncols = 2)
   expected_treatments3 <- c("T1", "T1", "T1", "T1")
   expect_equal(result3$treatment, expected_treatments3)
   
   # Verify the condition doesn't trigger when items is a vector
-  result4 <- initialize_design_df(items = c(1, 2, 3), nrows = 3, ncols = 1)
+  result4 <- initialise_design_df(items = c(1, 2, 3), nrows = 3, ncols = 1)
   expect_equal(result4$treatment, c(1, 2, 3))
   
   # Verify the condition doesn't trigger when items is non-numeric
-  result5 <- initialize_design_df(items = c("A", "B", "C"), nrows = 3, ncols = 1)
+  result5 <- initialise_design_df(items = c("A", "B", "C"), nrows = 3, ncols = 1)
   expect_equal(result5$treatment, c("A", "B", "C"))
 })
