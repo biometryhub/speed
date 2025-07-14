@@ -28,7 +28,7 @@ reference:
     desc: Utility functions to initialize objects.
   - contents:
       - create_pair_mapping
-      - initialize_design_df
+      - initialise_design_df
   - title: Advanced options
   - contents:
       - speed-options
