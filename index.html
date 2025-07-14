@@ -11,8 +11,8 @@
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Generate Spatially Efficient Experimental Designs">
-<meta name="description" content="The Speed package optimizes spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It employs customisable optimisation metrics, with a default approach that balances minimising treatment adjacency and maintaining spatial balance. Users can supply their own optimisation metrics to tailor designs to specific experimental requirements. The package also includes visualisation tools that allow researchers to inspect optimised designs.">
-<meta property="og:description" content="The Speed package optimizes spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It employs customisable optimisation metrics, with a default approach that balances minimising treatment adjacency and maintaining spatial balance. Users can supply their own optimisation metrics to tailor designs to specific experimental requirements. The package also includes visualisation tools that allow researchers to inspect optimised designs.">
+<meta name="description" content="The Speed package optimises spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It employs customisable optimisation metrics, with a default approach that balances minimising treatment adjacency and maintaining spatial balance. Users can supply their own optimisation metrics to tailor designs to specific experimental requirements. The package also includes visualisation tools that allow users to inspect optimised designs.">
+<meta property="og:description" content="The Speed package optimises spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It employs customisable optimisation metrics, with a default approach that balances minimising treatment adjacency and maintaining spatial balance. Users can supply their own optimisation metrics to tailor designs to specific experimental requirements. The package also includes visualisation tools that allow users to inspect optimised designs.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -53,7 +53,7 @@
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p>The <code>speed</code> package optimizes spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It uses simulated annealing to:</p>
+<p>The <code>speed</code> package optimises spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It uses simulated annealing to:</p>
 <ul>
 <li>Minimize treatment adjacency (reducing neighbor effects)</li>
 <li>Maintain spatial balance across rows and columns</li>
@@ -96,13 +96,13 @@
 <span>  treatment <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">LETTERS</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Optimize the design with seed for reproducibility</span></span>
+<span><span class="co"># Optimise the design with seed for reproducibility</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/speed.html">speed</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"treatment"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Iteration: 1000 Score: 1 Best: 1 Since Improvement: 975 </span></span>
 <span><span class="co">#&gt; Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1975 </span></span>
 <span><span class="co">#&gt; Early stopping at iteration 2025</span></span>
 <span></span>
-<span><span class="co"># Plot the optimized design</span></span>
+<span><span class="co"># Plot the optimised design</span></span>
 <span><span class="fu"><a href="reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-example-1.png" width="100%"></p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -114,7 +114,7 @@
 <div class="section level2">
 <h2 id="blocked-design">Blocked design<a class="anchor" aria-label="anchor" href="#blocked-design"></a>
 </h2>
-<p>You can also optimize designs within blocks:</p>
+<p>You can also optimise designs within blocks:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create a design with blocks</span></span>
 <span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
@@ -124,7 +124,7 @@
 <span>  block <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, each <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Optimize while respecting blocks</span></span>
+<span><span class="co"># Optimise while respecting blocks</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/speed.html">speed</a></span><span class="op">(</span><span class="va">df</span>, </span>
 <span>                <span class="st">"treatment"</span>,</span>
 <span>                swap_within <span class="op">=</span> <span class="st">"block"</span>,</span>
