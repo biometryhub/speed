@@ -603,7 +603,7 @@ create_pair_mapping <- function(items) {
 #'
 #' calculate_efficiency_factor(df_design, "treatment")
 #'
-#' @return A numeric value representing the efficiency factor of the design
+#' @return A numeric value representing the efficiency factor of the design. Higher values indicate more efficient designs.
 #'
 #' @references Piepho, H. P., Williams, E., & Michel, V. (2015). Nonresolvable Row-Column Designs with an Even
 #'   Distribution of Treatment Replications. Journal of Agricultural, Biological, and Environmental Statistics,
@@ -616,8 +616,8 @@ calculate_efficiency_factor <- function(design_df, item) {
   # Design parameters
   encoded_items <- as.factor(design_df[[item]]) |> as.integer()
   n_treatments <- length(unique(encoded_items))
-  n_rows <- max(design_df$row)
-  n_cols <- max(design_df$col)
+  n_rows <- max(as.numeric(as.character(design_df$row)))
+  n_cols <- max(as.numeric(as.character(design_df$col)))
   n_plots <- nrow(design_df)
 
   # Create design matrix X for treatments

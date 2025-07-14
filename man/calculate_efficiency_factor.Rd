@@ -12,7 +12,7 @@ calculate_efficiency_factor(design_df, item)
 \item{item}{A column name of the items in the design (e.g., \code{treatment}, \code{variety}, \code{genotype}, etc)}
 }
 \value{
-A numeric value representing the efficiency factor of the design
+A numeric value representing the efficiency factor of the design. Higher values indicate more efficient designs.
 }
 \description{
 Calculates an efficiency factor of a design according to Piepho 2015.

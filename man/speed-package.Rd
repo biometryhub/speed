@@ -5,7 +5,7 @@
 \alias{speed-package}
 \title{speed: Generate Spatially Efficient Experimental Designs}
 \description{
-The Speed package optimises spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It employs customisable optimisation metrics, with a default approach that balances minimising treatment adjacency and maintaining spatial balance. Users can supply their own optimisation metrics to tailor designs to specific experimental requirements. The package also includes visualisation tools that allow researchers to inspect optimised designs.
+The Speed package optimises spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It employs customisable optimisation metrics, with a default approach that balances minimising treatment adjacency and maintaining spatial balance. Users can supply their own optimisation metrics to tailor designs to specific experimental requirements. The package also includes visualisation tools that allow users to inspect optimised designs.
 }
 \seealso{
 Useful links:

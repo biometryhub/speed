@@ -63,10 +63,10 @@ generate_neighbour <- function(design,
   return(list(design = new_design, swapped_items = swapped_items))
 }
 
-#' Initialize Design Data Frame
+#' Initialise Design Data Frame
 #'
 #' @description
-#' Initialize a design data frame with or without blocking.
+#' Initialise a design data frame with or without blocking.
 #'
 #' @param items Items to be placed in the design. Either a single numeric value (the number of 
 #' equally replicated items), or a vector of items.

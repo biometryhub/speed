@@ -3,7 +3,7 @@
 \name{initialise_design_df}
 \alias{initialise_design_df}
 \alias{initialize_design_df}
-\title{Initialize Design Data Frame}
+\title{Initialise Design Data Frame}
 \usage{
 initialise_design_df(
   items,
@@ -37,7 +37,7 @@ equally replicated items), or a vector of items.}
 A data frame containing the design
 }
 \description{
-Initialize a design data frame with or without blocking.
+Initialise a design data frame with or without blocking.
 }
 \examples{
 initialise_design_df(
