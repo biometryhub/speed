@@ -15,8 +15,8 @@ dat$colBlock <- rep(1:10, each = 40)
 ## swap in rowBlocks and also balance across colBlocks
 options(speed.swap_count = 5, speed.swap_all_blocks = TRUE, speed.adaptive_swaps = TRUE, speed.cooling_rate = 0.99)
 des <- speed(dat, swap = "treat", swap_within = "rowBlock",
-                spatial_factors = ~ colBlock, iterations = 150000,
-                early_stop_iterations = 50000, seed = 123)
+             spatial_factors = ~ colBlock, iterations = 150000,
+             early_stop_iterations = 50000, seed = 123)
 
 lapply(split(desd, desd$rowBlock), function(el, trs) trs %in% as.character(unique(el$treat)), trs)
 lapply(split(desd, desd$colBlock), function(el, trs) trs %in% as.character(unique(el$treat)), trs)
@@ -36,22 +36,22 @@ dat <- dat |> mutate(across(1:5, factor))
 dat$dummy <- factor(rep(1, nrow(dat)))
 
 twod_od <- function() {
-    twod.odi <- odw(random = ~treat + rowBlock + colBlock,
-                    data = dat,
-                    permute = ~treat,
-                    swap = ~dummy,
-                    search = "tabu+rw", maxit = 10, start.values = TRUE)
+  twod.odi <- odw(random = ~treat + rowBlock + colBlock,
+                  data = dat,
+                  permute = ~treat,
+                  swap = ~dummy,
+                  search = "tabu+rw", maxit = 10, start.values = TRUE)
 
-    pars.init <- twod.odi$vparameters.table
-    pars.init[2:3,2] <- 100
+  pars.init <- twod.odi$vparameters.table
+  pars.init[2:3,2] <- 100
 
-    twod.od <- odw(random = ~treat + rowBlock + colBlock,
-                    data = dat,
-                    permute = ~treat,
-                    swap = ~dummy,
-                    search = "tabu+rw", 
-                    G.param = pars.init, R.param = pars.init,
-                    maxit = 10)
+  twod.od <- odw(random = ~treat + rowBlock + colBlock,
+                 data = dat,
+                 permute = ~treat,
+                 swap = ~dummy,
+                 search = "tabu+rw",
+                 G.param = pars.init, R.param = pars.init,
+                 maxit = 10)
 }
 
 twod.od <- twod_od()
@@ -67,10 +67,10 @@ table(desd$treat, desd$col)
 calculate_efficiency_factor(twod.od$design, treat)
 
 bench::mark(check = FALSE,
-    speed = speed(dat, swap = "treat", swap_within = "rowBlock",
-                  spatial_factors = ~ colBlock, iterations = 150000,
-                  early_stop_iterations = 50000, seed = 123, quiet = TRUE),
-    odw = twod_od()
+            speed = speed(dat, swap = "treat", swap_within = "rowBlock",
+                          spatial_factors = ~ colBlock, iterations = 150000,
+                          early_stop_iterations = 50000, seed = 123, quiet = TRUE),
+            odw = twod_od()
 )
 
 
@@ -79,11 +79,25 @@ bench::mark(check = FALSE,
 
 ### Easy case
 
-df <- data.frame(
-  row = rep(1:10, times = 6),
-  col = rep(1:6, each = 10),
-  treatment = rep(LETTERS[1:10], 6)
-)
+df <- initialise_design_df(10, 10, 6, 10, 1)
 # Optimise the design
-result <- speed(df, swap = "treatment", iterations = 100000, early_stop_iterations = 20000)
-# autoplot(result)
+result <- speed(df, swap = "treatment", seed = 42)
+autoplot(result)
+
+
+rcb.odi <- odw(random = ~treatment + block,
+               data = dat,
+               permute = ~treatment,
+               swap = ~block,
+               search = "tabu+rw", maxit = 10, start.values = TRUE)
+
+pars.init <- rcb.odi$vparameters.table
+rcb.odi[2,2] <- 100
+
+rcb.od <- odw(random = ~treatment + block,
+              data = dat,
+              permute = ~treatment,
+              swap = ~block,
+              search = "tabu+rw",
+              G.param = pars.init, R.param = pars.init,
+              maxit = 10)
