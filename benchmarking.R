@@ -32,12 +32,12 @@ calculate_efficiency_factor(des$design_df, treat)
 
 
 str(dat)
-dat <- dat |> mutate(across(1:5, factor))
-dat$dummy <- factor(rep(1, nrow(dat)))
+od_dat <- dat |> mutate(across(1:5, factor))
+od_dat$dummy <- factor(rep(1, nrow(od_dat)))
 
 twod_od <- function() {
   twod.odi <- odw(random = ~treat + rowBlock + colBlock,
-                  data = dat,
+                  data = od_dat,
                   permute = ~treat,
                   swap = ~dummy,
                   search = "tabu+rw", maxit = 10, start.values = TRUE)
@@ -46,7 +46,7 @@ twod_od <- function() {
   pars.init[2:3,2] <- 100
 
   twod.od <- odw(random = ~treat + rowBlock + colBlock,
-                 data = dat,
+                 data = od_dat,
                  permute = ~treat,
                  swap = ~dummy,
                  search = "tabu+rw",
@@ -66,14 +66,14 @@ table(desd$treat, desd$col)
 
 calculate_efficiency_factor(twod.od$design, treat)
 
-bench::mark(check = FALSE, iterations = 10,
+res1 <- bench::mark(check = FALSE, iterations = 10,
             speed = speed(dat, swap = "treat", swap_within = "rowBlock",
                           spatial_factors = ~ colBlock, iterations = 150000,
                           early_stop_iterations = 50000, seed = 123, quiet = TRUE),
             odw = twod_od()
 )
 
-
+autoplot(res1, type = "boxplot")
 
 
 
@@ -112,7 +112,7 @@ class(des) <- c(class(des), "design")
 autoplot(des)
 
 
-res <- bench::mark(check = FALSE, iterations = 10,
+res2 <- bench::mark(check = FALSE, iterations = 10,
             speed = speed(df, swap = "treatment", seed = 42, quiet = T),
             odw = rcb_od())
-autoplot(res, type = "boxplot")
+autoplot(res2, type = "boxplot")
