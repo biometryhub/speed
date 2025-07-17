@@ -15,26 +15,24 @@
 #' @param iterations Maximum number of iterations for the simulated annealing algorithm (default: 10000)
 #' @param early_stop_iterations Number of iterations without improvement before early stopping (default: 2000)
 #' @param obj_function Objective function used to calculate score (lower is better) (default:
-#'   \link{objective_function})
+#'   [objective_function()])
 #' @param quiet Logical; if TRUE, suppresses progress messages (default: FALSE)
 #' @param seed A numeric value for random seed. If provided, it ensures reproducibility of results (default:
 #'   NULL).
 #' @param ... Other arguments passed through to objective functions.
 #'
-#' @return A list containing:
-#' \itemize{
-#'   \item design_df - Data frame of optimised design
-#'   \item score - Final optimization score
-#'   \item adjacency_score - Score for treatment adjacencies
-#'   \item balance_score - Score for spatial balance
-#'   \item scores - Vector of scores across iterations
-#'   \item temperatures - Vector of temperatures across iterations
-#'   \item iterations_run - Total number of iterations performed
-#'   \item stopped_early - Logical indicating if optimization stopped early
-#'   \item treatments - Vector of unique treatments
-#'   \item seed - Random seed used for reproducibility of the design. If not set in the function, the seed is
-#'      set to the third element of .Random.seed.
-#' }
+#' @returns A list containing:
+#' - **design_df** - Data frame of optimised design
+#' - **score** - Final optimization score
+#' - **adjacency_score** - Score for treatment adjacencies
+#' - **balance_score** - Score for spatial balance
+#' - **scores** - Vector of scores across iterations
+#' - **temperatures** - Vector of temperatures across iterations
+#' - **iterations_run** - Total number of iterations performed
+#' - **stopped_early** - Logical indicating if optimization stopped early
+#' - **treatments** - Vector of unique treatments
+#' - **seed** - Random seed used for reproducibility of the design. If not set in the function, the seed is
+#'    set to the third element of `.Random.seed`.
 #'
 #' @importFrom stringi stri_sort
 #' @importFrom stats runif
@@ -43,14 +41,28 @@
 #' @examples
 #' # Create a simple design with 3 replicates of 4 treatments in a 4x3 layout
 #' df <- data.frame(
-#'   row = rep(1:4, each = 3),
-#'   col = rep(1:3, times = 4),
-#'   treatment = rep(LETTERS[1:4], 3)
+#'   row = rep(1:4, times = 5),
+#'   col = rep(1:5, each = 4),
+#'   treatment = rep(LETTERS[1:4], 5)
 #' )
 #'
 #' # Optimise the design
-#' result <- speed(df, swap = "treatment")
+#' result <- speed(df, swap = "treatment", seed = 42)
 #'
+#' # Hierarchical split-plot design
+#' \dontrun{
+#' df_split <- data.frame(
+#'   row = rep(1:8, each = 4),
+#'   col = rep(1:4, times = 8),
+#'   block = rep(1:4, each = 8),
+#'   wholeplot = rep(1:8, each = 4),
+#'   wholeplot_treatment = rep(rep(LETTERS[1:2], each = 4), times = 4),
+#'   subplot_treatment = rep(letters[1:4], 8)
+#' )
+#' result <- speed(df_split,
+#'                 swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+#'                 swap_within = list(wp = "block", sp = "wholeplot"))
+#' }
 #' @export
 # fmt: skip
 speed <- function(data,
@@ -63,15 +75,43 @@ speed <- function(data,
                   quiet = FALSE,
                   seed = NULL,
                   ...) {
+  # Check if this is a hierarchical design
+  is_hierarchical <- is.list(swap) && !is.null(names(swap))
+
+  if (is_hierarchical) {
+    return(speed_hierarchical(data, swap, swap_within, spatial_factors,
+                             iterations, early_stop_iterations, obj_function,
+                             quiet, seed, ...))
+  } else {
+    # Convert swap and swap_within to character if they are not already - NSE
+    swap <- as.character(substitute(swap))
+    swap_within <- as.character(substitute(swap_within))
+
+    return(speed_simple(data, swap, swap_within, spatial_factors,
+                       iterations, early_stop_iterations, obj_function,
+                       quiet, seed, ...))
+  }
+}
+
+#' Speed function for simple (non-hierarchical) designs
+#' @keywords internal
+# fmt: skip
+speed_simple <- function(data,
+                         swap,
+                         swap_within,
+                         spatial_factors,
+                         iterations,
+                         early_stop_iterations,
+                         obj_function,
+                         quiet,
+                         seed,
+                         ...) {
   # Extract options
   swap_count <- getOption("speed.swap_count", 1)
   swap_all_blocks <- getOption("speed.swap_all_blocks", FALSE)
   adaptive_swaps <- getOption("speed.adaptive_swaps", FALSE)
   start_temp <- getOption("speed.start_temp", 100)
   cooling_rate <- getOption("speed.cooling_rate", 0.99)
-
-  swap <- as.character(substitute(swap))
-  swap_within <- as.character(substitute(swap_within))
 
   # Verify inputs
   .verify_speed_inputs(data,
@@ -119,7 +159,6 @@ speed <- function(data,
 
   # Set seed for reproducibility
   if (is.null(seed)) {
-    # dummy_seed <- runif(1)
     seed <- .GlobalEnv$.Random.seed[3]
   }
   set.seed(seed)
@@ -213,6 +252,235 @@ speed <- function(data,
 
   class(output) <- c("design", class(output))
   return(output)
+}
+
+#' Speed function for hierarchical designs
+#' @keywords internal
+# fmt: skip
+speed_hierarchical <- function(data,
+                               swap,
+                               swap_within,
+                               spatial_factors,
+                               iterations,
+                               early_stop_iterations,
+                               obj_function,
+                               quiet,
+                               seed,
+                               ...) {
+  # Extract options
+  swap_count <- getOption("speed.swap_count", 1)
+  swap_all_blocks <- getOption("speed.swap_all_blocks", FALSE)
+  adaptive_swaps <- getOption("speed.adaptive_swaps", FALSE)
+  start_temp <- getOption("speed.start_temp", 100)
+  cooling_rate <- getOption("speed.cooling_rate", 0.99)
+
+  # Handle hierarchical parameters
+  hierarchy_levels <- names(swap)
+
+  # Convert single values to named lists for all levels
+  if (!is.list(iterations)) {
+    iterations <- setNames(rep(iterations, length(hierarchy_levels)), hierarchy_levels)
+  }
+  if (!is.list(early_stop_iterations)) {
+    early_stop_iterations <- setNames(rep(early_stop_iterations, length(hierarchy_levels)), hierarchy_levels)
+  }
+  if (!is.list(obj_function)) {
+    obj_function <- setNames(rep(list(obj_function), length(hierarchy_levels)), hierarchy_levels)
+  }
+
+  # Handle swap_within defaults
+  if (is.character(swap_within) && (swap_within == "1" || swap_within == "none")) {
+    swap_within <- setNames(rep("1", length(hierarchy_levels)), hierarchy_levels)
+  }
+
+  # Verify hierarchical inputs
+  .verify_hierarchical_inputs(data, swap, swap_within, spatial_factors,
+                              iterations, early_stop_iterations, obj_function,
+                              quiet, seed)
+
+  layout_df <- data
+  spatial_cols <- all.vars(spatial_factors)
+
+  # Handle swap_within for each level
+  for (level in hierarchy_levels) {
+    if (swap_within[[level]] == "1" || swap_within[[level]] == "none") {
+      layout_df[[paste0("swap_group_", level)]] <- factor(rep(1, nrow(data)))
+      swap_within[[level]] <- paste0("swap_group_", level)
+    }
+  }
+
+  # Initialize design
+  current_design <- layout_df
+  best_design <- current_design
+
+  # Set seed for reproducibility
+  if (is.null(seed)) {
+    seed <- .GlobalEnv$.Random.seed[3]
+  }
+  set.seed(seed)
+
+  # Sequential optimization for each hierarchy level
+  all_scores <- list()
+  all_temperatures <- list()
+  total_iterations <- 0  # TODO: Track total iterations across all levels
+
+  for (level in hierarchy_levels) {
+    if (!quiet) cat("Optimizing level:", level, "\n")
+
+    # Calculate initial score for this level
+    current_score_obj <- obj_function[[level]](current_design, swap[[level]], spatial_cols, ...)
+    current_score <- current_score_obj$score
+
+    if (!is.numeric(current_score)) {
+      stop("`$score` from `objective_function` must be numeric.")
+    }
+
+    best_score_obj <- current_score_obj
+    best_score <- current_score
+    temp <- start_temp
+    scores <- numeric(iterations[[level]])
+    temperatures <- numeric(iterations[[level]])
+    last_improvement_iter <- 0
+
+    # Optimization loop for this level
+    for (iter in 1:iterations[[level]]) {
+      scores[iter] <- current_score
+      temperatures[iter] <- temp
+
+      if (adaptive_swaps) {
+        current_swap_count <- max(1, round(swap_count * temp / start_temp))
+        current_swap_all_blocks <- runif(1) < (temp / start_temp) && swap_all_blocks
+      } else {
+        current_swap_count <- swap_count
+        current_swap_all_blocks <- swap_all_blocks
+      }
+
+      # Generate new design by swapping treatments at this level
+      new_design <- generate_neighbour(
+        current_design,
+        swap,
+        swap_within,
+        swap_count = current_swap_count,
+        swap_all_blocks = current_swap_all_blocks
+      )
+
+      # Calculate new score
+      new_score_obj <- obj_function[[level]](new_design$design,
+                                            swap[[level]],
+                                            spatial_cols,
+                                            current_score_obj = current_score_obj,
+                                            swapped_items = new_design$swapped_items,
+                                            ...)
+      new_score <- new_score_obj$score
+
+      # Decide whether to accept the new design
+      if (new_score < current_score || runif(1) < exp((current_score - new_score) / temp)) {
+        current_design <- new_design$design
+        current_score <- new_score
+        current_score_obj <- new_score_obj
+        if (new_score < best_score) {
+          best_design <- new_design$design
+          best_score_obj <- new_score_obj
+          best_score <- new_score
+          last_improvement_iter <- iter
+        }
+      }
+
+      # Cool temperature
+      temp <- temp * cooling_rate
+
+      # Progress reporting
+      if (!quiet && iter %% 1000 == 0) {
+        cat(
+          "Level:", level,
+          "Iteration:", iter,
+          "Score:", current_score,
+          "Best:", best_score,
+          "Since Improvement:", iter - last_improvement_iter,
+          "\n"
+        )
+      }
+
+      # Early stopping
+      if (iter - last_improvement_iter >= early_stop_iterations[[level]] || new_score == 0) {
+        if (!quiet) cat("Early stopping at iteration", iter, "for level", level, "\n")
+        scores <- scores[1:iter]
+        temperatures <- temperatures[1:iter]
+        break
+      }
+    }
+
+    all_scores[[level]] <- scores
+    all_temperatures[[level]] <- temperatures
+    total_iterations <- total_iterations + length(scores)
+  }
+
+  # Clean up temporary swap_group columns
+  for (level in hierarchy_levels) {
+    col_name <- paste0("swap_group_", level)
+    if (col_name %in% names(best_design)) {
+      best_design[[col_name]] <- NULL
+    }
+  }
+
+  # Calculate final combined score
+  final_score <- 0
+  for (level in hierarchy_levels) {
+    level_score <- obj_function[[level]](best_design, swap[[level]], spatial_cols, ...)$score
+    final_score <- final_score + level_score
+  }
+
+  # Collect treatments for each level
+  treatments <- list()
+  for (level in hierarchy_levels) {
+    treatments[[level]] <- stringi::stri_sort(unique(as.vector(best_design[[swap[[level]]]])), numeric = TRUE)
+  }
+
+  # Finalize output
+  output <- list(
+    design_df = best_design,
+    score = final_score,
+    scores = all_scores,
+    temperatures = all_temperatures,
+    iterations_run = total_iterations,
+    stopped_early = any(sapply(all_scores, function(x) length(x) < iterations)),
+    treatments = treatments,
+    seed = seed
+  )
+
+  class(output) <- c("design", class(output))
+  return(output)
+}
+
+#' Verify hierarchical inputs
+#' @keywords internal
+.verify_hierarchical_inputs <- function(data, swap, swap_within, spatial_factors,
+                                       iterations, early_stop_iterations, obj_function,
+                                       quiet, seed) {
+  # Check that swap and swap_within have same names
+  if (!all(names(swap) == names(swap_within))) {
+    stop("Names of `swap` and `swap_within` must match for hierarchical designs")
+  }
+
+  # Check that all specified columns exist in data
+  for (level in names(swap)) {
+    if (!swap[[level]] %in% names(data)) {
+      stop(paste("Column", swap[[level]], "not found in data"))
+    }
+    if (!swap_within[[level]] %in% names(data) &&
+        !(swap_within[[level]] %in% c("1", "none"))) {
+      stop(paste("Column", swap_within[[level]], "not found in data"))
+    }
+  }
+
+  # Verify other parameters
+  if (!is.logical(quiet)) {
+    stop("`quiet` must be logical")
+  }
+
+  if (!is.null(seed) && !is.numeric(seed)) {
+    stop("`seed` must be numeric or NULL")
+  }
 }
 
 
