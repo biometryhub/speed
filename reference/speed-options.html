@@ -56,10 +56,21 @@ behaviour of the optimisation algorithm.</p>
 <dd><p>Logical; if <code>TRUE</code>, adjusts swap parameters based on temperature (default: <code>FALSE</code>).</p></dd>
 
 <dt><code>speed.start_temp</code></dt>
-<dd><p>Starting temperature for simulated annealing (default: 100).</p></dd>
+<dd><p>Starting temperature for simulated annealing (default: 100). A higher start temperature allows
+the algorithm to accept worse solutions early on, encouraging exploration of the solution space and helping to avoid local
+optima. Lower values make the algorithm greedier from the start, which can speed up convergence but increases the risk of
+getting stuck in a poor solution.
+A good starting temperature allows moderately worse solutions to be accepted with a probability of 70–90% at the beginning of the optimisation.</p></dd>
 
 <dt><code>speed.cooling_rate</code></dt>
-<dd><p>Rate at which temperature decreases for simulated annealing (default: 0.99).</p></dd>
+<dd><p>Rate at which temperature decreases for simulated annealing (default: 0.99).
+This controls how quickly the algorithm shifts from exploration to exploitation.
+The temperature is updated at each iteration by multiplying it by this rate:
+<code>T_i = start_temp * cooling_rate^i</code>.
+A higher cooling rate (e.g. 0.995–0.999) results in slower cooling and a longer
+exploration phase, which is generally better for complex or noisy optimisation
+landscapes. Lower values (e.g. 0.95–0.98) cool quickly, leading to faster
+convergence but greater risk of premature convergence to a suboptimal design.</p></dd>
 
 <dt><code>speed.adj_weight</code></dt>
 <dd><p>Weight for adjacency score (default: 0).</p></dd>
