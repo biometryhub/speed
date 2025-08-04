@@ -7,6 +7,5 @@
   "settings": {
     "terminal.integrated.shell.linux": "/bin/bash"
   },
-  "extensions": ["Ikuyadeu.r", "REditorSupport.r-lsp"],
-  "postCreateCommand": "R -e 'install.packages(\"languageserver\", repos=\"http://cran.rstudio.com\")'"
+  "extensions": ["Ikuyadeu.r", "REditorSupport.r-lsp"]
 }
