@@ -7,7 +7,7 @@
 calculate_balance_score(layout_df, swap, spatial_cols)
 }
 \arguments{
-\item{layout_df}{A data frame representing the spatial information of the design}
+\item{layout_df}{A data frame representing the current design}
 
 \item{swap}{A column name of the items to be swapped}
 
