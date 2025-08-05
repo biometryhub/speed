@@ -332,7 +332,7 @@ speed_hierarchical <- function(data,
     current_score <- current_score_obj$score
 
     if (!is.numeric(current_score)) {
-      stop("`$score` from `objective_function` must be numeric.")
+      stop("`score` from `objective_function` must be numeric.")
     }
 
     best_score_obj <- current_score_obj
