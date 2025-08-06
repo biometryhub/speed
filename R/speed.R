@@ -181,6 +181,7 @@ speed_simple <- function(data,
       current_design,
       swap,
       swap_within,
+      level = NULL,
       swap_count = current_swap_count,
       swap_all_blocks = current_swap_all_blocks
     )
@@ -360,6 +361,7 @@ speed_hierarchical <- function(data,
         current_design,
         swap,
         swap_within,
+        level,
         swap_count = current_swap_count,
         swap_all_blocks = current_swap_all_blocks
       )

@@ -75,4 +75,18 @@ df <- data.frame(
 # Optimise the design
 result <- speed(df, swap = "treatment", seed = 42)
 
+# Hierarchical split-plot design
+\dontrun{
+df_split <- data.frame(
+  row = rep(1:8, each = 4),
+  col = rep(1:4, times = 8),
+  block = rep(1:4, each = 8),
+  wholeplot = rep(1:8, each = 4),
+  wholeplot_treatment = rep(rep(LETTERS[1:2], each = 4), times = 4),
+  subplot_treatment = rep(letters[1:4], 8)
+)
+result <- speed(df_split,
+                swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+                swap_within = list(wp = "block", sp = "wholeplot"))
+}
 }
