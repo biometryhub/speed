@@ -467,6 +467,69 @@ test_that("speed handles irregular layouts with L shaped plots", {
   vdiffr::expect_doppelganger("speed_large_missing_L", autoplot(result))
 })
 
+test_that("speed runs with random initialisation", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:5, times = 4),
+    col = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 1000,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  options(speed.random_initialisation = TRUE)
+  result_random <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 1000,
+    seed = 42,
+    quiet = TRUE
+  )
+  options(speed.random_initialisation = FALSE)
+
+  expect_named(
+    result_random,
+    c(
+      "design_df",
+      "score",
+      "scores",
+      "temperatures",
+      "iterations_run",
+      "stopped_early",
+      "treatments",
+      "seed"
+    )
+  )
+
+  # Check data types
+  expect_true(is.data.frame(result_random$design_df))
+  expect_true(is.numeric(result_random$score))
+  expect_true(is.numeric(result_random$scores))
+  expect_true(is.numeric(result_random$temperatures))
+  expect_true(is.logical(result_random$stopped_early))
+  expect_true(is.character(result_random$treatments))
+
+  # Check values
+  expect_equal(nrow(result_random$design_df), 20)
+  expect_equal(ncol(result_random$design_df), 3)
+  expect_equal(result_random$score, 1)
+  expect_equal(length(result_random$scores), 1000)
+  expect_equal(length(result_random$temperatures), 1000)
+  expect_equal(result_random$iterations_run, 1000)
+  expect_equal(result_random$stopped_early, FALSE)
+  expect_equal(result_random$treatments, c("A", "B", "C", "D"))
+
+  expect_false(isTRUE(all.equal(result_random$design_df$treatment, result$design_df$treatment)))
+})
+
 # TODO: Test cases to add/update
 # - Add more detailed checking of current designs
 # - NSE

@@ -26,6 +26,7 @@ A higher cooling rate (e.g. 0.995–0.999) results in slower cooling and a longe
 exploration phase, which is generally better for complex or noisy optimisation
 landscapes. Lower values (e.g. 0.95–0.98) cool quickly, leading to faster
 convergence but greater risk of premature convergence to a suboptimal design.}
+\item{\code{speed.random_initialisation}}{Logical; if TRUE, randomly shuffle items within \code{swap_within} (default: FALSE)}
 \item{\code{speed.adj_weight}}{Weight for adjacency score (default: 0).}
 \item{\code{speed.bal_weight}}{Weight for balance score (default: 1).}
 }
