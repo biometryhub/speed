@@ -158,26 +158,42 @@ generate_sequential_neighbour <- function(design,
 #' Initialise Design Data Frame
 #'
 #' @description
-#' Initialise a design data frame with or without blocking.
+#' Initialise a design data frame with or without blocking, including support for split-plot designs.
 #'
 #' @param items Items to be placed in the design. Either a single numeric value (the number of
-#' equally replicated items), or a vector of items.
+#' equally replicated items), or a vector of items. For split-plot designs, can be a named list
+#' with 'whole_plot' and 'sub_plot' elements.
 #' @param nrows Number of rows in the design
 #' @param ncols Number of columns in the design
 #' @param block_nrows Number of rows in each block
 #' @param block_ncols Number of columns in each block
+#' @param design_type Type of design to create. Options: "crd" (completely randomized design),
+#' "rcbd" (randomized complete block design), "split_plot", "strip_plot"
+#' @param wp_nrows Number of rows per whole plot (for split-plot designs)
+#' @param wp_ncols Number of columns per whole plot (for split-plot designs)
+#' @param randomize Whether to randomize treatment assignments (default: TRUE)
+#' @param seed Random seed for reproducibility
 #'
 #' @return A data frame containing the design
 #'
 #' @examples
+#' # Simple CRD
 #' initialise_design_df(
 #'   items = c(1, 2, 2, 1, 3, 3, 1, 3, 3),
 #'   nrows = 3,
 #'   ncols = 3
 #' )
 #'
-#' # blocking
-#' initialise_design_df(rep(1:8, 4), 8, 4, 2, 2)
+#' # RCBD with blocking
+#' initialise_design_df(rep(1:8, 4), 8, 4, 2, 2, design_type = "rcbd")
+#'
+#' # Split-plot design
+#' initialise_design_df(
+#'   items = list(whole_plot = c("A", "B"), sub_plot = c("X", "Y", "Z")),
+#'   nrows = 6, ncols = 4,
+#'   design_type = "split_plot",
+#'   wp_nrows = 2, wp_ncols = 2
+#' )
 #'
 #' @export
 # fmt: skip
@@ -185,31 +201,26 @@ initialise_design_df <- function(items,
                                  nrows,
                                  ncols,
                                  block_nrows = NULL,
-                                 block_ncols = NULL) {
-  .verify_initialise_design_df(nrows, ncols, block_nrows, block_ncols)
+                                 block_ncols = NULL,
+                                 design_type = "crd",
+                                 wp_nrows = NULL,
+                                 wp_ncols = NULL,
+                                 randomize = TRUE,
+                                 seed = NULL) {
+  .verify_initialise_design_df(nrows, ncols, block_nrows, block_ncols, design_type, wp_nrows, wp_ncols)
 
-  # If items is a single numeric value, take it as the number of equally replicated treatments
-  if (length(items) == 1 && is.numeric(items)) {
-    items <- paste0("T", 1:items)
+  if (!is.null(seed)) {
+    set.seed(seed)
   }
 
-  rows <- rep(1:nrows, ncols)
-  cols <- rep(1:ncols, each = nrows)
-  df <- data.frame(
-    row = rows,
-    col = cols,
-    treatment = items
+  # Handle different design types
+  switch(design_type,
+    "crd" = .create_crd(items, nrows, ncols, randomize),
+    "rcbd" = .create_rcbd(items, nrows, ncols, block_nrows, block_ncols, randomize),
+    "split_plot" = .create_split_plot(items, nrows, ncols, wp_nrows, wp_ncols, block_nrows, block_ncols, randomize),
+    "strip_plot" = .create_strip_plot(items, nrows, ncols, wp_nrows, wp_ncols, block_nrows, block_ncols, randomize),
+    stop("Unsupported design_type. Use 'crd', 'rcbd', 'split_plot', or 'strip_plot'")
   )
-  if (!is.null(block_nrows)) {
-    nblocks_row <- nrows / block_nrows
-    nblocks_col <- ncols / block_ncols
-
-    df$row_block <- rep(1:nblocks_row, ncols, each = block_nrows)
-    df$col_block <- rep(1:nblocks_col, each = nrows * block_ncols)
-    df$block <- as.numeric(df$row_block) +
-      nblocks_row * (as.numeric(df$col_block) - 1)
-  }
-  return(df)
 }
 
 #' Shuffle Items in A Group
@@ -237,7 +248,10 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
 .verify_initialise_design_df <- function(nrows,
                                          ncols,
                                          block_nrows,
-                                         block_ncols) {
+                                         block_ncols,
+                                         design_type = "crd",
+                                         wp_nrows = NULL,
+                                         wp_ncols = NULL) {
   verify_positive_whole_number(nrows, ncols)
 
   if (
@@ -254,6 +268,180 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
     verify_multiple_of(nrows, block_nrows)
     verify_multiple_of(ncols, block_ncols)
   }
+
+  # Validate split-plot parameters
+  if (design_type %in% c("split_plot", "strip_plot")) {
+    if (is.null(wp_nrows) || is.null(wp_ncols)) {
+      stop("For split-plot designs, both `wp_nrows` and `wp_ncols` must be specified")
+    }
+    verify_positive_whole_number(wp_nrows, wp_ncols)
+    verify_multiple_of(nrows, wp_nrows)
+    verify_multiple_of(ncols, wp_ncols)
+  }
+}
+
+# Helper function for CRD
+.create_crd <- function(items, nrows, ncols, randomize) {
+  # If items is a single numeric value, take it as the number of equally replicated treatments
+  if (length(items) == 1 && is.numeric(items)) {
+    items <- paste0("T", 1:items)
+  }
+
+  rows <- rep(1:nrows, ncols)
+  cols <- rep(1:ncols, each = nrows)
+  
+  df <- data.frame(
+    row = rows,
+    col = cols,
+    treatment = if (randomize) sample(items) else items
+  )
+  
+  return(df)
+}
+
+# Helper function for RCBD
+.create_rcbd <- function(items, nrows, ncols, block_nrows, block_ncols, randomize) {
+  df <- .create_crd(items, nrows, ncols, randomize = FALSE)
+  
+  if (!is.null(block_nrows)) {
+    nblocks_row <- nrows / block_nrows
+    nblocks_col <- ncols / block_ncols
+
+    df$row_block <- rep(1:nblocks_row, ncols, each = block_nrows)
+    df$col_block <- rep(1:nblocks_col, each = nrows * block_ncols)
+    df$block <- as.numeric(df$row_block) +
+      nblocks_row * (as.numeric(df$col_block) - 1)
+    
+    # Randomize treatments within each block
+    if (randomize) {
+      for (b in unique(df$block)) {
+        block_indices <- which(df$block == b)
+        df$treatment[block_indices] <- sample(df$treatment[block_indices])
+      }
+    }
+  }
+  
+  return(df)
+}
+
+# Helper function for split-plot design
+.create_split_plot <- function(items, nrows, ncols, wp_nrows, wp_ncols, block_nrows, block_ncols, randomize) {
+  # Validate items for split-plot
+  if (!is.list(items) || !all(c("whole_plot", "sub_plot") %in% names(items))) {
+    stop("For split-plot designs, 'items' must be a list with 'whole_plot' and 'sub_plot' elements")
+  }
+  
+  whole_plot_treatments <- items$whole_plot
+  sub_plot_treatments <- items$sub_plot
+  
+  # Create base design
+  rows <- rep(1:nrows, ncols)
+  cols <- rep(1:ncols, each = nrows)
+  
+  # Calculate whole plot structure
+  wp_rows <- nrows / wp_nrows
+  wp_cols <- ncols / wp_ncols
+  
+  # Create whole plot identifiers
+  whole_plot_id <- rep(1:(wp_rows * wp_cols), each = wp_nrows * wp_ncols)
+  
+  # Assign whole plot treatments
+  wp_treatment_assignment <- rep(whole_plot_treatments, length.out = wp_rows * wp_cols)
+  if (randomize) {
+    wp_treatment_assignment <- sample(wp_treatment_assignment)
+  }
+  
+  # Create sub-plot assignments within each whole plot
+  sub_plot_assignment <- character(nrows * ncols)
+  for (i in 1:(wp_rows * wp_cols)) {
+    wp_indices <- which(whole_plot_id == i)
+    sp_treatments <- rep(sub_plot_treatments, length.out = length(wp_indices))
+    if (randomize) {
+      sp_treatments <- sample(sp_treatments)
+    }
+    sub_plot_assignment[wp_indices] <- sp_treatments
+  }
+  
+  df <- data.frame(
+    row = rows,
+    col = cols,
+    whole_plot = whole_plot_id,
+    whole_plot_treatment = wp_treatment_assignment[whole_plot_id],
+    sub_plot_treatment = sub_plot_assignment,
+    treatment = paste(wp_treatment_assignment[whole_plot_id], sub_plot_assignment, sep = "_")
+  )
+  
+  # Add blocking if specified
+  if (!is.null(block_nrows)) {
+    nblocks_row <- nrows / block_nrows
+    nblocks_col <- ncols / block_ncols
+
+    df$row_block <- rep(1:nblocks_row, ncols, each = block_nrows)
+    df$col_block <- rep(1:nblocks_col, each = nrows * block_ncols)
+    df$block <- as.numeric(df$row_block) +
+      nblocks_row * (as.numeric(df$col_block) - 1)
+  }
+  
+  return(df)
+}
+
+# Helper function for strip-plot design
+.create_strip_plot <- function(items, nrows, ncols, wp_nrows, wp_ncols, block_nrows, block_ncols, randomize) {
+  # Validate items for strip-plot
+  if (!is.list(items) || !all(c("row_factor", "col_factor") %in% names(items))) {
+    stop("For strip-plot designs, 'items' must be a list with 'row_factor' and 'col_factor' elements")
+  }
+  
+  row_treatments <- items$row_factor
+  col_treatments <- items$col_factor
+  
+  # Create base design
+  rows <- rep(1:nrows, ncols)
+  cols <- rep(1:ncols, each = nrows)
+  
+  # Calculate strip structure
+  row_strips <- nrows / wp_nrows
+  col_strips <- ncols / wp_ncols
+  
+  # Assign row treatments (horizontal strips)
+  row_treatment_assignment <- rep(row_treatments, length.out = row_strips)
+  if (randomize) {
+    row_treatment_assignment <- sample(row_treatment_assignment)
+  }
+  
+  # Assign column treatments (vertical strips)
+  col_treatment_assignment <- rep(col_treatments, length.out = col_strips)
+  if (randomize) {
+    col_treatment_assignment <- sample(col_treatment_assignment)
+  }
+  
+  # Create strip assignments
+  row_strip <- rep(rep(1:row_strips, each = wp_nrows), ncols)
+  col_strip <- rep(1:col_strips, each = nrows * wp_ncols)
+  
+  df <- data.frame(
+    row = rows,
+    col = cols,
+    row_strip = row_strip,
+    col_strip = col_strip,
+    row_treatment = row_treatment_assignment[row_strip],
+    col_treatment = col_treatment_assignment[col_strip],
+    treatment = paste(row_treatment_assignment[row_strip], 
+                     col_treatment_assignment[col_strip], sep = "_")
+  )
+  
+  # Add blocking if specified
+  if (!is.null(block_nrows)) {
+    nblocks_row <- nrows / block_nrows
+    nblocks_col <- ncols / block_ncols
+
+    df$row_block <- rep(1:nblocks_row, ncols, each = block_nrows)
+    df$col_block <- rep(1:nblocks_col, each = nrows * block_ncols)
+    df$block <- as.numeric(df$row_block) +
+      nblocks_row * (as.numeric(df$col_block) - 1)
+  }
+  
+  return(df)
 }
 
 # Alias for the function to maintain backward compatibility
