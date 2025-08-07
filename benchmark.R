@@ -19,6 +19,33 @@ n_reps <- 5
 n_rows <- 25
 n_cols <- 3
 
+# speed
+treatments <- 1:n_treatments
+df_initial <- speed::initialise_design_df(rep(treatments, n_reps), n_rows, n_cols, 5, 3)
+df_initial <- random_treatments(df_initial, 112)
+
+bench_speed <- function() {
+  speed::speed(
+    data = df_initial,
+    swap = "treatment",
+    swap_within = "block",
+    spatial_factors = ~col,
+    iterations = 200000,
+    early_stop_iterations = 1000,
+    seed = 112,
+    quiet = FALSE
+  )
+}
+speed_result <- bench_speed()
+design_df <- speed_result$design_df
+
+unique(table(design_df$treatment, design_df$row))
+unique(table(design_df$treatment, design_df$col))
+
+png("speed-15x5.png")
+speed::autoplot(speed_result)
+dev.off()
+
 # digger
 bench_digger <- function(variables) {
   DiGGer::corDiGGer(
@@ -43,32 +70,13 @@ df_digger <- data.frame(
 
 unique(table(df_digger$treatment, df_digger$row))
 unique(table(df_digger$treatment, df_digger$col))
-write.csv(df_digger, "test.csv")
 
+digger_result <- speed_result
+digger_result$design_df <- df_digger
 
-# speed
-treatments <- 1:n_treatments
-df_initial <- speed::initialise_design_df(rep(treatments, n_reps), n_rows, n_cols, 5, 3)
-df_initial <- random_treatments(df_initial, 112)
-
-bench_speed <- function() {
-  speed::speed(
-    data = df_initial,
-    swap = "treatment",
-    swap_within = "block",
-    spatial_factors = ~col,
-    iterations = 200000,
-    early_stop_iterations = 1000,
-    seed = 112,
-    quiet = FALSE
-  )
-}
-speed_result <- bench_speed()
-design_df <- speed_result$design_df
-
-unique(table(design_df$treatment, design_df$row))
-unique(table(design_df$treatment, design_df$col))
-write.csv(design_df, "test.csv")
+png("digger-15x5.png")
+speed::autoplot(digger_result)
+dev.off()
 
 bench_result <- bench::mark(
   check = FALSE,
@@ -77,62 +85,57 @@ bench_result <- bench::mark(
   digger = bench_digger()
 )
 
-# 10 treatments 40 reps, 20 rows, 20 columns, 2x2 blocking
-# speed
-df_initial <- initialise_design_df(rep(1:10, 40), 20, 20, 2, 2)
 
-speed_design <- speed::speed(
+# odw
+df_initial$treatment <- as.factor(df_initial$treatment)
+df_initial$block <- as.factor(df_initial$block)
+df_initial$row <- as.factor(df_initial$row)
+df_initial$col <- as.factor(df_initial$col)
+
+initial_param_table <- odw::odw(
+  random = ~ treatment + col + block,
   data = df_initial,
-  swap = "treatment",
-  spatial_factors = ~ row + col,
-  iterations = 200000,
-  early_stop_iterations = 30000,
-  seed = 112,
-  quiet = FALSE
+  permute = ~treatment,
+  swap = ~block,
+  search = "tabu",
+  start.values = TRUE
+)$vparameters.table
+initial_param_table
+
+initial_param_table[2, 2] <- 100
+initial_param_table
+
+bench_odw <- function() {
+  odw::odw(
+    random = ~ treatment + col + block,
+    data = df_initial,
+    permute = ~treatment,
+    swap = ~block,
+    search = "tabu",
+    G.param = initial_param_table,
+    R.param = initial_param_table,
+    maxit = 2
+  )
+}
+design_object <- bench_odw()
+
+df_odw <- design_object$design
+df_odw$row <- as.numeric(df_odw$row)
+df_odw$col <- as.numeric(df_odw$col)
+df_odw$block <- as.numeric(df_odw$block)
+odw_result <- speed_result
+odw_result$design_df <- df_odw
+
+unique(table(df_odw$treatment, df_odw$row))
+unique(table(df_odw$treatment, df_odw$col))
+
+png("odw-15x5.png")
+speed::autoplot(odw_result)
+dev.off()
+
+bench_result <- bench::mark(
+  check = FALSE,
+  iterations = 10,
+  speed = bench_speed(),
+  odw = bench_odw()
 )
-design_df <- speed_design$design_df
-
-unique(table(design_df$treatment, design_df$row))
-unique(table(design_df$treatment, design_df$col))
-unique(table(design_df$treatment, design_df$block))
-
-
-# # speed
-# df_initial <- speed::initialise_design_df(rep(1:n_treatments, n_reps), n_rows, n_cols)
-# pair_mapping <- speed::create_pair_mapping(df_initial$treatment)
-#
-# options(speed.adj_weight = 1)
-# bench_speed <- function() {
-#   speed::speed(
-#     data = df_initial,
-#     swap = "treatment",
-#     swap_within = "col",
-#     spatial_factors = ~row,
-#     iterations = 200000,
-#     early_stop_iterations = 50000,
-#     obj_function = speed::objective_function_piepho,
-#     pair_mapping = pair_mapping,
-#     seed = 112,
-#     quiet = FALSE
-#   )
-# }
-# design_df_piepho <- bench_speed()$design_df
-#
-# unique(table(design_df_piepho$treatment, design_df_piepho$row))
-# unique(table(design_df_piepho$treatment, design_df_piepho$col))
-
-DF15 <- DiGGer::createFactorialDF(c(3, 5))
-sp3x5 <- DiGGer::facDiGGer(
-  factorNames = c("F1", "F2"),
-  rowsInDesign = 15, columnsInDesign = 3,
-  rowsInRep = 15, columnsInRep = 1,
-  mainPlotSizes = list(c(5, 1), c(1, 1)),
-  treatDataFrame = DF15,
-  treatRepColumn = "Repeats",
-  maxInt = 100000
-)
-
-plot(sp3x5, trts = 1:5, col = 5, new = TRUE, label = FALSE)
-plot(sp3x5, trts = 6:10, col = 7, new = FALSE, label = FALSE)
-plot(sp3x5, trts = 11:15, col = 8, new = FALSE, label = FALSE)
-DiGGer::desPlot(matrix(sp3x5$dlist$F2, 15), new = FALSE)
