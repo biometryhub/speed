@@ -139,6 +139,9 @@ speed_simple <- function(data,
   spatial_cols <- all.vars(spatial_factors)
   treatments <- layout_df[[swap]]
 
+  # Sort the data frame to start with to ensure consistency in calculating the adjacency later
+  layout_df <- layout_df[do.call(order, layout_df[spatial_cols]), ]
+
   # Initialize design
   current_design <- layout_df
   best_design <- current_design
@@ -301,6 +304,9 @@ speed_hierarchical <- function(data,
 
   layout_df <- data
   spatial_cols <- all.vars(spatial_factors)
+
+  # Sort the data frame to start with to ensure consistency in calculating the adjacency later
+  layout_df <- layout_df[do.call(order, layout_df[spatial_cols]), ]
 
   # Handle swap_within for each level
   for (level in hierarchy_levels) {

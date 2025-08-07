@@ -220,7 +220,7 @@ test_that("speed handles irregular layouts with missing plots", {
   # Check values
   expect_identical(which(is.na(result$design_df$treatment)), which(is.na(irregular_data$treatment)))
 
-  expect_equal(result$score, 3)
+  expect_equal(result$score, 1)
 
   vdiffr::expect_doppelganger("speed_missing_plots", autoplot(result))
 })
@@ -268,8 +268,8 @@ test_that("speed handles non-uniform treatment distributions", {
   # Check values
   expect_equal(result$stopped_early, TRUE)
 
-  expect_equal(result$score, 14.4)
-  expect_equal(result$iterations_run, 16050)
+  expect_equal(result$score, 14)
+  expect_equal(result$iterations_run, 13263)
 
   vdiffr::expect_doppelganger("speed_non_uniform", autoplot(result))
 })
