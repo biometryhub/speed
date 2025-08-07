@@ -467,6 +467,37 @@ test_that("speed handles irregular layouts with L shaped plots", {
   vdiffr::expect_doppelganger("speed_large_missing_L", autoplot(result))
 })
 
+# Check split plots
+test_that("speed handles split plot designs", {
+  # Hierarchical split-plot design
+  df_split <- data.frame(
+    row = rep(1:12, each = 4),
+    col = rep(1:4, times = 12),
+    block = rep(1:4, each = 12),
+    wholeplot = rep(1:12, each = 4),
+    wholeplot_treatment = rep(rep(LETTERS[1:3], each = 4), times = 4),
+    subplot_treatment = rep(letters[1:4], 12)
+  )
+
+  result <- speed(df_split,
+                  swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+                  swap_within = list(wp = "block", sp = "wholeplot"),
+                  early_stop_iterations = list(wp = 1000, sp = 10000),
+                  seed = 2, quiet = TRUE)
+
+  # Check the result
+  expect_s3_class(result, "design")
+  # Check values
+  expect_equal(result$score, 100)
+  expect_equal(result$iterations_run, 1954)
+  expect_equal(result$stopped_early, c(wp = TRUE, sp = TRUE))
+
+  # expect_identical(which(is.na(result$design_df$treatment)), which(is.na(irregular_large_data$treatment)))
+
+  vdiffr::expect_doppelganger("speed_splitplot_wp", autoplot(result, treatments = "wholeplot_treatment"))
+  vdiffr::expect_doppelganger("speed_splitplot_sp", autoplot(result, treatments = "subplot_treatment"))
+})
+
 # TODO: Test cases to add/update
 # - Add more detailed checking of current designs
 # - NSE

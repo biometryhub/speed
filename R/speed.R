@@ -232,8 +232,16 @@ speed_simple <- function(data,
     # Early stopping
     if (iter - last_improvement_iter >= early_stop_iterations || new_score == 0) {
       if (!quiet) cat("Early stopping at iteration", iter, "\n")
-      scores <- scores[1:iter]
-      temperatures <- temperatures[1:iter]
+      # Record final score and temperature before breaking
+      if (iter < iterations) {
+        scores[iter + 1] <- current_score
+        temperatures[iter + 1] <- temp
+        scores <- scores[1:(iter + 1)]
+        temperatures <- temperatures[1:(iter + 1)]
+      } else {
+        scores <- scores[1:iter]
+        temperatures <- temperatures[1:iter]
+      }
       break
     }
   }
@@ -410,10 +418,18 @@ speed_hierarchical <- function(data,
       }
 
       # Early stopping
-      if (iter - last_improvement_iter >= early_stop_iterations[[level]] || new_score == 0) {
+      if (iter - last_improvement_iter >= early_stop_iterations[[level]] || new_score < .Machine$double.eps) {
         if (!quiet) cat("Early stopping at iteration", iter, "for level", level, "\n")
-        scores <- scores[1:iter]
-        temperatures <- temperatures[1:iter]
+        # Record final score and temperature before breaking
+        if (iter < iterations[[level]]) {
+          scores[iter + 1] <- current_score
+          temperatures[iter + 1] <- temp
+          scores <- scores[1:(iter + 1)]
+          temperatures <- temperatures[1:(iter + 1)]
+        } else {
+          scores <- scores[1:iter]
+          temperatures <- temperatures[1:iter]
+        }
         break
       }
     }
@@ -423,72 +439,44 @@ speed_hierarchical <- function(data,
     total_iterations <- total_iterations + length(scores)
   }
 
-  # Clean up temporary swap_group columns
+  # Collect and set up output and results
+  treatments <- list()
+  # final_score <- 0
+  level_scores <- numeric()
   for (level in hierarchy_levels) {
+    # Clean up temporary swap_group columns
     col_name <- paste0("swap_group_", level)
     if (col_name %in% names(best_design)) {
       best_design[[col_name]] <- NULL
     }
-  }
 
-  # Calculate final combined score
-  final_score <- 0
-  for (level in hierarchy_levels) {
-    level_score <- obj_function[[level]](best_design, swap[[level]], spatial_cols, ...)$score
-    final_score <- final_score + level_score
-  }
-
-  # Collect treatments for each level
-  treatments <- list()
-  for (level in hierarchy_levels) {
+    # Collect treatments for each level
     treatments[[level]] <- stringi::stri_sort(unique(as.vector(best_design[[swap[[level]]]])), numeric = TRUE)
+
+    # Calculate final combined score
+    level_scores[level] <- obj_function[[level]](best_design, swap[[level]], spatial_cols, ...)$score
   }
+
+  # Check which levels stopped early
+  stopped_early <- sapply(hierarchy_levels, function(level) {
+    length(all_scores[[level]]) < iterations[[level]]
+  })
+  names(stopped_early) <- hierarchy_levels
 
   # Finalize output
   output <- list(
     design_df = best_design,
-    score = final_score,
+    score = sum(level_scores),
     scores = all_scores,
     temperatures = all_temperatures,
     iterations_run = total_iterations,
-    stopped_early = any(sapply(all_scores, function(x) length(x) < iterations)),
+    stopped_early = stopped_early,
     treatments = treatments,
     seed = seed
   )
 
   class(output) <- c("design", class(output))
   return(output)
-}
-
-#' Verify hierarchical inputs
-#' @keywords internal
-.verify_hierarchical_inputs <- function(data, swap, swap_within, spatial_factors,
-                                       iterations, early_stop_iterations, obj_function,
-                                       quiet, seed) {
-  # Check that swap and swap_within have same names
-  if (!all(names(swap) == names(swap_within))) {
-    stop("Names of `swap` and `swap_within` must match for hierarchical designs")
-  }
-
-  # Check that all specified columns exist in data
-  for (level in names(swap)) {
-    if (!swap[[level]] %in% names(data)) {
-      stop(paste("Column", swap[[level]], "not found in data"))
-    }
-    if (!swap_within[[level]] %in% names(data) &&
-        !(swap_within[[level]] %in% c("1", "none"))) {
-      stop(paste("Column", swap_within[[level]], "not found in data"))
-    }
-  }
-
-  # Verify other parameters
-  if (!is.logical(quiet)) {
-    stop("`quiet` must be logical")
-  }
-
-  if (!is.null(seed) && !is.numeric(seed)) {
-    stop("`seed` must be numeric or NULL")
-  }
 }
 
 
