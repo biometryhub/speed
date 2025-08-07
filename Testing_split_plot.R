@@ -27,12 +27,13 @@ autoplot(new_design$design, treatments = "subplot_treatment")
 
 
 
-df_split <- data.frame(
-  row = rep(1:18, each = 8),
-  col = rep(1:8, times = 18),
+df_split_split <- data.frame(
+  row = rep(1:16, each = 9),
+  col = rep(1:9, times = 16),
   block = rep(1:4, each = 36),
-  wholeplot = rep(1:12, each = 12),
-  wholeplot_treatment = rep(rep(LETTERS[1:3], each = 12), times = 4),
+  # Fixed wholeplot assignment: 3 wholeplots per block, each 4×3
+  wholeplot = rep(rep(1:3, each = 3), times = 16) + rep(0:3 * 3, each = 36),
+  wholeplot_treatment = rep(rep(LETTERS[1:3], each = 3), times = 16),
   subplot = rep(1:48, each = 3),
   subplot_treatment = rep(rep(letters[1:4], each = 3), times = 12),
   subsubplot_treatment = rep(c("x", "y", "z"), 48)
@@ -44,7 +45,9 @@ result_ss <- speed(df_split_split,
                             ssp = "subsubplot_treatment"),
                 swap_within = list(wp = "block",
                                    sp = "wholeplot",
-                                   ssp = "subplot"))
+                                   ssp = "subplot"),
+                iterations = list(wp = 2000, sp = 2000, ssp = 50000),
+                early_stop_iterations = list(wp = 1000, sp = 3000, ssp = 30000))
 
 autoplot(result_ss, treatments = "wholeplot_treatment")
 autoplot(result_ss, treatments = "subplot_treatment")
