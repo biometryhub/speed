@@ -42,6 +42,15 @@ objective_function <- function(layout_df,
                                adj_weight = getOption("speed.adj_weight", 1),
                                bal_weight = getOption("speed.bal_weight", 1),
                                ...) {
+  
+  # Check if there are only two treatments - adjacency becomes deterministic
+  n_treatments <- length(unique(layout_df[[swap]]))
+  if (n_treatments == 2 && adj_weight != 0) {
+    warning("Only 2 treatments detected in '", swap, "'. Adjacency optimization becomes deterministic (checkerboard pattern). Setting adjacency weight to 0.", 
+            call. = FALSE)
+    adj_weight <- 0
+  }
+  
   adj_score <- ifelse(adj_weight != 0,
                       calculate_adjacency_score(layout_df, swap),
                       0)
