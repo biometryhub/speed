@@ -8,6 +8,7 @@ generate_simple_neighbour(
   design,
   swap,
   swap_within,
+  level,
   swap_count,
   swap_all_blocks
 )

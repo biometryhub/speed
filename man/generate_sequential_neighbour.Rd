@@ -2,17 +2,18 @@
 % Please edit documentation in R/design_utils.R
 \name{generate_sequential_neighbour}
 \alias{generate_sequential_neighbour}
-\title{Generate neighbour for hierarchical designs}
+\title{Generate neighbour for sequential or hierarchical designs}
 \usage{
 generate_sequential_neighbour(
   design,
   swap,
   swap_within,
+  level,
   swap_count,
   swap_all_blocks
 )
 }
 \description{
-Generate neighbour for hierarchical designs
+Generate neighbour for sequential or hierarchical designs
 }
 \keyword{internal}
