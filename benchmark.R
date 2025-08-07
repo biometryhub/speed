@@ -7,6 +7,10 @@ n_cols <- 3
 
 # speed
 df_initial <- speed::initialise_design_df(rep(1:n_treatments, n_reps), n_rows, n_cols, 5, 3)
+df_initial$treatment <- as.factor(df_initial$treatment)
+df_initial$block <- as.factor(df_initial$block)
+df_initial$row <- as.factor(df_initial$row)
+df_initial$col <- as.factor(df_initial$col)
 
 options(speed.random_initialisation = TRUE)
 bench_speed <- function() {
@@ -24,6 +28,9 @@ bench_speed <- function() {
 speed_result <- bench_speed()
 
 design_df <- speed_result$design_df
+speed_result$design_df$row <- as.numeric(speed_result$design_df$row)
+speed_result$design_df$col <- as.numeric(speed_result$design_df$col)
+speed_result$design_df$block <- as.numeric(speed_result$design_df$block)
 unique(table(design_df$treatment, design_df$row))
 unique(table(design_df$treatment, design_df$col))
 
@@ -129,6 +136,10 @@ n_cols <- 8
 
 # speed
 df_initial <- speed::initialise_design_df(rep(1:n_treatments, n_reps), n_rows, n_cols, 2, 4)
+df_initial$treatment <- as.factor(df_initial$treatment)
+df_initial$block <- as.factor(df_initial$block)
+df_initial$row <- as.factor(df_initial$row)
+df_initial$col <- as.factor(df_initial$col)
 
 options(speed.random_initialisation = FALSE)
 bench_speed <- function() {
@@ -145,7 +156,16 @@ bench_speed <- function() {
 }
 speed_result <- bench_speed()
 
+bench::mark(
+  check = FALSE,
+  iterations = 10,
+  speed = bench_speed()
+)
+
 design_df <- speed_result$design_df
+speed_result$design_df$row <- as.numeric(speed_result$design_df$row)
+speed_result$design_df$col <- as.numeric(speed_result$design_df$col)
+speed_result$design_df$block <- as.numeric(speed_result$design_df$block)
 unique(table(design_df$treatment, design_df$row))
 unique(table(design_df$treatment, design_df$col))
 unique(table(design_df$treatment, design_df$block))
