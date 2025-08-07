@@ -8,6 +8,7 @@ generate_neighbour(
   design,
   swap,
   swap_within,
+  level = NULL,
   swap_count = getOption("speed.swap_count", 1),
   swap_all_blocks = getOption("speed.swap_all_blocks", FALSE)
 )
@@ -18,6 +19,8 @@ generate_neighbour(
 \item{swap}{Column name of the treatment to swap, or named list for hierarchical designs}
 
 \item{swap_within}{Column name defining groups within which to swap treatments, or named list for hierarchical designs}
+
+\item{level}{The level of the design to be optimised in the current loop. Relevant for sequential designs. Simple designs pass this as \code{NULL}.}
 
 \item{swap_count}{Number of swaps to perform}
 
