@@ -17,7 +17,8 @@
   swap_all_blocks,
   adaptive_swaps,
   start_temp,
-  cooling_rate
+  cooling_rate,
+  random_initialisation
 )
 }
 \arguments{
@@ -50,6 +51,8 @@ NULL).}
 \item{start_temp}{Starting temperature for simulated annealing (default: 100)}
 
 \item{cooling_rate}{Rate at which temperature decreases (default: 0.99)}
+
+\item{random_initialisation}{Logical; if TRUE, randomly shuffle items within \code{swap_within} (default: FALSE)}
 }
 \description{
 Verify inputs for the \code{speed} function.
