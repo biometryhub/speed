@@ -13,3 +13,7 @@ air.toml
 ^codecov\.yml$
 benchmarking.R
 Testing_split_plot.R
+Cases.md
+calc_obj.Rdata
+codemeta.json
+sp_setup.Rdata

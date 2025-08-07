@@ -616,7 +616,7 @@ calculate_efficiency_factor <- function(design_df, item) {
   item <- as.character(substitute(item))
 
   # Design parameters
-  encoded_items <- as.factor(design_df[[item]]) |> as.integer()
+  encoded_items <- as.integer(as.factor(design_df[[item]]))
   n_treatments <- length(unique(encoded_items))
   n_rows <- max(as.numeric(as.character(design_df$row)))
   n_cols <- max(as.numeric(as.character(design_df$col)))
