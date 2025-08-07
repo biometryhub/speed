@@ -22,12 +22,12 @@ bench_speed <- function() {
   )
 }
 speed_result <- bench_speed()
-design_df <- speed_result$design_df
 
+design_df <- speed_result$design_df
 unique(table(design_df$treatment, design_df$row))
 unique(table(design_df$treatment, design_df$col))
 
-png("speed-15x5.png")
+png("speed-15x5.png", height = 1080, width = 720)
 speed::autoplot(speed_result)
 dev.off()
 
@@ -47,19 +47,15 @@ bench_digger <- function(variables) {
 }
 digger_design <- DiGGer::getDesign(bench_digger())
 
-df_digger <- data.frame(
-  row = rep(1:n_rows, n_cols),
-  col = rep(1:n_cols, each = n_rows),
-  treatment = c(digger_design)
-)
-
+df_digger <- df_initial
+df_digger$treatment <- c(digger_design)
 unique(table(df_digger$treatment, df_digger$row))
 unique(table(df_digger$treatment, df_digger$col))
 
 digger_result <- speed_result
 digger_result$design_df <- df_digger
 
-png("digger-15x5.png")
+png("digger-15x5.png", height = 1080, width = 720)
 speed::autoplot(digger_result)
 dev.off()
 
@@ -113,7 +109,7 @@ odw_result$design_df <- df_odw
 unique(table(df_odw$treatment, df_odw$row))
 unique(table(df_odw$treatment, df_odw$col))
 
-png("odw-15x5.png")
+png("odw-15x5.png", height = 1080, width = 720)
 speed::autoplot(odw_result)
 dev.off()
 
