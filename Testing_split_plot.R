@@ -6,15 +6,14 @@ df_split <- data.frame(
   block = rep(1:4, each = 12),
   wholeplot = rep(1:12, each = 4),
   wholeplot_treatment = rep(rep(LETTERS[1:3], each = 4), times = 4),
-  subplot_treatment = rep(letters[1:4], 12),
-  subsubplot_treatment = rep()
+  subplot_treatment = rep(letters[1:4], 12)
 )
 
 options(speed.adj_weight = 1, speed.adaptive_swaps = TRUE)
 result <- speed(df_split,
                 swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
                 swap_within = list(wp = "block", sp = "wholeplot"),
-                early_stop_iterations = list(wp = 1000, sp = 10000))
+                early_stop_iterations = list(wp = 1000, sp = 10000), seed = 2)
 
 autoplot(result, treatments = "wholeplot_treatment")
 autoplot(result, treatments = "subplot_treatment")
