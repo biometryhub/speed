@@ -18,7 +18,8 @@
   swap_all_blocks,
   adaptive_swaps,
   start_temp,
-  cooling_rate
+  cooling_rate,
+  random_initialisation
 )
 
 .verify_hierarchical_inputs(
@@ -63,6 +64,8 @@ NULL).}
 \item{start_temp}{Starting temperature for simulated annealing (default: 100)}
 
 \item{cooling_rate}{Rate at which temperature decreases (default: 0.99)}
+
+\item{random_initialisation}{Logical; if TRUE, randomly shuffle items within \code{swap_within} (default: FALSE)}
 
 \item{obj_function}{Objective function used to calculate score (lower is better) (default:
 \code{\link[=objective_function]{objective_function()}})}

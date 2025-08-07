@@ -112,6 +112,7 @@ speed_simple <- function(data,
   adaptive_swaps <- getOption("speed.adaptive_swaps", FALSE)
   start_temp <- getOption("speed.start_temp", 100)
   cooling_rate <- getOption("speed.cooling_rate", 0.99)
+  random_initialisation <- getOption("speed.random_initialisation", FALSE)
 
   # Verify inputs
   .verify_speed_inputs(data,
@@ -126,7 +127,8 @@ speed_simple <- function(data,
                        swap_all_blocks,
                        adaptive_swaps,
                        start_temp,
-                       cooling_rate)
+                       cooling_rate,
+                       random_initialisation)
   rlang::check_dots_used()
 
   # Handle swap_within
@@ -134,6 +136,18 @@ speed_simple <- function(data,
   if (swap_within == "1" || swap_within == "none") {
     layout_df$swap_group <- factor(rep(1, nrow(data)))
     swap_within <- "swap_group"
+  }
+
+  # Set seed for reproducibility
+  if (is.null(seed)) {
+    # dummy_seed <- runif(1)
+    seed <- .GlobalEnv$.Random.seed[3]
+  }
+  set.seed(seed)
+
+  # random initialization
+  if (random_initialisation) {
+    layout_df <- shuffle_items(layout_df, swap, swap_within, seed)
   }
 
   spatial_cols <- all.vars(spatial_factors)
@@ -159,12 +173,6 @@ speed_simple <- function(data,
   scores <- numeric(iterations)
   temperatures <- numeric(iterations)
   last_improvement_iter <- 0
-
-  # Set seed for reproducibility
-  if (is.null(seed)) {
-    seed <- .GlobalEnv$.Random.seed[3]
-  }
-  set.seed(seed)
 
   # Main optimization loop
   for (iter in 1:iterations) {

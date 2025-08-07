@@ -66,7 +66,7 @@ generate_simple_neighbour <- function(design,
         # Select two random plots in this block
         swap_pair <- sample(block_indices, 2)
         if (design[[swap]][swap_pair[1]] == design[[swap]][swap_pair[2]]) {
-          no_dupe_filter = design[[swap]][block_indices] != design[[swap]][swap_pair[1]]
+          no_dupe_filter <- design[[swap]][block_indices] != design[[swap]][swap_pair[1]]
           swap_pair[[2]] <- sample(block_indices[no_dupe_filter], 1)
         }
 
@@ -212,6 +212,27 @@ initialise_design_df <- function(items,
   return(df)
 }
 
+#' Shuffle Items in A Group
+#'
+#' @inheritParams generate_neighbour
+#' @inheritParams speed
+#'
+#' @return A data frame with the items shuffled
+#'
+#' @keywords internal
+shuffle_items <- function(design, swap, swap_within, seed = NULL) {
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
+
+  for (i in unique(design[[swap_within]])) {
+    items <- design[design[[swap_within]] == i, ][[swap]]
+    design[design[[swap_within]] == i, ][[swap]] <- sample(items)
+  }
+
+  return(design)
+}
+
 # fmt: skip
 .verify_initialise_design_df <- function(nrows,
                                          ncols,
@@ -221,7 +242,7 @@ initialise_design_df <- function(items,
 
   if (
     (!is.null(block_nrows) && is.null(block_ncols)) ||
-    (is.null(block_nrows) && !is.null(block_ncols))
+      (is.null(block_nrows) && !is.null(block_ncols))
   ) {
     stop("`block_nrows` and `block_ncols` must both be numeric or `NULL`")
   }
