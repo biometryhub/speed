@@ -9,7 +9,9 @@
         "vdiffr",
         "igraph",
         "sp",
-        "data.table"
+        "data.table",
+        "matrixStats",
+        "bench"
       ]
     }
   },
