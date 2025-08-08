@@ -800,6 +800,183 @@ test_that("autoplot legend parameter works with hierarchical designs", {
 
 
 
+# Test cases from Jules_example_cases.R
+
+# Test: 2D blocking with rowBlocks and colBlocks
+test_that("speed handles 2D blocking with row and column blocks", {
+  # Create data frame in a single call
+  dat_2d_blocking <- data.frame(
+    row = rep(1:20, each = 20),
+    col = rep(1:20, 20),
+    treat = rep(paste("V", 1:40, sep = ""), 10),
+    rowBlock = rep(1:10, each = 40),
+    colBlock = rep(1:10, each = 40)
+  )
+  dat_2d_blocking <- dat_2d_blocking[order(dat_2d_blocking$col, dat_2d_blocking$row), ]
+
+  # Store original options and set test options
+  old_options <- options()
+  on.exit(options(old_options))
+  options(speed.swap_count = 5, speed.swap_all_blocks = TRUE,
+          speed.adaptive_swaps = TRUE, speed.cooling_rate = 0.99)
+
+  result <- speed(dat_2d_blocking,
+                  swap = "treat",
+                  swap_within = "rowBlock",
+                  spatial_factors = ~ colBlock,
+                  iterations = 1000,
+                  early_stop_iterations = 500,
+                  seed = 123,
+                  quiet = TRUE)
+
+  expect_s3_class(result, "design")
+  expect_equal(nrow(result$design_df), 400)
+  expect_equal(ncol(result$design_df), 5)
+
+  # Check that treatments are balanced within rowBlocks
+  rowblock_treatment_counts <- table(result$design_df$rowBlock, result$design_df$treat)
+  expect_true(all(rowSums(rowblock_treatment_counts) == 40))
+
+  vdiffr::expect_doppelganger("speed_2d_blocking_rowblock",
+                              autoplot(result, treatments = "treat", block = "rowBlock"))
+  vdiffr::expect_doppelganger("speed_2d_blocking_colblock",
+                              autoplot(result, treatments = "treat", block = "colBlock"))
+})
+
+# Test: RCBD with multiple treatment reps in rows and columns
+test_that("speed handles RCBD with multiple treatment reps", {
+  # Create data frame in a single call
+  dat_rcbd <- data.frame(
+    row = rep(1:25, each = 20),
+    col = rep(1:20, 25),
+    treat = rep(paste("V", 1:10, sep = ""), 50),
+    block = rep(1:50, each = 10)
+  )
+
+  # Store original options and set test options
+  old_options <- options()
+  on.exit(options(old_options))
+  options(speed.swap_count = 3, speed.adaptive_swaps = TRUE)
+
+  result <- speed(dat_rcbd,
+                  swap = "treat",
+                  swap_within = "block",
+                  iterations = 2000,
+                  early_stop_iterations = 1000,
+                  seed = 42,
+                  quiet = TRUE)
+
+  expect_s3_class(result, "design")
+  expect_equal(nrow(result$design_df), 500)
+  expect_equal(ncol(result$design_df), 4)
+
+  # Check that each block has exactly 10 treatments
+  block_sizes <- table(result$design_df$block)
+  expect_true(all(block_sizes == 10))
+
+  # Check that treatments are properly distributed within blocks
+  block_treatment_counts <- table(result$design_df$block, result$design_df$treat)
+  expect_true(all(rowSums(block_treatment_counts) == 10))
+
+  vdiffr::expect_doppelganger("speed_rcbd_multi_reps",
+                              autoplot(result, treatments = "treat"))
+})
+
+# Test: Partial replication design
+test_that("speed handles partial replication designs", {
+  set.seed(456)  # For reproducible random sampling
+
+  # Create data frame in a single call for partial rep design
+  treats <- sample(paste("V", 1:150, sep = ""), 150, replace = FALSE)
+  trep <- sample(treats, 50, replace = FALSE)
+  tunrep <- treats[!(treats %in% trep)]
+  treat <- unlist(lapply(split(tunrep, rep(1:2, each = 50)), function(el, trep) c(el, trep), trep))
+
+  dat_partial <- data.frame(
+    row = rep(1:20, each = 10),
+    col = rep(1:10, 20),
+    treat = treat,
+    block = rep(1:2, each = 100)
+  )
+
+  result <- speed(dat_partial,
+                  swap = "treat",
+                  swap_within = "block",
+                  spatial_factors = ~ row + col,
+                  iterations = 1000,
+                  early_stop_iterations = 500,
+                  seed = 42,
+                  quiet = TRUE)
+
+  expect_s3_class(result, "design")
+  expect_equal(nrow(result$design_df), 200)
+  expect_equal(ncol(result$design_df), 4)
+
+  # Check that each block has 100 plots
+  block_sizes <- table(result$design_df$block)
+  expect_true(all(block_sizes == 100))
+
+  # Check that replicated treatments appear in both blocks
+  block1_treats <- unique(result$design_df$treat[result$design_df$block == 1])
+  block2_treats <- unique(result$design_df$treat[result$design_df$block == 2])
+  replicated_treats <- intersect(block1_treats, block2_treats)
+  expect_equal(length(replicated_treats), 50)
+
+  vdiffr::expect_doppelganger("speed_partial_rep",
+                              autoplot(result, treatments = "treat"))
+})
+
+# Test: Large RCBD with 500 varieties
+test_that("speed handles large RCBD with 500 treatments", {
+  # Create data frame in a single call for large design
+  dat_large <- data.frame(
+    row = rep(1:50, times = 40),
+    col = rep(1:40, each = 50),
+    treat = rep(paste("V", 1:500, sep = ""), 4),
+    block = rep(1:4, each = 500)
+  )
+
+  # Store original options and set test options
+  old_options <- options()
+  on.exit(options(old_options))
+  options(speed.swap_count = 10)
+
+  result <- speed(dat_large,
+                  swap = "treat",
+                  swap_within = "block",
+                  spatial_factors = ~ row + col,
+                  iterations = 1000,
+                  early_stop_iterations = 400,
+                  seed = 42,
+                  quiet = TRUE)
+
+  expect_s3_class(result, "design")
+  expect_equal(nrow(result$design_df), 2000)
+  expect_equal(ncol(result$design_df), 4)
+
+  # Check that each block has exactly 500 treatments
+  block_sizes <- table(result$design_df$block)
+  expect_true(all(block_sizes == 500))
+
+  # Check that each treatment appears exactly once per block
+  block_treatment_counts <- table(result$design_df$block, result$design_df$treat)
+  expect_true(all(block_treatment_counts %in% c(0, 1)))
+  expect_true(all(colSums(block_treatment_counts) == 4))  # Each treatment in 4 blocks
+
+  # Check row and column balance
+  row_treatment_counts <- table(result$design_df$treat, result$design_df$row)
+  col_treatment_counts <- table(result$design_df$treat, result$design_df$col)
+
+  # Each treatment should appear in limited number of rows/columns
+  row_appearances <- rowSums(row_treatment_counts > 0)
+  col_appearances <- rowSums(col_treatment_counts > 0)
+  expect_true(all(row_appearances <= 4))  # Max 4 rows per treatment
+  expect_true(all(col_appearances <= 4))  # Max 4 columns per treatment
+
+  vdiffr::expect_doppelganger("speed_large_rcbd",
+                              autoplot(result, treatments = "treat", legend = FALSE))
+})
+
 # TODO: Test cases to add/update
 # - Add more detailed checking of current designs
 # - NSE
