@@ -52,3 +52,33 @@ result_ss <- speed(df_split_split,
 autoplot(result_ss, treatments = "wholeplot_treatment")
 autoplot(result_ss, treatments = "subplot_treatment")
 autoplot(result_ss, treatments = "subsubplot_treatment")
+
+
+
+
+df_strip <- data.frame(
+  row = rep(1:12, each = 6),  # 24 rows total (4 rows per block x 6 blocks)
+  col = rep(1:6, times = 12),  # 3 columns repeated
+  block = rep(rep(1:2, each = 3), times = 4) + rep(0:2*2, each = 24),  # 6 blocks, 12 plots each
+  
+  # Horizontal strips (3 levels, applied to rows within each block)
+  vertical_treatment = rep(rep(LETTERS[1:3], times = 2), times = 12),  # A, B, C
+  
+  # Vertical strips (4 levels, applied to columns within each block)  
+  horizontal_treatment = rep(rep(letters[1:4], each = 6), times = 3),  # a, b, c, d
+  
+  # Plot identifier within each block
+  plot_in_block = rep(1:12, times = 6)
+)
+
+class(df_strip) <- c("design", class(df_strip))
+autoplot(df_strip, treatments = "block")
+autoplot(df_strip, treatments = "horizontal_treatment")
+autoplot(df_strip, treatments = "vertical_treatment")
+
+result_strip <- speed(df_strip,
+                      swap = list(ht = "horizontal_treatment", vt = "vertical_treatment"),
+                      swap_within = list(ht = "block", vt = "block"))
+
+autoplot(result_strip, treatments = "horizontal_treatment")
+autoplot(result_strip, treatments = "vertical_treatment")
