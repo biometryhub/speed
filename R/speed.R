@@ -506,7 +506,19 @@ print.design <- function(x, ...) {
   # cat("Balance Score:", x$balance_score, "\n")
   cat("Iterations Run:", x$iterations_run, "\n")
   cat("Stopped Early:", x$stopped_early, "\n")
-  cat("Treatments:", paste(x$treatments, collapse = ", "), "\n")
+
+  # Handle treatments display for hierarchical vs simple designs
+  if (is.list(x$treatments)) {
+    # Hierarchical design - show each level with its name
+    cat("Treatments:\n")
+    for (level_name in names(x$treatments)) {
+      cat("  ", level_name, ": ", paste(x$treatments[[level_name]], collapse = ", "), "\n", sep = "")
+    }
+  } else {
+    # Simple design - show treatments as before
+    cat("Treatments:", paste(x$treatments, collapse = ", "), "\n")
+  }
+
   cat("Seed:", x$seed, "\n\n")
 
   # Print first few rows of the optimised design
