@@ -101,3 +101,14 @@ result <- speed(df,
 autoplot(result)
 ```
 
+## Citation
+
+If you use `speed` in your research, please cite via:
+
+```{r}
+citation("speed")
+```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

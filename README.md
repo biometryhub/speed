@@ -110,3 +110,32 @@ autoplot(result)
 ```
 
 <img src="man/figures/README-blocks-1.png" width="100%" />
+
+## Citation
+
+If you use `speed` in your research, please cite via:
+
+``` r
+citation("speed")
+#> Warning in citation("speed"): could not determine year for 'speed' from package
+#> DESCRIPTION file
+#> To cite package 'speed' in publications use:
+#> 
+#>   Rogers S, Taylor J, Edson R, Pipattungsakul W (????). _speed:
+#>   Generate Spatially Efficient Experimental Designs_. R package version
+#>   0.0.1, <https://biometryhub.github.io/speed/>.
+#> 
+#> A BibTeX entry for LaTeX users is
+#> 
+#>   @Manual{,
+#>     title = {speed: Generate Spatially Efficient Experimental Designs},
+#>     author = {Sam Rogers and Julian Taylor and Russell Edson and Wasin Pipattungsakul},
+#>     note = {R package version 0.0.1},
+#>     url = {https://biometryhub.github.io/speed/},
+#>   }
+```
+
+## License
+
+This project is licensed under the MIT License - see the
+[LICENSE](LICENSE) file for details.
