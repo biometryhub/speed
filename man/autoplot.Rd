@@ -18,6 +18,7 @@ autoplot(object, ...)
   column = NULL,
   block = NULL,
   treatments = NULL,
+  legend = FALSE,
   ...
 )
 }
@@ -43,6 +44,8 @@ autoplot(object, ...)
 \item{block}{A variable to plot a column from \code{object} as blocks.}
 
 \item{treatments}{A variable to plot a column from \code{object} as treatments.}
+
+\item{legend}{Logical (default \code{FALSE}). If \code{TRUE}, displays the legend for treatment colors.}
 }
 \value{
 A \code{ggplot2} object.
@@ -69,6 +72,9 @@ result <- speed(df,
 
 # Plot the design with block boundaries
 autoplot(result)
+
+# Show legend
+autoplot(result, legend = TRUE)
 
 # Colour blind friendly colours
 autoplot(result, palette = "colour-blind")

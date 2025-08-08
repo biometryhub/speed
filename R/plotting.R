@@ -10,6 +10,7 @@
 #' @param row A variable to plot a column from `object` as rows.
 #' @param column A variable to plot a column from `object` as columns.
 #' @param treatments A variable to plot a column from `object` as treatments.
+#' @param legend Logical (default `FALSE`). If `TRUE`, displays the legend for treatment colors.
 #' @inheritParams rlang::args_dots_used
 #'
 #' @name autoplot
@@ -55,6 +56,9 @@ ggplot2::autoplot
 #' # Plot the design with block boundaries
 #' autoplot(result)
 #'
+#' # Show legend
+#' autoplot(result, legend = TRUE)
+#'
 #' # Colour blind friendly colours
 #' autoplot(result, palette = "colour-blind")
 #'
@@ -76,7 +80,7 @@ ggplot2::autoplot
 #'
 #' # Custom colour palette
 #' autoplot(result, palette = c("#ef746a", "#3fbfc5", "#81ae00", "#c37cff"))
-autoplot.design <- function(object, rotation = 0, size = 4, margin = FALSE, palette = "default", buffer = NULL, row = NULL, column = NULL, block = NULL, treatments = NULL, ...) {
+autoplot.design <- function(object, rotation = 0, size = 4, margin = FALSE, palette = "default", buffer = NULL, row = NULL, column = NULL, block = NULL, treatments = NULL, legend = FALSE, ...) {
     stopifnot(inherits(object, "design"))
     rlang::check_dots_used()
 
@@ -196,6 +200,11 @@ autoplot.design <- function(object, rotation = 0, size = 4, margin = FALSE, pale
     }
 
     plt <- plt + scale_fill_manual(values = colour_palette, name = tools::toTitleCase(trt_expr))
+
+    # Control legend visibility
+    if (!legend) {
+        plt <- plt + ggplot2::theme(legend.position = "none")
+    }
 
     if(!margin) {
         plt <- plt + ggplot2::scale_x_continuous(expand = c(0, 0), breaks = seq(1, max(object[[column_expr]]), 1)) + ggplot2::scale_y_continuous(expand = c(0, 0), trans = scales::reverse_trans(), breaks = seq(1, max(object[[row_expr]]), 1))
