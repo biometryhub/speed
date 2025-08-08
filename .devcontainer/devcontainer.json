@@ -1,11 +1,17 @@
 {
-  "name": "R Dev (Ubuntu 18.04)",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": "."
+  "name": "nert-container",
+  "image": "ghcr.io/rocker-org/devcontainer/r-ver:4",
+  "features": {
+    "ghcr.io/rocker-org/devcontainer-features/r-packages:1": {
+      "packages": [
+        "ggplot2",
+        "testthat",
+        "vdiffr",
+        "igraph",
+        "sp",
+        "data.table"
+      ]
+    }
   },
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash"
-  },
-  "extensions": ["Ikuyadeu.r", "REditorSupport.r-lsp"]
+  "postCreateCommand": "./.devcontainer/postCreateCommand.sh"
 }
