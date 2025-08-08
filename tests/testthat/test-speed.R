@@ -546,13 +546,13 @@ test_that("speed handles split plot designs", {
                   swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
                   swap_within = list(wp = "block", sp = "wholeplot"),
                   early_stop_iterations = list(wp = 1000, sp = 10000),
-                  seed = 2, quiet = TRUE)
+                  seed = 1)
 
   # Check the result
   expect_s3_class(result, "design")
   # Check values
   expect_equal(result$score, 100)
-  expect_equal(result$iterations_run, 1954)
+  expect_equal(result$iterations_run, 1726)
   expect_equal(result$stopped_early, c(wp = TRUE, sp = TRUE))
 
   # expect_identical(which(is.na(result$design_df$treatment)), which(is.na(irregular_large_data$treatment)))
