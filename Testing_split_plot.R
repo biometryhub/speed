@@ -9,11 +9,12 @@ df_split <- data.frame(
   subplot_treatment = rep(letters[1:4], 12)
 )
 
-options(speed.adj_weight = 1, speed.adaptive_swaps = TRUE)
+options(speed.cooling_rate = 0.9999)
 result <- speed(df_split,
                 swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
                 swap_within = list(wp = "block", sp = "wholeplot"),
-                early_stop_iterations = list(wp = 1000, sp = 10000), seed = 2)
+                early_stop_iterations = list(wp = 1000, sp = 20000),
+                iterations = list(wp = 5000, sp = 50000))
 
 autoplot(result, treatments = "wholeplot_treatment")
 autoplot(result, treatments = "subplot_treatment")
@@ -26,7 +27,7 @@ autoplot(new_design$design, treatments = "wholeplot_treatment")
 autoplot(new_design$design, treatments = "subplot_treatment")
 
 
-
+options(speed.cooling_rate = 0.99)
 df_split_split <- data.frame(
   row = rep(1:16, each = 9),
   col = rep(1:9, times = 16),
