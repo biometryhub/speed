@@ -546,7 +546,7 @@ test_that("speed handles split plot designs", {
                   swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
                   swap_within = list(wp = "block", sp = "wholeplot"),
                   early_stop_iterations = list(wp = 1000, sp = 10000),
-                  seed = 1)
+                  seed = 1, quiet = TRUE)
 
   # Check the result
   expect_s3_class(result, "design")

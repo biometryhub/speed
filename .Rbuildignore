@@ -1,7 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 .devcontainer
-matsums.cpp
 ^LICENSE\.md$
 ^README\.Rmd$
 ^\.github$
@@ -14,6 +13,4 @@ air.toml
 benchmarking.R
 Testing_split_plot.R
 Cases.md
-calc_obj.Rdata
 codemeta.json
-sp_setup.Rdata
