@@ -561,6 +561,245 @@ test_that("speed handles split plot designs", {
   vdiffr::expect_doppelganger("speed_splitplot_sp", autoplot(result, treatments = "subplot_treatment"))
 })
 
+# Test split-split plots
+test_that("speed handles split-split plot designs", {
+  # Hierarchical split-split plot design
+  df_split_split <- data.frame(
+    row = rep(1:16, each = 9),
+    col = rep(1:9, times = 16),
+    block = rep(1:4, each = 36),
+    wholeplot = rep(rep(1:3, each = 3), times = 16) + rep(0:3 * 3, each = 36),
+    wholeplot_treatment = rep(rep(LETTERS[1:3], each = 3), times = 16),
+    subplot = rep(1:48, each = 3),
+    subplot_treatment = rep(rep(letters[1:4], each = 3), times = 12),
+    subsubplot_treatment = rep(c("x", "y", "z"), 48)
+  )
+
+  result <- speed(df_split_split,
+                  swap = list(wp = "wholeplot_treatment",
+                              sp = "subplot_treatment",
+                              ssp = "subsubplot_treatment"),
+                  swap_within = list(wp = "block",
+                                     sp = "wholeplot",
+                                     ssp = "subplot"),
+                  iterations = list(wp = 500, sp = 500, ssp = 1000),
+                  early_stop_iterations = list(wp = 200, sp = 200, ssp = 400),
+                  seed = 42, quiet = TRUE)
+
+  # Check the result
+  expect_s3_class(result, "design")
+
+  # Check output structure
+  expect_named(
+    result,
+    c(
+      "design_df",
+      "score",
+      "scores",
+      "temperatures",
+      "iterations_run",
+      "stopped_early",
+      "treatments",
+      "seed"
+    )
+  )
+
+  # Check data types
+  expect_true(is.data.frame(result$design_df))
+  expect_true(is.numeric(result$score))
+  expect_true(is.list(result$scores))
+  expect_true(is.list(result$temperatures))
+  expect_true(is.numeric(result$iterations_run))
+  expect_true(is.logical(result$stopped_early))
+  expect_true(is.list(result$treatments))
+
+  # Check hierarchical structure
+  expect_named(result$scores, c("wp", "sp", "ssp"))
+  expect_named(result$temperatures, c("wp", "sp", "ssp"))
+  expect_named(result$stopped_early, c("wp", "sp", "ssp"))
+  expect_named(result$treatments, c("wp", "sp", "ssp"))
+
+  # Check output dimensions
+  expect_equal(nrow(result$design_df), 144)  # 16 rows × 9 cols
+  expect_equal(ncol(result$design_df), 8)    # All columns preserved
+  expect_equal(length(result$scores), 3)
+  expect_equal(sapply(result$scores, length), c(wp = 229, sp = 201, ssp = 1000))
+
+  # Check numerical output
+  expect_equal(result$score, 497)
+  expect_equal(result$iterations_run, 1430)
+  expect_equal(result$stopped_early, c(wp = TRUE, sp = TRUE, ssp = FALSE))
+  expect_equal(result$seed, 42)
+
+  # Check treatment levels are preserved
+  expect_equal(result$treatments$wp, c("A", "B", "C"))
+  expect_equal(result$treatments$sp, c("a", "b", "c", "d"))
+  expect_equal(result$treatments$ssp, c("x", "y", "z"))
+
+  # Test visualization for each level
+  vdiffr::expect_doppelganger("speed_split_split_wp", autoplot(result, treatments = "wholeplot_treatment"))
+  vdiffr::expect_doppelganger("speed_split_split_sp", autoplot(result, treatments = "subplot_treatment"))
+  vdiffr::expect_doppelganger("speed_split_split_ssp", autoplot(result, treatments = "subsubplot_treatment"))
+})
+
+# Test strip plots
+test_that("speed handles strip plot designs", {
+  df_strip <- data.frame(
+    row = rep(1:12, each = 6),  # 12 rows total (4 rows per block x 6 blocks)
+    col = rep(1:6, times = 12),  # 6 columns repeated
+    block = rep(rep(1:2, each = 3), times = 4) + rep(0:2*2, each = 24),  # 6 blocks, 12 plots each
+    vertical_treatment = rep(rep(LETTERS[1:3], times = 2), times = 12),  # A, B, C
+    horizontal_treatment = rep(rep(letters[1:4], each = 6), times = 3),  # a, b, c, d
+    plot_in_block = rep(1:12, times = 6)
+  )
+
+  result <- speed(df_strip,
+                  swap = list(ht = "horizontal_treatment", vt = "vertical_treatment"),
+                  swap_within = list(ht = "block", vt = "block"),
+                  iterations = list(ht = 500, vt = 500),
+                  early_stop_iterations = list(ht = 200, vt = 200),
+                  seed = 42, quiet = TRUE)
+
+  # Check the result
+  expect_s3_class(result, "design")
+
+  # Check output structure
+  expect_named(
+    result,
+    c(
+      "design_df",
+      "score",
+      "scores",
+      "temperatures",
+      "iterations_run",
+      "stopped_early",
+      "treatments",
+      "seed"
+    )
+  )
+
+  # Check data types
+  expect_true(is.data.frame(result$design_df))
+  expect_true(is.numeric(result$score))
+  expect_true(is.list(result$scores))
+  expect_true(is.list(result$temperatures))
+  expect_true(is.numeric(result$iterations_run))
+  expect_true(is.logical(result$stopped_early))
+  expect_true(is.list(result$treatments))
+
+  # Check hierarchical structure
+  expect_named(result$scores, c("ht", "vt"))
+  expect_named(result$temperatures, c("ht", "vt"))
+  expect_named(result$stopped_early, c("ht", "vt"))
+  expect_named(result$treatments, c("ht", "vt"))
+
+  # Check output dimensions
+  expect_equal(nrow(result$design_df), 72)  # 16 rows × 9 cols
+  expect_equal(ncol(result$design_df), 6)    # All columns preserved
+  expect_equal(length(result$scores), 2)
+  expect_equal(sapply(result$scores, length), c(ht = 232, vt = 369))
+
+  # Check numerical output
+  expect_equal(result$score, 145)
+  expect_equal(result$iterations_run, 601)
+  expect_equal(result$stopped_early, c(ht = TRUE, vt = TRUE))
+  expect_equal(result$seed, 42)
+
+  # Check treatment levels are preserved
+  expect_equal(result$treatments$ht, c("a", "b", "c", "d"))
+  expect_equal(result$treatments$vt, c("A", "B", "C"))
+
+
+  # Test visualization for each level
+  vdiffr::expect_doppelganger("speed_strip_ht", autoplot(result, treatments = "horizontal_treatment"))
+  vdiffr::expect_doppelganger("speed_strip_vt", autoplot(result, treatments = "vertical_treatment"))
+})
+
+# Test autoplot legend parameter
+test_that("autoplot legend parameter controls legend visibility", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:3, each = 3),
+    col = rep(1:3, times = 3),
+    treatment = rep(LETTERS[1:3], 3)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Test default behavior (legend = FALSE)
+  plot_no_legend <- autoplot(result)
+  expect_contains(class(plot_no_legend), "ggplot")
+
+  # Check that legend is hidden by default
+  plot_build <- ggplot2::ggplot_build(plot_no_legend)
+  expect_equal(plot_no_legend$theme$legend.position, "none")
+
+  # Test with legend = TRUE
+  plot_with_legend <- autoplot(result, legend = TRUE)
+  expect_contains(class(plot_with_legend), "ggplot")
+
+  # Check that legend is shown when legend = TRUE
+  expect_equal(plot_with_legend$theme$legend.position, "right")
+
+  # Test visual regression for both cases
+  vdiffr::expect_doppelganger("autoplot_no_legend", autoplot(result, legend = FALSE))
+  vdiffr::expect_doppelganger("autoplot_with_legend", autoplot(result, legend = TRUE))
+})
+
+# Test autoplot legend parameter with hierarchical designs
+test_that("autoplot legend parameter works with hierarchical designs", {
+  # Hierarchical split-plot design
+  df_split <- data.frame(
+    row = rep(1:6, each = 4),
+    col = rep(1:4, times = 6),
+    block = rep(1:2, each = 12),
+    wholeplot = rep(1:6, each = 4),
+    wholeplot_treatment = rep(rep(LETTERS[1:3], each = 4), times = 2),
+    subplot_treatment = rep(letters[1:4], 6)
+  )
+
+  result <- speed(df_split,
+                  swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+                  swap_within = list(wp = "block", sp = "wholeplot"),
+                  iterations = list(wp = 50, sp = 50),
+                  seed = 42, quiet = TRUE)
+
+  # Test with wholeplot treatments
+  plot_wp_no_legend <- autoplot(result, treatments = "wholeplot_treatment", legend = FALSE)
+  plot_wp_with_legend <- autoplot(result, treatments = "wholeplot_treatment", legend = TRUE)
+
+  expect_contains(class(plot_wp_no_legend), "ggplot")
+  expect_contains(class(plot_wp_with_legend), "ggplot")
+
+  # Check legend visibility
+  expect_equal(plot_wp_no_legend$theme$legend.position, "none")
+  expect_equal(plot_wp_with_legend$theme$legend.position, "right")
+
+  # Test with subplot treatments
+  plot_sp_no_legend <- autoplot(result, treatments = "subplot_treatment", legend = FALSE)
+  plot_sp_with_legend <- autoplot(result, treatments = "subplot_treatment", legend = TRUE)
+
+  expect_contains(class(plot_sp_no_legend), "ggplot")
+  expect_contains(class(plot_sp_with_legend), "ggplot")
+
+  # Check legend visibility
+  expect_equal(plot_sp_no_legend$theme$legend.position, "none")
+  expect_equal(plot_sp_with_legend$theme$legend.position, "right")
+
+  # Test visual regression
+  vdiffr::expect_doppelganger("autoplot_hierarchical_no_legend", plot_wp_no_legend)
+  vdiffr::expect_doppelganger("autoplot_hierarchical_with_legend", plot_wp_with_legend)
+})
+
+
+
 # TODO: Test cases to add/update
 # - Add more detailed checking of current designs
 # - NSE
