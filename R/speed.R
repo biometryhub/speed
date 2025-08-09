@@ -449,7 +449,6 @@ speed_hierarchical <- function(data,
 
   # Collect and set up output and results
   treatments <- list()
-  # final_score <- 0
   level_scores <- numeric()
   for (level in hierarchy_levels) {
     # Clean up temporary swap_group columns
