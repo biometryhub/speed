@@ -102,10 +102,10 @@ RCBD is one of the most commonly used designs in agricultural research. It contr
 
 ## Setting Up RCBD with speed
 
-Here we initialise a dataframe for a design with 4 blocks and 6 treatments, arranged in 4 rows and 6 columns.
+Here we initialise a dataframe for a design with 4 blocks and 6 treatments, arranged in 4 rows and 6 columns. Note that we can specify treatments in the `items` argument.
 
 ```{r rcbd-df}
-rcbd_design <- initialise_design_df(items = 6, nrows = 4, ncols = 6, block_nrows = 1, block_ncols = 6)
+rcbd_design <- initialise_design_df(items = paste0("V", 1:6), nrows = 4, ncols = 6, block_nrows = 1, block_ncols = 6)
 head(rcbd_design)
 ```
 
@@ -183,6 +183,8 @@ This is a systematic Latin square layout; each treatment appears once per row an
 
 ### Performing the Optimisation
 
+Because of the spatial optimisation algorithm built into `speed`, with default options and enough iterations, it should arrive at a Latin square design in cases where the number of rows, columns, treatments and replicates are all equal such as this.
+
 ```{r latin-square-example}
 latin_square_result <- speed(latin_square_design, 
                              swap = "treatment",
@@ -192,6 +194,8 @@ latin_square_result
 ```
 
 ### Output of the Optimisation
+
+Note that the final score of zero shows that the algorithm has found a perfect Latin Square solution.
 
 ```{r latin-square-output}
 str(latin_square_result)
