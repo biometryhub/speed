@@ -12,3 +12,4 @@ Jules_example_cases.R
 air.toml
 ^codecov\.yml$
 benchmarking.R
+^vignettes/*_files$
