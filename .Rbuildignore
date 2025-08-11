@@ -1,7 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 .devcontainer
-matsums.cpp
 ^LICENSE\.md$
 ^README\.Rmd$
 ^\.github$
@@ -13,3 +12,6 @@ air.toml
 ^codecov\.yml$
 benchmarking.R
 ^vignettes/*_files$
+Testing_split_plot.R
+Cases.md
+codemeta.json

@@ -3,12 +3,15 @@
 #' @description
 #' Verify inputs for the `speed` function.
 #'
+#' @rdname verify
+#'
 #' @inheritParams speed
 #' @param swap_count Number of item swaps per iteration (default: 1)
 #' @param swap_all_blocks Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)
 #' @param adaptive_swaps Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)
 #' @param start_temp Starting temperature for simulated annealing (default: 100)
 #' @param cooling_rate Rate at which temperature decreases (default: 0.99)
+#' @param random_initialisation Logical; if TRUE, randomly shuffle items within `swap_within` (default: FALSE)
 #'
 #' @keywords internal
 .verify_speed_inputs <- function(data,
@@ -23,7 +26,8 @@
                                  swap_all_blocks,
                                  adaptive_swaps,
                                  start_temp,
-                                 cooling_rate) {
+                                 cooling_rate,
+                                 random_initialisation) {
   if (!is.data.frame(data)) {
     stop("`data` must be an initial data frame of the design")
   }
@@ -45,10 +49,42 @@
 
   verify_positive_whole_number(iterations, early_stop_iterations, swap_count)
   verify_non_negative_whole(start_temp)
-  verify_boolean(quiet, adaptive_swaps, swap_all_blocks)
+  verify_boolean(quiet, adaptive_swaps, swap_all_blocks, random_initialisation)
   verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
   if (!is.null(seed)) {
     verify_between(seed, lower = -.Machine$integer.max, upper = .Machine$integer.max)
+  }
+}
+
+#' Verify hierarchical inputs
+#' @rdname verify
+#' @keywords internal
+.verify_hierarchical_inputs <- function(data, swap, swap_within, spatial_factors,
+                                        iterations, early_stop_iterations, obj_function,
+                                        quiet, seed) {
+  # Check that swap and swap_within have same names
+  if (!all(names(swap) == names(swap_within))) {
+    stop("Names of `swap` and `swap_within` must match for hierarchical designs")
+  }
+
+  # Check that all specified columns exist in data
+  for (level in names(swap)) {
+    if (!swap[[level]] %in% names(data)) {
+      stop(paste("Column", swap[[level]], "not found in data"))
+    }
+    if (!swap_within[[level]] %in% names(data) &&
+        !(swap_within[[level]] %in% c("1", "none"))) {
+      stop(paste("Column", swap_within[[level]], "not found in data"))
+    }
+  }
+
+  # Verify other parameters
+  if (!is.logical(quiet)) {
+    stop("`quiet` must be logical")
+  }
+
+  if (!is.null(seed) && !is.numeric(seed)) {
+    stop("`seed` must be numeric or NULL")
   }
 }
 

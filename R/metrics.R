@@ -5,7 +5,7 @@
 #'
 #' @rdname objective_functions
 #'
-#' @param layout_df A data frame representing the spatial information of the design
+#' @param layout_df A data frame representing the current design
 #' @param swap A column name of the items to be swapped
 #' @param spatial_cols Column name(s) of the spatial factors
 #' @param ... Extra parameters passed from [speed]
@@ -30,7 +30,7 @@ objective_function_signature <- function(layout_df,
 
 #' Default Objective Function for Design Optimization
 #'
-#' @param adj_weight Weight for adjacency score (default: 0)
+#' @param adj_weight Weight for adjacency score (default: 1)
 #' @param bal_weight Weight for balance score (default: 1)
 #'
 #' @rdname objective_functions
@@ -39,9 +39,18 @@ objective_function_signature <- function(layout_df,
 objective_function <- function(layout_df,
                                swap,
                                spatial_cols,
-                               adj_weight = getOption("speed.adj_weight", 0),
+                               adj_weight = getOption("speed.adj_weight", 1),
                                bal_weight = getOption("speed.bal_weight", 1),
                                ...) {
+  
+  # Check if there are only two treatments - adjacency becomes deterministic
+  n_treatments <- length(unique(layout_df[[swap]]))
+  if (n_treatments == 2 && adj_weight != 0) {
+    warning("Only 2 treatments detected in '", swap, "'. Adjacency optimization becomes deterministic (checkerboard pattern). Setting adjacency weight to 0.", 
+            call. = FALSE)
+    adj_weight <- 0
+  }
+  
   adj_score <- ifelse(adj_weight != 0,
                       calculate_adjacency_score(layout_df, swap),
                       0)
@@ -120,12 +129,12 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #' # Gives value 6
 #' calculate_adjacency_score(design_with_adj, "treatment")
 #' @export
-calculate_adjacency_score <- function(layout_df, swap, spatial_cols) {
+calculate_adjacency_score <- function(layout_df, swap) {
   layout_df <- matrix(
     layout_df[[swap]],
     nrow = max(as.numeric(as.character(layout_df$row)), na.rm = TRUE),
     ncol = max(as.numeric(as.character(layout_df$col)), na.rm = TRUE),
-    byrow = FALSE
+    byrow = TRUE
   )
 
   row_adjacencies <- sum(
@@ -196,11 +205,13 @@ objective_function_piepho <- function(design,
 
   design[[swap]] <- as.vector(design_matrix)
   bal_score <- calculate_balance_score(design, swap, spatial_cols)
+  adj_score <- calculate_adjacency_score(design, swap)
 
   return(list(
-    score = round(nb_score + ed_score + bal_score, 10),
+    score = round(nb_score + ed_score + bal_score + adj_score, 10),
     ed = ed,
     bal = bal_score,
+    adj = adj_score,
     nb = nb
   ))
 }
@@ -614,7 +625,7 @@ calculate_efficiency_factor <- function(design_df, item) {
   item <- as.character(substitute(item))
 
   # Design parameters
-  encoded_items <- as.factor(design_df[[item]]) |> as.integer()
+  encoded_items <- as.integer(as.factor(design_df[[item]]))
   n_treatments <- length(unique(encoded_items))
   n_rows <- max(as.numeric(as.character(design_df$row)))
   n_cols <- max(as.numeric(as.character(design_df$col)))

@@ -1,0 +1,186 @@
+{
+  "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+  "@type": "SoftwareSourceCode",
+  "identifier": "speed",
+  "description": "The Speed package optimises spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It employs customisable optimisation metrics, with a default approach that balances minimising treatment adjacency and maintaining spatial balance. Users can supply their own optimisation metrics to tailor designs to specific experimental requirements. The package also includes visualisation tools that allow users to inspect optimised designs.",
+  "name": "speed: Generate Spatially Efficient Experimental Designs",
+  "codeRepository": "https://biometryhub.github.io/speed/",
+  "issueTracker": "https://github.com/biometryhub/speed/issues",
+  "license": "https://spdx.org/licenses/MIT",
+  "version": "0.0.1",
+  "programmingLanguage": {
+    "@type": "ComputerLanguage",
+    "name": "R",
+    "url": "https://r-project.org"
+  },
+  "runtimePlatform": "R version 4.5.1 (2025-06-13 ucrt)",
+  "author": [
+    {
+      "@type": "Person",
+      "givenName": "Sam",
+      "familyName": "Rogers",
+      "email": "sam.rogers@adelaide.edu.au"
+    },
+    {
+      "@type": "Person",
+      "givenName": "Julian",
+      "familyName": "Taylor",
+      "email": "julian.taylor@adelaide.edu.au"
+    },
+    {
+      "@type": "Person",
+      "givenName": "Russell",
+      "familyName": "Edson",
+      "email": "russell.edson@adelaide.edu.au"
+    },
+    {
+      "@type": "Person",
+      "givenName": "Wasin",
+      "familyName": "Pipattungsakul",
+      "email": "wasin.pipattungsakul@adelaide.edu.au"
+    }
+  ],
+  "copyrightHolder": [
+    {
+      "@type": "Organization",
+      "name": "University of Adelaide"
+    },
+    {
+      "@type": "Organization",
+      "name": "Grains Research and Development Corporation"
+    }
+  ],
+  "funder": [
+    {
+      "@type": "Organization",
+      "name": "University of Adelaide"
+    },
+    {
+      "@type": "Organization",
+      "name": "Grains Research and Development Corporation"
+    }
+  ],
+  "maintainer": [
+    {
+      "@type": "Person",
+      "givenName": "Sam",
+      "familyName": "Rogers",
+      "email": "sam.rogers@adelaide.edu.au"
+    }
+  ],
+  "softwareSuggestions": [
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "testthat",
+      "name": "testthat",
+      "version": ">= 3.0.0",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=testthat"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "vdiffr",
+      "name": "vdiffr",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=vdiffr"
+    }
+  ],
+  "softwareRequirements": {
+    "1": {
+      "@type": "SoftwareApplication",
+      "identifier": "farver",
+      "name": "farver",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=farver"
+    },
+    "2": {
+      "@type": "SoftwareApplication",
+      "identifier": "ggplot2",
+      "name": "ggplot2",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=ggplot2"
+    },
+    "3": {
+      "@type": "SoftwareApplication",
+      "identifier": "igraph",
+      "name": "igraph",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=igraph"
+    },
+    "4": {
+      "@type": "SoftwareApplication",
+      "identifier": "matrixStats",
+      "name": "matrixStats",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=matrixStats"
+    },
+    "5": {
+      "@type": "SoftwareApplication",
+      "identifier": "rlang",
+      "name": "rlang",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=rlang"
+    },
+    "6": {
+      "@type": "SoftwareApplication",
+      "identifier": "scales",
+      "name": "scales",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=scales"
+    },
+    "7": {
+      "@type": "SoftwareApplication",
+      "identifier": "stringi",
+      "name": "stringi",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=stringi"
+    },
+    "SystemRequirements": null
+  },
+  "fileSize": "1075.944KB"
+}

@@ -11,13 +11,13 @@ objective_function(
   layout_df,
   swap,
   spatial_cols,
-  adj_weight = getOption("speed.adj_weight", 0),
+  adj_weight = getOption("speed.adj_weight", 1),
   bal_weight = getOption("speed.bal_weight", 1),
   ...
 )
 }
 \arguments{
-\item{layout_df}{A data frame representing the spatial information of the design}
+\item{layout_df}{A data frame representing the current design}
 
 \item{swap}{A column name of the items to be swapped}
 
@@ -25,7 +25,7 @@ objective_function(
 
 \item{...}{Extra parameters passed from \link{speed}}
 
-\item{adj_weight}{Weight for adjacency score (default: 0)}
+\item{adj_weight}{Weight for adjacency score (default: 1)}
 
 \item{bal_weight}{Weight for balance score (default: 1)}
 }

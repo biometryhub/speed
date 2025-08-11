@@ -21,6 +21,7 @@
 #'        exploration phase, which is generally better for complex or noisy optimisation
 #'        landscapes. Lower values (e.g. 0.95–0.98) cool quickly, leading to faster
 #'        convergence but greater risk of premature convergence to a suboptimal design.}
+#'   \item{`speed.random_initialisation`}{Logical; if TRUE, randomly shuffle items within `swap_within` (default: FALSE)}
 #'   \item{`speed.adj_weight`}{Weight for adjacency score (default: 0).}
 #'   \item{`speed.bal_weight`}{Weight for balance score (default: 1).}
 #' }
