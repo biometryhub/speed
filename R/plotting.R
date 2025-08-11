@@ -112,6 +112,15 @@ autoplot.design <- function(object, rotation = 0, size = 4, margin = FALSE, pale
     block_expr <- rlang::quo_name(block_expr)
     trt_expr <- rlang::quo_name(trt_expr)
 
+    # Handle factor columns for spatial coordinates
+    # Convert factor row/column to numeric while preserving order
+    if(is.factor(object[[row_expr]])) {
+        object[[row_expr]] <- as.numeric(as.character(object[[row_expr]]))
+    }
+    if(is.factor(object[[column_expr]])) {
+        object[[column_expr]] <- as.numeric(as.character(object[[column_expr]]))
+    }
+
     object[[trt_expr]] <- factor(as.character(object[[trt_expr]]), levels = unique(stringi::stri_sort(as.character(object[[trt_expr]]), numeric = TRUE)))
     ntrt <- nlevels(object[[trt_expr]])
 
@@ -177,10 +186,13 @@ autoplot.design <- function(object, rotation = 0, size = 4, margin = FALSE, pale
         }
         for (i in 1:nrow(blkdf)) {
             tmp <- object[object[[block_expr]] == blkdf$block[i], ]
-            blkdf[i, "ymin"] <- (min(tmp$row) - 0.5)
-            blkdf[i, "ymax"] <- (max(tmp$row) + 0.5)
-            blkdf[i, "xmin"] <- (min(tmp$col) - 0.5)
-            blkdf[i, "xmax"] <- (max(tmp$col) + 0.5)
+            # Ensure row and col are numeric for min/max calculations
+            tmp_row <- if(is.factor(tmp$row)) as.numeric(as.character(tmp$row)) else tmp$row
+            tmp_col <- if(is.factor(tmp$col)) as.numeric(as.character(tmp$col)) else tmp$col
+            blkdf[i, "ymin"] <- (min(tmp_row) - 0.5)
+            blkdf[i, "ymax"] <- (max(tmp_row) + 0.5)
+            blkdf[i, "xmin"] <- (min(tmp_col) - 0.5)
+            blkdf[i, "xmax"] <- (max(tmp_col) + 0.5)
         }
 
         plt <- ggplot2::ggplot(...) +
