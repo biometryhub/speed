@@ -9,9 +9,9 @@ shuffle_items(design, swap, swap_within, seed = NULL)
 \arguments{
 \item{design}{Data frame containing the current design}
 
-\item{swap}{Column name of the treatment to swap}
+\item{swap}{Column name of the treatment to swap, or named list for hierarchical designs}
 
-\item{swap_within}{Column name defining groups within which to swap treatments}
+\item{swap_within}{Column name defining groups within which to swap treatments, or named list for hierarchical designs}
 
 \item{seed}{A numeric value for random seed. If provided, it ensures reproducibility of results (default:
 NULL).}

@@ -1,7 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 .devcontainer
-matsums.cpp
 ^LICENSE\.md$
 ^README\.Rmd$
 ^\.github$
@@ -12,3 +11,6 @@ Jules_example_cases.R
 air.toml
 ^codecov\.yml$
 benchmarking.R
+Testing_split_plot.R
+Cases.md
+codemeta.json

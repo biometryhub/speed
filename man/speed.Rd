@@ -34,7 +34,7 @@ or \code{"replicate"} or even \code{"site"}.}
 \item{early_stop_iterations}{Number of iterations without improvement before early stopping (default: 2000)}
 
 \item{obj_function}{Objective function used to calculate score (lower is better) (default:
-\link{objective_function})}
+\code{\link[=objective_function]{objective_function()}})}
 
 \item{quiet}{Logical; if TRUE, suppresses progress messages (default: FALSE)}
 
@@ -46,17 +46,17 @@ NULL).}
 \value{
 A list containing:
 \itemize{
-\item design_df - Data frame of optimised design
-\item score - Final optimization score
-\item adjacency_score - Score for treatment adjacencies
-\item balance_score - Score for spatial balance
-\item scores - Vector of scores across iterations
-\item temperatures - Vector of temperatures across iterations
-\item iterations_run - Total number of iterations performed
-\item stopped_early - Logical indicating if optimization stopped early
-\item treatments - Vector of unique treatments
-\item seed - Random seed used for reproducibility of the design. If not set in the function, the seed is
-set to the third element of .Random.seed.
+\item \strong{design_df} - Data frame of optimised design
+\item \strong{score} - Final optimization score
+\item \strong{adjacency_score} - Score for treatment adjacencies
+\item \strong{balance_score} - Score for spatial balance
+\item \strong{scores} - Vector of scores across iterations
+\item \strong{temperatures} - Vector of temperatures across iterations
+\item \strong{iterations_run} - Total number of iterations performed
+\item \strong{stopped_early} - Logical indicating if optimization stopped early
+\item \strong{treatments} - Vector of unique treatments
+\item \strong{seed} - Random seed used for reproducibility of the design. If not set in the function, the seed is
+set to the third element of \code{.Random.seed}.
 }
 }
 \description{
@@ -67,12 +67,26 @@ regular or irregular spatial designs.
 \examples{
 # Create a simple design with 3 replicates of 4 treatments in a 4x3 layout
 df <- data.frame(
-  row = rep(1:4, each = 3),
-  col = rep(1:3, times = 4),
-  treatment = rep(LETTERS[1:4], 3)
+  row = rep(1:4, times = 5),
+  col = rep(1:5, each = 4),
+  treatment = rep(LETTERS[1:4], 5)
 )
 
 # Optimise the design
-result <- speed(df, swap = "treatment")
+result <- speed(df, swap = "treatment", seed = 42)
 
+# Hierarchical split-plot design
+\dontrun{
+df_split <- data.frame(
+  row = rep(1:8, each = 4),
+  col = rep(1:4, times = 8),
+  block = rep(1:4, each = 8),
+  wholeplot = rep(1:8, each = 4),
+  wholeplot_treatment = rep(rep(LETTERS[1:2], each = 4), times = 4),
+  subplot_treatment = rep(letters[1:4], 8)
+)
+result <- speed(df_split,
+                swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+                swap_within = list(wp = "block", sp = "wholeplot"))
+}
 }

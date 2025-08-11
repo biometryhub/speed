@@ -2,6 +2,7 @@
 % Please edit documentation in R/verify_utils.R
 \name{.verify_speed_inputs}
 \alias{.verify_speed_inputs}
+\alias{.verify_hierarchical_inputs}
 \title{Verify Inputs for \code{speed}}
 \usage{
 .verify_speed_inputs(
@@ -19,6 +20,18 @@
   start_temp,
   cooling_rate,
   random_initialisation
+)
+
+.verify_hierarchical_inputs(
+  data,
+  swap,
+  swap_within,
+  spatial_factors,
+  iterations,
+  early_stop_iterations,
+  obj_function,
+  quiet,
+  seed
 )
 }
 \arguments{
@@ -53,6 +66,9 @@ NULL).}
 \item{cooling_rate}{Rate at which temperature decreases (default: 0.99)}
 
 \item{random_initialisation}{Logical; if TRUE, randomly shuffle items within \code{swap_within} (default: FALSE)}
+
+\item{obj_function}{Objective function used to calculate score (lower is better) (default:
+\code{\link[=objective_function]{objective_function()}})}
 }
 \description{
 Verify inputs for the \code{speed} function.
