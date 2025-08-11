@@ -73,30 +73,38 @@
 
 
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>A data frame containing the experimental design with spatial coordinates</p></dd>
+<dd><p>A data frame containing the experimental design with spatial
+coordinates</p></dd>
 
 
 <dt id="arg-swap">swap<a class="anchor" aria-label="anchor" href="#arg-swap"></a></dt>
-<dd><p>A column name of the items to be swapped (e.g., <code>treatment</code>, <code>variety</code>, <code>genotype</code>, etc)</p></dd>
+<dd><p>A column name of the items to be swapped (e.g., <code>treatment</code>,
+<code>variety</code>, <code>genotype</code>, etc). Can also be a named list to optimise a
+hierarchical design such as a split-plot. See details for more information.</p></dd>
 
 
 <dt id="arg-swap-within">swap_within<a class="anchor" aria-label="anchor" href="#arg-swap-within"></a></dt>
-<dd><p>A string specifying the variable that defines a boundary within which to swap
-treatments. Specify <code>"1"</code> or <code>"none"</code> for no boundary (default: <code>"1"</code>). Other examples might be <code>"block"</code>
-or <code>"replicate"</code> or even <code>"site"</code>.</p></dd>
+<dd><p>A string specifying the variable that defines a boundary
+within which to swap treatments. Specify <code>"1"</code> or <code>"none"</code> for no boundary
+(default: <code>"1"</code>). Other examples might be <code>"block"</code> or <code>"replicate"</code> or
+even <code>"site"</code>. Can also be a named list with names matching <code>swap</code> to
+optimise a hierarchical design such as a split-plot. See details for more
+information.</p></dd>
 
 
 <dt id="arg-spatial-factors">spatial_factors<a class="anchor" aria-label="anchor" href="#arg-spatial-factors"></a></dt>
-<dd><p>A one-sided formula specifying spatial factors to consider for balance (default:
-<code>~row + col</code>)</p></dd>
+<dd><p>A one-sided formula specifying spatial factors to
+consider for balance (default: <code>~row + col</code>).</p></dd>
 
 
 <dt id="arg-iterations">iterations<a class="anchor" aria-label="anchor" href="#arg-iterations"></a></dt>
-<dd><p>Maximum number of iterations for the simulated annealing algorithm (default: 10000)</p></dd>
+<dd><p>Maximum number of iterations for the simulated annealing
+algorithm (default: 10000). Can also be a named list.</p></dd>
 
 
 <dt id="arg-early-stop-iterations">early_stop_iterations<a class="anchor" aria-label="anchor" href="#arg-early-stop-iterations"></a></dt>
-<dd><p>Number of iterations without improvement before early stopping (default: 2000)</p></dd>
+<dd><p>Number of iterations without improvement before
+early stopping (default: 2000). Can also be a named list.</p></dd>
 
 
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
@@ -104,8 +112,8 @@ or <code>"replicate"</code> or even <code>"site"</code>.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>A numeric value for random seed. If provided, it ensures reproducibility of results (default:
-NULL).</p></dd>
+<dd><p>A numeric value for random seed. If provided, it ensures
+reproducibility of results (default: <code>NULL</code>).</p></dd>
 
 
 <dt id="arg-swap-count">swap_count<a class="anchor" aria-label="anchor" href="#arg-swap-count"></a></dt>
@@ -133,8 +141,8 @@ NULL).</p></dd>
 
 
 <dt id="arg-obj-function">obj_function<a class="anchor" aria-label="anchor" href="#arg-obj-function"></a></dt>
-<dd><p>Objective function used to calculate score (lower is better) (default:
-<code><a href="objective_functions.html">objective_function()</a></code>)</p></dd>
+<dd><p>Objective function used to calculate score (lower is
+better) (default: <code><a href="objective_functions.html">objective_function()</a></code>). Can also be a named list.</p></dd>
 
 </dl></div>
 
