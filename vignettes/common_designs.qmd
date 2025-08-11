@@ -213,11 +213,11 @@ A well-randomised and spatially efficient Latin square layout.
 
 ## Overview
 
-Split-Plot Design is used when some treatments are easier to apply to large areas (whole plots) while others require smaller areas (sub-plots). This creates a hierarchical structure with different levels of precision.
+Split-Plot Design is used when some treatments are easier to apply to large areas (whole plots) while others require smaller areas (sub-plots). This creates a hierarchical structure with different levels of precision. Split-Plot Designs are particularly useful in agricultural experiments where some factors are difficult or expensive to replicate at the whole plot level. These designs are possible with the `speed` package, allowing for spatial optimisation of both whole plots and sub-plots in a single step.
 
 ## When to Use
 
-- Treatments with different application scales
+- Treatments with different application scales (large vs small plots)
 - Irrigation × variety experiments
 - Tillage × fertilizer studies
 - When some treatments are expensive or difficult to replicate
@@ -228,19 +228,61 @@ Split-Plot Design is used when some treatments are easier to apply to large area
 - **Sub-plots**: Smaller units within whole plots (sub-treatments)
 - Different error terms for different treatment levels
 
-## Setting Up Split-Plot with speed
+## Setting Up Split Plot Design with speed
 
-```{r split-plot-example, eval=FALSE}
-# Placeholder for Split-Plot example
-# This will show:
-# - Defining whole plot and sub-plot factors
-# - Arranging whole plots optimally
-# - Randomising sub-plots within whole plots
-# - Using speed for spatial optimisation
-# - Visualising the hierarchical structure
-# - Understanding different error terms
+Now we can create a dataframe representing a split plot design. Note that the `initalise_design_df` function does not currently support split plot designs directly, so we will create it manually.
+
+```{r split-plot-df}
+split_plot_design <- data.frame(
+    row = rep(1:12, each = 4),
+    col = rep(1:4, times = 12),
+    block = rep(1:4, each = 12),
+    wholeplot = rep(1:12, each = 4),
+    wholeplot_treatment = rep(rep(LETTERS[1:3], each = 4), times = 4),
+    subplot_treatment = rep(letters[1:4], 12)
+ )
+head(split_plot_design)
 ```
 
+```{r split-plot-plot1}
+#| echo: false
+class(split_plot_design) <- c("design", class(split_plot_design))
+autoplot(split_plot_design, treatments = "wholeplot_treatment")
+autoplot(split_plot_design, treatments = "subplot_treatment", block = "wholeplot")
+```
+
+This is a systematic split plot layout; each treatment appears once per block for wholeplot treatments, and once per whole plot for sub-plot treatments. The design will now be randomised.
+
+### Performing the Optimisation
+
+Because of the spatial optimisation algorithm built into `speed`, with default options and enough iterations, it should arrive at a Latin square design in cases where the number of rows, columns, treatments and replicates are all equal such as this.
+
+```{r split-plot-example}
+split_plot_result <- speed(split_plot_design,
+                           swap = list(wp = "wholeplot_treatment",
+                                       sp = "subplot_treatment"),
+                           swap_within = list(wp = "block", sp = "wholeplot"),
+                           seed = 42)
+
+split_plot_result
+```
+
+### Output of the Optimisation
+
+Note the final score of 100, made up of 100 for the whole plots, and 0 for the sub-plots. This shows that the algorithm has found a solution which has adjacencies between plots when looking at whole plot treatments which is impossible to avoid due to the split plot structure, but the sub-plots have been perfectly optimised.
+
+```{r split-plot-output}
+str(split_plot_result)
+```
+
+### Visualise the Output
+
+```{r split-plot-plot2}
+autoplot(split_plot_result, treatments = "wholeplot_treatment")
+autoplot(split_plot_result, treatments = "subplot_treatment", block = "wholeplot")
+```
+
+This design has now been optimised at both the whole plot level and the sub-plot level.
 
 # Spatial Design Considerations
 
@@ -269,32 +311,6 @@ Consider including buffer areas or border plots to:
 - Reduce edge effects
 - minimise contamination between treatments
 - Provide realistic growing conditions
-
-# Design Efficiency Metrics
-
-## A-efficiency
-
-Measures the average variance of treatment contrasts relative to an optimal design.
-
-## D-efficiency
-
-Based on the determinant of the information matrix, relating to confidence ellipsoid volume.
-
-## E-efficiency
-
-Focuses on the worst-case treatment contrast, ensuring balanced precision.
-
-## Practical Considerations
-
-```{r efficiency-comparison, eval=FALSE}
-# Placeholder for efficiency comparison
-# This will show:
-# - Calculating efficiency metrics for different designs
-# - Comparing optimised vs non-optimised layouts
-# - Trade-offs between different efficiency measures
-# - Guidelines for acceptable efficiency levels
-```
-
 
 # Using `speed` Effectively
 
