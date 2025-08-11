@@ -134,7 +134,7 @@ calculate_adjacency_score <- function(layout_df, swap) {
     layout_df[[swap]],
     nrow = max(as.numeric(as.character(layout_df$row)), na.rm = TRUE),
     ncol = max(as.numeric(as.character(layout_df$col)), na.rm = TRUE),
-    byrow = TRUE
+    byrow = FALSE
   )
 
   row_adjacencies <- sum(
