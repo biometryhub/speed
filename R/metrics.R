@@ -52,7 +52,7 @@ objective_function <- function(layout_df,
   }
   
   adj_score <- ifelse(adj_weight != 0,
-                      calculate_adjacency_score(layout_df, swap),
+                      calculate_adjacency_score(layout_df, swap, spatial_cols),
                       0)
 
   bal_score <- ifelse(bal_weight != 0,
@@ -105,6 +105,8 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #' better separation of treatments.
 #'
 #' @inheritParams objective_function_signature
+#' @param spatial_cols Column names specifying the spatial factors. First element is treated
+#'   as the row-like dimension, second as the column-like dimension (default: c("row", "col"))
 #'
 #' @return Numeric score for treatment adjacencies (lower is better)
 #'
@@ -128,21 +130,37 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #'
 #' # Gives value 6
 #' calculate_adjacency_score(design_with_adj, "treatment")
+#'
+#' # Example 3: Custom spatial column names
+#' design_custom <- data.frame(
+#'   x_coord = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
+#'   y_coord = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
+#'   variety = c("A", "B", "A", "B", "A", "B", "A", "B", "A")
+#' )
+#' calculate_adjacency_score(design_custom, "variety", c("x_coord", "y_coord"))
 #' @export
-calculate_adjacency_score <- function(layout_df, swap) {
-  layout_df <- matrix(
+calculate_adjacency_score <- function(layout_df, swap, spatial_cols = c("row", "col")) {
+  # Extract spatial column names (assume first is row-like, second is col-like)
+  row_col <- spatial_cols[1]
+  col_col <- spatial_cols[2]
+  
+  # Sort by spatial columns to ensure correct matrix filling
+  layout_df <- layout_df[order(layout_df[[row_col]], layout_df[[col_col]]), ]
+  
+  # Create matrix using sorted data
+  design_matrix <- matrix(
     layout_df[[swap]],
-    nrow = max(as.numeric(as.character(layout_df$row)), na.rm = TRUE),
-    ncol = max(as.numeric(as.character(layout_df$col)), na.rm = TRUE),
+    nrow = max(as.numeric(as.character(layout_df[[row_col]])), na.rm = TRUE),
+    ncol = max(as.numeric(as.character(layout_df[[col_col]])), na.rm = TRUE),
     byrow = TRUE
   )
-
+  
   row_adjacencies <- sum(
-    layout_df[, -ncol(layout_df)] == layout_df[, -1],
+    design_matrix[, -ncol(design_matrix)] == design_matrix[, -1],
     na.rm = TRUE
   )
   col_adjacencies <- sum(
-    layout_df[-nrow(layout_df), ] == layout_df[-1, ],
+    design_matrix[-nrow(design_matrix), ] == design_matrix[-1, ],
     na.rm = TRUE
   )
   return(row_adjacencies + col_adjacencies)
@@ -205,7 +223,7 @@ objective_function_piepho <- function(design,
 
   design[[swap]] <- as.vector(design_matrix)
   bal_score <- calculate_balance_score(design, swap, spatial_cols)
-  adj_score <- calculate_adjacency_score(design, swap)
+  adj_score <- calculate_adjacency_score(design, swap, spatial_cols)
 
   return(list(
     score = round(nb_score + ed_score + bal_score + adj_score, 10),
