@@ -2,7 +2,7 @@
 #'
 #' @description
 #' Optimises the spatial layout of experimental designs using simulated
-#' annealing to minimize treatment adjacency and maintain treatment balance
+#' annealing to minimise treatment adjacency and maintain treatment balance
 #' across spatial factors. Works with regular or irregular spatial designs.
 #'
 #' @param data A data frame containing the experimental design with spatial
@@ -31,14 +31,30 @@
 #'
 #' @returns A list containing:
 #' - **design_df** - Data frame of optimised design
-#' - **score** - Final optimization score
+#' - **score** - Final optimisation score
 #' - **scores** - Vector or list of scores across iterations
 #' - **temperatures** - Vector of temperatures across iterations
 #' - **iterations_run** - Total number of iterations performed
-#' - **stopped_early** - Logical indicating if optimization stopped early
+#' - **stopped_early** - Logical indicating if optimisation stopped early
 #' - **treatments** - Vector or list of unique treatments
 #' - **seed** - Random seed used for reproducibility of the design. If not set
 #'   in the function, the seed is set to the third element of `.Random.seed`.
+#'
+#' @details
+#' This function provides a very general interface for producing experimental
+#' designs of different types. For hierarchical designs such as split-plots,
+#' strip plots, split-split plots and similar nested structures, the key
+#' arguments (`swap`, `swap_within`, `iterations`, `early_stop_iterations` and
+#' `obj_function`) can be provided as named lists where each name corresponds
+#' to a level in the hierarchy (e.g., "wholeplot", "subplot"). When these
+#' arguments are provided as named lists with matching names, the optimisation
+#' is applied sequentially at each hierarchical level, starting with the first
+#' level and progressing through the hierarchy. This allows for different
+#' optimisation parameters and objective functions to be applied at different
+#' levels of the design structure. For simple (non-hierarchical) designs, these
+#' arguments can be provided as single values. For more examples and detailed
+#' usage, see the package vignettes.
+#'
 #'
 #' @importFrom stringi stri_sort
 #' @importFrom stats runif
@@ -159,7 +175,7 @@ speed_simple <- function(data,
   }
   set.seed(seed)
 
-  # random initialization
+  # random initialisation
   if (random_initialisation) {
     layout_df <- shuffle_items(layout_df, swap, swap_within, seed)
   }
@@ -170,7 +186,7 @@ speed_simple <- function(data,
   # Sort the data frame to start with to ensure consistency in calculating the adjacency later
   layout_df <- layout_df[do.call(order, layout_df[spatial_cols]), ]
 
-  # Initialize design
+  # Initialise design
   current_design <- layout_df
   best_design <- current_design
 
@@ -188,7 +204,7 @@ speed_simple <- function(data,
   temperatures <- numeric(iterations)
   last_improvement_iter <- 0
 
-  # Main optimization loop
+  # Main optimisation loop
   for (iter in 1:iterations) {
     scores[iter] <- current_score
     temperatures[iter] <- temp
@@ -272,7 +288,7 @@ speed_simple <- function(data,
     best_design$swap_group <- NULL
   }
 
-  # Finalize output
+  # Finalise output
   output <- list(
     design_df = best_design,
     score = best_score,
@@ -346,7 +362,7 @@ speed_hierarchical <- function(data,
     }
   }
 
-  # Initialize design
+  # Initialise design
   current_design <- layout_df
   best_design <- current_design
 
@@ -356,13 +372,13 @@ speed_hierarchical <- function(data,
   }
   set.seed(seed)
 
-  # Sequential optimization for each hierarchy level
+  # Sequential optimisation for each hierarchy level
   all_scores <- list()
   all_temperatures <- list()
   total_iterations <- 0  # TODO: Track total iterations across all levels
 
   for (level in hierarchy_levels) {
-    if (!quiet) cat("Optimizing level:", level, "\n")
+    if (!quiet) cat("Optimising level:", level, "\n")
 
     # Calculate initial score for this level
     current_score_obj <- obj_function[[level]](current_design, swap[[level]], spatial_cols, ...)
@@ -379,7 +395,7 @@ speed_hierarchical <- function(data,
     temperatures <- numeric(iterations[[level]])
     last_improvement_iter <- 0
 
-    # Optimization loop for this level
+    # Optimisation loop for this level
     for (iter in 1:iterations[[level]]) {
       scores[iter] <- current_score
       temperatures[iter] <- temp
@@ -484,7 +500,7 @@ speed_hierarchical <- function(data,
   })
   names(stopped_early) <- hierarchy_levels
 
-  # Finalize output
+  # Finalise output
   output <- list(
     design_df = best_design,
     score = sum(level_scores),
@@ -515,8 +531,6 @@ print.design <- function(x, ...) {
   cat("Optimised Experimental Design\n")
   cat("----------------------------\n")
   cat("Score:", x$score, "\n")
-  # cat("Adjacency Score:", x$adjacency_score, "\n")
-  # cat("Balance Score:", x$balance_score, "\n")
   cat("Iterations Run:", x$iterations_run, "\n")
   cat("Stopped Early:", x$stopped_early, "\n")
 
@@ -533,10 +547,6 @@ print.design <- function(x, ...) {
   }
 
   cat("Seed:", x$seed, "\n\n")
-
-  # Print first few rows of the optimised design
-  # cat("Optimised Design (first 6 rows):\n")
-  # print(utils::head(x$design_df))
 
   return(invisible(x))
 }

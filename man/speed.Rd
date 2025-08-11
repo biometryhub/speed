@@ -55,11 +55,11 @@ reproducibility of results (default: \code{NULL}).}
 A list containing:
 \itemize{
 \item \strong{design_df} - Data frame of optimised design
-\item \strong{score} - Final optimization score
+\item \strong{score} - Final optimisation score
 \item \strong{scores} - Vector or list of scores across iterations
 \item \strong{temperatures} - Vector of temperatures across iterations
 \item \strong{iterations_run} - Total number of iterations performed
-\item \strong{stopped_early} - Logical indicating if optimization stopped early
+\item \strong{stopped_early} - Logical indicating if optimisation stopped early
 \item \strong{treatments} - Vector or list of unique treatments
 \item \strong{seed} - Random seed used for reproducibility of the design. If not set
 in the function, the seed is set to the third element of \code{.Random.seed}.
@@ -67,8 +67,23 @@ in the function, the seed is set to the third element of \code{.Random.seed}.
 }
 \description{
 Optimises the spatial layout of experimental designs using simulated
-annealing to minimize treatment adjacency and maintain treatment balance
+annealing to minimise treatment adjacency and maintain treatment balance
 across spatial factors. Works with regular or irregular spatial designs.
+}
+\details{
+This function provides a very general interface for producing experimental
+designs of different types. For hierarchical designs such as split-plots,
+strip plots, split-split plots and similar nested structures, the key
+arguments (\code{swap}, \code{swap_within}, \code{iterations}, \code{early_stop_iterations} and
+\code{obj_function}) can be provided as named lists where each name corresponds
+to a level in the hierarchy (e.g., "wholeplot", "subplot"). When these
+arguments are provided as named lists with matching names, the optimisation
+is applied sequentially at each hierarchical level, starting with the first
+level and progressing through the hierarchy. This allows for different
+optimisation parameters and objective functions to be applied at different
+levels of the design structure. For simple (non-hierarchical) designs, these
+arguments can be provided as single values. For more examples and detailed
+usage, see the package vignettes.
 }
 \examples{
 # Create a simple design with 3 replicates of 4 treatments in a 4x3 layout
