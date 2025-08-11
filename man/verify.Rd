@@ -39,24 +39,28 @@
 coordinates}
 
 \item{swap}{A column name of the items to be swapped (e.g., \code{treatment},
-\code{variety}, \code{genotype}, etc). Can also be a named list to optimise a
-hierarchical design such as a split-plot. See details for more information.}
+\code{variety}, \code{genotype}, etc). For hierarchical designs, provide a named
+list where each name corresponds to a hierarchy level (e.g.,
+\code{list(wp = "wholeplot_treatment", sp = "subplot_treatment")}).
+See details for more information.}
 
 \item{swap_within}{A string specifying the variable that defines a boundary
 within which to swap treatments. Specify \code{"1"} or \code{"none"} for no boundary
 (default: \code{"1"}). Other examples might be \code{"block"} or \code{"replicate"} or
-even \code{"site"}. Can also be a named list with names matching \code{swap} to
-optimise a hierarchical design such as a split-plot. See details for more
-information.}
+even \code{"site"}. For hierarchical designs, provide a named list with names
+matching \code{swap} to optimise a hierarchical design such as a split-plot.
+See details for more information.}
 
 \item{spatial_factors}{A one-sided formula specifying spatial factors to
 consider for balance (default: \code{~row + col}).}
 
 \item{iterations}{Maximum number of iterations for the simulated annealing
-algorithm (default: 10000). Can also be a named list.}
+algorithm (default: 10000). For hierarchical designs, can be a named list
+with names matching \code{swap}.}
 
 \item{early_stop_iterations}{Number of iterations without improvement before
-early stopping (default: 2000). Can also be a named list.}
+early stopping (default: 2000). For hierarchical designs, can be a named
+list with names matching \code{swap}.}
 
 \item{quiet}{Logical; if TRUE, suppresses progress messages (default: FALSE)}
 
@@ -76,7 +80,8 @@ reproducibility of results (default: \code{NULL}).}
 \item{random_initialisation}{Logical; if TRUE, randomly shuffle items within \code{swap_within} (default: FALSE)}
 
 \item{obj_function}{Objective function used to calculate score (lower is
-better) (default: \code{\link[=objective_function]{objective_function()}}). Can also be a named list.}
+better) (default: \code{\link[=objective_function]{objective_function()}}). For hierarchical designs, can
+be a named list with names matching \code{swap}.}
 }
 \description{
 Verify inputs for the \code{speed} function.

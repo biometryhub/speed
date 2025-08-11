@@ -22,27 +22,32 @@ speed(
 coordinates}
 
 \item{swap}{A column name of the items to be swapped (e.g., \code{treatment},
-\code{variety}, \code{genotype}, etc). Can also be a named list to optimise a
-hierarchical design such as a split-plot. See details for more information.}
+\code{variety}, \code{genotype}, etc). For hierarchical designs, provide a named
+list where each name corresponds to a hierarchy level (e.g.,
+\code{list(wp = "wholeplot_treatment", sp = "subplot_treatment")}).
+See details for more information.}
 
 \item{swap_within}{A string specifying the variable that defines a boundary
 within which to swap treatments. Specify \code{"1"} or \code{"none"} for no boundary
 (default: \code{"1"}). Other examples might be \code{"block"} or \code{"replicate"} or
-even \code{"site"}. Can also be a named list with names matching \code{swap} to
-optimise a hierarchical design such as a split-plot. See details for more
-information.}
+even \code{"site"}. For hierarchical designs, provide a named list with names
+matching \code{swap} to optimise a hierarchical design such as a split-plot.
+See details for more information.}
 
 \item{spatial_factors}{A one-sided formula specifying spatial factors to
 consider for balance (default: \code{~row + col}).}
 
 \item{iterations}{Maximum number of iterations for the simulated annealing
-algorithm (default: 10000). Can also be a named list.}
+algorithm (default: 10000). For hierarchical designs, can be a named list
+with names matching \code{swap}.}
 
 \item{early_stop_iterations}{Number of iterations without improvement before
-early stopping (default: 2000). Can also be a named list.}
+early stopping (default: 2000). For hierarchical designs, can be a named
+list with names matching \code{swap}.}
 
 \item{obj_function}{Objective function used to calculate score (lower is
-better) (default: \code{\link[=objective_function]{objective_function()}}). Can also be a named list.}
+better) (default: \code{\link[=objective_function]{objective_function()}}). For hierarchical designs, can
+be a named list with names matching \code{swap}.}
 
 \item{quiet}{Logical; if TRUE, suppresses progress messages (default: FALSE)}
 
@@ -56,11 +61,14 @@ A list containing:
 \itemize{
 \item \strong{design_df} - Data frame of optimised design
 \item \strong{score} - Final optimisation score
-\item \strong{scores} - Vector or list of scores across iterations
+\item \strong{scores} - Vector of scores across iterations (for simple designs) or
+named list of score vectors (for hierarchical designs)
 \item \strong{temperatures} - Vector of temperatures across iterations
 \item \strong{iterations_run} - Total number of iterations performed
 \item \strong{stopped_early} - Logical indicating if optimisation stopped early
-\item \strong{treatments} - Vector or list of unique treatments
+(for simple designs) or named logical vector (for hierarchical designs)
+\item \strong{treatments} - Vector of unique treatments (for simple designs) or
+named list of treatment vectors (for hierarchical designs)
 \item \strong{seed} - Random seed used for reproducibility of the design. If not set
 in the function, the seed is set to the third element of \code{.Random.seed}.
 }
