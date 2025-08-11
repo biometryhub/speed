@@ -28,10 +28,10 @@ knitr::opts_chunk$set(
 
 The `speed` package optimises spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It uses simulated annealing to:
 
-- Minimize treatment adjacency (reducing neighbor effects)
+- Minimise treatment adjacency (reducing neighbour effects)
 - Maintain spatial balance across rows and columns
 - Respect blocking constraints if specified
-- Provide visualization tools for design evaluation
+- Provide visualisation tools for design evaluation
 
 ## Installation
 
@@ -44,18 +44,18 @@ pak::pak("biometryhub/speed")
 
 ## Features
 
-- Flexible optimization of experimental designs
+- Flexible optimisation of experimental designs
 - Support for blocked designs
-- Customizable optimization parameters
-- Built-in visualization functions
-- Progress tracking during optimization
+- Customisable optimisation parameters
+- Built-in visualisation functions
+- Progress tracking during optimisation
 - Early stopping when convergence is reached
 
 See the package documentation for more detailed examples and options.
 
 ## Basic Example
 
-A simple example optimizing a 4×3 completely randomised design with 4 treatments:
+A simple example optimising a 4×3 completely randomised design with 4 treatments:
 
 ```{r example}
 library(speed)
@@ -73,7 +73,7 @@ result <- speed(df, "treatment", seed = 42)
 # Plot the optimised design
 autoplot(result)
 
-# View optimization progress
+# View optimisation progress
 plot_progress(result)
 ```
 
@@ -103,12 +103,15 @@ autoplot(result)
 
 ## Citation
 
-If you use `speed` in your research, please cite via:
+If you use `speed` in your research, please cite:
 
-```{r}
+```
+citation("speed")
+```
+```r
 citation("speed")
 ```
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.

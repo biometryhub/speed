@@ -21,10 +21,10 @@ The `speed` package optimises spatial experimental designs by
 rearranging treatments to improve statistical efficiency while
 maintaining statistical validity. It uses simulated annealing to:
 
-- Minimize treatment adjacency (reducing neighbor effects)
+- Minimise treatment adjacency (reducing neighbour effects)
 - Maintain spatial balance across rows and columns
 - Respect blocking constraints if specified
-- Provide visualization tools for design evaluation
+- Provide visualisation tools for design evaluation
 
 ## Installation
 
@@ -38,18 +38,18 @@ pak::pak("biometryhub/speed")
 
 ## Features
 
-- Flexible optimization of experimental designs
+- Flexible optimisation of experimental designs
 - Support for blocked designs
-- Customizable optimization parameters
-- Built-in visualization functions
-- Progress tracking during optimization
+- Customisable optimisation parameters
+- Built-in visualisation functions
+- Progress tracking during optimisation
 - Early stopping when convergence is reached
 
 See the package documentation for more detailed examples and options.
 
 ## Basic Example
 
-A simple example optimizing a 4×3 completely randomised design with 4
+A simple example optimising a 4×3 completely randomised design with 4
 treatments:
 
 ``` r
@@ -64,9 +64,9 @@ df <- data.frame(
 
 # Optimise the design with seed for reproducibility
 result <- speed(df, "treatment", seed = 42)
-#> Iteration: 1000 Score: 1 Best: 1 Since Improvement: 975 
-#> Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1975 
-#> Early stopping at iteration 2025
+#> Iteration: 1000 Score: 1 Best: 1 Since Improvement: 475 
+#> Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1475 
+#> Early stopping at iteration 2525
 
 # Plot the optimised design
 autoplot(result)
@@ -76,7 +76,7 @@ autoplot(result)
 
 ``` r
 
-# View optimization progress
+# View optimisation progress
 plot_progress(result)
 ```
 
@@ -101,9 +101,9 @@ result <- speed(df,
                 swap_within = "block",
                 iterations = 5000,
                 seed = 42)
-#> Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 394 
-#> Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1394 
-#> Early stopping at iteration 2606
+#> Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 
+#> Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 
+#> Early stopping at iteration 2457
 
 # Plot the design with block boundaries
 autoplot(result)
@@ -113,29 +113,15 @@ autoplot(result)
 
 ## Citation
 
-If you use `speed` in your research, please cite via:
+If you use `speed` in your research, please cite:
+
+    citation("speed")
 
 ``` r
 citation("speed")
-#> Warning in citation("speed"): could not determine year for 'speed' from package
-#> DESCRIPTION file
-#> To cite package 'speed' in publications use:
-#> 
-#>   Rogers S, Taylor J, Edson R, Pipattungsakul W (????). _speed:
-#>   Generate Spatially Efficient Experimental Designs_. R package version
-#>   0.0.1, <https://biometryhub.github.io/speed/>.
-#> 
-#> A BibTeX entry for LaTeX users is
-#> 
-#>   @Manual{,
-#>     title = {speed: Generate Spatially Efficient Experimental Designs},
-#>     author = {Sam Rogers and Julian Taylor and Russell Edson and Wasin Pipattungsakul},
-#>     note = {R package version 0.0.1},
-#>     url = {https://biometryhub.github.io/speed/},
-#>   }
 ```
 
 ## License
 
 This project is licensed under the MIT License - see the
-[LICENSE](LICENSE) file for details.
+[LICENSE](LICENSE.md) file for details.
