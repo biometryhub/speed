@@ -6,3 +6,4 @@ lib/
 docs
 
 /.quarto/
+inst/doc

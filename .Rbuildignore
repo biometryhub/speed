@@ -11,6 +11,7 @@ Jules_example_cases.R
 air.toml
 ^codecov\.yml$
 benchmarking.R
+^vignettes/*_files$
 Testing_split_plot.R
 Cases.md
 codemeta.json
