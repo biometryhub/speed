@@ -19,7 +19,7 @@ vignette: >
 
 Agricultural experiments require careful spatial design to minimise the effects of field heterogeneity and neighbour interactions while maximising statistical power. The `speed` package provides tools for creating spatially efficient experimental designs through simulated annealing optimisation.
 
-This vignette demonstrates how to use `speed` for common agricultural experimental designs, showing how spatial optimisation can improve the efficiency and validity of field trials.
+This vignette demonstrates how to use `speed` for common agricultural experimental designs, showing how spatial optimisation can improve the efficiency and validity of field trials. We'll work through four key design types, each building in complexity and showing different features of the package.
 
 ```{r load-package}
 library(speed)
@@ -37,6 +37,10 @@ The Completely Randomised Design is the simplest experimental design where treat
 - Controlled environments (greenhouse, growth chamber)
 - Small-scale experiments with minimal spatial variation
 - Proof-of-concept studies
+
+## Example: Field Trial with 8 Varieties
+
+Consider a field trial testing 8 new wheat varieties with 4 replicates each. Even though treatments are assigned randomly, spatial optimization can reduce neighbor effects and improve precision.
 
 ## Setting Up CRD with speed
 
@@ -99,6 +103,10 @@ RCBD is one of the most commonly used designs in agricultural research. It contr
 - Medium to large experiments (3+ treatments)
 - When blocking factor explains significant variation
 - Multi-location trials
+
+## Example: Variety Trial Across Field Gradient
+
+Consider testing 6 soybean varieties across a field with a moisture gradient. Using 4 blocks perpendicular to the gradient helps control for soil moisture variation.
 
 ## Setting Up RCBD with speed
 
@@ -255,7 +263,7 @@ This is a systematic split plot layout; each treatment appears once per block fo
 
 ### Performing the Optimisation
 
-Because of the spatial optimisation algorithm built into `speed`, with default options and enough iterations, it should arrive at a Latin square design in cases where the number of rows, columns, treatments and replicates are all equal such as this.
+For split-plot designs, we use named lists to specify the hierarchical structure. The `swap` parameter defines what to optimize at each level, while `swap_within` defines the constraints for each level.
 
 ```{r split-plot-example}
 split_plot_result <- speed(split_plot_design,
@@ -269,7 +277,7 @@ split_plot_result
 
 ### Output of the Optimisation
 
-Note the final score of 100, made up of 100 for the whole plots, and 0 for the sub-plots. This shows that the algorithm has found a solution which has adjacencies between plots when looking at whole plot treatments which is impossible to avoid due to the split plot structure, but the sub-plots have been perfectly optimised.
+The output shows optimization results for the design. The score and iterations are combined for the entire design, while the treatments, and stopping criteria are reported separately for each level, allowing you to assess the quality of optimization at each hierarchy level.
 
 ```{r split-plot-output}
 str(split_plot_result)
@@ -328,7 +336,7 @@ The `speed` package provides powerful tools for creating spatially efficient exp
 - Maintain design validity and balance
 - Visualise and evaluate design quality
 
-Whether using simple randomised designs or complex incomplete block structures, spatial optimisation through `speed` can significantly enhance the efficiency of agricultural experiments.
+Whether using simple randomised designs or complex split-plot structures, spatial optimisation through `speed` can significantly enhance the efficiency and reliability of agricultural experiments.
 
 ## Further Reading
 
