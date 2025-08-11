@@ -10,6 +10,7 @@
 #' @param row A variable to plot a column from `object` as rows.
 #' @param column A variable to plot a column from `object` as columns.
 #' @param treatments A variable to plot a column from `object` as treatments.
+#' @param legend Logical (default `FALSE`). If `TRUE`, displays the legend for treatment colors.
 #' @inheritParams rlang::args_dots_used
 #'
 #' @name autoplot
@@ -43,17 +44,17 @@ ggplot2::autoplot
 #'      treatment = rep(LETTERS[1:8], 3),
 #'      block = rep(1:3, each = 8))
 #'
-#' # Set seed for reproducibility
-#' set.seed(42)
-#'
 #' # Optimise while respecting blocks
 #' result <- speed(df,
 #'                 "treatment",
 #'                 swap_within = "block",
-#'                 iterations = 5000)
+#'                 seed = 42)
 #'
 #' # Plot the design with block boundaries
 #' autoplot(result)
+#'
+#' # Show legend
+#' autoplot(result, legend = TRUE)
 #'
 #' # Colour blind friendly colours
 #' autoplot(result, palette = "colour-blind")
@@ -61,22 +62,20 @@ ggplot2::autoplot
 #' # Alternative colour scheme
 #' autoplot(result, palette = "plasma")
 #'
-#' df <- data.frame(
-#'       row = rep(1:4, each = 3),
-#'       col = rep(1:3, times = 4),
-#'       treatment = rep(LETTERS[1:4], 3))
-#'
-#' # Set seed for reproducibility
-#' set.seed(42)
-#'
-#' # Optimise while respecting blocks
-#' result <- speed(df,
-#'                 "treatment",
-#'                 iterations = 5000)
-#'
 #' # Custom colour palette
-#' autoplot(result, palette = c("#ef746a", "#3fbfc5", "#81ae00", "#c37cff"))
-autoplot.design <- function(object, rotation = 0, size = 4, margin = FALSE, palette = "default", buffer = NULL, row = NULL, column = NULL, block = NULL, treatments = NULL, ...) {
+#' autoplot(result, palette = c("#ef746a", "#3fbfc5", "#81ae00", "#c37cff",
+#'                              "#304702", "#dde024", "#630380ff", "#df7700"))
+autoplot.design <- function(object,
+                            rotation = 0,
+                            size = 4,
+                            margin = FALSE,
+                            palette = "default",
+                            buffer = NULL,
+                            row = NULL,
+                            column = NULL,
+                            block = NULL,
+                            treatments = NULL,
+                            legend = FALSE, ...) {
     stopifnot(inherits(object, "design"))
     rlang::check_dots_used()
 
@@ -196,6 +195,11 @@ autoplot.design <- function(object, rotation = 0, size = 4, margin = FALSE, pale
     }
 
     plt <- plt + scale_fill_manual(values = colour_palette, name = tools::toTitleCase(trt_expr))
+
+    # Control legend visibility
+    if (!legend) {
+        plt <- plt + ggplot2::theme(legend.position = "none")
+    }
 
     if(!margin) {
         plt <- plt + ggplot2::scale_x_continuous(expand = c(0, 0), breaks = seq(1, max(object[[column_expr]]), 1)) + ggplot2::scale_y_continuous(expand = c(0, 0), trans = scales::reverse_trans(), breaks = seq(1, max(object[[row_expr]]), 1))
