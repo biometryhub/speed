@@ -18,28 +18,36 @@ speed(
 )
 }
 \arguments{
-\item{data}{A data frame containing the experimental design with spatial coordinates}
+\item{data}{A data frame containing the experimental design with spatial
+coordinates}
 
-\item{swap}{A column name of the items to be swapped (e.g., \code{treatment}, \code{variety}, \code{genotype}, etc)}
+\item{swap}{A column name of the items to be swapped (e.g., \code{treatment},
+\code{variety}, \code{genotype}, etc). Can also be a named list to optimise a
+hierarchical design such as a split-plot. See details for more information.}
 
-\item{swap_within}{A string specifying the variable that defines a boundary within which to swap
-treatments. Specify \code{"1"} or \code{"none"} for no boundary (default: \code{"1"}). Other examples might be \code{"block"}
-or \code{"replicate"} or even \code{"site"}.}
+\item{swap_within}{A string specifying the variable that defines a boundary
+within which to swap treatments. Specify \code{"1"} or \code{"none"} for no boundary
+(default: \code{"1"}). Other examples might be \code{"block"} or \code{"replicate"} or
+even \code{"site"}. Can also be a named list with names matching \code{swap} to
+optimise a hierarchical design such as a split-plot. See details for more
+information.}
 
-\item{spatial_factors}{A one-sided formula specifying spatial factors to consider for balance (default:
-\code{~row + col})}
+\item{spatial_factors}{A one-sided formula specifying spatial factors to
+consider for balance (default: \code{~row + col}).}
 
-\item{iterations}{Maximum number of iterations for the simulated annealing algorithm (default: 10000)}
+\item{iterations}{Maximum number of iterations for the simulated annealing
+algorithm (default: 10000). Can also be a named list.}
 
-\item{early_stop_iterations}{Number of iterations without improvement before early stopping (default: 2000)}
+\item{early_stop_iterations}{Number of iterations without improvement before
+early stopping (default: 2000). Can also be a named list.}
 
-\item{obj_function}{Objective function used to calculate score (lower is better) (default:
-\code{\link[=objective_function]{objective_function()}})}
+\item{obj_function}{Objective function used to calculate score (lower is
+better) (default: \code{\link[=objective_function]{objective_function()}}). Can also be a named list.}
 
 \item{quiet}{Logical; if TRUE, suppresses progress messages (default: FALSE)}
 
-\item{seed}{A numeric value for random seed. If provided, it ensures reproducibility of results (default:
-NULL).}
+\item{seed}{A numeric value for random seed. If provided, it ensures
+reproducibility of results (default: \code{NULL}).}
 
 \item{...}{Other arguments passed through to objective functions.}
 }
@@ -48,21 +56,19 @@ A list containing:
 \itemize{
 \item \strong{design_df} - Data frame of optimised design
 \item \strong{score} - Final optimization score
-\item \strong{adjacency_score} - Score for treatment adjacencies
-\item \strong{balance_score} - Score for spatial balance
-\item \strong{scores} - Vector of scores across iterations
+\item \strong{scores} - Vector or list of scores across iterations
 \item \strong{temperatures} - Vector of temperatures across iterations
 \item \strong{iterations_run} - Total number of iterations performed
 \item \strong{stopped_early} - Logical indicating if optimization stopped early
-\item \strong{treatments} - Vector of unique treatments
-\item \strong{seed} - Random seed used for reproducibility of the design. If not set in the function, the seed is
-set to the third element of \code{.Random.seed}.
+\item \strong{treatments} - Vector or list of unique treatments
+\item \strong{seed} - Random seed used for reproducibility of the design. If not set
+in the function, the seed is set to the third element of \code{.Random.seed}.
 }
 }
 \description{
-Optimises the spatial layout of experimental designs using simulated annealing to minimize
-treatment adjacency and maintain treatment balance across spatial factors. Works with
-regular or irregular spatial designs.
+Optimises the spatial layout of experimental designs using simulated
+annealing to minimize treatment adjacency and maintain treatment balance
+across spatial factors. Works with regular or irregular spatial designs.
 }
 \examples{
 # Create a simple design with 3 replicates of 4 treatments in a 4x3 layout
@@ -74,19 +80,27 @@ df <- data.frame(
 
 # Optimise the design
 result <- speed(df, swap = "treatment", seed = 42)
+autoplot(result)
 
 # Hierarchical split-plot design
-\dontrun{
 df_split <- data.frame(
-  row = rep(1:8, each = 4),
-  col = rep(1:4, times = 8),
-  block = rep(1:4, each = 8),
-  wholeplot = rep(1:8, each = 4),
-  wholeplot_treatment = rep(rep(LETTERS[1:2], each = 4), times = 4),
-  subplot_treatment = rep(letters[1:4], 8)
+  row = rep(1:12, each = 4),
+  col = rep(1:4, times = 12),
+  block = rep(1:4, each = 12),
+  wholeplot = rep(1:12, each = 4),
+  wholeplot_treatment = rep(rep(LETTERS[1:3], each = 4), times = 4),
+  subplot_treatment = rep(letters[1:4], 12)
 )
+
 result <- speed(df_split,
-                swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
-                swap_within = list(wp = "block", sp = "wholeplot"))
-}
+                swap = list(wp = "wholeplot_treatment",
+                            sp = "subplot_treatment"),
+                swap_within = list(wp = "block", sp = "wholeplot"),
+                seed = 42)
+
+# Plot wholeplot allocations within blocks
+autoplot(result, treatments = "wholeplot_treatment")
+# Plot subplot allocations within wholeplots
+autoplot(result, treatments = "subplot_treatment", block = "wholeplot")
+
 }

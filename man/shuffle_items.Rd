@@ -13,8 +13,8 @@ shuffle_items(design, swap, swap_within, seed = NULL)
 
 \item{swap_within}{Column name defining groups within which to swap treatments, or named list for hierarchical designs}
 
-\item{seed}{A numeric value for random seed. If provided, it ensures reproducibility of results (default:
-NULL).}
+\item{seed}{A numeric value for random seed. If provided, it ensures
+reproducibility of results (default: \code{NULL}).}
 }
 \value{
 A data frame with the items shuffled

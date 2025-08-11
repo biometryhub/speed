@@ -44,14 +44,11 @@ ggplot2::autoplot
 #'      treatment = rep(LETTERS[1:8], 3),
 #'      block = rep(1:3, each = 8))
 #'
-#' # Set seed for reproducibility
-#' set.seed(42)
-#'
 #' # Optimise while respecting blocks
 #' result <- speed(df,
 #'                 "treatment",
 #'                 swap_within = "block",
-#'                 iterations = 5000)
+#'                 seed = 42)
 #'
 #' # Plot the design with block boundaries
 #' autoplot(result)
@@ -65,22 +62,20 @@ ggplot2::autoplot
 #' # Alternative colour scheme
 #' autoplot(result, palette = "plasma")
 #'
-#' df <- data.frame(
-#'       row = rep(1:4, each = 3),
-#'       col = rep(1:3, times = 4),
-#'       treatment = rep(LETTERS[1:4], 3))
-#'
-#' # Set seed for reproducibility
-#' set.seed(42)
-#'
-#' # Optimise while respecting blocks
-#' result <- speed(df,
-#'                 "treatment",
-#'                 iterations = 5000)
-#'
 #' # Custom colour palette
-#' autoplot(result, palette = c("#ef746a", "#3fbfc5", "#81ae00", "#c37cff"))
-autoplot.design <- function(object, rotation = 0, size = 4, margin = FALSE, palette = "default", buffer = NULL, row = NULL, column = NULL, block = NULL, treatments = NULL, legend = FALSE, ...) {
+#' autoplot(result, palette = c("#ef746a", "#3fbfc5", "#81ae00", "#c37cff",
+#'                              "#304702", "#dde024", "#630380ff", "#df7700"))
+autoplot.design <- function(object,
+                            rotation = 0,
+                            size = 4,
+                            margin = FALSE,
+                            palette = "default",
+                            buffer = NULL,
+                            row = NULL,
+                            column = NULL,
+                            block = NULL,
+                            treatments = NULL,
+                            legend = FALSE, ...) {
     stopifnot(inherits(object, "design"))
     rlang::check_dots_used()
 
