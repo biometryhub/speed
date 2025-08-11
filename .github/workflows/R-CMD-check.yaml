@@ -45,6 +45,9 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
+      - name: Install built package
+        run: R CMD INSTALL .
+
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
