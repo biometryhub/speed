@@ -182,8 +182,7 @@ bench_speed <- function() {
     spatial_factors = ~row,
     iterations = 200000,
     early_stop_iterations = 5000,
-    seed = 112,
-    quiet = FALSE
+    seed = 112
   )
 }
 speed_result <- bench_speed()
@@ -202,10 +201,11 @@ speed::autoplot(speed_result)
 dev.off()
 
 df_layout <- df_initial
-df_layout$treatment <- df_layout$col_block
+df_layout$row <- as.numeric(df_layout$row)
+df_layout$col <- as.numeric(df_layout$col)
 class(df_layout) <- c(class(df_layout), "design")
 png("layout-20x20.png", height = 720, width = 720)
-speed::autoplot(df_layout)
+speed::autoplot(df_layout, treatments = "col_block")
 dev.off()
 
 # digger
@@ -241,15 +241,17 @@ dev.off()
 
 # odw
 df_initial_odw <- df_initial
-df_initial_odw <- shuffle_items(df_initial_odw, "treatment", "row_block", 112)
-df_initial_odw$treatment <- as.factor(df_initial_odw$treatment)
-df_initial_odw$row_block <- as.factor(df_initial_odw$row_block)
-df_initial_odw$col_block <- as.factor(df_initial_odw$col_block)
-df_initial_odw$row <- as.factor(df_initial_odw$row)
-df_initial_odw$col <- as.factor(df_initial_odw$col)
+# df_initial_odw <- speed::initialise_design_df(as.factor(rep(1:n_treatments, n_reps)), n_rows, n_cols, 2, 2)
+# df_initial_odw <- shuffle_items(df_initial_odw, "treatment", "row", 112)
+# df_initial_odw$treatment <- as.factor(df_initial_odw$treatment)
+# df_initial_odw$row_block <- as.factor(df_initial_odw$row_block)
+# df_initial_odw$col_block <- as.factor(df_initial_odw$col_block)
+# df_initial_odw$block <- as.factor(df_initial_odw$block)
+# df_initial_odw$row <- as.factor(df_initial_odw$row)
+# df_initial_odw$col <- as.factor(df_initial_odw$col)
 
 initial_param_table <- odw::odw(
-  random = ~ treatment + col + row + col_block + row_block,
+  random = ~ treatment + col + row + row_block,
   data = df_initial,
   permute = ~treatment,
   swap = ~col,
@@ -258,19 +260,19 @@ initial_param_table <- odw::odw(
 )$vparameters.table
 initial_param_table
 
-initial_param_table[2:5, 2] <- 100
+initial_param_table[2:4, 2] <- 100
 initial_param_table
 
 bench_odw <- function() {
   odw::odw(
-    random = ~ treatment + col + row + col_block + row_block,
-    data = df_initial,
+    random = ~ treatment + col + row + row_block,
+    data = df_initial_odw,
     permute = ~treatment,
     swap = ~col,
     search = "tabu",
     G.param = initial_param_table,
     R.param = initial_param_table,
-    maxit = 10
+    maxit = 8
   )
 }
 design_object <- bench_odw()
@@ -283,7 +285,8 @@ odw_result <- speed_result
 odw_result$design_df <- df_odw
 unique(table(df_odw$treatment, df_odw$row))
 unique(table(df_odw$treatment, df_odw$col))
-unique(table(df_odw$treatment, df_odw$block))
+unique(table(df_odw$treatment, df_odw$col_block))
+unique(table(df_odw$treatment, df_odw$row_block))
 speed::calculate_adjacency_score(df_odw, "treatment")
 
 png("odw-20x20.png", height = 720, width = 720)
