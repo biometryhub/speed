@@ -810,15 +810,20 @@ test_that("speed handles 2D blocking with row and column blocks", {
     col = rep(1:20, 20),
     treat = rep(paste("V", 1:40, sep = ""), 10),
     rowBlock = rep(1:10, each = 40),
-    colBlock = rep(1:10, each = 40)
+    colBlock = rep(rep(1:10, times = 20), each = 2)
   )
   dat_2d_blocking <- dat_2d_blocking[order(dat_2d_blocking$col, dat_2d_blocking$row), ]
 
   # Store original options and set test options
   old_options <- options()
   on.exit(options(old_options))
-  options(speed.swap_count = 5, speed.swap_all_blocks = TRUE,
-          speed.adaptive_swaps = TRUE, speed.cooling_rate = 0.99)
+  options(
+    speed.swap_count = 5,
+    speed.swap_all_blocks = TRUE,
+    speed.adaptive_swaps = TRUE,
+    speed.cooling_rate = 0.99,
+    speed.random_initialisation = TRUE
+  )
 
   result <- speed(dat_2d_blocking,
                   swap = "treat",

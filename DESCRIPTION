@@ -38,12 +38,12 @@ BugReports: https://github.com/biometryhub/speed/issues
 Imports: 
     farver,
     ggplot2,
-    igraph,
     matrixStats,
     rlang,
     scales,
     stringi
 Suggests: 
+    igraph,
     quarto,
     testthat (>= 3.0.0),
     vdiffr
