@@ -1,0 +1,1006 @@
+---
+title: "Complex Agricultural Experimental Designs with speed"
+author: "Sam Rogers"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    theme: flatly
+    highlight: tango
+vignette: >
+  %\VignetteIndexEntry{Complex Agricultural Experimental Designs with speed}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Introduction
+
+This vignette covers advanced and complex experimental designs that are commonly used in specialized agricultural research contexts. These designs are particularly useful for plant breeding programs, large-scale variety trials, and situations where standard complete block designs are impractical due to resource constraints or the nature of the treatments.
+
+Building on the foundational designs covered in the "Common Agricultural Experimental Designs" vignette, these complex designs offer solutions for challenging experimental scenarios while maintaining statistical rigor through spatial optimization with the `speed` package.
+
+```{r load-package}
+library(speed)
+```
+
+# Incomplete Block Designs
+
+## Overview
+
+When the number of treatments is large, complete blocks may be impractical due to field size or resource constraints. Incomplete block designs use smaller blocks where not all treatments appear in each block, while still maintaining good statistical properties.
+
+## Types of Incomplete Block Designs
+
+### Balanced Incomplete Block Design (BIBD)
+
+The most restrictive but statistically optimal incomplete block design.
+
+#### Characteristics:
+- Each treatment appears in exactly `r` blocks
+- Each block contains exactly `k` treatments
+- Each pair of treatments appears together in exactly `λ` blocks
+- Perfect balance but limited parameter combinations
+
+#### Parameters:
+- `v` = number of treatments
+- `b` = number of blocks  
+- `r` = number of blocks containing each treatment
+- `k` = number of treatments per block
+- `λ` = number of blocks containing each pair of treatments
+
+#### Relationship: `bk = vr` and `λ(v-1) = r(k-1)`
+
+### Resolvable Incomplete Block Design (RIBD)
+
+More flexible incomplete block designs where blocks can be grouped into complete replications.
+
+#### Characteristics:
+- Blocks can be organized into complete replications
+- Each replication contains every treatment exactly once
+- More flexible parameter combinations than BIBD
+- Excellent for multi-location trials
+
+### Partially Balanced Incomplete Block Design (PBIBD)
+
+Relaxes the balance requirements of BIBD while maintaining good statistical properties.
+
+## When to Use Incomplete Block Designs
+
+- **Large number of treatments** (typically >15-20)
+- **Limited block size** due to field homogeneity constraints
+- **Multi-location variety trials** where shipping costs limit replication
+- **Resource limitations** preventing complete replication
+- **Preliminary screening** of large treatment sets
+
+## Example: Incomplete Block Design for 15 Varieties
+
+Consider a trial with 15 treatments where complete blocks would be too large for field homogeneity. We'll use an incomplete block design with blocks of size 5.
+
+## Setting Up Incomplete Block Designs with speed
+
+```{r incomplete-block-df}
+# Placeholder: Initialize incomplete block design
+# incomplete_design <- initialise_design_df(items = 15, nrows = 6, ncols = 5, 
+#                                          incomplete_blocks = TRUE, block_size = 5)
+# head(incomplete_design)
+```
+
+```{r incomplete-block-plot1}
+#| echo: false
+# Placeholder: Initial visualization
+# class(incomplete_design) <- c("design", class(incomplete_design))
+# autoplot(incomplete_design)
+```
+
+This shows the systematic incomplete block layout before optimization.
+
+### Performing the Optimisation
+
+```{r incomplete-block-example}
+# Placeholder: Optimize the incomplete block design
+# incomplete_result <- speed(incomplete_design,
+#                           swap = "treatment",
+#                           swap_within = "block", 
+#                           seed = 42)
+# incomplete_result
+```
+
+### Output of the Optimisation
+
+```{r incomplete-block-output}
+# Placeholder: Show structure of results
+# str(incomplete_result)
+```
+
+### Visualise the Output
+
+```{r incomplete-block-plot2}
+# Placeholder: Final visualization
+# autoplot(incomplete_result)
+```
+
+A well-optimized incomplete block design with balanced treatment distribution!
+
+# Alpha Designs
+
+## Overview
+
+Alpha designs are a specific family of resolvable incomplete block designs developed specifically for agricultural applications, particularly plant breeding trials. They offer excellent efficiency with flexible parameter combinations.
+
+## Characteristics
+
+- **Small block sizes**: Typically 2-10 plots per block
+- **Resolvable structure**: Blocks grouped into complete replications  
+- **High efficiency**: Often 85-95% as efficient as RCBD
+- **Flexible parameters**: Wide range of treatment numbers accommodated
+- **Practical layout**: Well-suited to field implementation
+
+## Types of Alpha Designs
+
+### Alpha(0,1) Designs
+- Simplest alpha designs
+- Good general-purpose choice
+- Available for most parameter combinations
+
+### Cyclic Alpha Designs  
+- Generated using cyclic algorithms
+- Systematic construction method
+- Predictable structure
+
+## Design Parameters
+
+- `v` = number of varieties/treatments
+- `s` = number of replications  
+- `k` = block size
+- `b` = number of blocks (= vs/k)
+- `r` = number of replications per variety (= s)
+
+## When to Use Alpha Designs
+
+- **Plant breeding nurseries** with 20-500+ entries
+- **Large variety trials** across multiple locations
+- **Preliminary screening experiments** 
+- **When block size is constrained** by field conditions
+- **Multi-environment testing** programs
+
+## Advantages over RCBD
+
+1. **Smaller block size** reduces within-block variation
+2. **Higher precision** for treatment comparisons
+3. **Flexible replication** - can accommodate various treatment numbers
+4. **Practical field layout** - rectangular arrangement
+
+## Example: Alpha Design for Plant Breeding Trial
+
+Consider a plant breeding trial with 120 varieties that need to be tested in an alpha design with block size 6 and 3 replications.
+
+## Setting Up Alpha Designs with speed
+
+```{r alpha-design-df}
+# Placeholder: Initialize alpha design
+# alpha_design <- initialise_design_df(items = 120, nrows = 20, ncols = 18,
+#                                      alpha_design = TRUE, block_size = 6, reps = 3)
+# head(alpha_design)
+```
+
+```{r alpha-design-plot1}
+#| echo: false
+# Placeholder: Initial visualization
+# class(alpha_design) <- c("design", class(alpha_design))
+# autoplot(alpha_design)
+```
+
+This shows the systematic alpha design structure with small blocks before optimization.
+
+### Performing the Optimisation
+
+```{r alpha-design-example}
+# Placeholder: Optimize the alpha design
+# alpha_result <- speed(alpha_design,
+#                      swap = "treatment",
+#                      swap_within = "block",
+#                      seed = 42)
+# alpha_result
+```
+
+### Output of the Optimisation
+
+```{r alpha-design-output}
+# Placeholder: Show structure of results
+# str(alpha_result)
+```
+
+### Visualise the Output
+
+```{r alpha-design-plot2}
+# Placeholder: Final visualization
+# autoplot(alpha_result)
+```
+
+An optimized alpha design with excellent spatial distribution of varieties!
+
+# Augmented Designs
+
+## Overview
+
+Augmented designs address the common situation in plant breeding and variety testing where researchers need to evaluate many new, unreplicated treatments alongside a smaller set of standard, replicated check varieties.
+
+## Structure and Components
+
+### Check Treatments (Controls)
+- **Standard varieties** with known performance
+- **Replicated** across all or most blocks
+- Provide **baseline comparison** and error estimation
+- Usually 3-6 check varieties
+
+### Test Treatments (New Entries)
+- **Experimental varieties** or new treatments  
+- **Appear only once** in the experiment
+- **Main focus** of the research
+- Can number in the hundreds or thousands
+
+### Blocking Structure
+- Experiment divided into **incomplete blocks**
+- Each block contains **some checks + some test treatments**
+- **Block size** typically 10-25 plots
+- **Check distribution** optimized across blocks
+
+## Types of Augmented Designs
+
+### Simple Augmented Design
+- Checks appear once per block
+- Most basic augmented structure
+- Easy to construct and analyze
+
+### Augmented Randomized Complete Block Design (ARCBD)
+- Checks appear in every block
+- Higher check replication
+- Better error estimation
+
+### Modified Augmented Design
+- Variable check replication
+- Optimized check distribution
+- Balances efficiency and resources
+
+## When to Use Augmented Designs
+
+- **Plant breeding programs** screening large numbers of lines
+- **Variety evaluation trials** with limited resources
+- **Preliminary testing** before full replication studies  
+- **New treatment screening** with established standards
+- **Large-scale phenotyping** experiments
+
+## Advantages
+
+1. **Cost-effective** - test many treatments with limited resources
+2. **Efficient screening** - identify promising treatments quickly
+3. **Maintains precision** - checks provide error estimation
+4. **Flexible size** - can accommodate varying numbers of test treatments
+5. **Practical** - matches breeding program workflows
+
+## Analysis Considerations
+
+- **Mixed models** required to handle unequal replication
+- **BLUP prediction** for test treatment values
+- **Spatial analysis** particularly important
+- **Check performance** monitoring across blocks
+
+## Example: Augmented Design for Breeding Program
+
+Consider a breeding program testing 200 new lines against 4 standard check varieties, arranged in blocks of 20 plots.
+
+## Setting Up Augmented Designs with speed
+
+```{r augmented-design-df}
+# Placeholder: Initialize augmented design
+# augmented_design <- initialise_design_df(test_lines = 200, checks = 4,
+#                                         nrows = 15, ncols = 15, block_size = 20)
+# head(augmented_design)
+```
+
+```{r augmented-design-plot1}
+#| echo: false
+# Placeholder: Initial visualization
+# class(augmented_design) <- c("design", class(augmented_design))
+# autoplot(augmented_design)
+```
+
+This shows the initial augmented design with checks distributed systematically across blocks.
+
+### Performing the Optimisation
+
+```{r augmented-design-example}
+# Placeholder: Optimize the augmented design
+# augmented_result <- speed(augmented_design,
+#                          swap = "treatment",
+#                          swap_within = "block",
+#                          seed = 42)
+# augmented_result
+```
+
+### Output of the Optimisation
+
+```{r augmented-design-output}
+# Placeholder: Show structure of results
+# str(augmented_result)
+```
+
+### Visualise the Output
+
+```{r augmented-design-plot2}
+# Placeholder: Final visualization
+# autoplot(augmented_result)
+```
+
+An optimized augmented design with checks well-distributed for error estimation!
+
+# Strip-Plot Designs
+
+## Overview
+
+Strip-plot designs are extensions of split-plot designs used when both treatment factors are difficult to apply to small areas. Treatments are arranged in strips that cross each other, creating a grid pattern where intersections represent treatment combinations.
+
+## Structure
+
+- **Horizontal strips** for one factor (e.g., tillage methods)
+- **Vertical strips** for another factor (e.g., planting dates)
+- **Intersections** represent factor combinations
+- **Whole plots** larger than traditional split-plot designs
+
+## When to Use Strip-Plot Designs
+
+- **Both factors require large application areas**
+- **Machinery constraints** for both factors
+- **Irrigation × cultivation** experiments
+- **Planting date × row spacing** studies
+- **When split-plot hierarchy doesn't fit** the practical situation
+
+## Advantages and Limitations
+
+### Advantages
+- **Accommodates two "difficult-to-randomize" factors**
+- **More flexible** than split-plot for certain applications
+- **Maintains reasonable precision** for main effects
+- **Practical for mechanized agriculture**
+
+### Limitations
+- **Lower precision** for interaction effects
+- **Complex analysis** with multiple error terms
+- **Less efficient** than RCBD for most comparisons
+- **Requires larger field areas**
+
+## Example: Strip-Plot Design for Tillage × Planting Date
+
+Consider an experiment testing 3 tillage methods and 4 planting dates where both factors require large application areas.
+
+## Setting Up Strip-Plot Designs with speed
+
+```{r strip-plot-df}
+# Placeholder: Initialize strip-plot design
+# strip_design <- data.frame(
+#   row = rep(1:12, each = 12),
+#   col = rep(1:12, times = 12),
+#   tillage_strip = rep(rep(1:3, each = 4), times = 12),
+#   planting_strip = rep(1:4, each = 36),
+#   tillage = rep(rep(LETTERS[1:3], each = 4), times = 12),
+#   planting_date = rep(1:4, each = 36)
+# )
+# head(strip_design)
+```
+
+```{r strip-plot-plot1}
+#| echo: false
+# Placeholder: Initial visualization showing strip structure
+# class(strip_design) <- c("design", class(strip_design))
+# autoplot(strip_design, treatments = "tillage")
+# autoplot(strip_design, treatments = "planting_date")
+```
+
+This shows the initial strip-plot layout with horizontal and vertical strips before optimization.
+
+### Performing the Optimisation
+
+```{r strip-plot-example}
+# Placeholder: Optimize the strip-plot design
+# strip_result <- speed(strip_design,
+#                      swap = list(tillage = "tillage", planting = "planting_date"),
+#                      swap_within = list(tillage = "tillage_strip", planting = "planting_strip"),
+#                      seed = 42)
+# strip_result
+```
+
+### Output of the Optimisation
+
+```{r strip-plot-output}
+# Placeholder: Show structure of results
+# str(strip_result)
+```
+
+### Visualise the Output
+
+```{r strip-plot-plot2}
+# Placeholder: Final visualization
+# autoplot(strip_result, treatments = "tillage")
+# autoplot(strip_result, treatments = "planting_date")
+```
+
+An optimized strip-plot design with well-arranged treatment combinations!
+
+# P-Rep (Partially Replicated) Designs
+
+## Overview
+
+P-rep designs are a modern approach to plant breeding trials where a subset of entries (typically checks and selected test lines) are replicated while the majority of test entries appear only once. This provides a balance between statistical power and resource efficiency.
+
+## Structure
+
+- **Replicated entries**: Key checks and promising lines (10-20% of entries)
+- **Unreplicated entries**: Majority of test lines (80-90% of entries)
+- **Strategic replication**: Based on breeding program priorities
+- **Spatial distribution**: Replicates spread throughout the trial
+
+## Key Features
+
+### Flexible Replication
+- **Variable replication levels** based on entry importance
+- **Adaptive strategies** for different breeding stages
+- **Resource-efficient** compared to full replication
+
+### Modern Analysis Methods
+- **Mixed models** with spatial correlation
+- **BLUP prediction** for unreplicated entries
+- **Genomic information** integration possible
+- **Spatial adjustment** for field variation
+
+## When to Use P-Rep Designs
+
+- **Large-scale breeding trials** (>500 entries)
+- **Early generation testing** with limited seed
+- **Resource-constrained** breeding programs
+- **High-throughput phenotyping** applications
+- **When full replication is impractical**
+
+## Example: P-Rep Design for Large Breeding Trial
+
+Consider a breeding trial with 500 entries where 50 key entries (checks and promising lines) are replicated twice while others appear once.
+
+## Setting Up P-Rep Designs with speed
+
+```{r prep-design-df}
+# Placeholder: Initialize p-rep design
+# prep_design <- initialise_design_df(entries = 500, replicated_entries = 50,
+#                                    nrows = 25, ncols = 28, reps = 2)
+# head(prep_design)
+```
+
+```{r prep-design-plot1}
+#| echo: false
+# Placeholder: Initial visualization
+# class(prep_design) <- c("design", class(prep_design))
+# autoplot(prep_design)
+```
+
+This shows the initial p-rep design with replicated entries distributed systematically.
+
+### Performing the Optimisation
+
+```{r prep-design-example}
+# Placeholder: Optimize the p-rep design
+# prep_result <- speed(prep_design,
+#                     swap = "entry",
+#                     seed = 42)
+# prep_result
+```
+
+### Output of the Optimisation
+
+```{r prep-design-output}
+# Placeholder: Show structure of results
+# str(prep_result)
+```
+
+### Visualise the Output
+
+```{r prep-design-plot2}
+# Placeholder: Final visualization
+# autoplot(prep_result)
+```
+
+An optimized p-rep design with strategic replication and spatial distribution!
+
+# Row-Column Designs with Blocking
+
+## Overview
+
+Advanced row-column designs incorporate additional blocking structures to control for multiple sources of variation simultaneously. These designs are particularly useful for large, complex experiments where variation occurs in multiple dimensions.
+
+## Types of Row-Column Blocking
+
+### Row-Column Designs with Superblocks
+- **Superblocks** contain multiple row-column units
+- **Hierarchical structure** with blocks within blocks
+- **Multi-level variation control**
+- **Suitable for very large experiments**
+
+### Resolvable Row-Column Designs
+- **Complete replications** within the row-column structure
+- **Replications as additional blocking factor**
+- **Multiple complete layouts**
+- **Good for multi-location or multi-season trials**
+
+### Nested Row-Column Designs
+- **Plots nested within row-column intersections**
+- **Sub-sampling within main experimental units**
+- **Multiple measurements per treatment combination**
+- **Increased precision for specific comparisons**
+
+## Applications
+
+- **Multi-location breeding trials** with spatial control
+- **Large greenhouse experiments** with multiple environmental gradients
+- **Field trials with complex spatial patterns**
+- **High-throughput phenotyping** platforms
+
+## Example: Row-Column Design with Blocking for Multi-Environment Trial
+
+Consider a large field trial with 100 varieties tested across multiple environments, requiring both row-column blocking and superblock structure.
+
+## Setting Up Row-Column Designs with Blocking
+
+```{r rowcol-block-design-df}
+# Placeholder: Initialize row-column design with blocking
+# rowcol_block_design <- initialise_design_df(entries = 100, reps = 3,
+#                                            nrows = 20, ncols = 15, 
+#                                            blocks = 6)
+# head(rowcol_block_design)
+```
+
+```{r rowcol-block-design-plot1}
+#| echo: false
+# Placeholder: Initial visualization
+# class(rowcol_block_design) <- c("design", class(rowcol_block_design))
+# autoplot(rowcol_block_design)
+```
+
+This shows the initial row-column design with hierarchical blocking structure.
+
+### Performing the Optimisation
+
+```{r rowcol-block-design-example}
+# Placeholder: Optimize the row-column design with blocking
+# rowcol_block_result <- speed_hierarchical(rowcol_block_design,
+#                                          swap = "entry",
+#                                          seed = 42)
+# rowcol_block_result
+```
+
+### Output of the Optimisation
+
+```{r rowcol-block-design-output}
+# Placeholder: Show structure of results
+# str(rowcol_block_result)
+```
+
+### Visualise the Output
+
+```{r rowcol-block-design-plot2}
+# Placeholder: Final visualization
+# autoplot(rowcol_block_result)
+```
+
+An optimized row-column design with efficient hierarchical blocking!
+
+# Designs for Irregular Areas
+
+## Overview
+
+Real-world experimental sites often have irregular shapes, obstacles, or varying conditions that prevent the use of standard rectangular designs. Specialized approaches are needed to maintain statistical validity while accommodating practical constraints.
+
+## Types of Irregular Situations
+
+### Irregular Field Shapes
+- **Non-rectangular fields** (triangular, circular, L-shaped)
+- **Curved boundaries** following natural features
+- **Multiple disconnected areas**
+- **Terraced or sloped fields**
+
+### Field Obstacles
+- **Trees, buildings, or equipment** within the field
+- **Wet areas or rocky patches**
+- **Access roads or pathways**
+- **Utility lines or structures**
+
+### Varying Field Conditions
+- **Distinct soil types** within the field
+- **Drainage patterns** creating zones
+- **Shade gradients** from adjacent features
+- **Historical management differences**
+
+## Design Strategies for Irregular Areas
+
+### Adaptive Blocking
+- **Blocks follow field contours** or natural boundaries
+- **Variable block sizes** to accommodate constraints
+- **Flexible shapes** rather than rectangular blocks
+- **Natural groupings** of homogeneous areas
+
+### Constraint-Based Optimization
+- **Spatial constraints** for inaccessible areas
+- **Adjacency rules** modified for irregular layouts
+- **Distance-based optimization** rather than grid-based
+- **Weighted optimization** for varying quality areas
+
+### Incomplete Coverage Designs
+- **Strategic plot placement** in available areas
+- **Systematic gaps** where obstacles occur
+- **Interpolation methods** for spatial analysis
+- **Robust analysis approaches**
+
+## Example: Irregular Field Design with Obstacles
+
+Consider a field trial that must work around existing trees, buildings, and drainage areas, requiring adaptive plot placement.
+
+## Setting Up Designs for Irregular Areas
+
+```{r irregular-design-df}
+# Placeholder: Initialize irregular field design
+# # Define field boundaries and obstacles
+# field_constraints <- list(
+#   boundaries = data.frame(x = c(0, 50, 50, 0), y = c(0, 0, 30, 30)),
+#   obstacles = data.frame(x = c(15, 35), y = c(10, 20), radius = c(3, 2))
+# )
+# irregular_design <- initialise_design_df(entries = 48, reps = 3,
+#                                        constraints = field_constraints)
+# head(irregular_design)
+```
+
+```{r irregular-design-plot1}
+#| echo: false
+# Placeholder: Initial visualization with constraints
+# class(irregular_design) <- c("design", class(irregular_design))
+# autoplot(irregular_design) + 
+#   # Add constraint visualization
+#   geom_polygon(data = field_constraints$obstacles, 
+#                aes(x = x, y = y), alpha = 0.3, fill = "red")
+```
+
+This shows the initial design layout accommodating field constraints and obstacles.
+
+### Performing the Optimisation
+
+```{r irregular-design-example}
+# Placeholder: Optimize design with spatial constraints
+# irregular_result <- speed(irregular_design,
+#                          swap = "entry",
+#                          constraints = field_constraints,
+#                          seed = 42)
+# irregular_result
+```
+
+### Output of the Optimisation
+
+```{r irregular-design-output}
+# Placeholder: Show structure of results
+# str(irregular_result)
+```
+
+### Visualise the Output
+
+```{r irregular-design-plot2}
+# Placeholder: Final visualization with constraints
+# autoplot(irregular_result) + 
+#   # Add constraint visualization
+#   geom_polygon(data = field_constraints$obstacles, 
+#                aes(x = x, y = y), alpha = 0.3, fill = "red")
+```
+
+An optimized design that efficiently uses available space while respecting field constraints!
+
+# Split-Split Plot Designs
+
+## Overview
+
+Split-split plot designs extend the hierarchical structure of split-plot designs to accommodate three factors with different levels of experimental difficulty or practical constraints. This creates a three-level hierarchy of experimental units.
+
+## Hierarchical Structure
+
+### Whole Plots (Main Plots)
+- **Largest experimental units**
+- **Factor A** applied to whole plots
+- **Most difficult factor to randomize**
+- **Example**: Tillage systems, irrigation methods
+
+### Sub-Plots (Split Plots)
+- **Intermediate-sized units within whole plots**
+- **Factor B** applied to sub-plots
+- **Moderate randomization difficulty**
+- **Example**: Fertilizer treatments, planting dates
+
+### Sub-Sub-Plots (Split-Split Plots)
+- **Smallest experimental units**
+- **Factor C** applied to sub-sub-plots
+- **Easiest factor to randomize**
+- **Example**: Varieties, pesticide treatments
+
+## Error Structure
+
+Complex error structure with multiple error terms:
+- **Whole plot error** for Factor A effects
+- **Sub-plot error** for Factor B and A×B effects  
+- **Sub-sub-plot error** for Factor C and higher-order interactions
+
+## When to Use Split-Split Plot Designs
+
+- **Three factors with different application constraints**
+- **Hierarchical treatment structure** matches practical needs
+- **Sequential application** of treatments over time
+- **Resource or equipment limitations** for some factors
+
+## Examples of Applications
+
+### Agricultural Examples
+- **Tillage × Fertilizer × Variety** experiments
+- **Irrigation × Planting Date × Cultivar** studies
+- **Cover Crop × Nitrogen × Hybrid** trials
+
+### Industrial Examples
+- **Temperature × Pressure × Catalyst** process studies
+- **Machine × Operator × Material** quality experiments
+
+## Example: Split-Split Plot Design for Agricultural Systems Research
+
+Consider a complex agricultural trial examining Tillage System × Nitrogen Rate × Variety interactions with three hierarchical levels.
+
+## Setting Up Split-Split Plot Designs with speed
+
+```{r split-split-design-df}
+# Placeholder: Initialize split-split plot design
+# # Factor A: Tillage System (whole plots)
+# # Factor B: Nitrogen Rate (sub-plots)  
+# # Factor C: Variety (sub-sub-plots)
+# split_split_design <- initialise_design_df(
+#   factor_a = c("No-till", "Conventional", "Strip-till"),  # 3 levels
+#   factor_b = c("0N", "50N", "100N", "150N"),             # 4 levels
+#   factor_c = c("V1", "V2", "V3", "V4", "V5"),           # 5 levels
+#   reps = 4, nrows = 24, ncols = 20
+# )
+# head(split_split_design)
+```
+
+```{r split-split-design-plot1}
+#| echo: false
+# Placeholder: Initial visualization showing hierarchical structure
+# class(split_split_design) <- c("design", class(split_split_design))
+# autoplot(split_split_design) + 
+#   facet_wrap(~factor_a, labeller = label_both)
+```
+
+This shows the initial split-split plot design with three-level hierarchical structure.
+
+### Performing the Optimisation
+
+```{r split-split-design-example}
+# Placeholder: Optimize the split-split plot design
+# split_split_result <- speed_hierarchical(split_split_design,
+#                                         swap = c("factor_b", "factor_c"),
+#                                         seed = 42)
+# split_split_result
+```
+
+### Output of the Optimisation
+
+```{r split-split-design-output}
+# Placeholder: Show structure of results
+# str(split_split_result)
+```
+
+### Visualise the Output
+
+```{r split-split-design-plot2}
+# Placeholder: Final visualization
+# autoplot(split_split_result) + 
+#   facet_wrap(~factor_a, labeller = label_both)
+```
+
+An optimized split-split plot design with efficient spatial arrangement across all hierarchical levels!
+
+# Factorial Designs in Incomplete Blocks
+
+## Overview
+
+When factorial experiments involve many treatment combinations, complete replication may be impractical. Factorial designs can be embedded within incomplete block structures to maintain efficiency while reducing experimental size.
+
+## Approaches
+
+### Confounded Factorial Designs
+- **Confound** high-order interactions with blocks
+- **Sacrifice** information on some interactions
+- **Maintain** efficiency for main effects and important interactions
+
+### Fractional Factorial in Blocks
+- Use **fractional factorial** structure
+- **Block** the reduced treatment set
+- **Alias** some effects but maintain key comparisons
+
+## Applications
+
+- **Multi-factor agricultural trials** with resource constraints
+- **Industrial experiments** with expensive experimental units
+- **Screening experiments** for multiple factors
+
+## Setting Up Factorial Designs in Incomplete Blocks with speed
+
+```{r factorial-incomplete-example, eval=FALSE}
+# Placeholder for Factorial in Incomplete Blocks example
+# This will show:
+# - Designing confounded factorial experiments
+# - Choosing appropriate confounding schemes
+# - Optimizing block arrangements with speed
+# - Handling fractional factorials in blocks
+# - Analysis implications of confounding
+# - Efficiency comparisons with complete designs
+```
+
+# Nested and Hierarchical Designs
+
+## Overview
+
+Nested designs involve factors that are nested within levels of other factors, creating hierarchical structures. These are common in multi-location trials and breeding programs.
+
+## Structure
+
+### Simple Nesting
+- Factor B nested within Factor A
+- Different levels of B for each level of A
+- Example: Varieties within breeding programs
+
+### Multiple Nesting
+- Several factors nested within higher-level factors
+- Complex hierarchical relationships
+- Example: Plots within blocks within locations
+
+## Applications
+
+- **Multi-location variety trials**
+- **Breeding program comparisons**  
+- **Management system studies**
+- **Genotype × environment interactions**
+
+## Setting Up Nested Designs with speed
+
+```{r nested-design-example, eval=FALSE}
+# Placeholder for Nested Design example
+# This will show:
+# - Creating hierarchical factor structures
+# - Optimizing arrangements within nested constraints
+# - Handling multiple levels of nesting
+# - Spatial optimization across hierarchy levels
+# - Analysis considerations for nested factors
+# - Visualization of hierarchical structure
+```
+
+# Design Selection Guidelines for Complex Designs
+
+## Decision Framework
+
+### Treatment Numbers
+- **< 20 treatments**: Consider RCBD or Latin Square
+- **20-100 treatments**: Alpha designs often optimal  
+- **> 100 treatments**: Augmented or incomplete block designs
+- **Multiple factors**: Factorial arrangements in blocks
+
+### Resource Constraints
+- **Limited field area**: Incomplete blocks or augmented designs
+- **High treatment costs**: Augmented designs with fewer checks
+- **Labor limitations**: Simpler designs with fewer blocks
+
+### Precision Requirements
+- **High precision needed**: Complete designs or highly replicated checks
+- **Screening phase**: Augmented designs acceptable
+- **Final testing**: Complete replication recommended
+
+## Efficiency Considerations
+
+### Statistical Efficiency
+- Compare **A-efficiency**, **D-efficiency**, and **E-efficiency**
+- Consider **relative efficiency** to RCBD
+- Balance **precision** vs **resource use**
+
+### Practical Efficiency  
+- **Field layout** feasibility
+- **Management** complexity
+- **Analysis** requirements
+- **Implementation** costs
+
+# Advanced Spatial Optimization with speed
+
+## Optimization Strategies for Complex Designs
+
+### Multi-level Optimization
+- **Hierarchical optimization** for nested structures
+- **Constraint handling** for complex design rules
+- **Multi-objective** optimization balancing competing goals
+
+### Custom Objective Functions
+- **Weighted combinations** of different criteria
+- **Penalty functions** for constraint violations
+- **Domain-specific** optimization goals
+
+## Computational Considerations
+
+### Large Design Challenges
+- **Memory management** for large treatment sets
+- **Convergence** monitoring and criteria
+- **Parallel processing** options
+- **Progress tracking** for long optimizations
+
+### Quality Assessment
+- **Convergence diagnostics**
+- **Multiple optimization runs**
+- **Sensitivity analysis**
+- **Robustness testing**
+
+# Best Practices for Complex Designs
+
+## Design Phase
+
+1. **Clearly define objectives** and constraints
+2. **Consider practical limitations** early
+3. **Compare multiple design options** systematically  
+4. **Validate design properties** before implementation
+5. **Plan for analysis** requirements
+
+## Implementation Phase
+
+1. **Detailed field maps** and plot identification
+2. **Quality control** procedures for layout
+3. **Backup plans** for implementation issues
+4. **Documentation** of actual vs planned layout
+5. **Training** for field personnel
+
+## Analysis Phase
+
+1. **Appropriate statistical models** for design structure
+2. **Spatial analysis** consideration
+3. **Model validation** and diagnostics
+4. **Effect interpretation** in context of design
+5. **Reporting** design details and limitations
+
+# Conclusion
+
+Complex experimental designs offer powerful solutions for challenging agricultural research scenarios. The `speed` package provides essential tools for optimizing these designs spatially, ensuring that the statistical advantages of sophisticated designs are fully realized in practice.
+
+Key benefits of using complex designs with spatial optimization include:
+
+- **Efficient resource utilization** for large-scale studies
+- **Maintained statistical rigor** despite practical constraints  
+- **Enhanced precision** through appropriate blocking and spatial arrangement
+- **Flexible solutions** for diverse research objectives
+- **Practical feasibility** through optimized field layouts
+
+When selecting and implementing complex designs, researchers should carefully balance statistical efficiency, practical constraints, and research objectives. The spatial optimization capabilities of `speed` ensure that these sophisticated designs achieve their full potential in real-world applications.
+
+For guidance on comparing the efficiency of different design options, see the **"Comparing Experimental Design Efficiency with speed"** vignette.
+
+## Further Reading
+
+### Specialized Design References
+- Cochran, W.G. & Cox, G.M. (1957). *Experimental Designs*
+- John, J.A. & Williams, E.R. (1995). *Cyclic and Computer Generated Designs*  
+- Bailey, R.A. (2008). *Design of Comparative Experiments*
+- Patterson, H.D. & Williams, E.R. (1976). "A new class of resolvable incomplete block designs"
+
+### Agricultural Applications
+- Kempton, R.A. & Fox, P.N. (1997). *Statistical Methods for Plant Variety Evaluation*
+- Singh, R. & Chaudhary, B.D. (1985). *Biometrical Methods in Quantitative Genetic Analysis*
+
+## Related Vignettes
+
+- **"Common Agricultural Experimental Designs with speed"** - Foundational designs for most agricultural applications
+- **"Comparing Experimental Design Efficiency with speed"** - Tools for evaluating and comparing design efficiency
+
+---
+
+*This vignette demonstrates advanced applications of the `speed` package for complex experimental designs. For foundational designs, see the "Common Agricultural Experimental Designs" vignette. For specific implementation details, consult the package documentation and function help files.*
