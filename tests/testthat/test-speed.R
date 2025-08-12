@@ -278,7 +278,6 @@ test_that("speed handles non-uniform treatment distributions", {
 test_that("speed works with a custom objective function", {
   custom_obj_function <- function(adj_weight = 0.5, bal_weight = 2) {
     function(design, swap, spatial_cols, ...) {
-      kwargs <- list(...)
       adj_score <- calculate_adjacency_score(design, swap)
       bal_score <- calculate_balance_score(design, swap, spatial_cols)
       return(list(score = adj_weight * adj_score + bal_weight * bal_score))
