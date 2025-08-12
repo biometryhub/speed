@@ -17,7 +17,6 @@ generate_neighbour <- function(design,
                                level = NULL,
                                swap_count = getOption("speed.swap_count", 1),
                                swap_all_blocks = getOption("speed.swap_all_blocks", FALSE)) {
-
   # Check if this is a hierarchical design
   is_hierarchical <- is.list(swap) && !is.null(names(swap))
 
@@ -95,7 +94,7 @@ generate_sequential_neighbour <- function(design,
                                           swap_count,
                                           swap_all_blocks) {
   new_design <- design
-  
+
   # Get the swap columns for the specified level
   level_swap <- swap[[level]]
   level_swap_within <- swap_within[[level]]
@@ -131,15 +130,15 @@ generate_sequential_neighbour <- function(design,
           if (length(different_treatments) > 0) {
             swap_pair[2] <- sample(different_treatments, 1)
           } else {
-            next  # Skip this swap if no different treatments available
+            next # Skip this swap if no different treatments available
           }
         }
 
         # Find all plots with these treatments in this group
         plots_1 <- which(new_design[[level_swap_within]] == group &
-                         new_design[[level_swap]] == swap_pair[1])
+          new_design[[level_swap]] == swap_pair[1])
         plots_2 <- which(new_design[[level_swap_within]] == group &
-                         new_design[[level_swap]] == swap_pair[2])
+          new_design[[level_swap]] == swap_pair[2])
 
         # Swap all instances of these treatments
         new_design[[level_swap]][plots_1] <- swap_pair[2]
@@ -153,6 +152,45 @@ generate_sequential_neighbour <- function(design,
   }
 
   return(list(design = new_design, swapped_items = swapped_items[1:(swapped_idx - 1)]))
+}
+
+#' Infer 'row' and 'col' with Patterns
+#'
+#' @description
+#' Infer data frame names with patterns to determine if variations of 'row' and 'col' columns exist.
+#'
+#' @inheritParams objective_function_signature
+#'
+#' @returns A list containing:
+#' - **inferred** - Logical; if TRUE, row and column columns were inferred from the data frame
+#' - **row** - Name of the row column
+#' - **col** - Name of the column column
+#'
+#' @keywords internal
+infer_row_col <- function(layout_df) {
+  row_pattern <- "(?i)^row(s|)$"
+  col_pattern <- "(?i)^(col(umn|)|range)(s|)$"
+
+  row_col <- grep(row_pattern, names(layout_df), value = TRUE)[1]
+  col_col <- grep(col_pattern, names(layout_df), value = TRUE)[1]
+  if (is.na(row_col) || is.na(col_col)) {
+    if (is.na(row_col)) {
+      warning(
+        "Cannot infer row in the design data frame. speed.adj_weight is set to 0 for this call.",
+        call. = FALSE
+      )
+    } else {
+      warning(
+        "Cannot infer column in the design data frame. speed.adj_weight is set to 0 for this call.",
+        call. = FALSE
+      )
+    }
+
+    return(list(inferred = FALSE))
+  }
+
+  message(row_col, " and ", col_col, " are used as row and column, respectively.")
+  return(list(inferred = TRUE, row = row_col, col = col_col))
 }
 
 #' Initialise Design Data Frame

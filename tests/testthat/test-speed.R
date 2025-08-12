@@ -278,6 +278,7 @@ test_that("speed handles non-uniform treatment distributions", {
 test_that("speed works with a custom objective function", {
   custom_obj_function <- function(adj_weight = 0.5, bal_weight = 2) {
     function(design, swap, spatial_cols, ...) {
+      kwargs <- list(...)
       adj_score <- calculate_adjacency_score(design, swap)
       bal_score <- calculate_balance_score(design, swap, spatial_cols)
       return(list(score = adj_weight * adj_score + bal_weight * bal_score))
@@ -980,6 +981,67 @@ test_that("speed handles large RCBD with 500 treatments", {
 
   vdiffr::expect_doppelganger("speed_large_rcbd",
                               autoplot(result, treatments = "treat", legend = FALSE))
+})
+
+test_that("speed runs a with variation of row and column columns", {
+  # Sample data for testing
+  test_data <- data.frame(
+    Row = rep(1:5, times = 4),
+    col = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ Row + col,
+    iterations = 1000,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  result$design_df$row <- result$design_df$Row
+  vdiffr::expect_doppelganger("speed_small", autoplot(result))
+})
+
+test_that("speed runs a without row", {
+  # Sample data for testing
+  test_data <- data.frame(
+    col = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  expect_warning(
+    speed(
+      data = test_data,
+      swap = "treatment",
+      spatial_factors = ~  col,
+      iterations = 1000,
+      seed = 42,
+      quiet = TRUE
+    ),
+    "Cannot infer row in the design data frame. speed.adj_weight is set to 0 for this call."
+  )
+})
+
+test_that("speed runs a without column", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  expect_warning(
+    speed(
+      data = test_data,
+      swap = "treatment",
+      spatial_factors = ~  row,
+      iterations = 1000,
+      seed = 42,
+      quiet = TRUE
+    ),
+    "Cannot infer column in the design data frame. speed.adj_weight is set to 0 for this call."
+  )
 })
 
 # TODO: Test cases to add/update
