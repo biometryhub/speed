@@ -32,6 +32,8 @@ objective_function_signature <- function(layout_df,
 #'
 #' @param adj_weight Weight for adjacency score (default: 1)
 #' @param bal_weight Weight for balance score (default: 1)
+#' @param row_column Name of column representing the row of the design (default: "row")
+#' @param col_column Name of column representing the column of the design (default: "col")
 #'
 #' @rdname objective_functions
 #' @export
@@ -41,23 +43,27 @@ objective_function <- function(layout_df,
                                spatial_cols,
                                adj_weight = getOption("speed.adj_weight", 1),
                                bal_weight = getOption("speed.bal_weight", 1),
+                               row_column = "row",
+                               col_column = "col",
                                ...) {
-  
   # Check if there are only two treatments - adjacency becomes deterministic
   n_treatments <- length(unique(layout_df[[swap]]))
   if (n_treatments == 2 && adj_weight != 0) {
-    warning("Only 2 treatments detected in '", swap, "'. Adjacency optimization becomes deterministic (checkerboard pattern). Setting adjacency weight to 0.", 
-            call. = FALSE)
+    warning("Only 2 treatments detected in '", swap, "'. Adjacency optimization becomes deterministic (checkerboard pattern). Setting adjacency weight to 0.",
+      call. = FALSE
+    )
     adj_weight <- 0
   }
-  
+
   adj_score <- ifelse(adj_weight != 0,
-                      calculate_adjacency_score(layout_df, swap),
-                      0)
+    calculate_adjacency_score(layout_df, swap, row_column, col_column),
+    0
+  )
 
   bal_score <- ifelse(bal_weight != 0,
-                      calculate_balance_score(layout_df, swap, spatial_cols),
-                      0)
+    calculate_balance_score(layout_df, swap, spatial_cols),
+    0
+  )
 
   return(list(
     score = round(adj_weight * adj_score + bal_weight * bal_score, 10)
@@ -128,12 +134,13 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #'
 #' # Gives value 6
 #' calculate_adjacency_score(design_with_adj, "treatment")
+#'
 #' @export
-calculate_adjacency_score <- function(layout_df, swap) {
+calculate_adjacency_score <- function(layout_df, swap, row_column = "row", col_column = "col") {
   layout_df <- matrix(
     layout_df[[swap]],
-    nrow = max(as.numeric(as.character(layout_df$row)), na.rm = TRUE),
-    ncol = max(as.numeric(as.character(layout_df$col)), na.rm = TRUE),
+    nrow = max(as.numeric(as.character(layout_df[[row_column]])), na.rm = TRUE),
+    ncol = max(as.numeric(as.character(layout_df[[col_column]])), na.rm = TRUE),
     byrow = TRUE
   )
 
@@ -154,6 +161,7 @@ calculate_adjacency_score <- function(layout_df, swap) {
 #' Create an objective function including even distribution and neighbor balance introduced by Piepho 2018.
 #'
 #' @inheritParams objective_function_signature
+#' @inheritParams objective_function
 #' @inheritParams calculate_nb
 #' @inheritParams calculate_ed
 #' @param design A data frame representing the spatial information of the design
@@ -189,6 +197,8 @@ objective_function_piepho <- function(design,
                                       current_score_obj = NULL,
                                       swapped_items = NULL,
                                       pair_mapping = NULL,
+                                      row_column = "row",
+                                      col_column = "col",
                                       ...) {
   design_matrix <- matrix(
     design[[swap]],
@@ -205,7 +215,7 @@ objective_function_piepho <- function(design,
 
   design[[swap]] <- as.vector(design_matrix)
   bal_score <- calculate_balance_score(design, swap, spatial_cols)
-  adj_score <- calculate_adjacency_score(design, swap)
+  adj_score <- calculate_adjacency_score(design, swap, row_column, col_column)
 
   return(list(
     score = round(nb_score + ed_score + bal_score + adj_score, 10),
@@ -354,10 +364,9 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #'
 #' @export
 calculate_ed <- function(
-  design_matrix,
-  current_ed = NULL,
-  swapped_items = NULL
-) {
+    design_matrix,
+    current_ed = NULL,
+    swapped_items = NULL) {
   if (!is.null(swapped_items)) {
     design_matrix[!(design_matrix %in% swapped_items)] <- NA
     msts <- lapply(current_ed, function(ed_by_rep) ed_by_rep$msts)

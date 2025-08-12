@@ -4,12 +4,21 @@
 \alias{calculate_adjacency_score}
 \title{Calculate Adjacency Score for Design}
 \usage{
-calculate_adjacency_score(layout_df, swap)
+calculate_adjacency_score(
+  layout_df,
+  swap,
+  row_column = "row",
+  col_column = "col"
+)
 }
 \arguments{
 \item{layout_df}{A data frame representing the current design}
 
 \item{swap}{A column name of the items to be swapped}
+
+\item{row_column}{Name of column representing the row of the design (default: "row")}
+
+\item{col_column}{Name of column representing the column of the design (default: "col")}
 }
 \value{
 Numeric score for treatment adjacencies (lower is better)
@@ -39,4 +48,5 @@ design_with_adj <- data.frame(
 
 # Gives value 6
 calculate_adjacency_score(design_with_adj, "treatment")
+
 }

@@ -113,21 +113,39 @@ speed <- function(data,
                   quiet = FALSE,
                   seed = NULL,
                   ...) {
+  rlang::check_dots_used()
+
   # Check if this is a hierarchical design
   is_hierarchical <- is.list(swap) && !is.null(names(swap))
 
+  # Infer row and column columns
+  inferred <- infer_row_col(data)
+  row_column <- inferred$row
+  col_column <- inferred$col
+
+  # If row and column columns are not inferred, set adj_weight to 0
+  if (!inferred$inferred) {
+    old_options <- options()
+    on.exit(options(old_options), add = TRUE)
+    options(speed.adj_weight = 0)
+  } else {
+    # Sort the data frame to start with to ensure consistency in calculating the adjacency later
+    data <- data[do.call(order, data[c(row_column, col_column)]), ]
+  }
+
+
   if (is_hierarchical) {
     return(speed_hierarchical(data, swap, swap_within, spatial_factors,
-                             iterations, early_stop_iterations, obj_function,
-                             quiet, seed, ...))
+                              iterations, early_stop_iterations, obj_function,
+                              quiet, seed, row_column = row_column, col_column = col_column, ...))
   } else {
     # Convert swap and swap_within to character if they are not already - NSE
     swap <- as.character(substitute(swap))
     swap_within <- as.character(substitute(swap_within))
 
     return(speed_simple(data, swap, swap_within, spatial_factors,
-                       iterations, early_stop_iterations, obj_function,
-                       quiet, seed, ...))
+                        iterations, early_stop_iterations, obj_function,
+                        quiet, seed, row_column = row_column, col_column = col_column, ...))
   }
 }
 
@@ -167,8 +185,6 @@ speed_simple <- function(data,
                        start_temp,
                        cooling_rate,
                        random_initialisation)
-  rlang::check_dots_used()
-
   # Handle swap_within
   layout_df <- data
   if (swap_within == "1" || swap_within == "none") {
@@ -190,9 +206,6 @@ speed_simple <- function(data,
 
   spatial_cols <- all.vars(spatial_factors)
   treatments <- layout_df[[swap]]
-
-  # Sort the data frame to start with to ensure consistency in calculating the adjacency later
-  layout_df <- layout_df[do.call(order, layout_df[spatial_cols]), ]
 
   # Initialise design
   current_design <- layout_df
@@ -359,9 +372,6 @@ speed_hierarchical <- function(data,
   layout_df <- data
   spatial_cols <- all.vars(spatial_factors)
 
-  # Sort the data frame to start with to ensure consistency in calculating the adjacency later
-  layout_df <- layout_df[do.call(order, layout_df[spatial_cols]), ]
-
   # Handle swap_within for each level
   for (level in hierarchy_levels) {
     if (swap_within[[level]] == "1" || swap_within[[level]] == "none") {
@@ -428,11 +438,11 @@ speed_hierarchical <- function(data,
 
       # Calculate new score
       new_score_obj <- obj_function[[level]](new_design$design,
-                                            swap[[level]],
-                                            spatial_cols,
-                                            current_score_obj = current_score_obj,
-                                            swapped_items = new_design$swapped_items,
-                                            ...)
+                                             swap[[level]],
+                                             spatial_cols,
+                                             current_score_obj = current_score_obj,
+                                             swapped_items = new_design$swapped_items,
+                                             ...)
       new_score <- new_score_obj$score
 
       # Decide whether to accept the new design

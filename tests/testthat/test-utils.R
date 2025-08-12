@@ -47,7 +47,7 @@ test_that("pseudo_inverse works with rectangular matrices", {
 test_that("pseudo_inverse respects tolerance parameter", {
   # Create a matrix with very small singular values
   U <- matrix(c(1, 0, 0, 1), nrow = 2)
-  d <- c(1, 1e-12)  # Very small second singular value
+  d <- c(1, 1e-12) # Very small second singular value
   V <- matrix(c(1, 0, 0, 1), nrow = 2)
 
   # Reconstruct matrix with small singular value
@@ -90,4 +90,49 @@ test_that("env_add_one works with different key types", {
   # Test incrementing
   env_add_one(env, "char_key")
   expect_equal(env$char_key, 2)
+})
+
+test_that("infer_row_col can infer row and column", {
+  inferred <- infer_row_col(data.frame(
+    row = rep(1:4, each = 5),
+    col = rep(1:4, times = 5)
+  ))
+
+  expect_equal(inferred$inferred, TRUE)
+  expect_equal(inferred$col, "col")
+  expect_equal(inferred$row, "row")
+
+  inferred <- infer_row_col(data.frame(
+    Row = rep(1:4, each = 5),
+    column = rep(1:4, times = 5)
+  ))
+
+  expect_equal(inferred$inferred, TRUE)
+  expect_equal(inferred$col, "column")
+  expect_equal(inferred$row, "Row")
+
+  inferred <- infer_row_col(data.frame(
+    Rows = rep(1:4, each = 5),
+    range = rep(1:4, times = 5)
+  ))
+
+  expect_equal(inferred$inferred, TRUE)
+  expect_equal(inferred$col, "range")
+  expect_equal(inferred$row, "Rows")
+})
+
+test_that("infer_row_col raise warning if cannot infer", {
+  expect_warning(
+    inferred <- infer_row_col(data.frame(row = rep(1:4, each = 5))),
+    "Cannot infer column in the design data frame. speed.adj_weight is set to 0 for this call."
+  )
+
+  expect_equal(inferred$inferred, FALSE)
+
+  expect_warning(
+    inferred <- infer_row_col(data.frame(col = rep(1:4, each = 5))),
+    "Cannot infer row in the design data frame. speed.adj_weight is set to 0 for this call."
+  )
+
+  expect_equal(inferred$inferred, FALSE)
 })

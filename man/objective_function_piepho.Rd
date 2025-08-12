@@ -11,6 +11,8 @@ objective_function_piepho(
   current_score_obj = NULL,
   swapped_items = NULL,
   pair_mapping = NULL,
+  row_column = "row",
+  col_column = "col",
   ...
 )
 }
@@ -26,6 +28,10 @@ objective_function_piepho(
 \item{swapped_items}{The items that had just been swapped}
 
 \item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
+
+\item{row_column}{Name of column representing the row of the design (default: "row")}
+
+\item{col_column}{Name of column representing the column of the design (default: "col")}
 
 \item{...}{Extra parameters passed from \link{speed}}
 }
