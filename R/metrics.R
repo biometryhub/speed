@@ -32,6 +32,8 @@ objective_function_signature <- function(layout_df,
 #'
 #' @param adj_weight Weight for adjacency score (default: 1)
 #' @param bal_weight Weight for balance score (default: 1)
+#' @param row_column Name of column representing the row of the design (default: "row")
+#' @param col_column Name of column representing the column of the design (default: "col")
 #'
 #' @rdname objective_functions
 #' @export
@@ -159,6 +161,7 @@ calculate_adjacency_score <- function(layout_df, swap, row_column = "row", col_c
 #' Create an objective function including even distribution and neighbor balance introduced by Piepho 2018.
 #'
 #' @inheritParams objective_function_signature
+#' @inheritParams objective_function
 #' @inheritParams calculate_nb
 #' @inheritParams calculate_ed
 #' @param design A data frame representing the spatial information of the design
