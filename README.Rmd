@@ -23,6 +23,21 @@ knitr::opts_chunk$set(
 ![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fbiometryhub.github.io%2Fspeed&label=Hits&icon=arrow-down-circle&color=%23198754)
 <!-- badges: end -->
 
+## Table of Contents
+
+<!-- vim-markdown-toc GFM -->
+
+* [Overview](#overview)
+* [Installation](#installation)
+* [Features](#features)
+* [Example](#example)
+  * [Basic](#basic)
+  * [Blocked design](#blocked-design)
+  * [More Examples](#more-examples)
+* [Citation](#citation)
+* [License](#license)
+
+<!-- vim-markdown-toc -->
 
 ## Overview
 
@@ -53,7 +68,9 @@ pak::pak("biometryhub/speed")
 
 See the package documentation for more detailed examples and options.
 
-## Basic Example
+## Example
+
+### Basic
 
 A simple example optimising a 4×3 completely randomised design with 4 treatments:
 
@@ -77,7 +94,7 @@ autoplot(result)
 plot_progress(result)
 ```
 
-## Blocked design
+### Blocked design
 
 You can also optimise designs within blocks:
 
@@ -91,17 +108,18 @@ df <- data.frame(
 )
 
 # Optimise while respecting blocks
-result <- speed(df, 
-                "treatment",
-                swap_within = "block",
-                iterations = 5000,
-                seed = 42)
+result <- speed(df,
+  "treatment",
+  swap_within = "block",
+  iterations = 5000,
+  seed = 42
+)
 
 # Plot the design with block boundaries
 autoplot(result)
 ```
 
-## More Examples
+### More Examples
 
 For more detailed examples, visit [here](https://biometryhub.github.io/speed/articles/common_designs.html).
 
@@ -109,7 +127,7 @@ For more detailed examples, visit [here](https://biometryhub.github.io/speed/art
 
 If you use `speed` in your research, please cite:
 
-```{r citation}
+```{r citation, echo=FALSE, results="hold", comment=""}
 citation("speed")
 ```
 

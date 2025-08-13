@@ -15,6 +15,22 @@ coverage](https://codecov.io/gh/biometryhub/speed/graph/badge.svg)](https://app.
 ![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fbiometryhub.github.io%2Fspeed&label=Hits&icon=arrow-down-circle&color=%23198754)
 <!-- badges: end -->
 
+## Table of Contents
+
+<!-- vim-markdown-toc GFM -->
+
+- [Overview](#overview)
+- [Installation](#installation)
+- [Features](#features)
+- [Example](#example)
+  - [Basic](#basic)
+  - [Blocked design](#blocked-design)
+  - [More Examples](#more-examples)
+- [Citation](#citation)
+- [License](#license)
+
+<!-- vim-markdown-toc -->
+
 ## Overview
 
 The `speed` package optimises spatial experimental designs by
@@ -47,7 +63,9 @@ pak::pak("biometryhub/speed")
 
 See the package documentation for more detailed examples and options.
 
-## Basic Example
+## Example
+
+### Basic
 
 A simple example optimising a 4×3 completely randomised design with 4
 treatments:
@@ -83,7 +101,7 @@ plot_progress(result)
 
 <img src="man/figures/README-example-2.png" width="100%" /><img src="man/figures/README-example-3.png" width="100%" />
 
-## Blocked design
+### Blocked design
 
 You can also optimise designs within blocks:
 
@@ -97,11 +115,12 @@ df <- data.frame(
 )
 
 # Optimise while respecting blocks
-result <- speed(df, 
-                "treatment",
-                swap_within = "block",
-                iterations = 5000,
-                seed = 42)
+result <- speed(df,
+  "treatment",
+  swap_within = "block",
+  iterations = 5000,
+  seed = 42
+)
 #> row and col are used as row and column, respectively.
 #> Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 
 #> Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 
@@ -113,7 +132,7 @@ autoplot(result)
 
 <img src="man/figures/README-blocks-1.png" width="100%" />
 
-## More Examples
+### More Examples
 
 For more detailed examples, visit
 [here](https://biometryhub.github.io/speed/articles/common_designs.html).
@@ -122,25 +141,22 @@ For more detailed examples, visit
 
 If you use `speed` in your research, please cite:
 
-``` r
-citation("speed")
-#> Warning in citation("speed"): could not determine year for 'speed' from package
-#> DESCRIPTION file
-#> To cite package 'speed' in publications use:
-#> 
-#>   Rogers S, Taylor J, Edson R, Pipattungsakul W (????). _speed:
-#>   Generate Spatially Efficient Experimental Designs_. R package version
-#>   0.0.1, <https://biometryhub.github.io/speed/>.
-#> 
-#> A BibTeX entry for LaTeX users is
-#> 
-#>   @Manual{,
-#>     title = {speed: Generate Spatially Efficient Experimental Designs},
-#>     author = {Sam Rogers and Julian Taylor and Russell Edson and Wasin Pipattungsakul},
-#>     note = {R package version 0.0.1},
-#>     url = {https://biometryhub.github.io/speed/},
-#>   }
-```
+    Warning in citation("speed"): could not determine year for 'speed' from package
+    DESCRIPTION file
+    To cite package 'speed' in publications use:
+
+      Rogers S, Taylor J, Edson R, Pipattungsakul W (????). _speed:
+      Generate Spatially Efficient Experimental Designs_. R package version
+      0.0.1, <https://biometryhub.github.io/speed/>.
+
+    A BibTeX entry for LaTeX users is
+
+      @Manual{,
+        title = {speed: Generate Spatially Efficient Experimental Designs},
+        author = {Sam Rogers and Julian Taylor and Russell Edson and Wasin Pipattungsakul},
+        note = {R package version 0.0.1},
+        url = {https://biometryhub.github.io/speed/},
+      }
 
 ## License
 
