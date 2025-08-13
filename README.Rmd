@@ -37,7 +37,7 @@ The `speed` package optimises spatial experimental designs by rearranging treatm
 
 You can install the development version of speed from [GitHub](https://github.com/biometryhub/speed) with:
 
-```r
+```{r, eval = FALSE}
 # install.packages("pak")
 pak::pak("biometryhub/speed")
 ```
@@ -101,14 +101,15 @@ result <- speed(df,
 autoplot(result)
 ```
 
+## More Examples
+
+For more detailed examples, visit [here](https://biometryhub.github.io/speed/articles/common_designs.html).
+
 ## Citation
 
 If you use `speed` in your research, please cite:
 
-```
-citation("speed")
-```
-```r
+```{r citation}
 citation("speed")
 ```
 
