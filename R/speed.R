@@ -123,6 +123,10 @@ speed <- function(data,
   row_column <- inferred$row
   col_column <- inferred$col
 
+  # convert to factor
+  factored <- to_factor(data)
+  data <- factored$df
+
   # If row and column columns are not inferred, set adj_weight to 0
   if (!inferred$inferred) {
     old_options <- options()
@@ -134,9 +138,9 @@ speed <- function(data,
   }
 
   if (is_hierarchical) {
-    return(speed_hierarchical(data, swap, swap_within, spatial_factors,
-                              iterations, early_stop_iterations, obj_function,
-                              quiet, seed, row_column = row_column, col_column = col_column, ...))
+    design <- speed_hierarchical(data, swap, swap_within, spatial_factors,
+                                 iterations, early_stop_iterations, obj_function,
+                                 quiet, seed, row_column = row_column, col_column = col_column, ...)
   } else {
     # Convert swap and swap_within to character if they are not already - NSE
     # swap <- as.character(substitute(swap))
@@ -144,10 +148,13 @@ speed <- function(data,
     # swap <- wrappable_nse(swap)
     # swap_within <- wrappable_nse(swap_within)
 
-    return(speed_simple(data, swap, swap_within, spatial_factors,
-                        iterations, early_stop_iterations, obj_function,
-                        quiet, seed, row_column = row_column, col_column = col_column, ...))
+    design <- speed_simple(data, swap, swap_within, spatial_factors,
+                           iterations, early_stop_iterations, obj_function,
+                           quiet, seed, row_column = row_column, col_column = col_column, ...)
   }
+
+  design$design_df <- to_types(design$design_df, factored$input_types)
+  return(design)
 }
 
 #' Speed function for simple (non-hierarchical) designs
