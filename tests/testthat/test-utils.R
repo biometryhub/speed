@@ -93,10 +93,13 @@ test_that("env_add_one works with different key types", {
 })
 
 test_that("infer_row_col can infer row and column", {
-  inferred <- infer_row_col(data.frame(
-    row = rep(1:4, each = 5),
-    col = rep(1:4, times = 5)
-  ))
+  expect_message(
+    inferred <- infer_row_col(data.frame(
+      row = rep(1:4, each = 5),
+      col = rep(1:4, times = 5)
+    )),
+    "row and col are used as row and column, respectively"
+  )
 
   expect_equal(inferred$inferred, TRUE)
   expect_equal(inferred$col, "col")
@@ -105,7 +108,7 @@ test_that("infer_row_col can infer row and column", {
   inferred <- infer_row_col(data.frame(
     Row = rep(1:4, each = 5),
     column = rep(1:4, times = 5)
-  ))
+  ), quiet = TRUE)
 
   expect_equal(inferred$inferred, TRUE)
   expect_equal(inferred$col, "column")
@@ -114,7 +117,7 @@ test_that("infer_row_col can infer row and column", {
   inferred <- infer_row_col(data.frame(
     Rows = rep(1:4, each = 5),
     range = rep(1:4, times = 5)
-  ))
+  ), quiet = TRUE)
 
   expect_equal(inferred$inferred, TRUE)
   expect_equal(inferred$col, "range")

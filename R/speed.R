@@ -8,26 +8,26 @@
 #' @param data A data frame containing the experimental design with spatial
 #' coordinates
 #' @param swap A column name of the items to be swapped (e.g., `treatment`,
-#'   `variety`, `genotype`, etc). For hierarchical designs, provide a named 
-#'   list where each name corresponds to a hierarchy level (e.g., 
-#'   `list(wp = "wholeplot_treatment", sp = "subplot_treatment")`). 
+#'   `variety`, `genotype`, etc). For hierarchical designs, provide a named
+#'   list where each name corresponds to a hierarchy level (e.g.,
+#'   `list(wp = "wholeplot_treatment", sp = "subplot_treatment")`).
 #'   See details for more information.
 #' @param swap_within A string specifying the variable that defines a boundary
 #'   within which to swap treatments. Specify `"1"` or `"none"` for no boundary
 #'   (default: `"1"`). Other examples might be `"block"` or `"replicate"` or
-#'   even `"site"`. For hierarchical designs, provide a named list with names 
-#'   matching `swap` to optimise a hierarchical design such as a split-plot. 
+#'   even `"site"`. For hierarchical designs, provide a named list with names
+#'   matching `swap` to optimise a hierarchical design such as a split-plot.
 #'   See details for more information.
 #' @param spatial_factors A one-sided formula specifying spatial factors to
 #'   consider for balance (default: `~row + col`).
 #' @param iterations Maximum number of iterations for the simulated annealing
-#'   algorithm (default: 10000). For hierarchical designs, can be a named list 
+#'   algorithm (default: 10000). For hierarchical designs, can be a named list
 #'   with names matching `swap`.
 #' @param early_stop_iterations Number of iterations without improvement before
-#'   early stopping (default: 2000). For hierarchical designs, can be a named 
+#'   early stopping (default: 2000). For hierarchical designs, can be a named
 #'   list with names matching `swap`.
 #' @param obj_function Objective function used to calculate score (lower is
-#'   better) (default: [objective_function()]). For hierarchical designs, can 
+#'   better) (default: [objective_function()]). For hierarchical designs, can
 #'   be a named list with names matching `swap`.
 #' @param quiet Logical; if TRUE, suppresses progress messages (default: FALSE)
 #' @param seed A numeric value for random seed. If provided, it ensures
@@ -37,13 +37,13 @@
 #' @returns A list containing:
 #' - **design_df** - Data frame of optimised design
 #' - **score** - Final optimisation score
-#' - **scores** - Vector of scores across iterations (for simple designs) or 
+#' - **scores** - Vector of scores across iterations (for simple designs) or
 #'   named list of score vectors (for hierarchical designs)
 #' - **temperatures** - Vector of temperatures across iterations
 #' - **iterations_run** - Total number of iterations performed
-#' - **stopped_early** - Logical indicating if optimisation stopped early 
+#' - **stopped_early** - Logical indicating if optimisation stopped early
 #'   (for simple designs) or named logical vector (for hierarchical designs)
-#' - **treatments** - Vector of unique treatments (for simple designs) or 
+#' - **treatments** - Vector of unique treatments (for simple designs) or
 #'   named list of treatment vectors (for hierarchical designs)
 #' - **seed** - Random seed used for reproducibility of the design. If not set
 #'   in the function, the seed is set to the third element of `.Random.seed`.
@@ -119,7 +119,7 @@ speed <- function(data,
   is_hierarchical <- is.list(swap) && !is.null(names(swap))
 
   # Infer row and column columns
-  inferred <- infer_row_col(data)
+  inferred <- infer_row_col(data, quiet)
   row_column <- inferred$row
   col_column <- inferred$col
 

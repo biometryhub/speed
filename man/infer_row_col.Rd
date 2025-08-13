@@ -4,10 +4,12 @@
 \alias{infer_row_col}
 \title{Infer 'row' and 'col' with Patterns}
 \usage{
-infer_row_col(layout_df)
+infer_row_col(layout_df, quiet = FALSE)
 }
 \arguments{
 \item{layout_df}{A data frame representing the current design}
+
+\item{quiet}{Logical (default: FALSE). If TRUE, output will be suppressed.}
 }
 \value{
 A list containing:

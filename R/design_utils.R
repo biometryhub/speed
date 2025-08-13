@@ -160,6 +160,7 @@ generate_sequential_neighbour <- function(design,
 #' Infer data frame names with patterns to determine if variations of 'row' and 'col' columns exist.
 #'
 #' @inheritParams objective_function_signature
+#' @param quiet Logical (default: FALSE). If TRUE, output will be suppressed.
 #'
 #' @returns A list containing:
 #' - **inferred** - Logical; if TRUE, row and column columns were inferred from the data frame
@@ -167,7 +168,7 @@ generate_sequential_neighbour <- function(design,
 #' - **col** - Name of the column column
 #'
 #' @keywords internal
-infer_row_col <- function(layout_df) {
+infer_row_col <- function(layout_df, quiet = FALSE) {
   row_pattern <- "(?i)^row(s|)$"
   col_pattern <- "(?i)^(col(umn|)|range)(s|)$"
 
@@ -188,8 +189,9 @@ infer_row_col <- function(layout_df) {
 
     return(list(inferred = FALSE))
   }
-
-  message(row_col, " and ", col_col, " are used as row and column, respectively.")
+  if(!quiet) {
+    message(row_col, " and ", col_col, " are used as row and column, respectively.")
+  }
   return(list(inferred = TRUE, row = row_col, col = col_col))
 }
 
