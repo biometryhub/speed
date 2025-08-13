@@ -43,34 +43,34 @@ pseudo_inverse <- function(a_matrix, tolerance = 1e-10) {
   }
 }
 
-#' Evaluate NSE While Allowing Wrapping
-#'
-#' @description
-#' Evaluates NSE while allowing wrapping of the variable in another function call.
-#'
-#' @param var A symbol or a string
-#'
-#' @return A string representing the symbol or the literal string
-#'
-#' @keywords internal
-wrappable_nse <- function(var) {
-  expr <- substitute(var)
-
-  # Try to evaluate to see if it's a string value being passed
-  tryCatch(
-    {
-      # If we can evaluate it and it's a string, use the string value
-      evaluated <- eval(expr, envir = parent.frame())
-      if (is.character(evaluated)) {
-        return(evaluated)
-      } else {
-        # If it evaluates but isn't a string, treat as NSE (return symbol name)
-        return(deparse(expr))
-      }
-    },
-    error = function(e) {
-      # If evaluation fails (undefined variable), treat as NSE (return symbol name)
-      return(deparse(expr))
-    }
-  )
-}
+# #' Evaluate NSE While Allowing Wrapping
+# #'
+# #' @description
+# #' Evaluates NSE while allowing wrapping of the variable in another function call.
+# #'
+# #' @param var A symbol or a string
+# #'
+# #' @return A string representing the symbol or the literal string
+# #'
+# #' @keywords internal
+# wrappable_nse <- function(var) {
+#   expr <- substitute(var)
+#
+#   # Try to evaluate to see if it's a string value being passed
+#   tryCatch(
+#     {
+#       # If we can evaluate it and it's a string, use the string value
+#       evaluated <- eval(expr, envir = parent.frame())
+#       if (is.character(evaluated)) {
+#         return(evaluated)
+#       } else {
+#         # If it evaluates but isn't a string, treat as NSE (return symbol name)
+#         return(deparse(expr))
+#       }
+#     },
+#     error = function(e) {
+#       # If evaluation fails (undefined variable), treat as NSE (return symbol name)
+#       return(deparse(expr))
+#     }
+#   )
+# }
