@@ -27,8 +27,8 @@ reference:
   - title: Helper Functions
     desc: Utility functions to initialize objects.
   - contents:
-      - initialise_design_df
       - create_pair_mapping
+      - initialise_design_df
   - title: Advanced options
   - contents:
-      - speed_options
+      - speed-options
