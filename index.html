@@ -57,6 +57,27 @@
 <!-- badges: start -->
 
 <div class="section level2">
+<h2 id="table-of-contents">Table of Contents<a class="anchor" aria-label="anchor" href="#table-of-contents"></a>
+</h2>
+<!-- vim-markdown-toc GFM -->
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#features">Features</a></li>
+<li>
+<a href="#example">Example</a>
+<ul>
+<li><a href="#basic">Basic</a></li>
+<li><a href="#blocked-design">Blocked design</a></li>
+<li><a href="#more-examples">More Examples</a></li>
+</ul>
+</li>
+<li><a href="#citation">Citation</a></li>
+<li><a href="#license">License</a></li>
+</ul>
+<!-- vim-markdown-toc -->
+</div>
+<div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
 <p>The <code>speed</code> package optimises spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It uses simulated annealing to:</p>
@@ -89,8 +110,11 @@
 <p>See the package documentation for more detailed examples and options.</p>
 </div>
 <div class="section level2">
-<h2 id="basic-example">Basic Example<a class="anchor" aria-label="anchor" href="#basic-example"></a>
+<h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
+<div class="section level3">
+<h3 id="basic">Basic<a class="anchor" aria-label="anchor" href="#basic"></a>
+</h3>
 <p>A simple example optimising a 4×3 completely randomised design with 4 treatments:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://biometryhub.github.io/speed/">speed</a></span><span class="op">)</span></span>
@@ -118,9 +142,9 @@
 <span><span class="fu"><a href="reference/plot_progress.html">plot_progress</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-example-2.png" width="100%"><img src="reference/figures/README-example-3.png" width="100%"></p>
 </div>
-<div class="section level2">
-<h2 id="blocked-design">Blocked design<a class="anchor" aria-label="anchor" href="#blocked-design"></a>
-</h2>
+<div class="section level3">
+<h3 id="blocked-design">Blocked design<a class="anchor" aria-label="anchor" href="#blocked-design"></a>
+</h3>
 <p>You can also optimise designs within blocks:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create a design with blocks</span></span>
@@ -132,11 +156,12 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Optimise while respecting blocks</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/speed.html">speed</a></span><span class="op">(</span><span class="va">df</span>, </span>
-<span>                <span class="st">"treatment"</span>,</span>
-<span>                swap_within <span class="op">=</span> <span class="st">"block"</span>,</span>
-<span>                iterations <span class="op">=</span> <span class="fl">5000</span>,</span>
-<span>                seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/speed.html">speed</a></span><span class="op">(</span><span class="va">df</span>,</span>
+<span>  <span class="st">"treatment"</span>,</span>
+<span>  swap_within <span class="op">=</span> <span class="st">"block"</span>,</span>
+<span>  iterations <span class="op">=</span> <span class="fl">5000</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">42</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt; row and col are used as row and column, respectively.</span></span>
 <span><span class="co">#&gt; Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 </span></span>
 <span><span class="co">#&gt; Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 </span></span>
@@ -146,33 +171,32 @@
 <span><span class="fu"><a href="reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-blocks-1.png" width="100%"></p>
 </div>
-<div class="section level2">
-<h2 id="more-examples">More Examples<a class="anchor" aria-label="anchor" href="#more-examples"></a>
-</h2>
+<div class="section level3">
+<h3 id="more-examples">More Examples<a class="anchor" aria-label="anchor" href="#more-examples"></a>
+</h3>
 <p>For more detailed examples, visit <a href="https://biometryhub.github.io/speed/articles/common_designs.html">here</a>.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
 <p>If you use <code>speed</code> in your research, please cite:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"speed"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in citation("speed"): could not determine year for 'speed' from package</span></span>
-<span><span class="co">#&gt; DESCRIPTION file</span></span>
-<span><span class="co">#&gt; To cite package 'speed' in publications use:</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Rogers S, Taylor J, Edson R, Pipattungsakul W (????). _speed:</span></span>
-<span><span class="co">#&gt;   Generate Spatially Efficient Experimental Designs_. R package version</span></span>
-<span><span class="co">#&gt;   0.0.1, &lt;https://biometryhub.github.io/speed/&gt;.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; A BibTeX entry for LaTeX users is</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   @Manual{,</span></span>
-<span><span class="co">#&gt;     title = {speed: Generate Spatially Efficient Experimental Designs},</span></span>
-<span><span class="co">#&gt;     author = {Sam Rogers and Julian Taylor and Russell Edson and Wasin Pipattungsakul},</span></span>
-<span><span class="co">#&gt;     note = {R package version 0.0.1},</span></span>
-<span><span class="co">#&gt;     url = {https://biometryhub.github.io/speed/},</span></span>
-<span><span class="co">#&gt;   }</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="fu">citation</span>(<span class="st">"speed"</span>)<span class="sc">:</span> could not determine year <span class="cf">for</span> <span class="st">'speed'</span> from package</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>DESCRIPTION file</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>To cite package <span class="st">'speed'</span> <span class="cf">in</span> publications use<span class="sc">:</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  Rogers S, Taylor J, Edson R, Pipattungsakul <span class="fu">W</span> (????). _speed<span class="sc">:</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  Generate Spatially Efficient Experimental Designs_. R package version</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="dv">0</span>.<span class="fl">0.1</span>, <span class="sc">&lt;</span>https<span class="sc">:</span><span class="er">//</span>biometryhub.github.io<span class="sc">/</span>speed<span class="sc">/</span><span class="er">&gt;</span>.</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>A BibTeX entry <span class="cf">for</span> LaTeX users is</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  <span class="sc">@</span>Manual{,</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>    title <span class="ot">=</span> {speed<span class="sc">:</span> Generate Spatially Efficient Experimental Designs},</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>    author <span class="ot">=</span> {Sam Rogers and Julian Taylor and Russell Edson and Wasin Pipattungsakul},</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>    note <span class="ot">=</span> {R package version <span class="dv">0</span>.<span class="fl">0.1</span>},</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>    url <span class="ot">=</span> {https<span class="sc">:</span><span class="er">//</span>biometryhub.github.io<span class="sc">/</span>speed<span class="sc">/</span>},</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>  }</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
