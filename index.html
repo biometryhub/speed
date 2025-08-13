@@ -104,6 +104,7 @@
 <span></span>
 <span><span class="co"># Optimise the design with seed for reproducibility</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/speed.html">speed</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"treatment"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
+<span><span class="co">#&gt; row and col are used as row and column, respectively.</span></span>
 <span><span class="co">#&gt; Iteration: 1000 Score: 1 Best: 1 Since Improvement: 475 </span></span>
 <span><span class="co">#&gt; Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1475 </span></span>
 <span><span class="co">#&gt; Early stopping at iteration 2525</span></span>
@@ -136,6 +137,7 @@
 <span>                swap_within <span class="op">=</span> <span class="st">"block"</span>,</span>
 <span>                iterations <span class="op">=</span> <span class="fl">5000</span>,</span>
 <span>                seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
+<span><span class="co">#&gt; row and col are used as row and column, respectively.</span></span>
 <span><span class="co">#&gt; Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 </span></span>
 <span><span class="co">#&gt; Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 </span></span>
 <span><span class="co">#&gt; Early stopping at iteration 2457</span></span>
@@ -145,12 +147,32 @@
 <p><img src="reference/figures/README-blocks-1.png" width="100%"></p>
 </div>
 <div class="section level2">
+<h2 id="more-examples">More Examples<a class="anchor" aria-label="anchor" href="#more-examples"></a>
+</h2>
+<p>For more detailed examples, visit <a href="https://biometryhub.github.io/speed/articles/common_designs.html">here</a>.</p>
+</div>
+<div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
 <p>If you use <code>speed</code> in your research, please cite:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">citation</span>(<span class="st">"speed"</span>)</span></code></pre></div>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"speed"</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"speed"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning in citation("speed"): could not determine year for 'speed' from package</span></span>
+<span><span class="co">#&gt; DESCRIPTION file</span></span>
+<span><span class="co">#&gt; To cite package 'speed' in publications use:</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Rogers S, Taylor J, Edson R, Pipattungsakul W (????). _speed:</span></span>
+<span><span class="co">#&gt;   Generate Spatially Efficient Experimental Designs_. R package version</span></span>
+<span><span class="co">#&gt;   0.0.1, &lt;https://biometryhub.github.io/speed/&gt;.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; A BibTeX entry for LaTeX users is</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   @Manual{,</span></span>
+<span><span class="co">#&gt;     title = {speed: Generate Spatially Efficient Experimental Designs},</span></span>
+<span><span class="co">#&gt;     author = {Sam Rogers and Julian Taylor and Russell Edson and Wasin Pipattungsakul},</span></span>
+<span><span class="co">#&gt;     note = {R package version 0.0.1},</span></span>
+<span><span class="co">#&gt;     url = {https://biometryhub.github.io/speed/},</span></span>
+<span><span class="co">#&gt;   }</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
