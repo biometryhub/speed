@@ -35,6 +35,8 @@ When the number of treatments is large, complete blocks may be impractical due t
 
 ### Balanced Incomplete Block Design (BIBD)
 
+**Move to custom objective functions vignette**
+
 The most restrictive but statistically optimal incomplete block design.
 
 #### Characteristics:
@@ -42,6 +44,8 @@ The most restrictive but statistically optimal incomplete block design.
 - Each block contains exactly `k` treatments
 - Each pair of treatments appears together in exactly `λ` blocks
 - Perfect balance but limited parameter combinations
+
+Not trivial: https://www.stat.uchicago.edu/~yibi/teaching/stat222/2022/L20_21.pdf
 
 #### Parameters:
 - `v` = number of treatments
@@ -78,50 +82,66 @@ Relaxes the balance requirements of BIBD while maintaining good statistical prop
 
 Consider a trial with 15 treatments where complete blocks would be too large for field homogeneity. We'll use an incomplete block design with blocks of size 5.
 
-## Setting Up Incomplete Block Designs with speed
+## Setting Up a Balanced Incomplete Block Design with speed
+
+Firstly we need to create a data frame representing the incomplete block design. Here we will use a systematic approach to generate the blocks and treatment combinations.
 
 ```{r incomplete-block-df}
-# Placeholder: Initialize incomplete block design
-# incomplete_design <- initialise_design_df(items = 15, nrows = 6, ncols = 5, 
-#                                          incomplete_blocks = TRUE, block_size = 5)
-# head(incomplete_design)
+blocks <- c(1,2,3,4,5, 1,2,3,6,7, 1,4,5,6,7, 2,4,5,6,7, 
+            3,4,5,6,7, 1,3,4,6,7, 1,2,5,6,7)
+
+# g = 5 treatments
+# b = 10 blocks
+# k = 3 plots per block
+# r = 6 reps of each treatment
+# Lambda = 3 times each treatment appears together
+
+# Create the data frame
+bibd_df <- data.frame(
+  row = rep(1:3, 10),
+  col = rep(1:10, each = 3),
+  block = rep(1:10, each = 3),
+  treatment = rep(1:5, each = 6)
+)
+
+head(bibd_df)
 ```
 
 ```{r incomplete-block-plot1}
 #| echo: false
-# Placeholder: Initial visualization
-# class(incomplete_design) <- c("design", class(incomplete_design))
-# autoplot(incomplete_design)
+class(bibd_df) <- c("design", class(bibd_df))
+autoplot(bibd_df)
 ```
 
-This shows the systematic incomplete block layout before optimization.
+This shows the systematic incomplete block layout before optimization. Note that treatments need to be allowed to swap between any block, but to maintain our balance, we use `spatial_factors` to get the `speed()` algorithm to balance across the blocks as well.
 
 ### Performing the Optimisation
 
 ```{r incomplete-block-example}
-# Placeholder: Optimize the incomplete block design
-# incomplete_result <- speed(incomplete_design,
-#                           swap = "treatment",
-#                           swap_within = "block", 
-#                           seed = 42)
-# incomplete_result
+options(speed.cooling_rate=0.999)
+bibd_result <- speed(bibd_df, 
+                     swap = "treatment", 
+                     swap_within = "1", 
+                     spatial_factors = ~ block + row, 
+                     iterations = 50000,
+                     early_stop_iterations = 10000,
+                     seed = 42)
 ```
 
 ### Output of the Optimisation
 
 ```{r incomplete-block-output}
-# Placeholder: Show structure of results
-# str(incomplete_result)
+bibd_result
+str(bibd_result)
 ```
 
 ### Visualise the Output
 
 ```{r incomplete-block-plot2}
-# Placeholder: Final visualization
-# autoplot(incomplete_result)
+autoplot(bibd_result)
 ```
 
-A well-optimized incomplete block design with balanced treatment distribution!
+A well-optimized balanced incomplete block design with balanced treatment distribution!
 
 # Alpha Designs
 
