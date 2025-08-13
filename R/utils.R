@@ -74,3 +74,41 @@ pseudo_inverse <- function(a_matrix, tolerance = 1e-10) {
 #     }
 #   )
 # }
+
+#' Convert Data Frame Data to Factors
+#'
+#' @param df A data frame
+#'
+#' @returns A list containing:
+#' - **df** - A data frame with factors
+#' - **input_types** - A named list of the original type of each column
+#'
+#' @keywords internal
+to_factor <- function(df) {
+  input_types <- sapply(df, class)
+  for (col in names(df)) {
+    if (input_types[col] != "factor") {
+      df[[col]] <- as.factor(df[[col]])
+    }
+  }
+
+  return(list(df = df, input_types = input_types))
+}
+
+#' Convert Data Frame Data to Provided Types
+#'
+#' @inheritParams to_factor
+#' @param types A named list of the types for each column
+#'
+#' @returns A data frame with new types
+#'
+#' @keywords internal
+to_types <- function(df, types) {
+  for (col in names(df)) {
+    if (col %in% names(types) && types[col] != "factor") {
+      df[[col]] <- do.call(paste0("as.", types[[col]]), list(df[[col]]))
+    }
+  }
+
+  return(df)
+}
