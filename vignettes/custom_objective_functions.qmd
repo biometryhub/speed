@@ -1,0 +1,763 @@
+---
+title: "Custom Objective Functions and Advanced Options for Optimisation in speed"
+author: "Sam Rogers"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    theme: flatly
+    highlight: tango
+vignette: >
+  %\VignetteIndexEntry{Custom Objective Functions and Advanced Options for Optimisation in speed}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 6,
+  dpi = 150
+)
+```
+
+# Introduction
+
+While the `speed` package provides excellent default optimization settings for most experimental designs, researchers may need to customize the optimization process for specific requirements. This vignette demonstrates how to:
+
+- Create custom objective functions for specialized optimization goals
+- Adjust simulated annealing parameters for better performance
+- Handle complex constraints and specialized design requirements  
+- Monitor and control the optimization process
+- Troubleshoot optimization issues
+
+Understanding these advanced features allows researchers to fully leverage the `speed` package for complex or non-standard experimental design challenges.
+
+```{r load-package}
+library(speed)
+library(ggplot2)
+library(dplyr)
+```
+
+# Understanding the Optimization Process
+
+## Simulated Annealing Basics
+
+The `speed` package uses simulated annealing, a probabilistic optimization algorithm that:
+
+- **Starts** with an initial design layout
+- **Proposes** modifications (treatment swaps, moves)
+- **Accepts** improvements and sometimes accepts worse solutions
+- **Gradually reduces** acceptance of worse solutions ("cooling")
+- **Converges** to an optimized layout
+
+## Default Optimization Objectives
+
+The package's default objectives typically focus on:
+
+- **Minimizing treatment adjacency** - reducing neighbor effects
+- **Maintaining spatial balance** - even treatment distribution
+- **Respecting design constraints** - block structure, replication
+- **Optimizing statistical efficiency** - improving precision
+
+## When to Customize Optimization
+
+Consider custom optimization when:
+
+- **Specific neighbor relationships** are more important than others
+- **Non-uniform field conditions** require weighted optimization
+- **Complex constraints** aren't handled by default settings
+- **Multiple competing objectives** need balanced consideration
+- **Performance tuning** is needed for large or complex designs
+
+# Custom Objective Functions
+
+## Understanding Objective Function Structure
+
+Objective functions in `speed` typically:
+
+- **Input**: Current design layout and associated data
+- **Process**: Calculate penalties or scores for the layout
+- **Output**: Single numeric value (lower = better for minimization)
+
+```{r objective-function-basics, eval=FALSE}
+# Placeholder for basic objective function structure
+# This will show:
+# - Basic objective function template
+# - How layout information is accessed
+# - Simple penalty calculations
+# - Function return format
+# - Integration with speed optimization
+```
+
+## Custom Neighbor Effect Functions
+
+### Weighted Neighbor Effects
+
+When some treatment combinations are more problematic as neighbors than others.
+
+```{r weighted-neighbors, eval=FALSE}
+# Placeholder for weighted neighbor effects
+# This will show:
+# - Defining treatment interaction matrices
+# - Creating weighted penalty functions
+# - Handling asymmetric neighbor effects
+# - Examples: tall vs short varieties, chemical interactions
+# - Implementation in custom objective functions
+```
+
+### Distance-Based Penalties
+
+For situations where neighbor effects extend beyond immediate adjacency.
+
+```{r distance-penalties, eval=FALSE}
+# Placeholder for distance-based penalties
+# This will show:
+# - Calculating distances between treatments
+# - Implementing decay functions for neighbor effects
+# - Handling different distance metrics
+# - Examples: root competition zones, spray drift
+# - Computational efficiency considerations
+```
+
+### Border and Edge Effects
+
+Custom handling of plots at field edges or boundaries.
+
+```{r border-effects, eval=FALSE}
+# Placeholder for border effects
+# This will show:
+# - Identifying border and internal plots
+# - Different penalty structures for edge plots
+# - Handling irregular field shapes
+# - Border row considerations
+# - Balance between edge and internal plot quality
+```
+
+## Spatial Balance Objectives
+
+### Uniform Distribution Functions
+
+Ensuring treatments are evenly distributed across the experimental area.
+
+```{r uniform-distribution, eval=FALSE}
+# Placeholder for uniform distribution
+# This will show:
+# - Calculating treatment centroids
+# - Measuring distribution evenness
+# - Penalty functions for clustering
+# - Handling different field shapes
+# - Balance with other objectives
+```
+
+### Gradient-Aware Optimization
+
+Optimizing treatment placement considering known field gradients.
+
+```{r gradient-optimization, eval=FALSE}
+# Placeholder for gradient-aware optimization
+# This will show:
+# - Incorporating gradient information
+# - Balancing treatments across gradients
+# - Weighted spatial positioning
+# - Examples: slope, soil fertility, irrigation zones
+# - Integration with blocking structures
+```
+
+### Zone-Based Objectives
+
+For fields with distinct zones or management areas.
+
+```{r zone-objectives, eval=FALSE}
+# Placeholder for zone-based objectives
+# This will show:
+# - Defining field zones
+# - Within-zone and between-zone optimization
+# - Handling zone boundaries
+# - Examples: soil types, drainage classes
+# - Multi-zone balance considerations
+```
+
+## Design-Specific Custom Objectives
+
+### Split-Plot Optimization
+
+Custom objectives for hierarchical design structures.
+
+```{r splitplot-objectives, eval=FALSE}
+# Placeholder for split-plot objectives
+# This will show:
+# - Whole plot arrangement optimization
+# - Sub-plot randomization within whole plots
+# - Hierarchical constraint handling
+# - Multi-level spatial optimization
+# - Balance between levels
+```
+
+### Incomplete Block Objectives
+
+Specialized objectives for incomplete block designs.
+
+```{r incomplete-block-objectives, eval=FALSE}
+# Placeholder for incomplete block objectives
+# This will show:
+# - Within-block treatment arrangement
+# - Between-block treatment distribution
+# - Connectivity optimization
+# - Resolvability constraints
+# - Efficiency-focused objectives
+```
+
+### Multi-Factor Objectives
+
+Handling multiple factors with different optimization priorities.
+
+```{r multifactor-objectives, eval=FALSE}
+# Placeholder for multi-factor objectives
+# This will show:
+# - Factor-specific neighbor penalties
+# - Interaction term optimization
+# - Main effect vs interaction priorities
+# - Factorial structure constraints
+# - Weighted multi-objective functions
+```
+
+# Multi-Objective Optimization
+
+## Combining Multiple Objectives
+
+Real experiments often require balancing multiple competing goals.
+
+### Weighted Sum Approaches
+
+```{r weighted-sum, eval=FALSE}
+# Placeholder for weighted sum approaches
+# This will show:
+# - Combining different objective functions
+# - Setting appropriate weights
+# - Normalizing different objective scales
+# - Sensitivity to weight choices
+# - Interactive weight selection
+```
+
+### Pareto Optimization
+
+```{r pareto-optimization, eval=FALSE}
+# Placeholder for Pareto optimization
+# This will show:
+# - Multi-objective trade-off analysis
+# - Pareto front exploration
+# - Non-dominated solution sets
+# - Decision making with multiple criteria
+# - Visualization of trade-offs
+```
+
+### Hierarchical Objectives
+
+```{r hierarchical-objectives, eval=FALSE}
+# Placeholder for hierarchical objectives
+# This will show:
+# - Primary and secondary objective prioritization
+# - Lexicographic optimization approaches
+# - Constraint satisfaction hierarchies
+# - Sequential optimization strategies
+# - Practical implementation considerations
+```
+
+# Optimization Algorithm Parameters
+
+## Simulated Annealing Settings
+
+### Temperature Schedule
+
+Controlling the cooling rate and acceptance probability.
+
+```{r temperature-schedule, eval=FALSE}
+# Placeholder for temperature schedule
+# This will show:
+# - Initial temperature selection
+# - Cooling rate adjustments
+# - Linear vs exponential vs adaptive schedules
+# - Impact on optimization quality
+# - Convergence speed trade-offs
+```
+
+### Iteration Controls
+
+Managing the number of iterations and convergence criteria.
+
+```{r iteration-controls, eval=FALSE}
+# Placeholder for iteration controls
+# This will show:
+# - Maximum iteration settings
+# - Convergence detection methods
+# - Early stopping criteria
+# - Progress monitoring
+# - Computational time management
+```
+
+### Move Types and Probabilities
+
+Customizing how the algorithm proposes layout changes.
+
+```{r move-types, eval=FALSE}
+# Placeholder for move types
+# This will show:
+# - Different types of moves (swap, shift, rotate)
+# - Move probability settings
+# - Constraint-respecting moves
+# - Large vs small perturbations
+# - Adaptive move selection
+```
+
+## Performance Tuning
+
+### Large Design Optimization
+
+Handling computationally intensive large-scale designs.
+
+```{r large-design-tuning, eval=FALSE}
+# Placeholder for large design tuning
+# This will show:
+# - Memory management strategies
+# - Computational complexity considerations
+# - Parallel processing options
+# - Approximation methods for speed
+# - Quality vs speed trade-offs
+```
+
+### Convergence Diagnostics
+
+Monitoring and ensuring optimization quality.
+
+```{r convergence-diagnostics, eval=FALSE}
+# Placeholder for convergence diagnostics
+# This will show:
+# - Objective function tracking
+# - Convergence plots and metrics
+# - Multiple run comparisons
+# - Plateau detection
+# - Quality assessment methods
+```
+
+### Parameter Sensitivity Analysis
+
+Understanding how parameter choices affect results.
+
+```{r parameter-sensitivity, eval=FALSE}
+# Placeholder for parameter sensitivity
+# This will show:
+# - Systematic parameter testing
+# - Sensitivity to initial conditions
+# - Robustness across different scenarios
+# - Optimal parameter identification
+# - Automated parameter tuning
+```
+
+# Advanced Constraint Handling
+
+## Complex Design Constraints
+
+### Custom Blocking Constraints
+
+Beyond standard rectangular blocking patterns.
+
+```{r custom-blocking, eval=FALSE}
+# Placeholder for custom blocking constraints
+# This will show:
+# - Irregular block shapes
+# - Hierarchical blocking structures
+# - Overlapping constraint systems
+# - Dynamic constraint adjustment
+# - Constraint violation penalties
+```
+
+### Treatment Assignment Rules
+
+Specialized rules for treatment placement.
+
+```{r treatment-assignment, eval=FALSE}
+# Placeholder for treatment assignment rules
+# This will show:
+# - Mandatory treatment positions
+# - Forbidden treatment combinations
+# - Sequential treatment requirements
+# - Resource-based constraints
+# - Logical constraint dependencies
+```
+
+### Spatial Constraints
+
+Physical or practical limitations on plot placement.
+
+```{r spatial-constraints, eval=FALSE}
+# Placeholder for spatial constraints
+# This will show:
+# - Irregular field boundaries
+# - Obstacle avoidance
+# - Access path requirements
+# - Equipment movement constraints
+# - Safety or regulatory restrictions
+```
+
+## Constraint Satisfaction Strategies
+
+### Hard vs Soft Constraints
+
+Managing different types of constraint requirements.
+
+```{r constraint-types, eval=FALSE}
+# Placeholder for constraint types
+# This will show:
+# - Absolute requirements (hard constraints)
+# - Preference-based requirements (soft constraints)
+# - Penalty function design
+# - Constraint priority systems
+# - Feasibility checking
+```
+
+### Constraint Relaxation
+
+Strategies when exact constraint satisfaction is impossible.
+
+```{r constraint-relaxation, eval=FALSE}
+# Placeholder for constraint relaxation
+# This will show:
+# - Gradual constraint loosening
+# - Minimum viable constraint satisfaction
+# - Trade-off analysis
+# - Alternative constraint formulations
+# - User notification of violations
+```
+
+# Monitoring and Control
+
+## Real-Time Optimization Monitoring
+
+### Progress Visualization
+
+Tracking optimization progress during execution.
+
+```{r progress-monitoring, eval=FALSE}
+# Placeholder for progress monitoring
+# This will show:
+# - Real-time objective function plots
+# - Temperature and acceptance rate tracking
+# - Move type and success statistics
+# - Intermediate layout visualization
+# - Performance metric displays
+```
+
+### Interactive Control
+
+User intervention during optimization.
+
+```{r interactive-control, eval=FALSE}
+# Placeholder for interactive control
+# This will show:
+# - Manual optimization stopping
+# - Parameter adjustment during optimization
+# - Layout modification and restart
+# - Objective function switching
+# - Expert knowledge incorporation
+```
+
+### Quality Metrics
+
+Assessing optimization results.
+
+```{r quality-metrics, eval=FALSE}
+# Placeholder for quality metrics
+# This will show:
+# - Statistical efficiency measures
+# - Design balance assessments
+# - Constraint satisfaction scores
+# - Comparative quality analysis
+# - Recommendation systems
+```
+
+## Batch and Automated Optimization
+
+### Multiple Design Comparison
+
+Systematic comparison of optimization strategies.
+
+```{r batch-optimization, eval=FALSE}
+# Placeholder for batch optimization
+# This will show:
+# - Automated parameter sweeps
+# - Multiple initialization strategies
+# - Comparative result analysis
+# - Best design selection
+# - Robustness testing
+```
+
+### Workflow Integration
+
+Incorporating optimization into larger research workflows.
+
+```{r workflow-integration, eval=FALSE}
+# Placeholder for workflow integration
+# This will show:
+# - Automated design generation
+# - Integration with field planning software
+# - Batch processing for multiple experiments
+# - Result documentation and archiving
+# - Quality control pipelines
+```
+
+# Troubleshooting and Debugging
+
+## Common Optimization Issues
+
+### Poor Convergence
+
+Identifying and resolving convergence problems.
+
+```{r convergence-issues, eval=FALSE}
+# Placeholder for convergence troubleshooting
+# This will show:
+# - Convergence diagnostic methods
+# - Parameter adjustment strategies
+# - Objective function debugging
+# - Initial condition improvements
+# - Alternative optimization approaches
+```
+
+### Constraint Violations
+
+Handling situations where constraints cannot be satisfied.
+
+```{r constraint-debugging, eval=FALSE}
+# Placeholder for constraint debugging
+# This will show:
+# - Constraint conflict detection
+# - Infeasible constraint identification
+# - Constraint relaxation strategies
+# - Alternative formulation suggestions
+# - User guidance for resolution
+```
+
+### Performance Issues
+
+Addressing slow or inefficient optimization.
+
+```{r performance-debugging, eval=FALSE}
+# Placeholder for performance debugging
+# This will show:
+# - Computational bottleneck identification
+# - Memory usage optimization
+# - Algorithm parameter tuning
+# - Approximation strategies
+# - Hardware utilization improvements
+```
+
+## Validation and Testing
+
+### Optimization Result Validation
+
+Ensuring optimization results meet expectations.
+
+```{r result-validation, eval=FALSE}
+# Placeholder for result validation
+# This will show:
+# - Statistical property verification
+# - Constraint satisfaction checking
+# - Design efficiency validation
+# - Comparative analysis with standards
+# - Quality assurance procedures
+```
+
+### Custom Function Testing
+
+Debugging and validating custom objective functions.
+
+```{r function-testing, eval=FALSE}
+# Placeholder for function testing
+# This will show:
+# - Unit testing for objective functions
+# - Edge case handling verification
+# - Performance benchmarking
+# - Correctness validation methods
+# - Integration testing procedures
+```
+
+# Best Practices and Guidelines
+
+## Custom Objective Function Development
+
+### Design Principles
+
+1. **Start simple** - Begin with basic functions and add complexity gradually
+2. **Test thoroughly** - Validate function behavior on known layouts
+3. **Consider scale** - Ensure different penalty components are appropriately weighted
+4. **Document clearly** - Maintain clear documentation of function logic
+5. **Profile performance** - Monitor computational efficiency for large designs
+
+### Common Pitfalls
+
+1. **Inconsistent scaling** - Different penalty components with vastly different scales
+2. **Overly complex functions** - Functions that are difficult to debug or understand
+3. **Poor constraint handling** - Functions that don't properly enforce required constraints
+4. **Lack of testing** - Functions that haven't been validated on known cases
+5. **Performance issues** - Functions that are computationally inefficient
+
+## Parameter Selection Guidelines
+
+### Initial Parameter Settings
+
+1. **Conservative approach** - Start with moderate settings and adjust based on results
+2. **Problem-specific tuning** - Adjust parameters based on design size and complexity
+3. **Multiple trials** - Run optimization multiple times with different settings
+4. **Documentation** - Record parameter choices and their effects
+5. **Sensitivity analysis** - Understand how parameter changes affect results
+
+### Optimization Strategy
+
+1. **Incremental improvement** - Make gradual parameter adjustments
+2. **Systematic testing** - Use structured approaches to parameter exploration
+3. **Quality monitoring** - Track multiple quality metrics, not just objective function
+4. **Convergence verification** - Ensure optimization has genuinely converged
+5. **Result validation** - Verify that optimized designs meet practical requirements
+
+# Case Studies
+
+## Case Study 1: Custom Neighbor Effects for Plant Competition
+
+A specialized objective function for variety trials where plant height differences create asymmetric competition effects.
+
+```{r case-study-competition, eval=FALSE}
+# Placeholder for plant competition case study
+# This will show:
+# - Defining height-based competition matrices
+# - Implementing asymmetric neighbor penalties
+# - Optimizing for balanced competition effects
+# - Comparing with standard optimization
+# - Field validation of optimization results
+```
+
+## Case Study 2: Multi-Objective Optimization for Resource Allocation
+
+Balancing statistical efficiency with practical resource constraints in a large breeding trial.
+
+```{r case-study-resources, eval=FALSE}
+# Placeholder for resource allocation case study
+# This will show:
+# - Multiple competing objective functions
+# - Weighted optimization approaches
+# - Trade-off analysis and visualization
+# - Stakeholder input integration
+# - Implementation and evaluation
+```
+
+## Case Study 3: Irregular Field Optimization
+
+Custom optimization for a field with complex shape and obstacles.
+
+```{r case-study-irregular, eval=FALSE}
+# Placeholder for irregular field case study
+# This will show:
+# - Spatial constraint implementation
+# - Custom move types for irregular layouts
+# - Quality assessment for non-standard designs
+# - Practical implementation challenges
+# - Comparison with standard approaches
+```
+
+# Integration with Other Tools
+
+## Interfacing with External Software
+
+### GIS Integration
+
+Incorporating Geographic Information System data into optimization.
+
+```{r gis-integration, eval=FALSE}
+# Placeholder for GIS integration
+# This will show:
+# - Importing spatial data layers
+# - Using GIS data in objective functions
+# - Exporting optimized layouts to GIS
+# - Coordinate system handling
+# - Spatial analysis integration
+```
+
+### Field Management Software
+
+Connecting optimization results with farm management systems.
+
+```{r field-management, eval=FALSE}
+# Placeholder for field management integration
+# This will show:
+# - Export formats for field software
+# - GPS coordinate generation
+# - Equipment routing optimization
+# - Treatment application scheduling
+# - Data collection system integration
+```
+
+## Statistical Analysis Integration
+
+### Mixed Model Preparation
+
+Preparing optimized designs for statistical analysis.
+
+```{r analysis-preparation, eval=FALSE}
+# Placeholder for analysis preparation
+# This will show:
+# - Design structure documentation
+# - Spatial correlation modeling preparation
+# - Random effect specification
+# - Analysis code generation
+# - Result interpretation guidance
+```
+
+# Conclusion
+
+Custom optimization and advanced parameter control in the `speed` package provide powerful tools for addressing complex experimental design challenges. Key benefits include:
+
+- **Flexible objective functions** tailored to specific research needs
+- **Fine-tuned optimization** parameters for improved performance
+- **Complex constraint handling** for non-standard situations
+- **Multi-objective optimization** for balancing competing goals
+- **Robust monitoring and control** systems for quality assurance
+
+Successful implementation of advanced optimization requires:
+
+1. **Clear understanding** of research objectives and constraints
+2. **Systematic approach** to function development and testing
+3. **Careful parameter tuning** with appropriate validation
+4. **Thorough testing** and quality assurance procedures
+5. **Documentation** of methods and decisions for reproducibility
+
+By leveraging these advanced features, researchers can optimize experimental designs for even the most challenging agricultural research scenarios.
+
+## Further Reading
+
+### Optimization Theory
+- Kirkpatrick, S., Gelatt Jr, C.D., & Vecchi, M.P. (1983). "Optimization by simulated annealing"
+- Aarts, E. & Korst, J. (1989). *Simulated Annealing and Boltzmann Machines*
+- Michalewicz, Z. & Fogel, D.B. (2004). *How to Solve It: Modern Heuristics*
+
+### Experimental Design Optimization
+- Atkinson, A.C., Donev, A.N., & Tobias, R.D. (2007). *Optimum Experimental Designs*
+- Fedorov, V.V. & Hackl, P. (1997). *Model-Oriented Design of Experiments*
+- Bailey, R.A. (2008). *Design of Comparative Experiments*
+
+### Computational Methods
+- Press, W.H. et al. (2007). *Numerical Recipes: The Art of Scientific Computing*
+- Nocedal, J. & Wright, S.J. (2006). *Numerical Optimization*
+
+## Related Vignettes
+
+- **"Common Agricultural Experimental Designs with speed"** - Foundational design implementations
+- **"Complex Agricultural Experimental Designs with speed"** - Advanced design structures
+- **"Comparing Experimental Design Efficiency with speed"** - Design evaluation and selection
+
+---
+
+*This vignette demonstrates advanced customization capabilities of the `speed` package. For standard applications, see the other package vignettes. For specific implementation questions, consult the package documentation and function help files.*

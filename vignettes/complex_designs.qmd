@@ -15,11 +15,21 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 6,
+  dpi = 150
+)
+```
+
 # Introduction
 
-This vignette covers advanced and complex experimental designs that are commonly used in specialized agricultural research contexts. These designs are particularly useful for plant breeding programs, large-scale variety trials, and situations where standard complete block designs are impractical due to resource constraints or the nature of the treatments.
+This vignette covers advanced and complex experimental designs that are used in specialised agricultural research contexts. These designs are particularly useful for plant breeding programs, large-scale variety trials, and situations where standard complete block designs are impractical due to resource constraints or the nature of the treatments.
 
-Building on the foundational designs covered in the "Common Agricultural Experimental Designs" vignette, these complex designs offer solutions for challenging experimental scenarios while maintaining statistical rigor through spatial optimization with the `speed` package.
+Building on the foundational designs covered in the [Common Agricultural Experimental Designs vignette](/common_designs.html), these complex designs offer solutions for challenging experimental scenarios while maintaining statistical rigour through spatial optimisation with the `speed` package.
 
 ```{r load-package}
 library(speed)
@@ -35,26 +45,24 @@ When the number of treatments is large, complete blocks may be impractical due t
 
 ### Balanced Incomplete Block Design (BIBD)
 
-**Move to custom objective functions vignette**
-
 The most restrictive but statistically optimal incomplete block design.
 
 #### Characteristics:
-- Each treatment appears in exactly `r` blocks
-- Each block contains exactly `k` treatments
-- Each pair of treatments appears together in exactly `λ` blocks
+- Each treatment appears in exactly $r$ blocks
+- Each block contains exactly $k$ treatments
+- Each pair of treatments appears together in exactly $λ$ blocks
 - Perfect balance but limited parameter combinations
 
-Not trivial: https://www.stat.uchicago.edu/~yibi/teaching/stat222/2022/L20_21.pdf
-
 #### Parameters:
-- `v` = number of treatments
-- `b` = number of blocks  
-- `r` = number of blocks containing each treatment
-- `k` = number of treatments per block
-- `λ` = number of blocks containing each pair of treatments
+- $v$ = number of treatments
+- $b$ = number of blocks  
+- $r$ = number of blocks containing each treatment
+- $k$ = number of treatments per block
+- $λ$ = number of blocks containing each pair of treatments
+- $bk = vr$ and $λ(v-1) = r(k-1)$
 
-#### Relationship: `bk = vr` and `λ(v-1) = r(k-1)`
+What may become apparent from the characteristics and parameters listed above is that these designs are not trivial, and [there are specific and limited combinations that will work](https://en.wikipedia.org/wiki/Block_design#Pairwise_balanced_uniform_designs_(2-designs_or_BIBDs)). In the case of speed, a custom objective function is required to ensure that each pair of treatments appear the same number of times. For an example and further discussion, see the [vignette on custom objective functions](custom_objective_functions.html).
+
 
 ### Resolvable Incomplete Block Design (RIBD)
 
