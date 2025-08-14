@@ -17,6 +17,7 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
+  cache = TRUE,
   collapse = TRUE,
   comment = "#>",
   fig.width = 8,
@@ -27,13 +28,231 @@ knitr::opts_chunk$set(
 
 # Introduction
 
+asdfad
+
 This vignette covers advanced and complex experimental designs that are used in specialised agricultural research contexts. These designs are particularly useful for plant breeding programs, large-scale variety trials, and situations where standard complete block designs are impractical due to resource constraints or the nature of the treatments.
 
 Building on the foundational designs covered in the [Common Agricultural Experimental Designs vignette](/common_designs.html), these complex designs offer solutions for challenging experimental scenarios while maintaining statistical rigour through spatial optimisation with the `speed` package.
 
 ```{r load-package}
 library(speed)
+library(patchwork)
 ```
+
+# Split-Split Plot Designs
+
+## Overview
+
+Split-split plot designs extend the hierarchical structure of [split-plot designs](/common_designs.html#split-plot-design) to accommodate three factors with different levels of experimental difficulty or practical constraints. This creates a three-level hierarchy of experimental units.
+
+## Hierarchical Structure
+
+### Whole Plots (Main Plots)
+- **Largest experimental units**
+- **Factor A** applied to whole plots
+- **Most difficult factor to randomize**
+- **Example**: Tillage systems, irrigation methods
+
+### Sub-Plots (Split Plots)
+- **Intermediate-sized units within whole plots**
+- **Factor B** applied to sub-plots
+- **Moderate randomization difficulty**
+- **Example**: Fertilizer treatments, planting dates
+
+### Sub-Sub-Plots (Split-Split Plots)
+- **Smallest experimental units**
+- **Factor C** applied to sub-sub-plots
+- **Easiest factor to randomize**
+- **Example**: Varieties, pesticide treatments
+
+## Error Structure
+
+Complex error structure with multiple error terms:
+- **Whole plot error** for Factor A effects
+- **Sub-plot error** for Factor B and A×B effects  
+- **Sub-sub-plot error** for Factor C and higher-order interactions
+
+## When to Use Split-Split Plot Designs
+
+- **Three factors with different application constraints**
+- **Hierarchical treatment structure** matches practical needs
+- **Sequential application** of treatments over time
+- **Resource or equipment limitations** for some factors
+
+## Examples of Applications
+
+### Agricultural Examples
+- **Tillage × Fertilizer × Variety** experiments
+- **Irrigation × Planting Date × Cultivar** studies
+- **Cover Crop × Nitrogen × Hybrid** trials
+
+### Industrial Examples
+- **Temperature × Pressure × Catalyst** process studies
+- **Machine × Operator × Material** quality experiments
+
+## Example: Split-Split Plot Design for Agricultural Systems Research
+
+Consider a complex agricultural trial examining Tillage System × Nitrogen Rate × Variety interactions with three hierarchical levels.
+
+## Setting Up Split-Split Plot Designs with speed
+
+```{r split-split-design-df}
+split_split_df <- data.frame(
+  row = rep(1:16, each = 9),
+  col = rep(1:9, times = 16),
+  block = rep(1:4, each = 36),
+  # Fixed wholeplot assignment: 3 wholeplots per block, each 4×3
+  wholeplot = rep(rep(1:3, each = 3), times = 16) + rep(0:3 * 3, each = 36),
+  wholeplot_treatment = rep(rep(LETTERS[1:3], each = 3), times = 16),
+  subplot = rep(1:48, each = 3),
+  subplot_treatment = rep(rep(letters[1:4], each = 9), times = 4),
+  subsubplot_treatment = rep(c("x", "y", "z"), 48)
+)
+```
+
+```{r}
+#| echo: false
+#| #| label: fig-ssplot1
+#| fig-cap: "Initial layout of the split-split-plot design showing systematic treatment distribution."
+class(split_split_df) <- c("design", class(split_split_df))
+p1 <- autoplot(split_split_df, treatments = "block") + ggplot2::labs(title = "Blocks")
+p2 <- autoplot(split_split_df, treatments = "wholeplot_treatment") + ggplot2::labs(title = "Whole plot Treatments")
+p3 <- autoplot(split_split_df, treatments = "subplot_treatment", block = "wholeplot") + ggplot2::labs(title = "Sub-plot Treatments")
+p4 <- autoplot(split_split_df, treatments = "subsubplot_treatment", block = "subplot") + ggplot2::labs(title = "Sub-sub-plot Treatments")
+p1 + p2 + p3 + p4 +
+  plot_layout(ncol = 2) +
+  plot_annotation(title = "Initial Split-Split Plot Design")
+```
+
+This shows the initial split-split plot design with three-level hierarchical structure.
+
+### Performing the Optimisation
+
+```{r split-split-design-example}
+result_ss <- speed(split_split_df,
+                swap = list(wp = "wholeplot_treatment",
+                            sp = "subplot_treatment",
+                            ssp = "subsubplot_treatment"),
+                swap_within = list(wp = "block",
+                                   sp = "wholeplot",
+                                   ssp = "subplot"),
+                iterations = list(wp = 2000, sp = 5000, ssp = 20000),
+                early_stop_iterations = list(wp = 1000, sp = 3000, ssp = 5000),
+                seed = 42)
+
+autoplot(result_ss, treatments = "wholeplot_treatment")
+autoplot(result_ss, treatments = "subplot_treatment")
+autoplot(result_ss, treatments = "subsubplot_treatment")
+```
+
+### Output of the Optimisation
+
+```{r split-split-design-output}
+# Placeholder: Show structure of results
+# str(split_split_result)
+```
+
+### Visualise the Output
+
+```{r split-split-design-plot2}
+# Placeholder: Final visualization
+# autoplot(split_split_result) + 
+#   facet_wrap(~factor_a, labeller = label_both)
+```
+
+An optimized split-split plot design with efficient spatial arrangement across all hierarchical levels!
+
+# Strip-Plot Designs
+
+## Overview
+
+Strip-plot designs are extensions of split-plot designs used when both treatment factors are difficult to apply to small areas. Treatments are arranged in strips that cross each other, creating a grid pattern where intersections represent treatment combinations.
+
+## Structure
+
+- **Horizontal strips** for one factor (e.g., tillage methods)
+- **Vertical strips** for another factor (e.g., planting dates)
+- **Intersections** represent factor combinations
+- **Whole plots** larger than traditional split-plot designs
+
+## When to Use Strip-Plot Designs
+
+- **Both factors require large application areas**
+- **Machinery constraints** for both factors
+- **Irrigation × cultivation** experiments
+- **Planting date × row spacing** studies
+- **When split-plot hierarchy doesn't fit** the practical situation
+
+## Advantages and Limitations
+
+### Advantages
+- **Accommodates two "difficult-to-randomize" factors**
+- **More flexible** than split-plot for certain applications
+- **Maintains reasonable precision** for main effects
+- **Practical for mechanized agriculture**
+
+### Limitations
+- **Lower precision** for interaction effects
+- **Complex analysis** with multiple error terms
+- **Less efficient** than RCBD for most comparisons
+- **Requires larger field areas**
+
+## Example: Strip-Plot Design for Tillage × Planting Date
+
+Consider an experiment testing 3 tillage methods and 4 planting dates where both factors require large application areas.
+
+## Setting Up Strip-Plot Designs with speed
+
+```{r strip-plot-df}
+# Placeholder: Initialize strip-plot design
+# strip_design <- data.frame(
+#   row = rep(1:12, each = 12),
+#   col = rep(1:12, times = 12),
+#   tillage_strip = rep(rep(1:3, each = 4), times = 12),
+#   planting_strip = rep(1:4, each = 36),
+#   tillage = rep(rep(LETTERS[1:3], each = 4), times = 12),
+#   planting_date = rep(1:4, each = 36)
+# )
+# head(strip_design)
+```
+
+```{r strip-plot-plot1}
+#| echo: false
+# Placeholder: Initial visualization showing strip structure
+# class(strip_design) <- c("design", class(strip_design))
+# autoplot(strip_design, treatments = "tillage")
+# autoplot(strip_design, treatments = "planting_date")
+```
+
+This shows the initial strip-plot layout with horizontal and vertical strips before optimization.
+
+### Performing the Optimisation
+
+```{r strip-plot-example}
+# Placeholder: Optimize the strip-plot design
+# strip_result <- speed(strip_design,
+#                      swap = list(tillage = "tillage", planting = "planting_date"),
+#                      swap_within = list(tillage = "tillage_strip", planting = "planting_strip"),
+#                      seed = 42)
+# strip_result
+```
+
+### Output of the Optimisation
+
+```{r strip-plot-output}
+# Placeholder: Show structure of results
+# str(strip_result)
+```
+
+### Visualise the Output
+
+```{r strip-plot-plot2}
+# Placeholder: Final visualization
+# autoplot(strip_result, treatments = "tillage")
+# autoplot(strip_result, treatments = "planting_date")
+```
+
+An optimized strip-plot design with well-arranged treatment combinations!
 
 # Incomplete Block Designs
 
@@ -94,62 +313,67 @@ Consider a trial with 15 treatments where complete blocks would be too large for
 
 Firstly we need to create a data frame representing the incomplete block design. Here we will use a systematic approach to generate the blocks and treatment combinations.
 
-```{r incomplete-block-df}
-blocks <- c(1,2,3,4,5, 1,2,3,6,7, 1,4,5,6,7, 2,4,5,6,7, 
-            3,4,5,6,7, 1,3,4,6,7, 1,2,5,6,7)
-
-# g = 5 treatments
-# b = 10 blocks
-# k = 3 plots per block
-# r = 6 reps of each treatment
-# Lambda = 3 times each treatment appears together
-
+```{r resolvable-incomplete-block-df}
 # Create the data frame
-bibd_df <- data.frame(
-  row = rep(1:3, 10),
-  col = rep(1:10, each = 3),
-  block = rep(1:10, each = 3),
-  treatment = rep(1:5, each = 6)
+ribd_df <- data.frame(
+  row = rep(1:3, 6),                     # Row within each block
+  col = rep(1:6, each = 3),            # Column corresponds to block
+  replicate = rep(1:3, each = 6),        # 3 replicates, 6 observations each
+  block = rep(1:6, each = 3),            # 6 blocks total, 3 treatments per block
+  treatment = rep(1:6, times = 3)                # Treatment assignments
 )
 
-head(bibd_df)
+# View the design
+head(ribd_df)
 ```
 
-```{r incomplete-block-plot1}
+```{r}
 #| echo: false
-class(bibd_df) <- c("design", class(bibd_df))
-autoplot(bibd_df)
+#| label: fig-ribdplot1
+#| fig-cap: "Initial layout of the resolvable incomplete block design showing systematic treatment distribution."
+class(ribd_df) <- c("design", class(ribd_df))
+autoplot(ribd_df)
 ```
 
-This shows the systematic incomplete block layout before optimization. Note that treatments need to be allowed to swap between any block, but to maintain our balance, we use `spatial_factors` to get the `speed()` algorithm to balance across the blocks as well.
+```{r}
+#| echo: false
+#| label: fig-ribdplot2
+#| fig-cap: "Initial layout showing blocks."
+autoplot(ribd_df, treatments = "block")
+```
+
+```{r}
+#| echo: false
+#| label: fig-ribdplot3
+#| fig-cap: "Initial layout showing replicates."
+autoplot(ribd_df, treatments = "replicate")
+```
+
+@fig-ribdplot1, @fig-ribdplot2 and @fig-ribdplot3 show the systematic resolvable incomplete block layout before optimisation. Note that replicates are made of two blocks, in each of which half the treatments will appear, and replicates are made up of pairs of blocks. The treatments can be swapped between blocks, but need to remain within their replicate.
 
 ### Performing the Optimisation
 
-```{r incomplete-block-example}
-options(speed.cooling_rate=0.999)
-bibd_result <- speed(bibd_df, 
+```{r ribd-example}
+ribd_result <- speed(ribd_df, 
                      swap = "treatment", 
-                     swap_within = "1", 
-                     spatial_factors = ~ block + row, 
-                     iterations = 50000,
-                     early_stop_iterations = 10000,
-                     seed = 42)
+                     swap_within = "replicate", 
+                     seed = 42)    
 ```
 
 ### Output of the Optimisation
 
-```{r incomplete-block-output}
-bibd_result
-str(bibd_result)
+```{r ribd-output}
+ribd_result
+str(ribd_result)
 ```
 
 ### Visualise the Output
 
-```{r incomplete-block-plot2}
-autoplot(bibd_result)
+```{r ribd-plot4}
+autoplot(ribd_result)
 ```
 
-A well-optimized balanced incomplete block design with balanced treatment distribution!
+We see that each block by itself only contains half the treatments, but when combined, the pairs have a full replicate. The algorithm has also spatially optimised the treatments across rows and columns, giving a nicely optimised resolvable incomplete block design.
 
 # Alpha Designs
 
@@ -364,97 +588,7 @@ This shows the initial augmented design with checks distributed systematically a
 
 An optimized augmented design with checks well-distributed for error estimation!
 
-# Strip-Plot Designs
 
-## Overview
-
-Strip-plot designs are extensions of split-plot designs used when both treatment factors are difficult to apply to small areas. Treatments are arranged in strips that cross each other, creating a grid pattern where intersections represent treatment combinations.
-
-## Structure
-
-- **Horizontal strips** for one factor (e.g., tillage methods)
-- **Vertical strips** for another factor (e.g., planting dates)
-- **Intersections** represent factor combinations
-- **Whole plots** larger than traditional split-plot designs
-
-## When to Use Strip-Plot Designs
-
-- **Both factors require large application areas**
-- **Machinery constraints** for both factors
-- **Irrigation × cultivation** experiments
-- **Planting date × row spacing** studies
-- **When split-plot hierarchy doesn't fit** the practical situation
-
-## Advantages and Limitations
-
-### Advantages
-- **Accommodates two "difficult-to-randomize" factors**
-- **More flexible** than split-plot for certain applications
-- **Maintains reasonable precision** for main effects
-- **Practical for mechanized agriculture**
-
-### Limitations
-- **Lower precision** for interaction effects
-- **Complex analysis** with multiple error terms
-- **Less efficient** than RCBD for most comparisons
-- **Requires larger field areas**
-
-## Example: Strip-Plot Design for Tillage × Planting Date
-
-Consider an experiment testing 3 tillage methods and 4 planting dates where both factors require large application areas.
-
-## Setting Up Strip-Plot Designs with speed
-
-```{r strip-plot-df}
-# Placeholder: Initialize strip-plot design
-# strip_design <- data.frame(
-#   row = rep(1:12, each = 12),
-#   col = rep(1:12, times = 12),
-#   tillage_strip = rep(rep(1:3, each = 4), times = 12),
-#   planting_strip = rep(1:4, each = 36),
-#   tillage = rep(rep(LETTERS[1:3], each = 4), times = 12),
-#   planting_date = rep(1:4, each = 36)
-# )
-# head(strip_design)
-```
-
-```{r strip-plot-plot1}
-#| echo: false
-# Placeholder: Initial visualization showing strip structure
-# class(strip_design) <- c("design", class(strip_design))
-# autoplot(strip_design, treatments = "tillage")
-# autoplot(strip_design, treatments = "planting_date")
-```
-
-This shows the initial strip-plot layout with horizontal and vertical strips before optimization.
-
-### Performing the Optimisation
-
-```{r strip-plot-example}
-# Placeholder: Optimize the strip-plot design
-# strip_result <- speed(strip_design,
-#                      swap = list(tillage = "tillage", planting = "planting_date"),
-#                      swap_within = list(tillage = "tillage_strip", planting = "planting_strip"),
-#                      seed = 42)
-# strip_result
-```
-
-### Output of the Optimisation
-
-```{r strip-plot-output}
-# Placeholder: Show structure of results
-# str(strip_result)
-```
-
-### Visualise the Output
-
-```{r strip-plot-plot2}
-# Placeholder: Final visualization
-# autoplot(strip_result, treatments = "tillage")
-# autoplot(strip_result, treatments = "planting_date")
-```
-
-An optimized strip-plot design with well-arranged treatment combinations!
 
 # P-Rep (Partially Replicated) Designs
 
@@ -725,114 +859,6 @@ This shows the initial design layout accommodating field constraints and obstacl
 ```
 
 An optimized design that efficiently uses available space while respecting field constraints!
-
-# Split-Split Plot Designs
-
-## Overview
-
-Split-split plot designs extend the hierarchical structure of split-plot designs to accommodate three factors with different levels of experimental difficulty or practical constraints. This creates a three-level hierarchy of experimental units.
-
-## Hierarchical Structure
-
-### Whole Plots (Main Plots)
-- **Largest experimental units**
-- **Factor A** applied to whole plots
-- **Most difficult factor to randomize**
-- **Example**: Tillage systems, irrigation methods
-
-### Sub-Plots (Split Plots)
-- **Intermediate-sized units within whole plots**
-- **Factor B** applied to sub-plots
-- **Moderate randomization difficulty**
-- **Example**: Fertilizer treatments, planting dates
-
-### Sub-Sub-Plots (Split-Split Plots)
-- **Smallest experimental units**
-- **Factor C** applied to sub-sub-plots
-- **Easiest factor to randomize**
-- **Example**: Varieties, pesticide treatments
-
-## Error Structure
-
-Complex error structure with multiple error terms:
-- **Whole plot error** for Factor A effects
-- **Sub-plot error** for Factor B and A×B effects  
-- **Sub-sub-plot error** for Factor C and higher-order interactions
-
-## When to Use Split-Split Plot Designs
-
-- **Three factors with different application constraints**
-- **Hierarchical treatment structure** matches practical needs
-- **Sequential application** of treatments over time
-- **Resource or equipment limitations** for some factors
-
-## Examples of Applications
-
-### Agricultural Examples
-- **Tillage × Fertilizer × Variety** experiments
-- **Irrigation × Planting Date × Cultivar** studies
-- **Cover Crop × Nitrogen × Hybrid** trials
-
-### Industrial Examples
-- **Temperature × Pressure × Catalyst** process studies
-- **Machine × Operator × Material** quality experiments
-
-## Example: Split-Split Plot Design for Agricultural Systems Research
-
-Consider a complex agricultural trial examining Tillage System × Nitrogen Rate × Variety interactions with three hierarchical levels.
-
-## Setting Up Split-Split Plot Designs with speed
-
-```{r split-split-design-df}
-# Placeholder: Initialize split-split plot design
-# # Factor A: Tillage System (whole plots)
-# # Factor B: Nitrogen Rate (sub-plots)  
-# # Factor C: Variety (sub-sub-plots)
-# split_split_design <- initialise_design_df(
-#   factor_a = c("No-till", "Conventional", "Strip-till"),  # 3 levels
-#   factor_b = c("0N", "50N", "100N", "150N"),             # 4 levels
-#   factor_c = c("V1", "V2", "V3", "V4", "V5"),           # 5 levels
-#   reps = 4, nrows = 24, ncols = 20
-# )
-# head(split_split_design)
-```
-
-```{r split-split-design-plot1}
-#| echo: false
-# Placeholder: Initial visualization showing hierarchical structure
-# class(split_split_design) <- c("design", class(split_split_design))
-# autoplot(split_split_design) + 
-#   facet_wrap(~factor_a, labeller = label_both)
-```
-
-This shows the initial split-split plot design with three-level hierarchical structure.
-
-### Performing the Optimisation
-
-```{r split-split-design-example}
-# Placeholder: Optimize the split-split plot design
-# split_split_result <- speed_hierarchical(split_split_design,
-#                                         swap = c("factor_b", "factor_c"),
-#                                         seed = 42)
-# split_split_result
-```
-
-### Output of the Optimisation
-
-```{r split-split-design-output}
-# Placeholder: Show structure of results
-# str(split_split_result)
-```
-
-### Visualise the Output
-
-```{r split-split-design-plot2}
-# Placeholder: Final visualization
-# autoplot(split_split_result) + 
-#   facet_wrap(~factor_a, labeller = label_both)
-```
-
-An optimized split-split plot design with efficient spatial arrangement across all hierarchical levels!
 
 # Factorial Designs in Incomplete Blocks
 
