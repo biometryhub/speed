@@ -28,8 +28,6 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-asdfad
-
 This vignette covers advanced and complex experimental designs that are used in specialised agricultural research contexts. These designs are particularly useful for plant breeding programs, large-scale variety trials, and situations where standard complete block designs are impractical due to resource constraints or the nature of the treatments.
 
 Building on the foundational designs covered in the [Common Agricultural Experimental Designs vignette](/common_designs.html), these complex designs offer solutions for challenging experimental scenarios while maintaining statistical rigour through spatial optimisation with the `speed` package.
@@ -112,7 +110,7 @@ split_split_df <- data.frame(
 
 ```{r}
 #| echo: false
-#| #| label: fig-ssplot1
+#| label: fig-ssplot1
 #| fig-cap: "Initial layout of the split-split-plot design showing systematic treatment distribution."
 class(split_split_df) <- c("design", class(split_split_df))
 p1 <- autoplot(split_split_df, treatments = "block") + ggplot2::labs(title = "Blocks")
@@ -136,31 +134,35 @@ result_ss <- speed(split_split_df,
                 swap_within = list(wp = "block",
                                    sp = "wholeplot",
                                    ssp = "subplot"),
-                iterations = list(wp = 2000, sp = 5000, ssp = 20000),
-                early_stop_iterations = list(wp = 1000, sp = 3000, ssp = 5000),
+                iterations = list(wp = 2000, 
+                                  sp = 5000, 
+                                  ssp = 20000),
+                early_stop_iterations = list(wp = 1000, 
+                                             sp = 3000, 
+                                             ssp = 5000),
                 seed = 42)
-
-autoplot(result_ss, treatments = "wholeplot_treatment")
-autoplot(result_ss, treatments = "subplot_treatment")
-autoplot(result_ss, treatments = "subsubplot_treatment")
 ```
 
 ### Output of the Optimisation
 
 ```{r split-split-design-output}
-# Placeholder: Show structure of results
-# str(split_split_result)
+result_ss
 ```
 
 ### Visualise the Output
 
-```{r split-split-design-plot2}
-# Placeholder: Final visualization
-# autoplot(split_split_result) + 
-#   facet_wrap(~factor_a, labeller = label_both)
+```{r}
+#| label: fig-ssplot2
+#| fig-cap: "Final layout of the split-split-plot design showing optimised treatment distribution."
+res1 <- autoplot(result_ss, treatments = "wholeplot_treatment") + ggplot2::labs(title = "Whole plot Treatments")
+res2 <- autoplot(result_ss, treatments = "subplot_treatment") + ggplot2::labs(title = "Sub-plot Treatments")
+res3 <- autoplot(result_ss, treatments = "subsubplot_treatment") + ggplot2::labs(title = "Sub-sub-plot Treatments")
+res1 + res2 + res3 +
+  plot_layout(ncol = 2) +
+  plot_annotation(title = "Optimized Split-Split Plot Design")
 ```
 
-An optimized split-split plot design with efficient spatial arrangement across all hierarchical levels!
+Above is the final output of this design. Note that there are some adjacent pairs of treatments in the sub-sub-plots. This is quite difficult to avoid in these situations, however adjusting some of the optimisation parameters may help with this. For further information, see the vignette about [changing optimisation parameters for speed](/custom_objective_functions.html).
 
 # Strip-Plot Designs
 
@@ -186,10 +188,10 @@ Strip-plot designs are extensions of split-plot designs used when both treatment
 ## Advantages and Limitations
 
 ### Advantages
-- **Accommodates two "difficult-to-randomize" factors**
+- **Accommodates two "difficult-to-randomise" factors**
 - **More flexible** than split-plot for certain applications
 - **Maintains reasonable precision** for main effects
-- **Practical for mechanized agriculture**
+- **Practical for mechanised agriculture**
 
 ### Limitations
 - **Lower precision** for interaction effects
@@ -204,55 +206,60 @@ Consider an experiment testing 3 tillage methods and 4 planting dates where both
 ## Setting Up Strip-Plot Designs with speed
 
 ```{r strip-plot-df}
-# Placeholder: Initialize strip-plot design
-# strip_design <- data.frame(
-#   row = rep(1:12, each = 12),
-#   col = rep(1:12, times = 12),
-#   tillage_strip = rep(rep(1:3, each = 4), times = 12),
-#   planting_strip = rep(1:4, each = 36),
-#   tillage = rep(rep(LETTERS[1:3], each = 4), times = 12),
-#   planting_date = rep(1:4, each = 36)
-# )
-# head(strip_design)
+df_strip <- data.frame(
+  row = rep(1:12, each = 6),  # 24 rows total (4 rows per block x 6 blocks)
+  col = rep(1:6, times = 12),  # 3 columns repeated
+  block = rep(rep(1:2, each = 3), times = 4) + rep(0:2*2, each = 24),  # 6 blocks, 12 plots each
+  
+  # Horizontal strips (3 levels, applied to rows within each block)
+  vertical_treatment = rep(rep(LETTERS[1:3], times = 2), times = 12),  # A, B, C
+  
+  # Vertical strips (4 levels, applied to columns within each block)  
+  horizontal_treatment = rep(rep(letters[1:4], each = 6), times = 3),  # a, b, c, d
+  
+  # Plot identifier within each block
+  plot_in_block = rep(1:12, times = 6)
+)
 ```
 
-```{r strip-plot-plot1}
+```{r}
 #| echo: false
-# Placeholder: Initial visualization showing strip structure
-# class(strip_design) <- c("design", class(strip_design))
-# autoplot(strip_design, treatments = "tillage")
-# autoplot(strip_design, treatments = "planting_date")
+#| label: fig-stripplot1
+#| fig-cap: "Initial layout of the strip plot design showing systematic treatment distribution."
+class(df_strip) <- c("design", class(df_strip))
+p1 <- autoplot(df_strip, treatments = "block") + ggplot2::labs(title = "Blocks")
+p2 <- autoplot(df_strip, treatments = "horizontal_treatment") + ggplot2::labs(title = "Tillage Treatments")
+p3 <- autoplot(df_strip, treatments = "vertical_treatment") + ggplot2::labs(title = "Planting Date Treatments")
+p1 + p2 + p3 +
+  plot_layout(ncol = 2) +
+  plot_annotation(title = "Initial Strip Plot Design")
 ```
 
-This shows the initial strip-plot layout with horizontal and vertical strips before optimization.
+This shows the initial strip-plot layout with horizontal and vertical strips before optimisation.
 
 ### Performing the Optimisation
 
 ```{r strip-plot-example}
-# Placeholder: Optimize the strip-plot design
-# strip_result <- speed(strip_design,
-#                      swap = list(tillage = "tillage", planting = "planting_date"),
-#                      swap_within = list(tillage = "tillage_strip", planting = "planting_strip"),
-#                      seed = 42)
-# strip_result
+strip_result <- speed(df_strip,
+                      swap = list(ht = "horizontal_treatment", vt = "vertical_treatment"),
+                      swap_within = list(ht = "block", vt = "block"))
+
 ```
 
 ### Output of the Optimisation
 
 ```{r strip-plot-output}
-# Placeholder: Show structure of results
-# str(strip_result)
+strip_result
 ```
 
 ### Visualise the Output
 
 ```{r strip-plot-plot2}
-# Placeholder: Final visualization
-# autoplot(strip_result, treatments = "tillage")
-# autoplot(strip_result, treatments = "planting_date")
+autoplot(strip_result, treatments = "horizontal_treatment") + ggplot2::labs(title = "Tillage Treatments")
+autoplot(strip_result, treatments = "vertical_treatment") + ggplot2::labs(title = "Planting Date Treatments")
 ```
 
-An optimized strip-plot design with well-arranged treatment combinations!
+An optimised strip-plot design with well-arranged treatment combinations!
 
 # Incomplete Block Designs
 
