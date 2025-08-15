@@ -93,10 +93,13 @@ test_that("env_add_one works with different key types", {
 })
 
 test_that("infer_row_col can infer row and column", {
-  inferred <- infer_row_col(data.frame(
-    row = rep(1:4, each = 5),
-    col = rep(1:4, times = 5)
-  ))
+  expect_message(
+    inferred <- infer_row_col(data.frame(
+      row = rep(1:4, each = 5),
+      col = rep(1:4, times = 5)
+    )),
+    "row and col are used as row and column, respectively"
+  )
 
   expect_equal(inferred$inferred, TRUE)
   expect_equal(inferred$col, "col")
@@ -105,7 +108,7 @@ test_that("infer_row_col can infer row and column", {
   inferred <- infer_row_col(data.frame(
     Row = rep(1:4, each = 5),
     column = rep(1:4, times = 5)
-  ))
+  ), quiet = TRUE)
 
   expect_equal(inferred$inferred, TRUE)
   expect_equal(inferred$col, "column")
@@ -114,7 +117,7 @@ test_that("infer_row_col can infer row and column", {
   inferred <- infer_row_col(data.frame(
     Rows = rep(1:4, each = 5),
     range = rep(1:4, times = 5)
-  ))
+  ), quiet = TRUE)
 
   expect_equal(inferred$inferred, TRUE)
   expect_equal(inferred$col, "range")
@@ -135,4 +138,45 @@ test_that("infer_row_col raise warning if cannot infer", {
   )
 
   expect_equal(inferred$inferred, FALSE)
+})
+
+test_that("to_factor converts data frame data to factors", {
+  test_data <- data.frame(
+    factor_col = as.factor(1:5),
+    character_col = LETTERS[1:5],
+    integer_col = 1:5,
+    numeric_col = as.numeric(1:5),
+    logical_col = c(TRUE, FALSE, TRUE, FALSE, TRUE)
+  )
+  factored <- to_factor(test_data)
+
+  expect_setequal(names(factored), c("df", "input_types"))
+  expect_setequal(names(factored$df), names(test_data))
+  expect_setequal(names(factored$input_types), names(test_data))
+  expect_setequal(unique(sapply(factored$df, class)), "factor")
+  expect_equal(factored$df$factor_col, test_data$factor_col)
+  expect_equal(factored$df$character_col, as.factor(test_data$character_col))
+  expect_equal(factored$df$integer_col, as.factor(test_data$integer_col))
+  expect_equal(factored$df$numeric_col, as.factor(test_data$numeric_col))
+  expect_equal(factored$df$logical_col, as.factor(test_data$logical_col))
+})
+
+test_that("to_types converts data frame data to input types", {
+  test_data <- data.frame(
+    factor_col = as.factor(1:5),
+    character_col = LETTERS[1:5],
+    integer_col = 1:5,
+    numeric_col = as.numeric(1:5),
+    logical_col = c(TRUE, FALSE, TRUE, FALSE, TRUE)
+  )
+  factored <- to_factor(test_data)
+
+  typed_data <- to_types(factored$df, factored$input_types)
+
+  expect_setequal(names(typed_data), names(test_data))
+  expect_equal(typed_data$factor_col, test_data$factor_col)
+  expect_equal(typed_data$character_col, test_data$character_col)
+  expect_equal(typed_data$integer_col, test_data$integer_col)
+  expect_equal(typed_data$numeric_col, test_data$numeric_col)
+  expect_equal(typed_data$logical_col, test_data$logical_col)
 })
