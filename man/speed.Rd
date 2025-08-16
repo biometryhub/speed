@@ -9,6 +9,7 @@ speed(
   swap,
   swap_within = "1",
   spatial_factors = ~row + col,
+  grid_factors = list(dim1 = "row", dim2 = "col"),
   iterations = 10000,
   early_stop_iterations = 2000,
   obj_function = objective_function,
@@ -36,6 +37,10 @@ See details for more information.}
 
 \item{spatial_factors}{A one-sided formula specifying spatial factors to
 consider for balance (default: \code{~row + col}).}
+
+\item{grid_factors}{A named list specifying grid factors to construct a
+matrix for calculating adjacency score, \code{dim1} for row and \code{dim2} for
+column. (default: \code{list(dim1 = "row", dim2 = "col")}).}
 
 \item{iterations}{Maximum number of iterations for the simulated annealing
 algorithm (default: 10000). For hierarchical designs, can be a named list

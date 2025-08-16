@@ -160,6 +160,9 @@ generate_sequential_neighbour <- function(design,
 #' Infer data frame names with patterns to determine if variations of 'row' and 'col' columns exist.
 #'
 #' @inheritParams objective_function_signature
+#' @param grid_factors A named list specifying grid factors to construct a
+#'   matrix for calculating adjacency score, `dim1` for row and `dim2` for
+#'   column. (default: `list(dim1 = "row", dim2 = "col")`).
 #' @param quiet Logical (default: FALSE). If TRUE, output will be suppressed.
 #'
 #' @returns A list containing:
@@ -168,7 +171,16 @@ generate_sequential_neighbour <- function(design,
 #' - **col** - Name of the column column
 #'
 #' @keywords internal
-infer_row_col <- function(layout_df, quiet = FALSE) {
+infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "col"), quiet = FALSE) {
+  if (grid_factors$dim1 %in% names(layout_df) && grid_factors$dim2 %in% names(layout_df)) {
+    row_col <- grid_factors$dim1
+    col_col <- grid_factors$dim2
+    if (!quiet) {
+      message(row_col, " and ", col_col, " are used as row and column, respectively.")
+    }
+    return(list(inferred = TRUE, row = row_col, col = col_col))
+  }
+
   row_pattern <- "(?i)^row(s|)$"
   col_pattern <- "(?i)^(col(umn|)|range)(s|)$"
 
@@ -177,12 +189,14 @@ infer_row_col <- function(layout_df, quiet = FALSE) {
   if (is.na(row_col) || is.na(col_col)) {
     if (is.na(row_col)) {
       warning(
-        "Cannot infer row in the design data frame. speed.adj_weight is set to 0 for this call.",
+        "Cannot infer row in the design data frame. speed.adj_weight is set to 0 for this call. If this is not",
+        " intended, provide `grid_factors` argument.",
         call. = FALSE
       )
     } else {
       warning(
-        "Cannot infer column in the design data frame. speed.adj_weight is set to 0 for this call.",
+        "Cannot infer column in the design data frame. speed.adj_weight is set to 0 for this call. If this is",
+        " not intended, provide `grid_factors` argument.",
         call. = FALSE
       )
     }

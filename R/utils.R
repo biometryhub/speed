@@ -95,6 +95,7 @@ to_factor <- function(df) {
   return(list(df = df, input_types = input_types))
 }
 
+# TODO: generalize this, not excluding factors
 #' Convert Data Frame Data to Provided Types
 #'
 #' @inheritParams to_factor
