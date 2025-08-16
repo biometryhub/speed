@@ -4,10 +4,18 @@
 \alias{infer_row_col}
 \title{Infer 'row' and 'col' with Patterns}
 \usage{
-infer_row_col(layout_df, quiet = FALSE)
+infer_row_col(
+  layout_df,
+  grid_factors = list(dim1 = "row", dim2 = "col"),
+  quiet = FALSE
+)
 }
 \arguments{
 \item{layout_df}{A data frame representing the current design}
+
+\item{grid_factors}{A named list specifying grid factors to construct a
+matrix for calculating adjacency score, \code{dim1} for row and \code{dim2} for
+column. (default: \code{list(dim1 = "row", dim2 = "col")}).}
 
 \item{quiet}{Logical (default: FALSE). If TRUE, output will be suppressed.}
 }

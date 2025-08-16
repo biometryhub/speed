@@ -1004,7 +1004,6 @@ test_that("speed runs a with variation of row and column columns", {
 })
 
 test_that("speed runs a without row", {
-  # Sample data for testing
   test_data <- data.frame(
     col = rep(1:4, each = 5),
     treatment = rep(LETTERS[1:4], 5)
@@ -1019,12 +1018,14 @@ test_that("speed runs a without row", {
       seed = 42,
       quiet = TRUE
     ),
-    "Cannot infer row in the design data frame. speed.adj_weight is set to 0 for this call."
+    paste0(
+      "Cannot infer row in the design data frame. speed.adj_weight is set to 0 for this call. If this is not",
+      " intended, provide `grid_factors` argument."
+    )
   )
 })
 
 test_that("speed runs a without column", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:4, each = 5),
     treatment = rep(LETTERS[1:4], 5)
@@ -1039,8 +1040,33 @@ test_that("speed runs a without column", {
       seed = 42,
       quiet = TRUE
     ),
-    "Cannot infer column in the design data frame. speed.adj_weight is set to 0 for this call."
+    paste0(
+      "Cannot infer column in the design data frame. speed.adj_weight is set to 0 for this call. If this is",
+      " not intended, provide `grid_factors` argument."
+    )
   )
+})
+
+test_that("speed runs with grid_factors", {
+  test_data <- data.frame(
+    lane = rep(1:5, times = 4),
+    position = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ lane + position,
+    grid_factors = list(dim1 = "lane", dim2 = "position"),
+    iterations = 1000,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  expect_equal(nrow(result$design_df), 20)
+  expect_equal(ncol(result$design_df), 3)
+  expect_equal(result$score, 1)
 })
 
 # for nse

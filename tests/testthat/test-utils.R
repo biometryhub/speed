@@ -105,36 +105,61 @@ test_that("infer_row_col can infer row and column", {
   expect_equal(inferred$col, "col")
   expect_equal(inferred$row, "row")
 
-  inferred <- infer_row_col(data.frame(
-    Row = rep(1:4, each = 5),
-    column = rep(1:4, times = 5)
-  ), quiet = TRUE)
+  inferred <- infer_row_col(
+    data.frame(
+      Row = rep(1:4, each = 5),
+      column = rep(1:4, times = 5)
+    ),
+    quiet = TRUE
+  )
 
   expect_equal(inferred$inferred, TRUE)
   expect_equal(inferred$col, "column")
   expect_equal(inferred$row, "Row")
 
-  inferred <- infer_row_col(data.frame(
-    Rows = rep(1:4, each = 5),
-    range = rep(1:4, times = 5)
-  ), quiet = TRUE)
+  inferred <- infer_row_col(
+    data.frame(
+      Rows = rep(1:4, each = 5),
+      range = rep(1:4, times = 5)
+    ),
+    quiet = TRUE
+  )
 
   expect_equal(inferred$inferred, TRUE)
   expect_equal(inferred$col, "range")
   expect_equal(inferred$row, "Rows")
+
+  inferred <- infer_row_col(
+    data.frame(
+      lane = rep(1:4, each = 5),
+      position = rep(1:4, times = 5)
+    ),
+    grid_factors = list(dim1 = "lane", dim2 = "position"),
+    quiet = TRUE
+  )
+
+  expect_equal(inferred$inferred, TRUE)
+  expect_equal(inferred$row, "lane")
+  expect_equal(inferred$col, "position")
 })
 
 test_that("infer_row_col raise warning if cannot infer", {
   expect_warning(
     inferred <- infer_row_col(data.frame(row = rep(1:4, each = 5))),
-    "Cannot infer column in the design data frame. speed.adj_weight is set to 0 for this call."
+    paste0(
+      "Cannot infer column in the design data frame. speed.adj_weight is set to 0 for this call. If this is",
+      " not intended, provide `grid_factors` argument."
+    )
   )
 
   expect_equal(inferred$inferred, FALSE)
 
   expect_warning(
     inferred <- infer_row_col(data.frame(col = rep(1:4, each = 5))),
-    "Cannot infer row in the design data frame. speed.adj_weight is set to 0 for this call."
+    paste0(
+      "Cannot infer row in the design data frame. speed.adj_weight is set to 0 for this call. If this is not",
+      " intended, provide `grid_factors` argument."
+    )
   )
 
   expect_equal(inferred$inferred, FALSE)

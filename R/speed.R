@@ -20,6 +20,9 @@
 #'   See details for more information.
 #' @param spatial_factors A one-sided formula specifying spatial factors to
 #'   consider for balance (default: `~row + col`).
+#' @param grid_factors A named list specifying grid factors to construct a
+#'   matrix for calculating adjacency score, `dim1` for row and `dim2` for
+#'   column. (default: `list(dim1 = "row", dim2 = "col")`).
 #' @param iterations Maximum number of iterations for the simulated annealing
 #'   algorithm (default: 10000). For hierarchical designs, can be a named list
 #'   with names matching `swap`.
@@ -107,6 +110,7 @@ speed <- function(data,
                   swap,
                   swap_within = "1",
                   spatial_factors = ~ row + col,
+                  grid_factors = list(dim1 = "row", dim2 = "col"),
                   iterations = 10000,
                   early_stop_iterations = 2000,
                   obj_function = objective_function,
@@ -119,7 +123,7 @@ speed <- function(data,
   is_hierarchical <- is.list(swap) && !is.null(names(swap))
 
   # Infer row and column columns
-  inferred <- infer_row_col(data, quiet)
+  inferred <- infer_row_col(data, grid_factors, quiet)
   row_column <- inferred$row
   col_column <- inferred$col
 
