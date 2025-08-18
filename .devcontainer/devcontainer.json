@@ -12,7 +12,8 @@
         "data.table",
         "matrixStats",
         "bench",
-        "quarto"
+        "quarto",
+        "tidyr"
       ]
     }
   },
