@@ -11,7 +11,8 @@
         "sp",
         "data.table",
         "matrixStats",
-        "bench"
+        "bench",
+        "quarto"
       ]
     }
   },

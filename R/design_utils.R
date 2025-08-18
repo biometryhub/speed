@@ -17,7 +17,6 @@ generate_neighbour <- function(design,
                                level = NULL,
                                swap_count = getOption("speed.swap_count", 1),
                                swap_all_blocks = getOption("speed.swap_all_blocks", FALSE)) {
-
   # Check if this is a hierarchical design
   is_hierarchical <- is.list(swap) && !is.null(names(swap))
 
@@ -40,7 +39,8 @@ generate_simple_neighbour <- function(design,
   new_design <- design
 
   # Get unique blocks
-  blocks <- unique(design[[swap_within]])
+  all_blocks <- design[[swap_within]]
+  blocks <- levels(all_blocks)
 
   if (swap_all_blocks) {
     # Swap in all blocks
@@ -56,27 +56,24 @@ generate_simple_neighbour <- function(design,
   # Perform swaps in selected blocks
   for (block in blocks_to_swap) {
     # Get indices of plots in this block
-    block_indices <- which(
-      design[[swap_within]] == block & !is.na(design[[swap]])
-    )
+    block_indices <- which(all_blocks == block & !is.na(design[[swap]]))
 
     if (length(block_indices) >= 2) {
       # Need at least 2 plots to swap
       for (i in 1:swap_count) {
         # Select two random plots in this block
         swap_pair <- sample(block_indices, 2)
-        if (design[[swap]][swap_pair[1]] == design[[swap]][swap_pair[2]]) {
-          no_dupe_filter <- design[[swap]][block_indices] != design[[swap]][swap_pair[1]]
+        to_be_swapped <- new_design[[swap]][swap_pair]
+        if (to_be_swapped[1] == to_be_swapped[2]) {
+          no_dupe_filter <- new_design[[swap]][block_indices] != to_be_swapped[1]
           swap_pair[[2]] <- sample(block_indices[no_dupe_filter], 1)
+          to_be_swapped[2] <- new_design[[swap]][[swap_pair[[2]]]]
         }
 
         # Swap treatments
-        temp <- new_design[[swap]][swap_pair[1]]
-        new_design[[swap]][swap_pair[1]] <- new_design[[swap]][swap_pair[2]]
-        new_design[[swap]][swap_pair[2]] <- temp
+        new_design[[swap]][rev(swap_pair)] <- to_be_swapped
+        swapped_items[swapped_idx:(swapped_idx + 1)] <- to_be_swapped
 
-        swapped_items[swapped_idx] <- new_design[[swap]][swap_pair[1]]
-        swapped_items[swapped_idx + 1] <- new_design[[swap]][swap_pair[2]]
         swapped_idx <- swapped_idx + 2
       }
     }
@@ -95,13 +92,13 @@ generate_sequential_neighbour <- function(design,
                                           swap_count,
                                           swap_all_blocks) {
   new_design <- design
-  
+
   # Get the swap columns for the specified level
   level_swap <- swap[[level]]
   level_swap_within <- swap_within[[level]]
 
   # Get unique groups for this level
-  groups <- unique(design[[level_swap_within]])
+  groups <- levels(design[[level_swap_within]])
 
   if (swap_all_blocks) {
     # Swap in all groups
@@ -117,8 +114,10 @@ generate_sequential_neighbour <- function(design,
   # Perform swaps in selected groups
   for (group in groups_to_swap) {
     # Get unique treatments within this group
-    group_data <- design[design[[level_swap_within]] == group & !is.na(design[[level_swap]]), ]
-    group_treatments <- unique(design[design[[level_swap_within]] == group & !is.na(design[[level_swap]]), level_swap])
+    group_data <- new_design[new_design[[level_swap_within]] == group & !is.na(new_design[[level_swap]]), ]
+    group_treatments <- unique(
+      new_design[new_design[[level_swap_within]] == group & !is.na(new_design[[level_swap]]), level_swap]
+    )
 
     if (nrow(group_data) >= 2) {
       for (i in 1:swap_count) {
@@ -131,15 +130,15 @@ generate_sequential_neighbour <- function(design,
           if (length(different_treatments) > 0) {
             swap_pair[2] <- sample(different_treatments, 1)
           } else {
-            next  # Skip this swap if no different treatments available
+            next # Skip this swap if no different treatments available
           }
         }
 
         # Find all plots with these treatments in this group
         plots_1 <- which(new_design[[level_swap_within]] == group &
-                         new_design[[level_swap]] == swap_pair[1])
+          new_design[[level_swap]] == swap_pair[1])
         plots_2 <- which(new_design[[level_swap_within]] == group &
-                         new_design[[level_swap]] == swap_pair[2])
+          new_design[[level_swap]] == swap_pair[2])
 
         # Swap all instances of these treatments
         new_design[[level_swap]][plots_1] <- swap_pair[2]
@@ -153,6 +152,61 @@ generate_sequential_neighbour <- function(design,
   }
 
   return(list(design = new_design, swapped_items = swapped_items[1:(swapped_idx - 1)]))
+}
+
+#' Infer 'row' and 'col' with Patterns
+#'
+#' @description
+#' Infer data frame names with patterns to determine if variations of 'row' and 'col' columns exist.
+#'
+#' @inheritParams objective_function_signature
+#' @param grid_factors A named list specifying grid factors to construct a
+#'   matrix for calculating adjacency score, `dim1` for row and `dim2` for
+#'   column. (default: `list(dim1 = "row", dim2 = "col")`).
+#' @param quiet Logical (default: FALSE). If TRUE, output will be suppressed.
+#'
+#' @returns A list containing:
+#' - **inferred** - Logical; if TRUE, row and column columns were inferred from the data frame
+#' - **row** - Name of the row column
+#' - **col** - Name of the column column
+#'
+#' @keywords internal
+infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "col"), quiet = FALSE) {
+  if (grid_factors$dim1 %in% names(layout_df) && grid_factors$dim2 %in% names(layout_df)) {
+    row_col <- grid_factors$dim1
+    col_col <- grid_factors$dim2
+    if (!quiet) {
+      message(row_col, " and ", col_col, " are used as row and column, respectively.")
+    }
+    return(list(inferred = TRUE, row = row_col, col = col_col))
+  }
+
+  row_pattern <- "(?i)^row(s|)$"
+  col_pattern <- "(?i)^(col(umn|)|range)(s|)$"
+
+  row_col <- grep(row_pattern, names(layout_df), value = TRUE)[1]
+  col_col <- grep(col_pattern, names(layout_df), value = TRUE)[1]
+  if (is.na(row_col) || is.na(col_col)) {
+    if (is.na(row_col)) {
+      warning(
+        "Cannot infer row in the design data frame. speed.adj_weight is set to 0 for this call. If this is not",
+        " intended, provide `grid_factors` argument.",
+        call. = FALSE
+      )
+    } else {
+      warning(
+        "Cannot infer column in the design data frame. speed.adj_weight is set to 0 for this call. If this is",
+        " not intended, provide `grid_factors` argument.",
+        call. = FALSE
+      )
+    }
+
+    return(list(inferred = FALSE))
+  }
+  if (!quiet) {
+    message(row_col, " and ", col_col, " are used as row and column, respectively.")
+  }
+  return(list(inferred = TRUE, row = row_col, col = col_col))
 }
 
 #' Initialise Design Data Frame

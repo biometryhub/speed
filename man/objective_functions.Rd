@@ -13,6 +13,8 @@ objective_function(
   spatial_cols,
   adj_weight = getOption("speed.adj_weight", 1),
   bal_weight = getOption("speed.bal_weight", 1),
+  row_column = "row",
+  col_column = "col",
   ...
 )
 }
@@ -28,6 +30,10 @@ objective_function(
 \item{adj_weight}{Weight for adjacency score (default: 1)}
 
 \item{bal_weight}{Weight for balance score (default: 1)}
+
+\item{row_column}{Name of column representing the row of the design (default: "row")}
+
+\item{col_column}{Name of column representing the column of the design (default: "col")}
 }
 \value{
 A numeric value representing the score of the design (lower is better)
