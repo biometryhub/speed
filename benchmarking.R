@@ -16,9 +16,9 @@ dat$colBlock <- rep(1:10, each = 40)
 ## swap in rowBlocks and also balance across colBlocks
 options(speed.swap_count = 5, speed.swap_all_blocks = TRUE, speed.adaptive_swaps = TRUE, speed.cooling_rate = 0.99)
 des <- speed(dat,
-  swap = "treat", swap_within = "rowBlock",
-  spatial_factors = ~colBlock, iterations = 150000,
-  early_stop_iterations = 50000, seed = 123
+             swap = "treat", swap_within = "rowBlock",
+             spatial_factors = ~colBlock, iterations = 150000,
+             early_stop_iterations = 50000, seed = 123
 )
 
 lapply(split(desd, desd$rowBlock), function(el, trs) trs %in% as.character(unique(el$treat)), trs)
@@ -75,9 +75,9 @@ calculate_efficiency_factor(twod.od$design, treat)
 res1 <- bench::mark(
   check = FALSE, iterations = 10,
   speed = speed(dat,
-    swap = "treat", swap_within = "rowBlock",
-    spatial_factors = ~colBlock, iterations = 150000,
-    early_stop_iterations = 50000, seed = 123, quiet = TRUE
+                swap = "treat", swap_within = "rowBlock",
+                spatial_factors = ~colBlock, iterations = 150000,
+                early_stop_iterations = 50000, seed = 123, quiet = TRUE
   ),
   odw = twod_od()
 )
@@ -154,7 +154,11 @@ n_rows <- 25
 n_cols <- 3
 
 # speed
-df_initial <- speed::initialise_design_df(rep(1:n_treatments, n_reps), n_rows, n_cols, 5, 3)
+df_initial <- speed::initialise_design_df(items = 15,
+                                          nrows = 25,
+                                          ncols = 3,
+                                          block_nrows = 5,
+                                          block_ncols = 3)
 df_initial$treatment <- as.factor(df_initial$treatment)
 df_initial$block <- as.factor(df_initial$block)
 df_initial$row <- as.factor(df_initial$row)
@@ -167,7 +171,7 @@ bench_speed <- function() {
     swap = "treatment",
     swap_within = "block",
     spatial_factors = ~col,
-    seed = 112
+    seed = 1
   )
 }
 speed_result <- bench_speed()
@@ -189,7 +193,7 @@ df_layout$plot_in_block <- df_initial$treatment
 df_layout$row <- as.numeric(df_layout$row)
 df_layout$col <- as.numeric(df_layout$col)
 class(df_layout) <- c(class(df_layout), "design")
-png("layout-15x5.png", height = 1080, width = 480)
+png("layout-15x5.png", height = 500, width = 500)
 speed::autoplot(df_layout, treatments = "plot_in_block")
 dev.off()
 
@@ -221,7 +225,7 @@ speed::calculate_adjacency_score(df_digger, "treatment")
 digger_result <- speed_result
 digger_result$design_df <- df_digger
 
-png("digger-15x5.png", height = 1080, width = 480)
+png("digger-15x5.png", height = 500, width = 480)
 speed::autoplot(digger_result)
 dev.off()
 
@@ -271,7 +275,7 @@ speed::calculate_adjacency_score(df_odw, "treatment")
 unique(table(df_odw$treatment, df_odw$row))
 unique(table(df_odw$treatment, df_odw$col))
 
-png("odw-15x5.png", height = 1080, width = 480)
+png("odw-15x5.png", height = 500, width = 500)
 speed::autoplot(odw_result)
 dev.off()
 
@@ -283,8 +287,8 @@ bench_result <- bench::mark(
   odw = bench_odw()
 )
 
-png("bench-15x5.png", height = 720, width = 720)
-ggplot2::autoplot(bench_result, type = "boxplot")
+png("bench-15x5.png", height = 720, width = 720, res = 300)
+ggplot2::autoplot(bench_result, type = "violin") + ggplot2::theme_bw()
 dev.off()
 
 #######################################################
@@ -339,7 +343,7 @@ df_layout$row <- as.numeric(df_layout$row)
 df_layout$col <- as.numeric(df_layout$col)
 class(df_layout) <- c(class(df_layout), "design")
 png("layout-20x20.png", height = 720, width = 720)
-speed::autoplot(df_layout, treatments = "col_block")
+speed::autoplot(df_layout, treatments = "col_block", legend = T)
 dev.off()
 
 # digger
@@ -455,28 +459,38 @@ wholeplot_ncols <- 4
 n_rows <- 12
 n_cols <- 4
 
+# Hierarchical split-plot design
+df_initial <- data.frame(
+  row = rep(1:12, each = 4),
+  col = rep(1:4, times = 12),
+  block = rep(1:4, each = 12),
+  wholeplot = rep(1:12, each = 4),
+  wholeplot_treatment = rep(rep(LETTERS[1:3], each = 4), times = 4),
+  subplot_treatment = rep(letters[1:4], 12)
+)
+
 # speed
-df_initial <- speed::initialise_design_df(
-  rep(letters[1:n_subplot_treatments], each = n_subplot_reps),
-  n_rows,
-  n_cols,
-  wholeplot_nrows,
-  wholeplot_ncols
-)
-df_dummy <- speed::initialise_design_df(
-  rep(
-    rep(LETTERS[1:n_wholeplot_treatments], times = n_wholeplot_reps),
-    times = n_rows * n_cols / n_wholeplot_reps / n_wholeplot_treatments
-  ),
-  n_rows,
-  n_cols,
-  block_nrows,
-  block_ncols
-)
-df_initial$wholeplot <- as.factor(df_initial$block)
-df_initial$block <- as.factor(df_dummy$block)
-df_initial$wholeplot_treatment <- as.factor(df_dummy$treatment)
-df_initial$subplot_treatment <- as.factor(df_initial$treatment)
+# df_initial <- speed::initialise_design_df(
+#   rep(letters[1:n_subplot_treatments], each = n_subplot_reps),
+#   n_rows,
+#   n_cols,
+#   wholeplot_nrows,
+#   wholeplot_ncols
+# )
+# df_dummy <- speed::initialise_design_df(
+#   rep(
+#     rep(LETTERS[1:n_wholeplot_treatments], times = n_wholeplot_reps),
+#     times = n_rows * n_cols / n_wholeplot_reps / n_wholeplot_treatments
+#   ),
+#   n_rows,
+#   n_cols,
+#   block_nrows,
+#   block_ncols
+# )
+df_initial$wholeplot <- as.factor(df_initial$wholeplot)
+df_initial$block <- as.factor(df_initial$block)
+df_initial$wholeplot_treatment <- as.factor(df_initial$wholeplot_treatment)
+df_initial$subplot_treatment <- as.factor(df_initial$subplot_treatment)
 df_initial$row <- as.factor(df_initial$row)
 df_initial$col <- as.factor(df_initial$col)
 
@@ -493,14 +507,11 @@ speed::autoplot(df_layout, treatments = "subplot_treatment", block = "wholeplot"
 dev.off()
 
 bench_speed <- function() {
-  speed::speed(
-    data = df_initial,
-    swap = list(wholeplot = "wholeplot_treatment", subplot = "subplot_treatment"),
-    swap_within = list(wholeplot = "block", subplot = "wholeplot"),
-    spatial_factors = ~col,
-    early_stop_iterations = list(wholeplot = 1000, subplot = 10000), ,
-    seed = 13
-  )
+  speed::speed(df_initial,
+               swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+               swap_within = list(wp = "block", sp = "wholeplot"),
+               early_stop_iterations = list(wp = 1000, sp = 20000),
+               iterations = list(wp = 5000, sp = 50000), seed = 3)
 }
 speed_result <- bench_speed()
 speed_result$score
@@ -539,39 +550,42 @@ dev.off()
 
 # digger
 bench_digger_whole <- function(variables) {
-  DiGGer::ibDiGGer(
-    numberOfTreatments = n_wholeplot_treatments,
-    rowsInDesign = n_rows,
-    columnsInDesign = 1,
-    rowsInBlock = 3,
-    columnsInBlock = 1,
-    maxInterchanges = 1000,
-    rngSeeds = c(112, 112)
-  )
-}
-bench_digger_sub <- function(variables) {
-  DiGGer::ibDiGGer(
-    numberOfTreatments = n_subplot_treatments,
+  DiGGer::facDiGGer(
+    factorNames = c("F1", "F2"),
     rowsInDesign = n_rows,
     columnsInDesign = n_cols,
-    rowsInBlock = wholeplot_nrows,
-    columnsInBlock = wholeplot_ncols,
-    rowsInRep = 12,
-    columnsInRep = 1,
+    rowsInReplicate = 3,
+    columnsInReplicate = 4,
+    mainPlotSizes = list(c(1,4), c(1,1)),
+    treatDataFrame = DF15,
+    treatRepColumn = "Repeats",
     maxInterchanges = 1000,
     rngSeeds = c(112, 112)
   )
 }
-digger_design <- DiGGer::getDesign(bench_digger_sub())
-digger_dummy <- DiGGer::getDesign(bench_digger_whole())
+# bench_digger_sub <- function(variables) {
+#   DiGGer::ibDiGGer(
+#     numberOfTreatments = n_subplot_treatments,
+#     rowsInDesign = n_rows,
+#     columnsInDesign = n_cols,
+#     rowsInBlock = wholeplot_nrows,
+#     columnsInBlock = wholeplot_ncols,
+#     rowsInRep = 12,
+#     columnsInRep = 1,
+#     maxInterchanges = 1000,
+#     rngSeeds = c(112, 112)
+#   )
+# }
+# digger_design <- DiGGer::getDesign(bench_digger_sub())
+digger_design <- DiGGer::getDesign(bench_digger_whole())
 
 df_digger <- df_initial
 df_digger$row <- as.numeric(df_digger$row)
 df_digger$col <- as.numeric(df_digger$col)
 df_digger$block <- as.numeric(df_digger$block)
 df_digger$wholeplot <- as.numeric(df_digger$wholeplot)
-df_digger$subplot_treatment <- letters[c(digger_design)]
-df_digger$wholeplot_treatment <- rep(LETTERS[c(digger_dummy)], times = n_cols)
+df_digger$subplot_treatment <- letters[c(t(digger_design %% 4 + 1))]
+df_digger$wholeplot_treatment <- c(t(ifelse(digger_design <= 4, "A", ifelse(digger_design > 8, "C", "B"))))
 unique(table(df_digger$wholeplot_treatment, df_digger$block))
 unique(table(df_digger$subplot_treatment, df_digger$wholeplot))
 speed::calculate_adjacency_score(df_digger, "subplot_treatment")
@@ -616,13 +630,15 @@ dev.off()
 # df_digger$wholeplot_treatment <- rep(LETTERS[c(digger_dummy)], times = 4)
 
 # odw
-df_initial_odw <- speed::initialise_design_df(
-  as.factor(rep(letters[1:n_subplot_treatments], each = n_subplot_reps)),
-  n_rows,
-  n_cols,
-  wholeplot_nrows,
-  wholeplot_ncols
-)
+df_initial_odw <- df_initial
+
+#   speed::initialise_design_df(
+#   as.factor(rep(letters[1:n_subplot_treatments], each = n_subplot_reps)),
+#   n_rows,
+#   n_cols,
+#   wholeplot_nrows,
+#   wholeplot_ncols
+# )
 df_dummy_odw <- speed::initialise_design_df(
   as.factor(rep(LETTERS[1:n_wholeplot_treatments], n_wholeplot_reps)),
   n_rows,
@@ -630,7 +646,7 @@ df_dummy_odw <- speed::initialise_design_df(
   block_nrows,
   1
 )
-df_initial_odw$wholeplot <- as.factor(df_initial_odw$block)
+df_initial_odw$wholeplot <- as.factor(df_initial_odw$wholeplot)
 df_initial_odw$row <- as.factor(df_initial_odw$row)
 df_initial_odw$col <- as.factor(df_initial_odw$col)
 df_dummy_odw$block <- as.factor(df_dummy_odw$block)
@@ -666,9 +682,9 @@ bench_odw_dummy <- function() {
 design_object_dummy <- bench_odw_dummy()
 
 initial_param_table <- odw::odw(
-  random = ~ treatment + row + col,
+  random = ~ subplot_treatment + block:col,
   data = df_initial_odw,
-  permute = ~treatment,
+  permute = ~subplot_treatment,
   swap = ~row,
   search = "tabu",
   start.values = TRUE
@@ -680,9 +696,9 @@ initial_param_table
 
 bench_odw <- function() {
   odw::odw(
-    random = ~ treatment + row + col,
+    random = ~ subplot_treatment + block:col,
     data = df_initial_odw,
-    permute = ~treatment,
+    permute = ~subplot_treatment,
     swap = ~row,
     search = "tabu",
     G.param = initial_param_table,
@@ -696,9 +712,9 @@ df_odw <- design_object$design
 df_odw_dummy <- design_object_dummy$design
 df_odw$row <- as.numeric(df_odw$row)
 df_odw$col <- as.numeric(df_odw$col)
-df_odw$subplot_treatment <- df_odw$treatment
-df_odw$wholeplot_treatment <- rep(LETTERS[df_odw_dummy$treatment], n_cols)
-df_odw$block <- rep(df_odw_dummy$block, n_cols)
+# df_odw$subplot_treatment <- df_odw$treatment
+df_odw$wholeplot_treatment <- rep(df_odw_dummy$treatment, each = n_cols)
+# df_odw$block <- rep(df_odw_dummy$block, n_cols)
 odw_result <- speed_result
 odw_result$design_df <- df_odw
 unique(table(df_odw$wholeplot_treatment, df_odw$block))
