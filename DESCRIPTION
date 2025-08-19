@@ -1,7 +1,7 @@
 Type: Package
 Package: speed
 Title: Generate Spatially Efficient Experimental Designs
-Version: 0.0.1
+Version: 0.0.2
 Authors@R: 
     c(person(given = "Sam",
              family = "Rogers",
@@ -44,6 +44,7 @@ Imports:
     stringi
 Suggests: 
     igraph,
+    patchwork,
     quarto,
     testthat (>= 3.0.0),
     vdiffr

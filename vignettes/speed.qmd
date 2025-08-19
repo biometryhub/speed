@@ -21,6 +21,8 @@ Agricultural experiments require careful spatial design to minimise the effects 
 
 This vignette demonstrates how to use `speed` for common agricultural experimental designs, showing how spatial optimisation can improve the efficiency and validity of field trials. We'll work through four key design types, each building in complexity and showing different features of the package.
 
+For advanced and specialised experimental designs (e.g., split-split plot, strip-plot, incomplete block, p-rep, and more), see the companion vignette: [Complex Agricultural Experimental Designs with speed](complex_designs.html).
+
 ```{r load-package}
 library(speed)
 ```
@@ -29,7 +31,7 @@ library(speed)
 
 ## Overview
 
-The Completely Randomised Design is the simplest experimental design where treatments are assigned to experimental units entirely at random. While simple to implement, CRD doesn't account for spatial variation in field conditions.
+The Completely Randomised Design is the simplest experimental design where treatments are assigned to experimental units entirely at random. While simple to implement, a CRD doesn't account for spatial variation in field conditions, which can be mitigated by spatial optimisation techniques.
 
 ## When to Use
 
@@ -40,14 +42,14 @@ The Completely Randomised Design is the simplest experimental design where treat
 
 ## Example: Field Trial with 8 Varieties
 
-Consider a field trial testing 8 new wheat varieties with 4 replicates each. Even though treatments are assigned randomly, spatial optimization can reduce neighbor effects and improve precision.
+Consider a field trial testing 8 new wheat varieties with 4 replicates each. Even though treatments are assigned randomly, spatial optimisation can reduce neighbour effects and improve precision.
 
 ## Setting Up CRD with speed
 
-In agricultural contexts, even completely randomised designs benefit from spatial optimisation to minimise treatment clustering and neighbour effects. Firstly we will initialise a dataframe representing the design and visualise it. This design has 4 replicates of 8 treatments or `items`, with 8 rows and 4 columns.
+In agricultural contexts, even completely randomised designs benefit from spatial optimisation to minimise treatment clustering and neighbour effects. Firstly we will initialise a data frame representing the design and visualise it. This design has 4 replicates of 8 treatments or `items`, with 8 rows and 4 columns.
 
 ```{r crd-df}
-# Initialise dataframe
+# Initialise data frame
 crd_design <- initialise_design_df(items = 8, nrows = 8, ncols = 4)
 head(crd_design)
 ```
@@ -62,7 +64,7 @@ This is a systematic layout; note how the initial layout arranges treatments in 
 
 ### Performing the Optimisation
 
-The main `speed()` function performs the optimisation. It has been set up with sensible defaults to allow application to a wide variety of situations. In this case, we only need to provide the design dataframe for it to operate on, the column name of the dataframe to use for the treatments, and a seed for reproducibility. 
+The main `speed()` function performs the optimisation. It has been set up with sensible defaults to allow application to a wide variety of situations. In this case, we only need to provide the design data frame for it to operate on, the column name of the data frame to use for the treatments, and a seed for reproducibility. 
 
 ```{r crd-example}
 crd_result <- speed(crd_design, 
@@ -88,8 +90,9 @@ The final step is to visualise the optimised design. The plot below displays the
 autoplot(crd_result)
 ```
 
-A nicely randomised and spatially optimal design!
+A nicely randomised[^1] and spatially optimal design!
 
+[^1]: Note that this design is not a true randomised design, as `speed` performs restricted randomisation and this design has been optimised to reduce neighbour effects. However, it can still be considered a Completely Randomised Design as it does not account for any blocking or other sources of variation.
 
 # Randomised Complete Block Design (RCBD)
 
@@ -106,11 +109,11 @@ RCBD is one of the most commonly used designs in agricultural research. It contr
 
 ## Example: Variety Trial Across Field Gradient
 
-Consider testing 6 soybean varieties across a field with a moisture gradient. Using 4 blocks perpendicular to the gradient helps control for soil moisture variation.
+Consider testing 6 barley varieties across a field with a moisture gradient. Using 4 blocks perpendicular to the gradient helps control for soil moisture variation.
 
 ## Setting Up RCBD with speed
 
-Here we initialise a dataframe for a design with 4 blocks and 6 treatments, arranged in 4 rows and 6 columns. Note that we can specify treatments in the `items` argument.
+Here we initialise a data frame for a design with 4 blocks and 6 treatments, arranged in 4 rows and 6 columns. Note that we can specify treatments in the `items` argument.
 
 ```{r rcbd-df}
 rcbd_design <- initialise_design_df(items = paste0("V", 1:6), nrows = 4, ncols = 6, block_nrows = 1, block_ncols = 6)
@@ -227,7 +230,7 @@ Split-Plot Design is used when some treatments are easier to apply to large area
 
 - Treatments with different application scales (large vs small plots)
 - Irrigation × variety experiments
-- Tillage × fertilizer studies
+- Tillage × fertiliser studies
 - When some treatments are expensive or difficult to replicate
 
 ## Structure
@@ -238,7 +241,7 @@ Split-Plot Design is used when some treatments are easier to apply to large area
 
 ## Setting Up Split Plot Design with speed
 
-Now we can create a dataframe representing a split plot design. Note that the `initalise_design_df` function does not currently support split plot designs directly, so we will create it manually.
+Now we can create a data frame representing a split plot design. Note that the `initalise_design_df` function does not currently support split plot designs directly, so we will create it manually.
 
 ```{r split-plot-df}
 split_plot_design <- data.frame(
@@ -259,11 +262,11 @@ autoplot(split_plot_design, treatments = "wholeplot_treatment")
 autoplot(split_plot_design, treatments = "subplot_treatment", block = "wholeplot")
 ```
 
-This is a systematic split plot layout; each treatment appears once per block for wholeplot treatments, and once per whole plot for sub-plot treatments. The design will now be randomised.
+This is a systematic split plot layout; each treatment appears once per block for whole plot treatments, and once per whole plot for sub-plot treatments. The design will now be randomised.
 
 ### Performing the Optimisation
 
-For split-plot designs, we use named lists to specify the hierarchical structure. The `swap` parameter defines what to optimize at each level, while `swap_within` defines the constraints for each level.
+For split-plot designs, we use named lists to specify the hierarchical structure. The `swap` parameter defines what to optimise at each level, while `swap_within` defines the constraints for each level.
 
 ```{r split-plot-example}
 split_plot_result <- speed(split_plot_design,
@@ -277,7 +280,7 @@ split_plot_result
 
 ### Output of the Optimisation
 
-The output shows optimization results for the design. The score and iterations are combined for the entire design, while the treatments, and stopping criteria are reported separately for each level, allowing you to assess the quality of optimization at each hierarchy level.
+The output shows optimisation results for the design. The score and iterations are combined for the entire design, while the treatments, and stopping criteria are reported separately for each level, allowing you to assess the quality of optimisation at each hierarchy level.
 
 ```{r split-plot-output}
 str(split_plot_result)
@@ -298,7 +301,7 @@ This design has now been optimised at both the whole plot level and the sub-plot
 
 The shape and orientation of your experimental field significantly impacts design efficiency:
 
-- **Long, narrow fields**: Favor designs with blocks perpendicular to the long axis
+- **Long, narrow fields**: Favour designs with blocks perpendicular to the long axis
 - **Square fields**: Allow more flexibility in blocking direction
 - **Irregular shapes**: May require custom design approaches
 
@@ -322,8 +325,8 @@ Consider including buffer areas or border plots to:
 
 # Using `speed` Effectively
 
-1. **Set appropriate parameters**: Balance optimisation time with improvement
-2. **Visualise designs**: Always plot layouts before implementation
+1. **Set appropriate parameters**: Balance optimisation time with improvement <!-- Link to vignette on parameters -->
+2. **[Visualise designs](autoplot.html)**: Always plot layouts before implementation  <!-- Link to autoplot -->
 3. **Compare alternatives**: Test multiple blocking strategies
 4. **Validate results**: Check constraint satisfaction and efficiency metrics
 
@@ -345,6 +348,11 @@ Whether using simple randomised designs or complex split-plot structures, spatia
 - John, J.A. & Williams, E.R. (1995). *Cyclic and Computer Generated Designs*
 - Bailey, R.A. (2008). *Design of Comparative Experiments*
 
----
 
 *This vignette demonstrates the versatility of the `speed` package for agricultural experimental design. For more advanced applications and custom designs, consult the package documentation and additional vignettes.*
+
+
+# Related Vignettes
+
+- [Complex Agricultural Experimental Designs with speed](complex_designs.html): Advanced and specialised designs, including split-split plot, strip-plot, incomplete block, p-rep, and more.
+- [Custom Objective Functions and Advanced Options for Optimisation in speed](custom_objective_functions.html): Creating custom objective functions and advanced optimisation strategies.
