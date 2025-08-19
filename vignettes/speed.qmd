@@ -31,6 +31,8 @@ Agricultural experiments require careful spatial design to minimise the effects 
 
 This vignette demonstrates how to use `speed` for common agricultural experimental designs, showing how spatial optimisation can improve the efficiency and validity of field trials. We'll work through four key design types, each building in complexity and showing different features of the package.
 
+For advanced and specialised experimental designs (e.g., split-split plot, strip-plot, incomplete block, p-rep, and more), see the companion vignette: [Complex Agricultural Experimental Designs with speed](complex_designs.html).
+
 ```{r load-package}
 library(speed)
 ```
@@ -356,6 +358,11 @@ Whether using simple randomised designs or complex split-plot structures, spatia
 - John, J.A. & Williams, E.R. (1995). *Cyclic and Computer Generated Designs*
 - Bailey, R.A. (2008). *Design of Comparative Experiments*
 
----
 
 *This vignette demonstrates the versatility of the `speed` package for agricultural experimental design. For more advanced applications and custom designs, consult the package documentation and additional vignettes.*
+
+
+# Related Vignettes
+
+- [Complex Agricultural Experimental Designs with speed](complex_designs.html): Advanced and specialised designs, including split-split plot, strip-plot, incomplete block, p-rep, and more.
+- [Custom Objective Functions and Advanced Options for Optimisation in speed](custom_objective_functions.html): Creating custom objective functions and advanced optimisation strategies.

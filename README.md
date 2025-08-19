@@ -82,7 +82,6 @@ df <- data.frame(
 
 # Optimise the design with seed for reproducibility
 result <- speed(df, "treatment", seed = 42)
-#> row and col are used as row and column, respectively.
 #> Iteration: 1000 Score: 1 Best: 1 Since Improvement: 475 
 #> Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1475 
 #> Early stopping at iteration 2525
@@ -121,7 +120,6 @@ result <- speed(df,
   iterations = 5000,
   seed = 42
 )
-#> row and col are used as row and column, respectively.
 #> Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 
 #> Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 
 #> Early stopping at iteration 2457
@@ -134,8 +132,9 @@ autoplot(result)
 
 ### More Examples
 
-For more detailed examples, visit
-[here](https://biometryhub.github.io/speed/articles/common_designs.html).
+For more detailed examples, see the [getting started
+vignette](articles/speed.html) or the vignette about [more complex
+examples](articles/complex_designs.html).
 
 ## Citation
 

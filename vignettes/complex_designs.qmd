@@ -30,7 +30,7 @@ knitr::opts_chunk$set(
 
 This vignette covers advanced and complex experimental designs that are used in specialised agricultural research contexts. These designs are particularly useful for plant breeding programs, large-scale variety trials, and situations where standard complete block designs are impractical due to resource constraints or the nature of the treatments.
 
-Building on the foundational designs covered in the [Common Agricultural Experimental Designs vignette](/common_designs.html), these complex designs offer solutions for challenging experimental scenarios while maintaining statistical rigour through spatial optimisation with the `speed` package.
+Building on the foundational designs covered in the [Common Agricultural Experimental Designs vignette](/speed.html), these complex designs offer solutions for challenging experimental scenarios while maintaining statistical rigour through spatial optimisation with the `speed` package.
 
 ```{r load-package}
 library(speed)
@@ -41,7 +41,7 @@ library(patchwork) # For combining plots
 
 ## Overview
 
-Split-split plot designs extend the hierarchical structure of [split-plot designs](/common_designs.html#split-plot-design) to accommodate three factors with different levels of experimental difficulty or practical constraints. This creates a three-level hierarchy of experimental units.
+Split-split plot designs extend the hierarchical structure of [split-plot designs](/speed.html#split-plot-design) to accommodate three factors with different levels of experimental difficulty or practical constraints. This creates a three-level hierarchy of experimental units.
 
 ## Hierarchical Structure
 
@@ -542,12 +542,21 @@ head(blocking_2d_design)
 #| label: fig-2dblockplot1
 #| fig-cap: "Initial layout of the 2D blocking design showing systematic treatment distribution."
 class(blocking_2d_design) <- c("design", class(blocking_2d_design))
-p1 <- autoplot(blocking_2d_design, block = "rowBlock", treatments = "rowBlock") + ggplot2::labs(title = "Row Blocks")
-p2 <- autoplot(blocking_2d_design, block = "colBlock", treatments = "colBlock") + ggplot2::labs(title = "Column Blocks")
-p3 <- autoplot(blocking_2d_design, block = "rowBlock") + ggplot2::labs(title = "Treatments")
-p1 + p2 + p3 +
-  plot_layout(ncol = 2) +
-  plot_annotation(title = "Initial Row-Column Blocking Design")
+autoplot(blocking_2d_design, block = "rowBlock")
+```
+
+```{r}
+#| echo: false
+#| label: fig-2dblockplot2
+#| fig-cap: "2D blocking design showing rowBlock layout."
+autoplot(blocking_2d_design, block = "rowBlock", treatments = "rowBlock")
+```
+
+```{r}
+#| echo: false
+#| label: fig-2dblockplot3
+#| fig-cap: "2D blocking design showing colBlock layout."
+autoplot(blocking_2d_design, block = "colBlock", treatments = "colBlock")
 ```
 
 This shows the initial row-column design with hierarchical blocking structure.
@@ -565,7 +574,8 @@ blocking_2d_result <- speed(blocking_2d_design,
                             swap_within = "rowBlock",
                             spatial_factors = ~ colBlock, 
                             iterations = 150000,
-                            early_stop_iterations = 50000, seed = 42)
+                            early_stop_iterations = 50000, 
+                            seed = 42, quiet = TRUE)
 ```
 
 ### Output of the Optimisation
@@ -577,7 +587,7 @@ blocking_2d_result
 ### Visualise the Output
 
 ```{r}
-#| label: fig-2dblockplot2
+#| label: fig-2dblockplot4
 #| fig-cap: "Final layout of the 2D blocking design showing optimised treatment distribution."
 #| echo: false
 autoplot(blocking_2d_result, block = "rowBlock")
@@ -585,6 +595,7 @@ autoplot(blocking_2d_result, block = "rowBlock")
 
 An optimised row-column design with blocking in two directions.
 
+<!---
 # Designs for Irregular Areas
 
 ## Overview
@@ -696,7 +707,7 @@ This shows the initial design layout accommodating field constraints and obstacl
 ```
 
 An optimised design that efficiently uses available space while respecting field constraints!
-
+--->
 <!---
 # Factorial Designs in Incomplete Blocks
 
@@ -888,7 +899,7 @@ Key benefits of using complex designs with spatial optimisation include:
 
 When selecting and implementing complex designs, researchers should carefully balance statistical efficiency, practical constraints, and research objectives. The spatial optimisation capabilities of `speed` ensure that these sophisticated designs achieve their full potential in real-world applications.
 
-For guidance on comparing the efficiency of different design options, see the **"Comparing Experimental Design Efficiency with speed"** vignette.
+<!-- For guidance on comparing the efficiency of different design options, see the **"Comparing Experimental Design Efficiency with speed"** vignette. -->
 
 ## Further Reading
 
@@ -906,9 +917,9 @@ For guidance on comparing the efficiency of different design options, see the **
 
 ## Related Vignettes
 
-- **"Common Agricultural Experimental Designs with speed"** - Foundational designs for most agricultural applications
-- **"Comparing Experimental Design Efficiency with speed"** - Tools for evaluating and comparing design efficiency
+- **[Common Agricultural Experimental Designs with speed](speed.html)** - Foundational designs for most agricultural applications
+<!-- - **"Comparing Experimental Design Efficiency with speed"** - Tools for evaluating and comparing design efficiency -->
 
 ---
 
-*This vignette demonstrates advanced applications of the `speed` package for complex experimental designs. For foundational designs, see the "Common Agricultural Experimental Designs" vignette. For specific implementation details, consult the package documentation and function help files.*
+*This vignette demonstrates advanced applications of the `speed` package for complex experimental designs. For foundational designs, see the "[Common Agricultural Experimental Designs](speed.html)" vignette. For specific implementation details, consult the package documentation and function help files.*

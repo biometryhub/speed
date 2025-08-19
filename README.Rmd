@@ -121,7 +121,7 @@ autoplot(result)
 
 ### More Examples
 
-For more detailed examples, visit [here](https://biometryhub.github.io/speed/articles/common_designs.html).
+For more detailed examples, see the [getting started vignette](articles/speed.html) or the vignette about [more complex examples](articles/complex_designs.html).
 
 ## Citation
 
