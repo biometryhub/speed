@@ -49,21 +49,21 @@ Split-split plot designs extend the hierarchical structure of [split-plot design
 
 - **Largest experimental units**
 - **Factor A** applied to whole plots
-- **Most difficult factor to randomize**
+- **Most difficult factor to randomise**
 - **Example**: Tillage systems, irrigation methods
 
 ### Sub-Plots (Split Plots)
 
 - **Intermediate-sized units within whole plots**
 - **Factor B** applied to sub-plots
-- **Moderate randomization difficulty**
+- **Moderate randomisation difficulty**
 - **Example**: Fertilizer treatments, planting dates
 
 ### Sub-Sub-Plots (Split-Split Plots)
 
 - **Smallest experimental units**
 - **Factor C** applied to sub-sub-plots
-- **Easiest factor to randomize**
+- **Easiest factor to randomise**
 - **Example**: Varieties, pesticide treatments
 
 ## Error Structure
@@ -165,7 +165,7 @@ res2 <- autoplot(result_ss, treatments = "subplot_treatment") + ggplot2::labs(ti
 res3 <- autoplot(result_ss, treatments = "subsubplot_treatment") + ggplot2::labs(title = "Sub-sub-plot Treatments")
 res1 + res2 + res3 +
   plot_layout(ncol = 2) +
-  plot_annotation(title = "Optimized Split-Split Plot Design")
+  plot_annotation(title = "Optimised Split-Split Plot Design")
 ```
 
 Above is the final output of this design. Note that there are some adjacent pairs of treatments in the sub-sub-plots. This is quite difficult to avoid in these situations, however adjusting some of the optimisation parameters may help with this. For further information, see the vignette about [changing optimisation parameters for speed](/custom_objective_functions.html).
@@ -306,7 +306,7 @@ More flexible incomplete block designs where blocks can be grouped into complete
 
 #### Characteristics:
 
-- Blocks can be organized into complete replications
+- Blocks can be organised into complete replications
 - Each replication contains every treatment exactly once
 - More flexible parameter combinations than BIBD
 - Excellent for multi-location trials
@@ -476,7 +476,7 @@ sum(prep_result$design_df$duplicated[prep_result$design_df$block==1])
 any(duplicated(prep_result$design_df$entry[prep_result$design_df$block==1]))
 ```
 
-With 40 duplicated varieties in this block, we know we also have 40 in the other block, and we can see that none of the entries in either block are duplicated.
+With 40 duplicated varieties in this block, we know we also have 40 in the other block.
 
 ### Visualise the Output
 
@@ -484,7 +484,7 @@ With 40 duplicated varieties in this block, we know we also have 40 in the other
 autoplot(prep_result, treatments = "entry")
 ```
 
-An optimized p-rep design with strategic replication and spatial distribution!
+An optimised p-rep design with strategic replication and spatial distribution. Note that because the treatments column is not called "treatment", we need to specify the `treatments` argument in the `autoplot()` function.
 
 # Row-Column Designs with Blocking
 
@@ -522,60 +522,74 @@ Advanced row-column designs incorporate additional blocking structures to contro
 - **Field trials with complex spatial patterns**
 - **High-throughput phenotyping** platforms
 
-## Example: Row-Column Design with Blocking for Multi-Environment Trial
+## Example: Row-Column Design with Blocking in Two Dimensions
 
-Consider a large field trial with 100 varieties tested across multiple environments, requiring both row-column blocking and superblock structure.
+Consider a large field trial with 40 varieties each replicated 10 times, requiring both row blocks and column blocks.
 
 ## Setting Up Row-Column Designs with Blocking
 
 ```{r rowcol-block-design-df}
-# Placeholder: Initialize row-column design with blocking
-# rowcol_block_design <- initialise_design_df(entries = 100, reps = 3,
-#                                            nrows = 20, ncols = 15, 
-#                                            blocks = 6)
-# head(rowcol_block_design)
+blocking_2d_design <- data.frame(row = rep(1:20, each = 20), 
+                                 col = rep(1:20, 20), 
+                                 treatment = rep(paste("V", 1:40, sep = ""), 10), 
+                                 rowBlock = rep(1:10, each = 40),
+                                 colBlock = rep(rep(1:10, each = 2), 20))
+head(blocking_2d_design)
 ```
 
-```{r rowcol-block-design-plot1}
+```{r}
 #| echo: false
-# Placeholder: Initial visualization
-# class(rowcol_block_design) <- c("design", class(rowcol_block_design))
-# autoplot(rowcol_block_design)
+#| label: fig-2dblockplot1
+#| fig-cap: "Initial layout of the 2D blocking design showing systematic treatment distribution."
+class(blocking_2d_design) <- c("design", class(blocking_2d_design))
+p1 <- autoplot(blocking_2d_design, block = "rowBlock", treatments = "rowBlock") + ggplot2::labs(title = "Row Blocks")
+p2 <- autoplot(blocking_2d_design, block = "colBlock", treatments = "colBlock") + ggplot2::labs(title = "Column Blocks")
+p3 <- autoplot(blocking_2d_design, block = "rowBlock") + ggplot2::labs(title = "Treatments")
+p1 + p2 + p3 +
+  plot_layout(ncol = 2) +
+  plot_annotation(title = "Initial Row-Column Blocking Design")
 ```
 
 This shows the initial row-column design with hierarchical blocking structure.
 
 ### Performing the Optimisation
 
+Now we will use the `speed()` function to optimise this design. We will swap treatments within row blocks, while also considering column blocks as a spatial factor. Note that we also set some optimisation parameters to allow for more swaps, as this is a larger design with more treatments.
+
 ```{r rowcol-block-design-example}
-# Placeholder: Optimize the row-column design with blocking
-# rowcol_block_result <- speed_hierarchical(rowcol_block_design,
-#                                          swap = "entry",
-#                                          seed = 42)
-# rowcol_block_result
+#| cache: true
+options(speed.swap_count = 5, speed.swap_all_blocks = TRUE, speed.adaptive_swaps = TRUE)
+
+blocking_2d_result <- speed(blocking_2d_design, 
+                            swap = "treatment", 
+                            swap_within = "rowBlock",
+                            spatial_factors = ~ colBlock, 
+                            iterations = 150000,
+                            early_stop_iterations = 50000, seed = 42)
 ```
 
 ### Output of the Optimisation
 
 ```{r rowcol-block-design-output}
-# Placeholder: Show structure of results
-# str(rowcol_block_result)
+blocking_2d_result
 ```
 
 ### Visualise the Output
 
-```{r rowcol-block-design-plot2}
-# Placeholder: Final visualization
-# autoplot(rowcol_block_result)
+```{r}
+#| label: fig-2dblockplot2
+#| fig-cap: "Final layout of the 2D blocking design showing optimised treatment distribution."
+#| echo: false
+autoplot(blocking_2d_result, block = "rowBlock")
 ```
 
-An optimized row-column design with efficient hierarchical blocking!
+An optimised row-column design with blocking in two directions.
 
 # Designs for Irregular Areas
 
 ## Overview
 
-Real-world experimental sites often have irregular shapes, obstacles, or varying conditions that prevent the use of standard rectangular designs. Specialized approaches are needed to maintain statistical validity while accommodating practical constraints.
+Real-world experimental sites often have irregular shapes, obstacles, or varying conditions that prevent the use of standard rectangular designs. Specialised approaches are needed to maintain statistical validity while accommodating practical constraints.
 
 ## Types of Irregular Situations
 
@@ -596,7 +610,7 @@ Real-world experimental sites often have irregular shapes, obstacles, or varying
 ### Varying Field Conditions
 
 - **Distinct soil types** within the field
-- **Drainage patterns** creating zones
+- **Drainage patterns** creating sones
 - **Shade gradients** from adjacent features
 - **Historical management differences**
 
@@ -609,12 +623,12 @@ Real-world experimental sites often have irregular shapes, obstacles, or varying
 - **Flexible shapes** rather than rectangular blocks
 - **Natural groupings** of homogeneous areas
 
-### Constraint-Based Optimization
+### Constraint-Based Optimisation
 
 - **Spatial constraints** for inaccessible areas
 - **Adjacency rules** modified for irregular layouts
-- **Distance-based optimization** rather than grid-based
-- **Weighted optimization** for varying quality areas
+- **Distance-based optimisation** rather than grid-based
+- **Weighted optimisation** for varying quality areas
 
 ### Incomplete Coverage Designs
 
@@ -630,7 +644,7 @@ Consider a field trial that must work around existing trees, buildings, and drai
 ## Setting Up Designs for Irregular Areas
 
 ```{r irregular-design-df}
-# Placeholder: Initialize irregular field design
+# Placeholder: Initialise irregular field design
 # # Define field boundaries and obstacles
 # field_constraints <- list(
 #   boundaries = data.frame(x = c(0, 50, 50, 0), y = c(0, 0, 30, 30)),
@@ -643,10 +657,10 @@ Consider a field trial that must work around existing trees, buildings, and drai
 
 ```{r irregular-design-plot1}
 #| echo: false
-# Placeholder: Initial visualization with constraints
+# Placeholder: Initial visualisation with constraints
 # class(irregular_design) <- c("design", class(irregular_design))
 # autoplot(irregular_design) + 
-#   # Add constraint visualization
+#   # Add constraint visualisation
 #   geom_polygon(data = field_constraints$obstacles, 
 #                aes(x = x, y = y), alpha = 0.3, fill = "red")
 ```
@@ -656,7 +670,7 @@ This shows the initial design layout accommodating field constraints and obstacl
 ### Performing the Optimisation
 
 ```{r irregular-design-example}
-# Placeholder: Optimize design with spatial constraints
+# Placeholder: Optimise design with spatial constraints
 # irregular_result <- speed(irregular_design,
 #                          swap = "entry",
 #                          constraints = field_constraints,
@@ -674,15 +688,16 @@ This shows the initial design layout accommodating field constraints and obstacl
 ### Visualise the Output
 
 ```{r irregular-design-plot2}
-# Placeholder: Final visualization with constraints
+# Placeholder: Final visualisation with constraints
 # autoplot(irregular_result) + 
-#   # Add constraint visualization
+#   # Add constraint visualisation
 #   geom_polygon(data = field_constraints$obstacles, 
 #                aes(x = x, y = y), alpha = 0.3, fill = "red")
 ```
 
-An optimized design that efficiently uses available space while respecting field constraints!
+An optimised design that efficiently uses available space while respecting field constraints!
 
+<!---
 # Factorial Designs in Incomplete Blocks
 
 ## Overview
@@ -716,7 +731,7 @@ When factorial experiments involve many treatment combinations, complete replica
 # This will show:
 # - Designing confounded factorial experiments
 # - Choosing appropriate confounding schemes
-# - Optimizing block arrangements with speed
+# - Optimising block arrangements with speed
 # - Handling fractional factorials in blocks
 # - Analysis implications of confounding
 # - Efficiency comparisons with complete designs
@@ -755,11 +770,11 @@ Nested designs involve factors that are nested within levels of other factors, c
 # Placeholder for Nested Design example
 # This will show:
 # - Creating hierarchical factor structures
-# - Optimizing arrangements within nested constraints
+# - Optimising arrangements within nested constraints
 # - Handling multiple levels of nesting
-# - Spatial optimization across hierarchy levels
+# - Spatial optimisation across hierarchy levels
 # - Analysis considerations for nested factors
-# - Visualization of hierarchical structure
+# - Visualisation of hierarchical structure
 ```
 
 # Design Selection Guidelines for Complex Designs
@@ -777,7 +792,7 @@ Nested designs involve factors that are nested within levels of other factors, c
 
 - **Limited field area**: Incomplete blocks or augmented designs
 - **High treatment costs**: Augmented designs with fewer checks
-- **Labor limitations**: Simpler designs with fewer blocks
+- **Labour limitations**: Simpler designs with fewer blocks
 
 ### Precision Requirements
 
@@ -800,21 +815,21 @@ Nested designs involve factors that are nested within levels of other factors, c
 - **Analysis** requirements
 - **Implementation** costs
 
-# Advanced Spatial Optimization with speed
+# Advanced Spatial Optimisation with speed
 
-## Optimization Strategies for Complex Designs
+## Optimisation Strategies for Complex Designs
 
-### Multi-level Optimization
+### Multi-level Optimisation
 
-- **Hierarchical optimization** for nested structures
+- **Hierarchical optimisation** for nested structures
 - **Constraint handling** for complex design rules
-- **Multi-objective** optimization balancing competing goals
+- **Multi-objective** optimisation balancing competing goals
 
 ### Custom Objective Functions
 
 - **Weighted combinations** of different criteria
 - **Penalty functions** for constraint violations
-- **Domain-specific** optimization goals
+- **Domain-specific** optimisation goals
 
 ## Computational Considerations
 
@@ -823,12 +838,12 @@ Nested designs involve factors that are nested within levels of other factors, c
 - **Memory management** for large treatment sets
 - **Convergence** monitoring and criteria
 - **Parallel processing** options
-- **Progress tracking** for long optimizations
+- **Progress tracking** for long optimisations
 
 ### Quality Assessment
 
 - **Convergence diagnostics**
-- **Multiple optimization runs**
+- **Multiple optimisation runs**
 - **Sensitivity analysis**
 - **Robustness testing**
 
@@ -857,26 +872,27 @@ Nested designs involve factors that are nested within levels of other factors, c
 3. **Model validation** and diagnostics
 4. **Effect interpretation** in context of design
 5. **Reporting** design details and limitations
+--->
 
 # Conclusion
 
-Complex experimental designs offer powerful solutions for challenging agricultural research scenarios. The `speed` package provides essential tools for optimizing these designs spatially, ensuring that the statistical advantages of sophisticated designs are fully realized in practice.
+Complex experimental designs offer powerful solutions for challenging agricultural research scenarios. The `speed` package provides essential tools for optimising these designs spatially, ensuring that the statistical advantages of sophisticated designs are fully realised in practice.
 
-Key benefits of using complex designs with spatial optimization include:
+Key benefits of using complex designs with spatial optimisation include:
 
-- **Efficient resource utilization** for large-scale studies
+- **Efficient resource utilisation** for large-scale studies
 - **Maintained statistical rigor** despite practical constraints  
 - **Enhanced precision** through appropriate blocking and spatial arrangement
 - **Flexible solutions** for diverse research objectives
-- **Practical feasibility** through optimized field layouts
+- **Practical feasibility** through optimised field layouts
 
-When selecting and implementing complex designs, researchers should carefully balance statistical efficiency, practical constraints, and research objectives. The spatial optimization capabilities of `speed` ensure that these sophisticated designs achieve their full potential in real-world applications.
+When selecting and implementing complex designs, researchers should carefully balance statistical efficiency, practical constraints, and research objectives. The spatial optimisation capabilities of `speed` ensure that these sophisticated designs achieve their full potential in real-world applications.
 
 For guidance on comparing the efficiency of different design options, see the **"Comparing Experimental Design Efficiency with speed"** vignette.
 
 ## Further Reading
 
-### Specialized Design References
+### Specialised Design References
 
 - Cochran, W.G. & Cox, G.M. (1957). *Experimental Designs*
 - John, J.A. & Williams, E.R. (1995). *Cyclic and Computer Generated Designs*  
