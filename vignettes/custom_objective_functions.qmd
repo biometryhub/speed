@@ -27,13 +27,13 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-While the `speed` package provides excellent default optimization settings for most experimental designs, researchers may need to customize the optimization process for specific requirements. This vignette demonstrates how to:
+While the `speed` package provides a range of excellent default optimisation settings for most experimental designs, researchers may need to customise the optimisation process for specific requirements. This vignette demonstrates how to:
 
-- Create custom objective functions for specialized optimization goals
+- Create custom objective functions for specialised optimisation goals
 - Adjust simulated annealing parameters for better performance
-- Handle complex constraints and specialized design requirements  
-- Monitor and control the optimization process
-- Troubleshoot optimization issues
+- Handle complex constraints and specialised design requirements  
+- Monitor and control the optimisation process
+- Troubleshoot optimisation issues
 
 Understanding these advanced features allows researchers to fully leverage the `speed` package for complex or non-standard experimental design challenges.
 
@@ -41,111 +41,215 @@ Understanding these advanced features allows researchers to fully leverage the `
 library(speed)
 ```
 
-# Understanding the Optimization Process
+# Understanding the Optimisation Process
 
 ## Simulated Annealing Basics
 
-The `speed` package uses simulated annealing, a probabilistic optimization algorithm that:
+The `speed` package uses simulated annealing, a probabilistic optimisation algorithm that:
 
-- **Starts** with an initial design layout
-- **Proposes** modifications (treatment swaps, moves)
-- **Accepts** improvements and sometimes accepts worse solutions
-- **Gradually reduces** acceptance of worse solutions ("cooling")
-- **Converges** to an optimized layout
+- Starts with an initial design layout
+- Proposes modifications (treatment swaps, moves)
+- Accepts improvements and sometimes accepts worse solutions
+- Gradually reduces acceptance of worse solutions ("cooling")
+- Converges to an optimised layout
 
-## Default Optimization Objectives
+## Default Optimisation Objectives
 
 The package's default objectives typically focus on:
 
-- **Minimizing treatment adjacency** - reducing neighbor effects
+- **Minimising treatment adjacency** - reducing neighbour effects
 - **Maintaining spatial balance** - even treatment distribution
 - **Respecting design constraints** - block structure, replication
-- **Optimizing statistical efficiency** - improving precision
+- **Optimising statistical efficiency** - improving precision
 
-## When to Customize Optimization
+## When to Customise Optimisation
 
-Consider custom optimization when:
+You may consider custom optimisation when:
 
-- **Specific neighbor relationships** are more important than others
-- **Non-uniform field conditions** require weighted optimization
-- **Complex constraints** aren't handled by default settings
-- **Multiple competing objectives** need balanced consideration
-- **Performance tuning** is needed for large or complex designs
+- Specific neighbour relationships are more important than others
+- Non-uniform field conditions require weighted optimisation
+- Complex constraints aren't handled by default settings
+- Multiple competing objectives need balanced consideration
+- Performance tuning is needed for large or complex designs
 
 # Custom Objective Functions
 
 ## Understanding Objective Function Structure
 
-Objective functions in `speed` typically:
+Objective functions in `speed` typically follow a standard structure:
 
 - **Input**: Current design layout and associated data
-- **Process**: Calculate penalties or scores for the layout
-- **Output**: Single numeric value (lower = better for minimization)
+- **Process**: Calculate penalties or scores for the input layout
+- **Output**: Single numeric value (lower = better for minimisation)
 
-```{r objective-function-basics, eval=FALSE}
-blocks <- c(1,2,3,4,5, 1,2,3,6,7, 1,4,5,6,7, 2,4,5,6,7, 
-            3,4,5,6,7, 1,3,4,6,7, 1,2,5,6,7)
+Custom objective functions are a powerful way to tailor the optimisation process to the unique requirements of your experiment. While the default objectives in `speed` are designed to handle a wide range of common scenarios such as minimising neighbour effects, balancing treatments spatially, and respecting block structures, real-world experiments often present additional or alternative priorities. For example, you may need to:
 
-# g = 5 treatments
-# b = 10 blocks
-# k = 3 plots per block
-# r = 6 reps of each treatment
-# Lambda = 3 times each treatment appears together
+- Enforce strict replication or co-occurrence rules for treatments
+- Optimise for specific spatial or agronomic constraints
+- Balance multiple objectives simultaneously (e.g., efficiency and logistics)
+- Incorporate domain knowledge or experimental goals not captured by default settings
 
+In these cases, writing a custom objective function allows you to explicitly define what constitutes a "good" design for your context. This flexibility is especially valuable for advanced or non-standard designs, or when you want to experiment with new optimisation strategies.
+
+## Motivating Example
+
+A classic example of a case where the default objective function doesn't capture all the design constraints is a *Balanced Incomplete Block Design* (BIBD), where each treatment appears in a fixed number of blocks, and every pair of treatments occurs together the same number of times. Achieving this balance is critical for valid statistical inference, but it can be challenging to obtain such a layout, especially for large or complex experiments. Due to the number of constraints involved, there are specific and limited combinations available for the layout of the design, and the default objectives may not be sufficient to guide the optimisation process towards a valid BIBD layout.
+
+By writing a custom objective function, you can directly penalise deviations from the BIBD requirements such as unequal treatment replication or unequal co-occurrence of treatment pairs, thus guiding the optimisation towards a valid or near-optimal BIBD solution. The following example demonstrates how to structure such a function and integrate it into the `speed` optimisation workflow.
+
+## Writing a Custom Objective Function
+
+Let's now walk through the process of building a custom objective function for a Balanced Incomplete Block Design (BIBD). We'll break down the logic behind each part of the function, show how to implement it in R, and discuss how it addresses the key requirements of a BIBD. This example will illustrate how you can translate design constraints into code, and how to use your custom function within the `speed` optimisation workflow.
+
+### Constraints
+
+A BIBD has the following properties:
+
+#### Characteristics:
+
+- Each treatment appears in exactly $r$ blocks
+- Each block contains exactly $k$ treatments
+- Each pair of treatments appears together in exactly $λ$ blocks
+- Perfect balance but limited parameter combinations
+
+#### Parameters:
+
+- $v$ = number of treatments
+- $b$ = number of blocks  
+- $r$ = number of blocks containing each treatment
+- $k$ = number of treatments per block
+- $λ$ = number of blocks containing each pair of treatments
+- $bk = vr$ and $λ(v-1) = r(k-1)$
+
+Most of constraints can be handled by careful design of the layout and the default objectives in `speed` package, such as minimising neighbour effects and ensuring spatial balance. However, the co-occurrence of treatments is more complex and requires custom handling.
+
+### Custom Objective Function Implementation
+
+Firstly, we need to create a function that evaluates the co-occurrence of treatments in the design. The function will count the number of times each pair of treatments appears together, and simply return a list of the counts. This will also help us to check if the design meets the BIBD requirements later.
+
+```{r cooccurrance, eval=TRUE}
+get_cooccurrence <- function(design_df, swap) {
+  pairs <- unlist(lapply(unique(design_df$block), function(block) {
+    combn(
+      sort(as.character(design_df[design_df$block == block, swap])),
+      2,
+      FUN = function(x) paste(x, collapse = ",")
+    )
+  }))
+  
+  as.list(table(pairs))
+}
+```
+
+Given an input data frame `design_df` with a column for blocks and a column for treatments, this function will return a list of treatment pairs (provided in the column given by the `swap` argument) and their counts across the blocks. Now we need to incorporate this into a custom objective function that uses this to evaluate the BIBD properties.
+
+```{r custom-objective, eval=TRUE}
+bibd_objective_function <- function(
+    layout_df,
+    swap,
+    spatial_cols,
+    row_column = "row",
+    col_column = "col",
+    ...) {
+  
+  adj_score <- calculate_adjacency_score(layout_df, swap, row_column, col_column)
+  bal_score <- calculate_balance_score(layout_df, swap, spatial_cols)
+  
+  pairs <- get_cooccurrence(layout_df, swap)
+  pair_bal_score <- var(as.numeric(pairs))
+  
+  return(list(
+    score = round(adj_score + bal_score + 10*pair_bal_score, 10)
+  ))
+}
+```
+
+This function follows a very similar structure to the [default objective functions](https://biometryhub.github.io/speed/reference/objective_functions.html) in `speed`, but it adds a specific penalty for the co-occurrence of treatments. The `get_cooccurrence` function is called to calculate how many times each pair of treatments appears together, and the variance of these counts is used as a penalty term in the final score. As increasinly more treatment pairs appear the same number of times together, the variance of the pairs co-occurrence decreases, becoming more optimal. The `10*pair_bal_score` term is a weight that can be adjusted based on how important the co-occurrence balance is relative to the adjacency and balance scores. This function could be further customised to include additional penalties or adjustments based on specific design requirements, however the current implementation provides a solid foundation for optimising a BIBD layout. Also, given that custom objective functions are user-defined, they don't require the same level of error-checking as the default functions, so we can keep the implementation relatively simple.
+
+## Using the Custom Objective Function
+
+Now that we have our custom objective function, we can use it in the `speed` optimisation process. The `speed` package allows us to specify a custom objective function using the `objective_function` argument. We also need to ensure that our layout data frame has the necessary columns for blocks, treatments, and spatial coordinates.
+
+The following parameters will allow us to produce a valid BIBD layout:
+- `v` = 5 (number of treatments)
+- `b` = 10 (number of blocks)
+- `k` = 3 (number of plots per block)
+- `r` = 6 (number of replicates of each treatment)
+- `lambda` = 3 (number of times each treatment appears together)
+
+### Setting Up the Design Data Frame
+
+We will create a data frame representing the BIBD layout, and then run the `speed` optimisation with our custom objective function.
+
+```{r bibd-objective, eval=TRUE}
 # Create the data frame
-bibd_df <- data.frame(
-  row = rep(1:3, 10),
-  col = rep(1:10, each = 3),
-  block = rep(1:10, each = 3),
-  treatment = rep(1:5, each = 6)
-)
+bibd_df <- initialise_design_df(items = 5, nrows = 3, ncols = 10, 
+                                block_nrows = 3, block_ncols = 1)
 
 head(bibd_df)
+```
 
+The `initialise_design_df` function creates a data frame with 5 treatments, arranged in 10 blocks, with each block containing 3 plots. The `block_nrows` and `block_ncols` parameters define the layout of the blocks.
+
+```{r}
+#| label: fig-bibd-layout
+#| fig-cap: "Initial BIBD Layout"
+#| fig-align: center
 #| echo: false
 class(bibd_df) <- c("design", class(bibd_df))
 autoplot(bibd_df)
-
-options(speed.cooling_rate=0.999)
-bibd_result <- speed(bibd_df, 
-                     swap = "treatment", 
-                     swap_within = "1", 
-                     spatial_factors = ~ block + row, 
-                     iterations = 50000,
-                     early_stop_iterations = 10000,
-                     seed = 42)
-
-bibd_result
-str(bibd_result)
-
-autoplot(bibd_result)
 ```
 
-## Custom Neighbor Effect Functions
+@fig-bibd-layout shows the initial layout of the BIBD design. The treatments are systematically assigned to blocks, but we need to randomise this design, and ensure that the co-occurrence of treatments meets the BIBD requirements.
 
-### Weighted Neighbor Effects
+### Performing the Optimisation
 
-When some treatment combinations are more problematic as neighbors than others.
+Now we can run the optimisation using our custom objective function simply by passing the name to the `speed` function via the `obj_function` argument. We will also specify the `swap` argument to indicate which column contains the treatments, and the `spatial_factors` argument to include the block, row, and column information for spatial balance. This will allow the optimisation to consider both the adjacency of treatments and their spatial distribution across the blocks, while the custom objective function will ensure that the co-occurrence of treatments is balanced according to the BIBD requirements. Note also that we set `options(speed.random_initialisation = FALSE)` to ensure that the initialisation of the design is randomised. 
 
-```{r weighted-neighbors, eval=FALSE}
-# Placeholder for weighted neighbor effects
+```{r bibd-optimisation, eval=TRUE}
+options(speed.random_initialisation = FALSE)
+result <- speed(bibd_df, 
+                swap = "treatment",
+                spatial_factors = ~ block + row + col,
+                obj_function = bibd_objective_function, 
+                seed = 42)
+
+result
+```
+
+
+
+```{r bibd_result-plot, eval=TRUE}
+autoplot(result)
+get_cooccurrence(result$design_df, "treatment")
+unique(unlist(get_cooccurrence(result$design_df, "treatment")))
+```
+
+## Custom neighbour Effect Functions
+
+### Weighted neighbour Effects
+
+When some treatment combinations are more problematic as neighbours than others.
+
+```{r weighted-neighbours, eval=FALSE}
+# Placeholder for weighted neighbour effects
 # This will show:
 # - Defining treatment interaction matrices
 # - Creating weighted penalty functions
-# - Handling asymmetric neighbor effects
+# - Handling asymmetric neighbour effects
 # - Examples: tall vs short varieties, chemical interactions
 # - Implementation in custom objective functions
 ```
 
 ### Distance-Based Penalties
 
-For situations where neighbor effects extend beyond immediate adjacency.
+For situations where neighbour effects extend beyond immediate adjacency.
 
 ```{r distance-penalties, eval=FALSE}
 # Placeholder for distance-based penalties
 # This will show:
 # - Calculating distances between treatments
-# - Implementing decay functions for neighbor effects
+# - Implementing decay functions for neighbour effects
 # - Handling different distance metrics
 # - Examples: root competition zones, spray drift
 # - Computational efficiency considerations
@@ -181,12 +285,12 @@ Ensuring treatments are evenly distributed across the experimental area.
 # - Balance with other objectives
 ```
 
-### Gradient-Aware Optimization
+### Gradient-Aware Optimisation
 
-Optimizing treatment placement considering known field gradients.
+Optimising treatment placement considering known field gradients.
 
-```{r gradient-optimization, eval=FALSE}
-# Placeholder for gradient-aware optimization
+```{r gradient-optimisation, eval=FALSE}
+# Placeholder for gradient-aware optimisation
 # This will show:
 # - Incorporating gradient information
 # - Balancing treatments across gradients
@@ -203,7 +307,7 @@ For fields with distinct zones or management areas.
 # Placeholder for zone-based objectives
 # This will show:
 # - Defining field zones
-# - Within-zone and between-zone optimization
+# - Within-zone and between-zone optimisation
 # - Handling zone boundaries
 # - Examples: soil types, drainage classes
 # - Multi-zone balance considerations
@@ -211,49 +315,49 @@ For fields with distinct zones or management areas.
 
 ## Design-Specific Custom Objectives
 
-### Split-Plot Optimization
+### Split-Plot Optimisation
 
 Custom objectives for hierarchical design structures.
 
 ```{r splitplot-objectives, eval=FALSE}
 # Placeholder for split-plot objectives
 # This will show:
-# - Whole plot arrangement optimization
-# - Sub-plot randomization within whole plots
+# - Whole plot arrangement optimisation
+# - Sub-plot randomisation within whole plots
 # - Hierarchical constraint handling
-# - Multi-level spatial optimization
+# - Multi-level spatial optimisation
 # - Balance between levels
 ```
 
 ### Incomplete Block Objectives
 
-Specialized objectives for incomplete block designs.
+Specialised objectives for incomplete block designs.
 
 ```{r incomplete-block-objectives, eval=FALSE}
 # Placeholder for incomplete block objectives
 # This will show:
 # - Within-block treatment arrangement
 # - Between-block treatment distribution
-# - Connectivity optimization
+# - Connectivity optimisation
 # - Resolvability constraints
 # - Efficiency-focused objectives
 ```
 
 ### Multi-Factor Objectives
 
-Handling multiple factors with different optimization priorities.
+Handling multiple factors with different optimisation priorities.
 
 ```{r multifactor-objectives, eval=FALSE}
 # Placeholder for multi-factor objectives
 # This will show:
-# - Factor-specific neighbor penalties
-# - Interaction term optimization
+# - Factor-specific neighbour penalties
+# - Interaction term optimisation
 # - Main effect vs interaction priorities
 # - Factorial structure constraints
 # - Weighted multi-objective functions
 ```
 
-# Multi-Objective Optimization
+# Multi-Objective Optimisation
 
 ## Combining Multiple Objectives
 
@@ -266,21 +370,21 @@ Real experiments often require balancing multiple competing goals.
 # This will show:
 # - Combining different objective functions
 # - Setting appropriate weights
-# - Normalizing different objective scales
+# - Normalising different objective scales
 # - Sensitivity to weight choices
 # - Interactive weight selection
 ```
 
-### Pareto Optimization
+### Pareto Optimisation
 
-```{r pareto-optimization, eval=FALSE}
-# Placeholder for Pareto optimization
+```{r pareto-optimisation, eval=FALSE}
+# Placeholder for Pareto optimisation
 # This will show:
 # - Multi-objective trade-off analysis
 # - Pareto front exploration
 # - Non-dominated solution sets
 # - Decision making with multiple criteria
-# - Visualization of trade-offs
+# - Visualisation of trade-offs
 ```
 
 ### Hierarchical Objectives
@@ -289,13 +393,13 @@ Real experiments often require balancing multiple competing goals.
 # Placeholder for hierarchical objectives
 # This will show:
 # - Primary and secondary objective prioritization
-# - Lexicographic optimization approaches
+# - Lexicographic optimisation approaches
 # - Constraint satisfaction hierarchies
-# - Sequential optimization strategies
+# - Sequential optimisation strategies
 # - Practical implementation considerations
 ```
 
-# Optimization Algorithm Parameters
+# Optimisation Algorithm Parameters
 
 ## Simulated Annealing Settings
 
@@ -309,7 +413,7 @@ Controlling the cooling rate and acceptance probability.
 # - Initial temperature selection
 # - Cooling rate adjustments
 # - Linear vs exponential vs adaptive schedules
-# - Impact on optimization quality
+# - Impact on optimisation quality
 # - Convergence speed trade-offs
 ```
 
@@ -329,7 +433,7 @@ Managing the number of iterations and convergence criteria.
 
 ### Move Types and Probabilities
 
-Customizing how the algorithm proposes layout changes.
+Customising how the algorithm proposes layout changes.
 
 ```{r move-types, eval=FALSE}
 # Placeholder for move types
@@ -343,7 +447,7 @@ Customizing how the algorithm proposes layout changes.
 
 ## Performance Tuning
 
-### Large Design Optimization
+### Large Design Optimisation
 
 Handling computationally intensive large-scale designs.
 
@@ -359,7 +463,7 @@ Handling computationally intensive large-scale designs.
 
 ### Convergence Diagnostics
 
-Monitoring and ensuring optimization quality.
+Monitoring and ensuring optimisation quality.
 
 ```{r convergence-diagnostics, eval=FALSE}
 # Placeholder for convergence diagnostics
@@ -405,7 +509,7 @@ Beyond standard rectangular blocking patterns.
 
 ### Treatment Assignment Rules
 
-Specialized rules for treatment placement.
+Specialised rules for treatment placement.
 
 ```{r treatment-assignment, eval=FALSE}
 # Placeholder for treatment assignment rules
@@ -463,11 +567,11 @@ Strategies when exact constraint satisfaction is impossible.
 
 # Monitoring and Control
 
-## Real-Time Optimization Monitoring
+## Real-Time Optimisation Monitoring
 
-### Progress Visualization
+### Progress Visualisation
 
-Tracking optimization progress during execution.
+Tracking optimisation progress during execution.
 
 ```{r progress-monitoring, eval=FALSE}
 # Placeholder for progress monitoring
@@ -475,19 +579,19 @@ Tracking optimization progress during execution.
 # - Real-time objective function plots
 # - Temperature and acceptance rate tracking
 # - Move type and success statistics
-# - Intermediate layout visualization
+# - Intermediate layout visualisation
 # - Performance metric displays
 ```
 
 ### Interactive Control
 
-User intervention during optimization.
+User intervention during optimisation.
 
 ```{r interactive-control, eval=FALSE}
 # Placeholder for interactive control
 # This will show:
-# - Manual optimization stopping
-# - Parameter adjustment during optimization
+# - Manual optimisation stopping
+# - Parameter adjustment during optimisation
 # - Layout modification and restart
 # - Objective function switching
 # - Expert knowledge incorporation
@@ -495,7 +599,7 @@ User intervention during optimization.
 
 ### Quality Metrics
 
-Assessing optimization results.
+Assessing optimisation results.
 
 ```{r quality-metrics, eval=FALSE}
 # Placeholder for quality metrics
@@ -507,17 +611,17 @@ Assessing optimization results.
 # - Recommendation systems
 ```
 
-## Batch and Automated Optimization
+## Batch and Automated Optimisation
 
 ### Multiple Design Comparison
 
-Systematic comparison of optimization strategies.
+Systematic comparison of optimisation strategies.
 
-```{r batch-optimization, eval=FALSE}
-# Placeholder for batch optimization
+```{r batch-optimisation, eval=FALSE}
+# Placeholder for batch optimisation
 # This will show:
 # - Automated parameter sweeps
-# - Multiple initialization strategies
+# - Multiple initialisation strategies
 # - Comparative result analysis
 # - Best design selection
 # - Robustness testing
@@ -525,7 +629,7 @@ Systematic comparison of optimization strategies.
 
 ### Workflow Integration
 
-Incorporating optimization into larger research workflows.
+Incorporating optimisation into larger research workflows.
 
 ```{r workflow-integration, eval=FALSE}
 # Placeholder for workflow integration
@@ -539,7 +643,7 @@ Incorporating optimization into larger research workflows.
 
 # Troubleshooting and Debugging
 
-## Common Optimization Issues
+## Common Optimisation Issues
 
 ### Poor Convergence
 
@@ -552,7 +656,7 @@ Identifying and resolving convergence problems.
 # - Parameter adjustment strategies
 # - Objective function debugging
 # - Initial condition improvements
-# - Alternative optimization approaches
+# - Alternative optimisation approaches
 ```
 
 ### Constraint Violations
@@ -571,23 +675,23 @@ Handling situations where constraints cannot be satisfied.
 
 ### Performance Issues
 
-Addressing slow or inefficient optimization.
+Addressing slow or inefficient optimisation.
 
 ```{r performance-debugging, eval=FALSE}
 # Placeholder for performance debugging
 # This will show:
 # - Computational bottleneck identification
-# - Memory usage optimization
+# - Memory usage optimisation
 # - Algorithm parameter tuning
 # - Approximation strategies
-# - Hardware utilization improvements
+# - Hardware utilisation improvements
 ```
 
 ## Validation and Testing
 
-### Optimization Result Validation
+### Optimisation Result Validation
 
-Ensuring optimization results meet expectations.
+Ensuring optimisation results meet expectations.
 
 ```{r result-validation, eval=FALSE}
 # Placeholder for result validation
@@ -639,35 +743,35 @@ Debugging and validating custom objective functions.
 
 1. **Conservative approach** - Start with moderate settings and adjust based on results
 2. **Problem-specific tuning** - Adjust parameters based on design size and complexity
-3. **Multiple trials** - Run optimization multiple times with different settings
+3. **Multiple trials** - Run optimisation multiple times with different settings
 4. **Documentation** - Record parameter choices and their effects
 5. **Sensitivity analysis** - Understand how parameter changes affect results
 
-### Optimization Strategy
+### Optimisation Strategy
 
 1. **Incremental improvement** - Make gradual parameter adjustments
 2. **Systematic testing** - Use structured approaches to parameter exploration
 3. **Quality monitoring** - Track multiple quality metrics, not just objective function
-4. **Convergence verification** - Ensure optimization has genuinely converged
-5. **Result validation** - Verify that optimized designs meet practical requirements
+4. **Convergence verification** - Ensure optimisation has genuinely converged
+5. **Result validation** - Verify that optimised designs meet practical requirements
 
 # Case Studies
 
-## Case Study 1: Custom Neighbor Effects for Plant Competition
+## Case Study 1: Custom neighbour Effects for Plant Competition
 
-A specialized objective function for variety trials where plant height differences create asymmetric competition effects.
+A specialised objective function for variety trials where plant height differences create asymmetric competition effects.
 
 ```{r case-study-competition, eval=FALSE}
 # Placeholder for plant competition case study
 # This will show:
 # - Defining height-based competition matrices
-# - Implementing asymmetric neighbor penalties
-# - Optimizing for balanced competition effects
-# - Comparing with standard optimization
-# - Field validation of optimization results
+# - Implementing asymmetric neighbour penalties
+# - Optimising for balanced competition effects
+# - Comparing with standard optimisation
+# - Field validation of optimisation results
 ```
 
-## Case Study 2: Multi-Objective Optimization for Resource Allocation
+## Case Study 2: Multi-Objective Optimisation for Resource Allocation
 
 Balancing statistical efficiency with practical resource constraints in a large breeding trial.
 
@@ -675,15 +779,15 @@ Balancing statistical efficiency with practical resource constraints in a large 
 # Placeholder for resource allocation case study
 # This will show:
 # - Multiple competing objective functions
-# - Weighted optimization approaches
-# - Trade-off analysis and visualization
+# - Weighted optimisation approaches
+# - Trade-off analysis and visualisation
 # - Stakeholder input integration
 # - Implementation and evaluation
 ```
 
-## Case Study 3: Irregular Field Optimization
+## Case Study 3: Irregular Field Optimisation
 
-Custom optimization for a field with complex shape and obstacles.
+Custom optimisation for a field with complex shape and obstacles.
 
 ```{r case-study-irregular, eval=FALSE}
 # Placeholder for irregular field case study
@@ -701,28 +805,28 @@ Custom optimization for a field with complex shape and obstacles.
 
 ### GIS Integration
 
-Incorporating Geographic Information System data into optimization.
+Incorporating Geographic Information System data into optimisation.
 
 ```{r gis-integration, eval=FALSE}
 # Placeholder for GIS integration
 # This will show:
 # - Importing spatial data layers
 # - Using GIS data in objective functions
-# - Exporting optimized layouts to GIS
+# - Exporting optimised layouts to GIS
 # - Coordinate system handling
 # - Spatial analysis integration
 ```
 
 ### Field Management Software
 
-Connecting optimization results with farm management systems.
+Connecting optimisation results with farm management systems.
 
 ```{r field-management, eval=FALSE}
 # Placeholder for field management integration
 # This will show:
 # - Export formats for field software
 # - GPS coordinate generation
-# - Equipment routing optimization
+# - Equipment routing optimisation
 # - Treatment application scheduling
 # - Data collection system integration
 ```
@@ -731,7 +835,7 @@ Connecting optimization results with farm management systems.
 
 ### Mixed Model Preparation
 
-Preparing optimized designs for statistical analysis.
+Preparing optimised designs for statistical analysis.
 
 ```{r analysis-preparation, eval=FALSE}
 # Placeholder for analysis preparation
@@ -745,15 +849,15 @@ Preparing optimized designs for statistical analysis.
 
 # Conclusion
 
-Custom optimization and advanced parameter control in the `speed` package provide powerful tools for addressing complex experimental design challenges. Key benefits include:
+Custom optimisation and advanced parameter control in the `speed` package provide powerful tools for addressing complex experimental design challenges. Key benefits include:
 
 - **Flexible objective functions** tailored to specific research needs
-- **Fine-tuned optimization** parameters for improved performance
+- **Fine-tuned optimisation** parameters for improved performance
 - **Complex constraint handling** for non-standard situations
-- **Multi-objective optimization** for balancing competing goals
+- **Multi-objective optimisation** for balancing competing goals
 - **Robust monitoring and control** systems for quality assurance
 
-Successful implementation of advanced optimization requires:
+Successful implementation of advanced optimisation requires:
 
 1. **Clear understanding** of research objectives and constraints
 2. **Systematic approach** to function development and testing
@@ -761,23 +865,23 @@ Successful implementation of advanced optimization requires:
 4. **Thorough testing** and quality assurance procedures
 5. **Documentation** of methods and decisions for reproducibility
 
-By leveraging these advanced features, researchers can optimize experimental designs for even the most challenging agricultural research scenarios.
+By leveraging these advanced features, researchers can optimise experimental designs for even the most challenging agricultural research scenarios.
 
 ## Further Reading
 
-### Optimization Theory
-- Kirkpatrick, S., Gelatt Jr, C.D., & Vecchi, M.P. (1983). "Optimization by simulated annealing"
+### Optimisation Theory
+- Kirkpatrick, S., Gelatt Jr, C.D., & Vecchi, M.P. (1983). "Optimisation by simulated annealing"
 - Aarts, E. & Korst, J. (1989). *Simulated Annealing and Boltzmann Machines*
 - Michalewicz, Z. & Fogel, D.B. (2004). *How to Solve It: Modern Heuristics*
 
-### Experimental Design Optimization
+### Experimental Design Optimisation
 - Atkinson, A.C., Donev, A.N., & Tobias, R.D. (2007). *Optimum Experimental Designs*
 - Fedorov, V.V. & Hackl, P. (1997). *Model-Oriented Design of Experiments*
 - Bailey, R.A. (2008). *Design of Comparative Experiments*
 
 ### Computational Methods
 - Press, W.H. et al. (2007). *Numerical Recipes: The Art of Scientific Computing*
-- Nocedal, J. & Wright, S.J. (2006). *Numerical Optimization*
+- Nocedal, J. & Wright, S.J. (2006). *Numerical Optimisation*
 
 ## Related Vignettes
 
@@ -787,4 +891,4 @@ By leveraging these advanced features, researchers can optimize experimental des
 
 ---
 
-*This vignette demonstrates advanced customization capabilities of the `speed` package. For standard applications, see the other package vignettes. For specific implementation questions, consult the package documentation and function help files.*
+*This vignette demonstrates advanced customisation capabilities of the `speed` package. For standard applications, see the other package vignettes. For specific implementation questions, consult the package documentation and function help files.*
