@@ -348,11 +348,8 @@ Whether using simple randomised designs or complex split-plot structures, spatia
 - John, J.A. & Williams, E.R. (1995). *Cyclic and Computer Generated Designs*
 - Bailey, R.A. (2008). *Design of Comparative Experiments*
 
-
 *This vignette demonstrates the versatility of the `speed` package for agricultural experimental design. For more advanced applications and custom designs, consult the package documentation and additional vignettes.*
-
 
 # Related Vignettes
 
 - [Complex Agricultural Experimental Designs with speed](complex_designs.html): Advanced and specialised designs, including split-split plot, strip-plot, incomplete block, p-rep, and more.
-- [Custom Objective Functions and Advanced Options for Optimisation in speed](custom_objective_functions.html): Creating custom objective functions and advanced optimisation strategies.

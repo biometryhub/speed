@@ -906,7 +906,7 @@ When selecting and implementing complex designs, researchers should carefully ba
 
 ## Related Vignettes
 
-- **[Common Agricultural Experimental Designs with speed](speed.html)** - Foundational designs for most agricultural applications
+- [Common Agricultural Experimental Designs with speed](speed.html) - Foundational designs for most agricultural applications
 <!-- - **"Comparing Experimental Design Efficiency with speed"** - Tools for evaluating and comparing design efficiency -->
 
 ---
