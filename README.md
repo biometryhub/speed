@@ -133,8 +133,9 @@ autoplot(result)
 ### More Examples
 
 For more detailed examples, see the [getting started
-vignette](articles/speed.html) or the vignette about [more complex
-examples](articles/complex_designs.html).
+vignette](https://biometryhub.github.io/speed/articles/speed.html) or
+the vignette about [more complex
+examples](https://biometryhub.github.io/speed/articles/complex_designs.html).
 
 ## Citation
 
