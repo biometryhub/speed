@@ -15,16 +15,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  fig.width = 8,
-  fig.height = 6,
-  dpi = 150
-)
-```
-
 # Introduction
 
 Agricultural experiments require careful spatial design to minimise the effects of field heterogeneity and neighbour interactions while maximising statistical power. The `speed` package provides tools for creating spatially efficient experimental designs through simulated annealing optimisation.

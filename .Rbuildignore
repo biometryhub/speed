@@ -12,6 +12,7 @@ air.toml
 ^codecov\.yml$
 benchmarking.R
 ^vignettes/*_files$
+^vignettes/.quarto
 Testing_split_plot.R
 Cases.md
 codemeta.json
