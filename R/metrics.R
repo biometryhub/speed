@@ -139,8 +139,8 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 calculate_adjacency_score <- function(layout_df, swap, row_column = "row", col_column = "col") {
   layout_df <- matrix(
     layout_df[[swap]],
-    nrow = max(as.numeric(levels(layout_df[[row_column]])), na.rm = TRUE),
-    ncol = max(as.numeric(levels(layout_df[[col_column]])), na.rm = TRUE),
+    nrow = max(as.numeric(as.character(layout_df[[row_column]])), na.rm = TRUE),
+    ncol = max(as.numeric(as.character(layout_df[[col_column]])), na.rm = TRUE),
     byrow = TRUE
   )
 
