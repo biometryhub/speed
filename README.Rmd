@@ -53,8 +53,18 @@ The `speed` package optimises spatial experimental designs by rearranging treatm
 You can install the development version of speed from [GitHub](https://github.com/biometryhub/speed) with:
 
 ```{r, eval = FALSE}
-# install.packages("pak")
+# pak
+if (!require("pak", quietly = TRUE)) install.packages("pak")
 pak::pak("biometryhub/speed")
+
+# devtools
+if (!require("devtools", quietly = TRUE)) install.packages("devtools")
+devtools::install_github("biometryhub/speed")
+
+# remotes
+if (!require("remotes", quietly = TRUE)) install.packages("remotes")
+remotes::install_github("biometryhub/speed")
+
 ```
 
 ## Features

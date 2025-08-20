@@ -48,8 +48,17 @@ You can install the development version of speed from
 [GitHub](https://github.com/biometryhub/speed) with:
 
 ``` r
-# install.packages("pak")
+# pak
+if (!require("pak", quietly = TRUE)) install.packages("pak")
 pak::pak("biometryhub/speed")
+
+# devtools
+if (!require("devtools", quietly = TRUE)) install.packages("devtools")
+devtools::install_github("biometryhub/speed")
+
+# remotes
+if (!require("remotes", quietly = TRUE)) install.packages("remotes")
+remotes::install_github("biometryhub/speed")
 ```
 
 ## Features
@@ -82,6 +91,7 @@ df <- data.frame(
 
 # Optimise the design with seed for reproducibility
 result <- speed(df, "treatment", seed = 42)
+#> row and col are used as row and column, respectively.
 #> Iteration: 1000 Score: 1 Best: 1 Since Improvement: 475 
 #> Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1475 
 #> Early stopping at iteration 2525
@@ -120,6 +130,7 @@ result <- speed(df,
   iterations = 5000,
   seed = 42
 )
+#> row and col are used as row and column, respectively.
 #> Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 
 #> Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 
 #> Early stopping at iteration 2457
@@ -147,14 +158,14 @@ If you use `speed` in your research, please cite:
 
       Rogers S, Taylor J, Edson R, Pipattungsakul W (????). _speed:
       Generate Spatially Efficient Experimental Designs_. R package version
-      0.0.1, <https://biometryhub.github.io/speed/>.
+      0.0.2, <https://biometryhub.github.io/speed/>.
 
     A BibTeX entry for LaTeX users is
 
       @Manual{,
         title = {speed: Generate Spatially Efficient Experimental Designs},
         author = {Sam Rogers and Julian Taylor and Russell Edson and Wasin Pipattungsakul},
-        note = {R package version 0.0.1},
+        note = {R package version 0.0.2},
         url = {https://biometryhub.github.io/speed/},
       }
 
