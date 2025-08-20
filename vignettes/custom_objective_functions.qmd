@@ -141,7 +141,7 @@ get_cooccurrence <- function(design_df, swap) {
 }
 ```
 
-Given an input data frame `design_df` with a column for blocks and a column for treatments, this function will return a list of treatment pairs (provided in the column given by the `swap` argument) and their counts across the blocks. Now we need to incorporate this into a custom objective function that uses this to evaluate the BIBD properties.
+Given an input data frame `design_df` with a column for blocks and a column for treatments, this function will return a list of treatment pairs (provided in the column given by the `swap` argument) and their counts across the blocks. Now we need to incorporate this into a custom objective function that uses this to evaluate the BIBD properties. To be able to include it within the `speed` optimisation algorithim, we need to ensure that the function returns a list with a `score` element, which is a single numeric value representing the optimality of the layout. The `speed` package is set up to minimise this score, so lower values are better, and may require taking the reciprocal of the score if higher values mean more optimal layouts in the context of a custom objective function.
 
 ```{r custom-objective, eval=TRUE}
 bibd_objective_function <- function(
