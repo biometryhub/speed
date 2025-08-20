@@ -706,3 +706,158 @@ calculate_efficiency_factor <- function(design_df, item) {
   f_A <- (2 / r_h) / apv
   return(f_A)
 }
+
+
+#' Factorial Objective Function for Design Optimization
+#'
+#' @description
+#' Objective function for factorial experimental designs that optimizes spatial
+#' distribution of individual main effects while maintaining factorial structure.
+#' Calculates separate adjacency and balance scores for each factor and combines
+#' them with the interaction term score.
+#'
+#' @param layout_df A data frame representing the current design
+#' @param swap A column name of the treatment combinations to be swapped
+#' @param spatial_cols Column name(s) of the spatial factors
+#' @param factors A named list specifying which columns represent individual
+#'   factors. Names will be used for weighting. Example: 
+#'   `list(A = "factor_a", B = "factor_b", C = "factor_c")`
+#' @param factor_weights A named numeric vector specifying weights for each
+#'   factor. Names should match those in `factors`. If NULL, all factors
+#'   weighted equally (default: NULL)
+#' @param interaction_weight Weight for the interaction term score (default: 1)
+#' @param adj_weight Weight for adjacency scores (default: 1)
+#' @param bal_weight Weight for balance scores (default: 1)
+#' @param row_column Name of column representing the row of the design (default: "row")
+#' @param col_column Name of column representing the column of the design (default: "col")
+#' @param ... Additional arguments passed through
+#'
+#' @return A list with a single element `score` representing the total weighted
+#'   score of the design (lower is better)
+#'
+#' @examples
+#' # Create a 2x2 factorial design
+#' factorial_df <- data.frame(
+#'   row = rep(1:4, each = 3),
+#'   col = rep(1:3, times = 4),
+#'   factor_a = rep(c("A1", "A1", "A2", "A2"), each = 3),
+#'   factor_b = rep(c("B1", "B2", "B1", "B2"), each = 3),
+#'   treatment_combination = rep(c("A1B1", "A1B2", "A2B1", "A2B2"), each = 3)
+#' )
+#' 
+#' # Use in speed function
+#' # result <- speed(factorial_df, 
+#' #                 swap = "treatment_combination",
+#' #                 obj_function = objective_function_factorial,
+#' #                 factors = list(A = "factor_a", B = "factor_b"))
+#'
+#' @export
+objective_function_factorial <- function(layout_df,
+                                       swap,
+                                       spatial_cols,
+                                       factors,
+                                       factor_weights = NULL,
+                                       interaction_weight = 1,
+                                       adj_weight = getOption("speed.adj_weight", 1),
+                                       bal_weight = getOption("speed.bal_weight", 1),
+                                       row_column = "row",
+                                       col_column = "col",
+                                       ...) {
+  
+  # Validate inputs
+  if (!is.list(factors) || is.null(names(factors))) {
+    stop("'factors' must be a named list")
+  }
+  
+  # Check that all specified factor columns exist
+  missing_cols <- setdiff(factors, names(layout_df))
+  if (length(missing_cols) > 0) {
+    stop("Factor columns not found in data: ", paste(missing_cols, collapse = ", "))
+  }
+  
+  # Set up factor weights - equal by default
+  if (is.null(factor_weights)) {
+    factor_weights <- setNames(rep(1, length(factors)), names(factors))
+  } else {
+    # Validate factor_weights names match factors names
+    if (!all(names(factor_weights) %in% names(factors))) {
+      stop("factor_weights names must match factors names")
+    }
+    # Set missing weights to 1
+    missing_weights <- setdiff(names(factors), names(factor_weights))
+    if (length(missing_weights) > 0) {
+      factor_weights[missing_weights] <- 1
+    }
+  }
+  
+  # Initialize total score
+  total_score <- 0
+  
+  # Calculate scores for individual factors
+  for (factor_name in names(factors)) {
+    factor_col <- factors[[factor_name]]
+    factor_weight <- factor_weights[[factor_name]]
+    
+    # Check for only 2 levels (adjacency becomes deterministic)
+    n_levels <- length(unique(layout_df[[factor_col]]))
+    current_adj_weight <- adj_weight
+    if (n_levels == 2 && adj_weight != 0) {
+      warning("Only 2 levels detected in factor '", factor_name, 
+              "'. Adjacency optimization becomes deterministic. Consider reducing adjacency weight.",
+              call. = FALSE)
+    }
+    
+    # Calculate adjacency score for this factor
+    if (current_adj_weight != 0) {
+      adj_score <- calculate_adjacency_score(layout_df, factor_col, row_column, col_column)
+    } else {
+      adj_score <- 0
+    }
+    
+    # Calculate balance score for this factor
+    if (bal_weight != 0) {
+      bal_score <- calculate_balance_score(layout_df, factor_col, spatial_cols)
+    } else {
+      bal_score <- 0
+    }
+    
+    # Add weighted factor scores to total
+    factor_score <- factor_weight * (current_adj_weight * adj_score + bal_weight * bal_score)
+    total_score <- total_score + factor_score
+  }
+  
+  # Calculate score for interaction term
+  if (interaction_weight != 0) {
+    # Check for only 2 treatment combinations
+    n_combinations <- length(unique(layout_df[[swap]]))
+    current_adj_weight_int <- adj_weight
+    if (n_combinations == 2 && adj_weight != 0) {
+      warning("Only 2 treatment combinations detected in '", swap, 
+              "'. Adjacency optimization becomes deterministic. Consider reducing adjacency weight.",
+              call. = FALSE)
+      current_adj_weight_int <- 0
+    }
+    
+    # Adjacency score for interactions
+    if (current_adj_weight_int != 0) {
+      int_adj_score <- calculate_adjacency_score(layout_df, swap, row_column, col_column)
+    } else {
+      int_adj_score <- 0
+    }
+    
+    # Balance score for interactions  
+    if (bal_weight != 0) {
+      int_bal_score <- calculate_balance_score(layout_df, swap, spatial_cols)
+    } else {
+      int_bal_score <- 0
+    }
+    
+    # Add weighted interaction scores to total
+    interaction_score <- interaction_weight * (current_adj_weight_int * int_adj_score + bal_weight * int_bal_score)
+    total_score <- total_score + interaction_score
+  }
+  
+  return(list(
+    score = round(total_score, 10)
+  ))
+}
