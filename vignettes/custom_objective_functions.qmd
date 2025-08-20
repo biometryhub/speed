@@ -225,6 +225,8 @@ get_cooccurrence(result$design_df, "treatment")
 unique(unlist(get_cooccurrence(result$design_df, "treatment")))
 ```
 
+
+<!---
 ## Custom neighbour Effect Functions
 
 ### Weighted neighbour Effects
@@ -399,7 +401,8 @@ Real experiments often require balancing multiple competing goals.
 # - Practical implementation considerations
 ```
 
-# Optimisation Algorithm Parameters
+
+# Adjusting Optimisation Algorithm Parameters
 
 ## Simulated Annealing Settings
 
@@ -567,37 +570,7 @@ Strategies when exact constraint satisfaction is impossible.
 
 # Monitoring and Control
 
-## Real-Time Optimisation Monitoring
-
-### Progress Visualisation
-
-Tracking optimisation progress during execution.
-
-```{r progress-monitoring, eval=FALSE}
-# Placeholder for progress monitoring
-# This will show:
-# - Real-time objective function plots
-# - Temperature and acceptance rate tracking
-# - Move type and success statistics
-# - Intermediate layout visualisation
-# - Performance metric displays
-```
-
-### Interactive Control
-
-User intervention during optimisation.
-
-```{r interactive-control, eval=FALSE}
-# Placeholder for interactive control
-# This will show:
-# - Manual optimisation stopping
-# - Parameter adjustment during optimisation
-# - Layout modification and restart
-# - Objective function switching
-# - Expert knowledge incorporation
-```
-
-### Quality Metrics
+## Quality Metrics
 
 Assessing optimisation results.
 
@@ -640,222 +613,16 @@ Incorporating optimisation into larger research workflows.
 # - Result documentation and archiving
 # - Quality control pipelines
 ```
-
-# Troubleshooting and Debugging
-
-## Common Optimisation Issues
-
-### Poor Convergence
-
-Identifying and resolving convergence problems.
-
-```{r convergence-issues, eval=FALSE}
-# Placeholder for convergence troubleshooting
-# This will show:
-# - Convergence diagnostic methods
-# - Parameter adjustment strategies
-# - Objective function debugging
-# - Initial condition improvements
-# - Alternative optimisation approaches
-```
-
-### Constraint Violations
-
-Handling situations where constraints cannot be satisfied.
-
-```{r constraint-debugging, eval=FALSE}
-# Placeholder for constraint debugging
-# This will show:
-# - Constraint conflict detection
-# - Infeasible constraint identification
-# - Constraint relaxation strategies
-# - Alternative formulation suggestions
-# - User guidance for resolution
-```
-
-### Performance Issues
-
-Addressing slow or inefficient optimisation.
-
-```{r performance-debugging, eval=FALSE}
-# Placeholder for performance debugging
-# This will show:
-# - Computational bottleneck identification
-# - Memory usage optimisation
-# - Algorithm parameter tuning
-# - Approximation strategies
-# - Hardware utilisation improvements
-```
-
-## Validation and Testing
-
-### Optimisation Result Validation
-
-Ensuring optimisation results meet expectations.
-
-```{r result-validation, eval=FALSE}
-# Placeholder for result validation
-# This will show:
-# - Statistical property verification
-# - Constraint satisfaction checking
-# - Design efficiency validation
-# - Comparative analysis with standards
-# - Quality assurance procedures
-```
-
-### Custom Function Testing
-
-Debugging and validating custom objective functions.
-
-```{r function-testing, eval=FALSE}
-# Placeholder for function testing
-# This will show:
-# - Unit testing for objective functions
-# - Edge case handling verification
-# - Performance benchmarking
-# - Correctness validation methods
-# - Integration testing procedures
-```
-
-# Best Practices and Guidelines
-
-## Custom Objective Function Development
-
-### Design Principles
-
-1. **Start simple** - Begin with basic functions and add complexity gradually
-2. **Test thoroughly** - Validate function behavior on known layouts
-3. **Consider scale** - Ensure different penalty components are appropriately weighted
-4. **Document clearly** - Maintain clear documentation of function logic
-5. **Profile performance** - Monitor computational efficiency for large designs
-
-### Common Pitfalls
-
-1. **Inconsistent scaling** - Different penalty components with vastly different scales
-2. **Overly complex functions** - Functions that are difficult to debug or understand
-3. **Poor constraint handling** - Functions that don't properly enforce required constraints
-4. **Lack of testing** - Functions that haven't been validated on known cases
-5. **Performance issues** - Functions that are computationally inefficient
-
-## Parameter Selection Guidelines
-
-### Initial Parameter Settings
-
-1. **Conservative approach** - Start with moderate settings and adjust based on results
-2. **Problem-specific tuning** - Adjust parameters based on design size and complexity
-3. **Multiple trials** - Run optimisation multiple times with different settings
-4. **Documentation** - Record parameter choices and their effects
-5. **Sensitivity analysis** - Understand how parameter changes affect results
-
-### Optimisation Strategy
-
-1. **Incremental improvement** - Make gradual parameter adjustments
-2. **Systematic testing** - Use structured approaches to parameter exploration
-3. **Quality monitoring** - Track multiple quality metrics, not just objective function
-4. **Convergence verification** - Ensure optimisation has genuinely converged
-5. **Result validation** - Verify that optimised designs meet practical requirements
-
-# Case Studies
-
-## Case Study 1: Custom neighbour Effects for Plant Competition
-
-A specialised objective function for variety trials where plant height differences create asymmetric competition effects.
-
-```{r case-study-competition, eval=FALSE}
-# Placeholder for plant competition case study
-# This will show:
-# - Defining height-based competition matrices
-# - Implementing asymmetric neighbour penalties
-# - Optimising for balanced competition effects
-# - Comparing with standard optimisation
-# - Field validation of optimisation results
-```
-
-## Case Study 2: Multi-Objective Optimisation for Resource Allocation
-
-Balancing statistical efficiency with practical resource constraints in a large breeding trial.
-
-```{r case-study-resources, eval=FALSE}
-# Placeholder for resource allocation case study
-# This will show:
-# - Multiple competing objective functions
-# - Weighted optimisation approaches
-# - Trade-off analysis and visualisation
-# - Stakeholder input integration
-# - Implementation and evaluation
-```
-
-## Case Study 3: Irregular Field Optimisation
-
-Custom optimisation for a field with complex shape and obstacles.
-
-```{r case-study-irregular, eval=FALSE}
-# Placeholder for irregular field case study
-# This will show:
-# - Spatial constraint implementation
-# - Custom move types for irregular layouts
-# - Quality assessment for non-standard designs
-# - Practical implementation challenges
-# - Comparison with standard approaches
-```
-
-# Integration with Other Tools
-
-## Interfacing with External Software
-
-### GIS Integration
-
-Incorporating Geographic Information System data into optimisation.
-
-```{r gis-integration, eval=FALSE}
-# Placeholder for GIS integration
-# This will show:
-# - Importing spatial data layers
-# - Using GIS data in objective functions
-# - Exporting optimised layouts to GIS
-# - Coordinate system handling
-# - Spatial analysis integration
-```
-
-### Field Management Software
-
-Connecting optimisation results with farm management systems.
-
-```{r field-management, eval=FALSE}
-# Placeholder for field management integration
-# This will show:
-# - Export formats for field software
-# - GPS coordinate generation
-# - Equipment routing optimisation
-# - Treatment application scheduling
-# - Data collection system integration
-```
-
-## Statistical Analysis Integration
-
-### Mixed Model Preparation
-
-Preparing optimised designs for statistical analysis.
-
-```{r analysis-preparation, eval=FALSE}
-# Placeholder for analysis preparation
-# This will show:
-# - Design structure documentation
-# - Spatial correlation modeling preparation
-# - Random effect specification
-# - Analysis code generation
-# - Result interpretation guidance
-```
+--->
 
 # Conclusion
 
-Custom optimisation and advanced parameter control in the `speed` package provide powerful tools for addressing complex experimental design challenges. Key benefits include:
+Custom optimisation in the `speed` package provides a powerful tool for addressing complex experimental design challenges. Key benefits include:
 
 - **Flexible objective functions** tailored to specific research needs
 - **Fine-tuned optimisation** parameters for improved performance
 - **Complex constraint handling** for non-standard situations
 - **Multi-objective optimisation** for balancing competing goals
-- **Robust monitoring and control** systems for quality assurance
 
 Successful implementation of advanced optimisation requires:
 
