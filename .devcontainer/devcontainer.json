@@ -13,7 +13,8 @@
         "matrixStats",
         "bench",
         "quarto",
-        "tidyr"
+        "tidyr",
+        "patchwork"
       ]
     }
   },
