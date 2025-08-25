@@ -205,3 +205,21 @@ test_that("to_types converts data frame data to input types", {
   expect_equal(typed_data$numeric_col, test_data$numeric_col)
   expect_equal(typed_data$logical_col, test_data$logical_col)
 })
+
+test_that("parse_swap_formula parses with defaults", {
+  swap <- ~ single(treatment)
+  parsed <- parse_swap_formula(swap)
+
+  expect_equal(parsed, list(list("single", "treatment", c("row", "col"), "1")))
+})
+
+test_that("parse_swap_formula parses with multiple terms", {
+  swap <- ~ single(treatment) + all(sub_treatment, a_row + a_col, block) + single(z, a + b + c, d)
+  parsed <- parse_swap_formula(swap)
+
+  expect_equal(parsed, list(
+    list("single", "treatment", c("row", "col"), "1"),
+    list("all", "sub_treatment", c("a_row", "a_col"), "block"),
+    list("single", "z", c("a", "b", "c"), "d")
+  ))
+})

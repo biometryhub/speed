@@ -43,38 +43,6 @@ pseudo_inverse <- function(a_matrix, tolerance = 1e-10) {
   }
 }
 
-# #' Evaluate NSE While Allowing Wrapping
-# #'
-# #' @description
-# #' Evaluates NSE while allowing wrapping of the variable in another function call.
-# #'
-# #' @param var A symbol or a string
-# #'
-# #' @return A string representing the symbol or the literal string
-# #'
-# #' @keywords internal
-# wrappable_nse <- function(var) {
-#   expr <- substitute(var)
-#
-#   # Try to evaluate to see if it's a string value being passed
-#   tryCatch(
-#     {
-#       # If we can evaluate it and it's a string, use the string value
-#       evaluated <- eval(expr, envir = parent.frame())
-#       if (is.character(evaluated)) {
-#         return(evaluated)
-#       } else {
-#         # If it evaluates but isn't a string, treat as NSE (return symbol name)
-#         return(deparse(expr))
-#       }
-#     },
-#     error = function(e) {
-#       # If evaluation fails (undefined variable), treat as NSE (return symbol name)
-#       return(deparse(expr))
-#     }
-#   )
-# }
-
 #' Convert Data Frame Data to Factors
 #'
 #' @param df A data frame
@@ -112,4 +80,31 @@ to_types <- function(df, types) {
   }
 
   return(df)
+}
+
+parse_swap_formula <- function(formula) {
+  # split a + b expression recursively
+  split_terms <- function(expr) {
+    if (is.call(expr) && identical(expr[[1]], as.name("+"))) {
+      return(c(split_terms(expr[[2]]), split_terms(expr[[3]])))
+    } else {
+      return(list(expr))
+    }
+  }
+
+  parse_call <- function(call_expr) {
+    fn_name <- as.character(call_expr[[1]])
+    args <- as.list(call_expr[-1])
+
+    list(
+      fn_name,
+      if (length(args) >= 1) all.vars(args[[1]])[1] else stop("Missing first argument"),
+      if (length(args) >= 2) all.vars(args[[2]]) else c("row", "col"),
+      if (length(args) >= 3) all.vars(args[[3]])[1] else "1"
+    )
+  }
+
+  rhs <- formula[[2]]
+  calls <- split_terms(rhs)
+  return(lapply(calls, parse_call))
 }

@@ -1069,33 +1069,6 @@ test_that("speed runs with grid_factors", {
   expect_equal(result$score, 1)
 })
 
-# for nse
-# test_that("speed runs within another function call", {
-#   wrapper <- function() {
-#     test_data <- data.frame(
-#       row = rep(1:5, times = 4),
-#       col = rep(1:4, each = 5),
-#       treatment = rep(LETTERS[1:4], 5)
-#     )
-#
-#     swap <- "treatment"
-#     swap_within <- "1"
-#
-#     return(speed(
-#       data = test_data,
-#       swap = swap,
-#       swap_within = swap_within,
-#       spatial_factors = ~ row + col,
-#       iterations = 100,
-#       seed = 42,
-#       quiet = TRUE
-#     ))
-#   }
-#
-#   result <- wrapper()
-#   expect_s3_class(result, "design")
-# })
-
 # TODO: Test cases to add/update
 # - Add more detailed checking of current designs
 # - NSE

@@ -146,12 +146,6 @@ speed <- function(data,
                                  iterations, early_stop_iterations, obj_function,
                                  quiet, seed, row_column = row_column, col_column = col_column, ...)
   } else {
-    # Convert swap and swap_within to character if they are not already - NSE
-    # swap <- as.character(substitute(swap))
-    # swap <- eval(substitute(swap), envir = parent.frame())
-    # swap <- wrappable_nse(swap)
-    # swap_within <- wrappable_nse(swap_within)
-
     design <- speed_simple(data, swap, swap_within, spatial_factors,
                            iterations, early_stop_iterations, obj_function,
                            quiet, seed, row_column = row_column, col_column = col_column, ...)
