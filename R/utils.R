@@ -82,29 +82,45 @@ to_types <- function(df, types) {
   return(df)
 }
 
-parse_swap_formula <- function(formula) {
-  # split a + b expression recursively
-  split_terms <- function(expr) {
-    if (is.call(expr) && identical(expr[[1]], as.name("+"))) {
-      return(c(split_terms(expr[[2]]), split_terms(expr[[3]])))
-    } else {
-      return(list(expr))
-    }
-  }
-
-  parse_call <- function(call_expr) {
-    fn_name <- as.character(call_expr[[1]])
-    args <- as.list(call_expr[-1])
-
-    list(
-      fn_name,
-      if (length(args) >= 1) all.vars(args[[1]])[1] else stop("Missing first argument"),
-      if (length(args) >= 2) all.vars(args[[2]]) else c("row", "col"),
-      if (length(args) >= 3) all.vars(args[[3]])[1] else "1"
-    )
-  }
-
-  rhs <- formula[[2]]
-  calls <- split_terms(rhs)
-  return(lapply(calls, parse_call))
-}
+# parse_swap_formula <- function(formula) {
+#   # split a + b expression recursively
+#   split_terms <- function(expr) {
+#     if (is.call(expr) && identical(expr[[1]], as.name("+"))) {
+#       return(c(split_terms(expr[[2]]), split_terms(expr[[3]])))
+#     } else {
+#       return(list(expr))
+#     }
+#   }
+#
+#   parse_term <- function(call_expr) {
+#     fn_name <- as.character(call_expr[[1]])
+#     args <- as.list(call_expr[-1])
+#
+#     return(list(
+#       fn_name,
+#       if (length(args) >= 1) all.vars(args[[1]])[1] else stop("Missing first argument"),
+#       if (length(args) >= 2) all.vars(args[[2]]) else c("row", "col"),
+#       if (length(args) >= 3) all.vars(args[[3]])[1] else "1"
+#     ))
+#   }
+#
+#   rhs <- formula[[2]]
+#   terms <- split_terms(rhs)
+#
+#
+#   parsed_args <- lapply(terms, parse_term)
+#   names(parsed_args) <- sapply(
+#     parsed_args,
+#     function(swap) {
+#       paste0(
+#         swap[[1]],
+#         " ",
+#         swap[[2]],
+#         " within ",
+#         ifelse(swap[[4]] == "1", "whole design", swap[[4]])
+#       )
+#     }
+#   )
+#
+#   return(parsed_args)
+# }

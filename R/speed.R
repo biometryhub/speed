@@ -116,6 +116,7 @@ speed <- function(data,
                   obj_function = objective_function,
                   quiet = FALSE,
                   seed = NULL,
+                  optimise = NULL,
                   ...) {
   rlang::check_dots_used()
 
@@ -200,7 +201,6 @@ speed_simple <- function(data,
 
   # Set seed for reproducibility
   if (is.null(seed)) {
-    # dummy_seed <- runif(1)
     seed <- .GlobalEnv$.Random.seed[3]
   }
   set.seed(seed)
@@ -249,7 +249,6 @@ speed_simple <- function(data,
       current_design,
       swap,
       swap_within,
-      level = NULL,
       swap_count = current_swap_count,
       swap_all_blocks = current_swap_all_blocks
     )
@@ -403,9 +402,14 @@ speed_hierarchical <- function(data,
 
   for (level in hierarchy_levels) {
     if (!quiet) cat("Optimising level:", level, "\n")
+    current_swap <- swap[[level]]
+    current_swap_within <- swap_within[[level]]
+    current_obj_function <- obj_function[[level]]
+    current_early_stop_iter <- early_stop_iterations[[level]]
+    current_max_iter <- iterations[[level]]
 
     # Calculate initial score for this level
-    current_score_obj <- obj_function[[level]](current_design, swap[[level]], spatial_cols, ...)
+    current_score_obj <- current_obj_function(current_design, current_swap, spatial_cols, ...)
     current_score <- current_score_obj$score
 
     if (!is.numeric(current_score)) {
@@ -415,12 +419,12 @@ speed_hierarchical <- function(data,
     best_score_obj <- current_score_obj
     best_score <- current_score
     temp <- start_temp
-    scores <- numeric(iterations[[level]])
-    temperatures <- numeric(iterations[[level]])
+    scores <- numeric(current_max_iter)
+    temperatures <- numeric(current_max_iter)
     last_improvement_iter <- 0
 
     # Optimisation loop for this level
-    for (iter in 1:iterations[[level]]) {
+    for (iter in 1:current_max_iter) {
       scores[iter] <- current_score
       temperatures[iter] <- temp
 
@@ -435,16 +439,16 @@ speed_hierarchical <- function(data,
       # Generate new design by swapping treatments at this level
       new_design <- generate_neighbour(
         current_design,
-        swap,
-        swap_within,
-        level,
+        current_swap,
+        current_swap_within,
         swap_count = current_swap_count,
-        swap_all_blocks = current_swap_all_blocks
+        swap_all_blocks = current_swap_all_blocks,
+        swap_all = TRUE
       )
 
       # Calculate new score
-      new_score_obj <- obj_function[[level]](new_design$design,
-                                             swap[[level]],
+      new_score_obj <- current_obj_function(new_design$design,
+                                             current_swap,
                                              spatial_cols,
                                              current_score_obj = current_score_obj,
                                              swapped_items = new_design$swapped_items,
@@ -480,10 +484,10 @@ speed_hierarchical <- function(data,
       }
 
       # Early stopping
-      if (iter - last_improvement_iter >= early_stop_iterations[[level]] || new_score < .Machine$double.eps) {
+      if (iter - last_improvement_iter >= current_early_stop_iter || new_score < .Machine$double.eps) {
         if (!quiet) cat("Early stopping at iteration", iter, "for level", level, "\n")
         # Record final score and temperature before breaking
-        if (iter < iterations[[level]]) {
+        if (iter < current_max_iter) {
           scores[iter + 1] <- current_score
           temperatures[iter + 1] <- temp
           scores <- scores[1:(iter + 1)]

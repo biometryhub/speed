@@ -6,6 +6,7 @@
 #' @param level The level of the design to be optimised in the current loop. Relevant for sequential designs. Simple designs pass this as `NULL`.
 #' @param swap_count Number of swaps to perform
 #' @param swap_all_blocks Whether to perform swaps in all blocks or just one
+#' @param swap_all Whether to swap all matching items or a single item at a time (default: FALSE)
 #'
 #' @return A list with the updated design after swapping and information about swapped items
 #'
@@ -14,28 +15,20 @@
 generate_neighbour <- function(design,
                                swap,
                                swap_within,
-                               level = NULL,
                                swap_count = getOption("speed.swap_count", 1),
-                               swap_all_blocks = getOption("speed.swap_all_blocks", FALSE)) {
-  # Check if this is a hierarchical design
-  is_hierarchical <- is.list(swap) && !is.null(names(swap))
-
-  if (is_hierarchical) {
-    return(generate_sequential_neighbour(design, swap, swap_within, level, swap_count, swap_all_blocks))
+                               swap_all_blocks = getOption("speed.swap_all_blocks", FALSE),
+                               swap_all = FALSE) {
+  if (swap_all) {
+    return(generate_multi_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks))
   } else {
-    return(generate_simple_neighbour(design, swap, swap_within, level, swap_count, swap_all_blocks))
+    return(generate_single_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks))
   }
 }
 
 #' Generate neighbour for simple (non-hierarchical) designs
 #' @keywords internal
 # fmt: skip
-generate_simple_neighbour <- function(design,
-                                      swap,
-                                      swap_within,
-                                      level,
-                                      swap_count,
-                                      swap_all_blocks) {
+generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks) {
   new_design <- design
 
   # Get unique blocks
@@ -65,8 +58,13 @@ generate_simple_neighbour <- function(design,
         swap_pair <- sample(block_indices, 2)
         to_be_swapped <- new_design[[swap]][swap_pair]
         if (to_be_swapped[1] == to_be_swapped[2]) {
-          no_dupe_filter <- new_design[[swap]][block_indices] != to_be_swapped[1]
-          swap_pair[[2]] <- sample(block_indices[no_dupe_filter], 1)
+          different_indices <- block_indices[new_design[[swap]][block_indices] != to_be_swapped[1]]
+          if (length(different_indices) == 0) {
+            # skip if no different treatments available
+            next
+          }
+
+          swap_pair[[2]] <- sample(different_indices, 1)
           to_be_swapped[2] <- new_design[[swap]][[swap_pair[[2]]]]
         }
 
@@ -85,20 +83,11 @@ generate_simple_neighbour <- function(design,
 #' Generate neighbour for sequential or hierarchical designs
 #' @keywords internal
 # fmt: skip
-generate_sequential_neighbour <- function(design,
-                                          swap,
-                                          swap_within,
-                                          level,
-                                          swap_count,
-                                          swap_all_blocks) {
+generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks) {
   new_design <- design
 
-  # Get the swap columns for the specified level
-  level_swap <- swap[[level]]
-  level_swap_within <- swap_within[[level]]
-
   # Get unique groups for this level
-  groups <- levels(design[[level_swap_within]])
+  groups <- levels(design[[swap_within]])
 
   if (swap_all_blocks) {
     # Swap in all groups
@@ -114,10 +103,9 @@ generate_sequential_neighbour <- function(design,
   # Perform swaps in selected groups
   for (group in groups_to_swap) {
     # Get unique treatments within this group
-    group_data <- new_design[new_design[[level_swap_within]] == group & !is.na(new_design[[level_swap]]), ]
-    group_treatments <- unique(
-      new_design[new_design[[level_swap_within]] == group & !is.na(new_design[[level_swap]]), level_swap]
-    )
+    group_filter <- new_design[[swap_within]] == group
+    group_data <- new_design[group_filter & !is.na(new_design[[swap]]), ]
+    group_treatments <- unique(group_data[[swap]])
 
     if (nrow(group_data) >= 2) {
       for (i in 1:swap_count) {
@@ -135,14 +123,12 @@ generate_sequential_neighbour <- function(design,
         }
 
         # Find all plots with these treatments in this group
-        plots_1 <- which(new_design[[level_swap_within]] == group &
-          new_design[[level_swap]] == swap_pair[1])
-        plots_2 <- which(new_design[[level_swap_within]] == group &
-          new_design[[level_swap]] == swap_pair[2])
+        plots_1 <- which(group_filter & new_design[[swap]] == swap_pair[1])
+        plots_2 <- which(group_filter & new_design[[swap]] == swap_pair[2])
 
         # Swap all instances of these treatments
-        new_design[[level_swap]][plots_1] <- swap_pair[2]
-        new_design[[level_swap]][plots_2] <- swap_pair[1]
+        new_design[[swap]][plots_1] <- swap_pair[2]
+        new_design[[swap]][plots_2] <- swap_pair[1]
 
         swapped_items[swapped_idx] <- swap_pair[1]
         swapped_items[swapped_idx + 1] <- swap_pair[2]
