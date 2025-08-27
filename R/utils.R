@@ -124,3 +124,82 @@ to_types <- function(df, types) {
 #
 #   return(parsed_args)
 # }
+
+# quiet = FALSE,
+# seed = NULL,
+# optimise = NULL,
+# ...) {
+
+create_speed_input <- function(
+    swap,
+    swap_within,
+    spatial_factors,
+    grid_factors,
+    iterations,
+    early_stop_iterations,
+    obj_function,
+    swap_all) {
+  optimize <- list()
+  if (is.list(swap)) {
+    for (optimize_name in names(swap)) {
+      optimize[[optimize_name]] <- list(
+        swap = swap[[optimize_name]],
+        swap_within = swap_within[[optimize_name]] %||% .DEFAULT_SWAP_WITHIN,
+        spatial_factors = if (is.list(spatial_factors)) {
+          spatial_factors[[optimize_name]] %||% .DEFAULT_SPATIAL_FACTORS
+        } else {
+          spatial_factors
+        },
+        grid_factors = if (is.list(grid_factors[[1]])) {
+          grid_factors[[optimize_name]] %||% .DEFAULT_GRID_FACTORS
+        } else {
+          grid_factors
+        },
+        iterations = if (is.list(iterations)) {
+          iterations[[optimize_name]] %||% .DEFAULT_ITERATIONS
+        } else {
+          iterations
+        },
+        early_stop_iterations = if (is.list(early_stop_iterations)) {
+          early_stop_iterations[[optimize_name]] %||% .DEFAULT_EARLY_STOP_ITERATIONS
+        } else {
+          early_stop_iterations
+        },
+        obj_function = if (is.list(obj_function)) {
+          obj_function[[optimize_name]] %||% objective_function
+        } else {
+          obj_function
+        },
+        swap_all = TRUE
+        # swap_all = if (is.list(swap_all)) {
+        #   swap_all[[optimize_name]] %||% .DEFAULT_SWAP_ALL
+        # } else {
+        #   swap_all
+        # }
+      )
+    }
+  } else {
+    optimize_name <- paste(
+      ifelse(swap_all, "all", "single"),
+      swap,
+      "within",
+      ifelse(swap_within %in% c("1", "none"), "whole design", swap_within),
+      sep = " "
+    )
+
+    optimize[[optimize_name]] <- list(
+      swap = swap,
+      swap_within = swap_within,
+      spatial_factors = spatial_factors,
+      grid_factors = grid_factors,
+      iterations = iterations,
+      early_stop_iterations = early_stop_iterations,
+      obj_function = obj_function,
+      swap_all = swap_all
+    )
+  }
+
+  return(optimize)
+}
+
+`%||%` <- function(a, b) if (!is.null(a)) a else b

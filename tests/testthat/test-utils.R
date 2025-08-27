@@ -225,3 +225,65 @@ test_that("to_types converts data frame data to input types", {
 #     "single z within d" = list("single", "z", c("a", "b", "c"), "d")
 #   ))
 # })
+
+test_that("create_speed_input creates an input from a named list", {
+  speed_input <- create_speed_input(
+    swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+    swap_within = list(wp = "block", sp = "wholeplot"),
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = list(wp = 1000, sp = 10000),
+    obj_function = objective_function,
+    swap_all = TRUE
+  )
+
+  expect_equal(speed_input, list(
+    wp = list(
+      swap = "wholeplot_treatment",
+      swap_within = "block",
+      spatial_factors = ~ row + col,
+      grid_factors = list(dim1 = "row", dim2 = "col"),
+      iterations = 10000,
+      early_stop_iterations = 1000,
+      obj_function = objective_function,
+      swap_all = TRUE
+    ),
+    sp = list(
+      swap = "subplot_treatment",
+      swap_within = "wholeplot",
+      spatial_factors = ~ row + col,
+      grid_factors = list(dim1 = "row", dim2 = "col"),
+      iterations = 10000,
+      early_stop_iterations = 10000,
+      obj_function = objective_function,
+      swap_all = TRUE
+    )
+  ))
+})
+
+test_that("create_speed_input creates an input from a string", {
+  speed_input <- create_speed_input(
+    swap = "treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 1000,
+    obj_function = objective_function,
+    swap_all = FALSE
+  )
+
+  expect_equal(speed_input, list(
+    "single treatment within block" = list(
+      swap = "treatment",
+      swap_within = "block",
+      spatial_factors = ~ row + col,
+      grid_factors = list(dim1 = "row", dim2 = "col"),
+      iterations = 10000,
+      early_stop_iterations = 1000,
+      obj_function = objective_function,
+      swap_all = FALSE
+    )
+  ))
+})
