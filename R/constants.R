@@ -1,6 +1,8 @@
-.DEFAULT_SWAP_WITHIN <- "1"
-.DEFAULT_SPATIAL_FACTORS <- ~ row + col
-.DEFAULT_GRID_FACTORS <- list(dim1 = "row", dim2 = "col")
-.DEFAULT_ITERATIONS <- 10000
-.DEFAULT_EARLY_STOP_ITERATIONS <- 2000
-.DEFAULT_SWAP_ALL <- FALSE
+.DEFAULT <- list(
+  swap_within = "1",
+  spatial_factors = ~ row + col,
+  grid_factors = list(dim1 = "row", dim2 = "col"),
+  iterations = 10000,
+  early_stop_iterations = 2000,
+  swap_all = FALSE
+)

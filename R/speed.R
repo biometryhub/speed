@@ -125,15 +125,21 @@ speed <- function(data,
                   ...) {
   rlang::check_dots_used()
 
+  if (is.null(optimise)) {
   # Check if this is a legacy hierarchical design
-  is_hierarchical <- is.list(swap) && !is.null(names(swap))
-  if (is_hierarchical) {
-    .verify_hierarchical_inputs(data, swap, swap_within, spatial_factors, iterations, early_stop_iterations,
-                                obj_function, quiet, seed)
-  } else {
-    .verify_speed_inputs(data, swap, swap_within, spatial_factors, iterations, early_stop_iterations, quiet,
-                         seed)
+    is_legacy <- is.list(swap) && !is.null(names(swap))
+    if (is_legacy) {
+      .verify_hierarchical_inputs(data, swap, swap_within, spatial_factors, iterations, early_stop_iterations,
+                                  obj_function, quiet, seed)
+    } else {
+      .verify_speed_inputs(data, swap, swap_within, spatial_factors, iterations, early_stop_iterations, quiet,
+                           seed)
+    }
   }
+
+  # prepare inputs
+  optimize <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
+                                 early_stop_iterations, obj_function, swap_all, optimise)
 
   # Infer row and column columns
   inferred <- infer_row_col(data, grid_factors, quiet)
@@ -153,10 +159,6 @@ speed <- function(data,
     # Sort the data frame to start with to ensure consistency in calculating the adjacency later
     data <- data[do.call(order, data[c(row_column, col_column)]), ]
   }
-
-  # prepare inputs
-  optimize <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
-                                 early_stop_iterations, obj_function, swap_all)
 
   # dummy group for swapping within whole design
   dummy_group <- paste0("dummy_", as.integer(Sys.time()))

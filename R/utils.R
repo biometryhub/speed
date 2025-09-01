@@ -130,38 +130,60 @@ to_types <- function(df, types) {
 # optimise = NULL,
 # ...) {
 
-create_speed_input <- function(
-    swap,
-    swap_within,
-    spatial_factors,
-    grid_factors,
-    iterations,
-    early_stop_iterations,
-    obj_function,
-    swap_all) {
+create_speed_input <- function(swap,
+                               swap_within,
+                               spatial_factors,
+                               grid_factors,
+                               iterations,
+                               early_stop_iterations,
+                               obj_function,
+                               swap_all,
+                               optimize = NULL) {
+  if (!is.null(optimize)) {
+    optimize_args <- c(
+      "swap",
+      "swap_within",
+      "spatial_factors",
+      "grid_factors",
+      "iterations",
+      "early_stop_iterations",
+      "obj_function",
+      "swap_all"
+    )
+
+    for (optimize_name in names(optimize)) {
+      for (arg in optimize_args) {
+        if (is.null(optimize[[optimize_name]][[arg]])) {
+          optimize[[optimize_name]][[arg]] <- get(arg)
+        }
+      }
+    }
+    return(optimize)
+  }
+
   optimize <- list()
   if (is.list(swap)) {
     for (optimize_name in names(swap)) {
       optimize[[optimize_name]] <- list(
         swap = swap[[optimize_name]],
-        swap_within = swap_within[[optimize_name]] %||% .DEFAULT_SWAP_WITHIN,
+        swap_within = swap_within[[optimize_name]] %||% .DEFAULT$swap_within,
         spatial_factors = if (is.list(spatial_factors)) {
-          spatial_factors[[optimize_name]] %||% .DEFAULT_SPATIAL_FACTORS
+          spatial_factors[[optimize_name]] %||% .DEFAULT$spatial_factors
         } else {
           spatial_factors
         },
         grid_factors = if (is.list(grid_factors[[1]])) {
-          grid_factors[[optimize_name]] %||% .DEFAULT_GRID_FACTORS
+          grid_factors[[optimize_name]] %||% .DEFAULT$grid_factors
         } else {
           grid_factors
         },
         iterations = if (is.list(iterations)) {
-          iterations[[optimize_name]] %||% .DEFAULT_ITERATIONS
+          iterations[[optimize_name]] %||% .DEFAULT$iterations
         } else {
           iterations
         },
         early_stop_iterations = if (is.list(early_stop_iterations)) {
-          early_stop_iterations[[optimize_name]] %||% .DEFAULT_EARLY_STOP_ITERATIONS
+          early_stop_iterations[[optimize_name]] %||% .DEFAULT$early_stop_iterations
         } else {
           early_stop_iterations
         },
@@ -170,12 +192,11 @@ create_speed_input <- function(
         } else {
           obj_function
         },
-        swap_all = TRUE
-        # swap_all = if (is.list(swap_all)) {
-        #   swap_all[[optimize_name]] %||% .DEFAULT_SWAP_ALL
-        # } else {
-        #   swap_all
-        # }
+        swap_all = if (is.list(swap_all)) {
+          swap_all[[optimize_name]] %||% .DEFAULT$swap_all
+        } else {
+          TRUE
+        }
       )
     }
   } else {
