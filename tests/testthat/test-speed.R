@@ -546,6 +546,7 @@ test_that("speed handles split plot designs", {
                   swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
                   swap_within = list(wp = "block", sp = "wholeplot"),
                   early_stop_iterations = list(wp = 1000, sp = 10000),
+                  swap_all = TRUE,
                   seed = 1, quiet = TRUE)
 
   # Check the result
@@ -584,6 +585,7 @@ test_that("speed handles split-split plot designs", {
                                      ssp = "subplot"),
                   iterations = list(wp = 500, sp = 500, ssp = 1000),
                   early_stop_iterations = list(wp = 200, sp = 200, ssp = 400),
+                  swap_all = TRUE,
                   seed = 42, quiet = TRUE)
 
   # Check the result
@@ -658,6 +660,7 @@ test_that("speed handles strip plot designs", {
                   swap_within = list(ht = "block", vt = "block"),
                   iterations = list(ht = 500, vt = 500),
                   early_stop_iterations = list(ht = 200, vt = 200),
+                  swap_all = TRUE,
                   seed = 42, quiet = TRUE)
 
   # Check the result
@@ -769,6 +772,7 @@ test_that("autoplot legend parameter works with hierarchical designs", {
                   swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
                   swap_within = list(wp = "block", sp = "wholeplot"),
                   iterations = list(wp = 50, sp = 50),
+                  swap_all = TRUE,
                   seed = 42, quiet = TRUE)
 
   # Test with wholeplot treatments
@@ -1067,6 +1071,106 @@ test_that("speed runs with grid_factors", {
   expect_equal(nrow(result$design_df), 20)
   expect_equal(ncol(result$design_df), 3)
   expect_equal(result$score, 1)
+})
+
+test_that("speed handles MET", {
+  # 5 sites, 100 treatments, 7 total reps
+  # 5x28x5
+  treatments <- rep(1:100, 7)
+  df_site <- initialise_design_df(1, 28, 5, 14, 5)
+  df_initial <- rbind(df_site, df_site, df_site, df_site, df_site)
+  df_initial$treatment <- treatments
+  df_initial$site <- rep(c("a", "b", "c", "d", "e"), each = 140)
+
+  # will be handled in speed function
+  df_initial$site_row <- paste(df_initial$site, df_initial$row, sep = "_")
+  df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
+  df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
+
+  optimize <- list(
+    connectivity = list(spatial_factors = ~site),
+    balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+  )
+
+  old_options <- options()
+  on.exit(options(old_options))
+  options(speed.random_initialisation = TRUE)
+  speed_design <- speed(
+    data = df_initial,
+    swap = "treatment",
+    optimise = optimize,
+    seed = 112,
+    quiet = TRUE
+  )
+  design_df <- speed_design$design_df
+
+  expect_setequal(unique(table(design_df$treatment, design_df$site)), c(1, 2))
+  expect_equal(unique(matrixStats::rowVars(table(design_df$treatment, design_df$site))), 0.3)
+  expect_equal(max(table(design_df$site_row, design_df$treatment)), 1)
+  expect_equal(max(table(design_df$site_col, design_df$treatment)), 1)
+})
+
+test_that("speed handles MET with unequal site dimensions", {
+  # 5 sites, 57 treatments, 7-8 total reps
+  # 28x5, 20x3, 20x4, 15x4, 22x3
+  # all_treatments <- c(rep(1:50, 7), rep(51:57, 8))
+  locked_treatments <- c(rep(1:31, 2), rep(32:57, 3))
+  treatments <- c(rep(1:31, 5), rep(32:50, 4), rep(51:57, 5))
+
+  df_site_1 <- initialise_design_df(locked_treatments, 28, 5, 7, 5)
+  df_site_1$site <- "a"
+  df_site_2 <- initialise_design_df(1, 20, 3, 10, 3)
+  df_site_2$site <- "b"
+  df_site_3 <- initialise_design_df(1, 20, 4, 10, 4)
+  df_site_3$site <- "c"
+  df_site_4 <- initialise_design_df(1, 15, 4, 5, 4)
+  df_site_4$site <- "d"
+  df_site_5 <- initialise_design_df(1, 22, 3, 11, 3)
+  df_site_5$site <- "e"
+
+  df_initial <- rbind(df_site_1, df_site_2, df_site_3, df_site_4, df_site_5)
+  df_initial[df_initial$site != "a", ]$treatment <- treatments
+  df_initial$swappable_site <- df_initial$site != "a"
+
+  df_initial$site_row <- paste(df_initial$site, df_initial$row, sep = "_")
+  df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
+  df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
+
+  optimize <- list(
+    connectivity = list(swap_within = "swappable_site", spatial_factors = ~site),
+    balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+  )
+
+  old_options <- options()
+  on.exit(options(old_options))
+  options(speed.random_initialisation = TRUE, speed.adj_weight = 0)
+  speed_design <- speed(
+    data = df_initial,
+    swap = "treatment",
+    early_stop_iterations = 5000,
+    optimise = optimize,
+    seed = 112,
+    quiet = TRUE
+  )
+  design_df <- speed_design$design_df
+
+  expect_setequal(
+    unique(table(design_df[design_df$site == "a", ]$treatment, design_df[design_df$site == "a", ]$site)),
+    c(2, 3)
+  )
+  expect_setequal(
+    unique(table(design_df[design_df$site != "a", ]$treatment, design_df[design_df$site != "a", ]$site)),
+    c(1, 2)
+  )
+  expect_setequal(
+    table(design_df$treatment, design_df$site) |>
+      matrixStats::rowVars() |>
+      round(3) |>
+      unique(),
+    c(0.3, 0.8)
+  )
+  expect_equal(max(table(design_df$site_row, design_df$treatment)), 1)
+  expect_equal(max(table(design_df$site_col, design_df$treatment)), 1)
 })
 
 # TODO: Test cases to add/update

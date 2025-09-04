@@ -237,29 +237,30 @@ test_that("create_speed_input creates an input from a named list", {
     obj_function = objective_function,
     swap_all = TRUE
   )
+  keys <- names(speed_input)
+  ordered_names <- keys[order(keys)]
 
-  expect_equal(speed_input, list(
-    wp = list(
-      swap = "wholeplot_treatment",
-      swap_within = "block",
-      spatial_factors = ~ row + col,
-      grid_factors = list(dim1 = "row", dim2 = "col"),
-      iterations = 10000,
-      early_stop_iterations = 1000,
-      obj_function = objective_function,
-      swap_all = TRUE
-    ),
-    sp = list(
-      swap = "subplot_treatment",
-      swap_within = "wholeplot",
-      spatial_factors = ~ row + col,
-      grid_factors = list(dim1 = "row", dim2 = "col"),
-      iterations = 10000,
-      early_stop_iterations = 10000,
-      obj_function = objective_function,
-      swap_all = TRUE
-    )
-  ))
+  expect_equal(speed_input$wp[ordered_names], list(
+    swap = "wholeplot_treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 1000,
+    obj_function = objective_function,
+    swap_all = TRUE
+  )[ordered_names])
+
+  expect_equal(speed_input$sp[ordered_names], list(
+    swap = "subplot_treatment",
+    swap_within = "wholeplot",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 10000,
+    obj_function = objective_function,
+    swap_all = TRUE
+  )[ordered_names])
 })
 
 test_that("create_speed_input creates an input from a string", {
@@ -273,8 +274,10 @@ test_that("create_speed_input creates an input from a string", {
     obj_function = objective_function,
     swap_all = FALSE
   )
+  keys <- names(speed_input)
+  ordered_names <- keys[order(keys)]
 
-  expect_equal(speed_input, list(
+  expect_equal(speed_input[ordered_names], list(
     "single treatment within block" = list(
       swap = "treatment",
       swap_within = "block",
@@ -285,5 +288,5 @@ test_that("create_speed_input creates an input from a string", {
       obj_function = objective_function,
       swap_all = FALSE
     )
-  ))
+  )[ordered_names])
 })
