@@ -233,37 +233,63 @@ infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "c
 #' # blocking
 #' initialise_design_df(rep(1:8, 4), 8, 4, 2, 2)
 #'
+#' # another blocking example
+#' initialise_design_df(
+#'   items = paste0("T", 1:6),
+#'   nrows = 4,
+#'   ncols = 6,
+#'   block_nrows = 2,
+#'   block_ncols = 3
+#' )
 #' @export
 # fmt: skip
 initialise_design_df <- function(items,
                                  nrows,
                                  ncols,
-                                 block_nrows = NULL,
-                                 block_ncols = NULL) {
-  .verify_initialise_design_df(nrows, ncols, block_nrows, block_ncols)
+                                 block_nrows = 1,
+                                 block_ncols = 1) {
 
-  # If items is a single numeric value, take it as the number of equally replicated treatments
-  if (length(items) == 1 && is.numeric(items)) {
-    items <- paste0("T", 1:items)
-  }
+    speed:::.verify_initialise_design_df(nrows, ncols, block_nrows, block_ncols)
 
-  rows <- rep(1:nrows, ncols)
-  cols <- rep(1:ncols, each = nrows)
-  df <- data.frame(
-    row = rows,
-    col = cols,
-    treatment = items
-  )
-  if (!is.null(block_nrows)) {
-    nblocks_row <- nrows / block_nrows
-    nblocks_col <- ncols / block_ncols
+    ## If items is number of treatments
+    if (length(items) == 1 && is.numeric(items)) items <- paste0("T", 1:items)
 
-    df$row_block <- rep(1:nblocks_row, ncols, each = block_nrows)
-    df$col_block <- rep(1:nblocks_col, each = nrows * block_ncols)
-    df$block <- as.numeric(df$row_block) +
-      nblocks_row * (as.numeric(df$col_block) - 1)
-  }
-  return(df)
+    ## Create grid
+    design <- expand.grid(row = 1:nrows, col = 1:ncols)
+    design$treatment <- items
+
+    ## If blocked design
+    if (block_nrows != 1 || block_ncols != 1) {
+        nblocks_row <- nrows / block_nrows
+        nblocks_col <- ncols / block_ncols
+
+        ## Which block do the columns and rows belong to?
+        design$row_block <- ceiling(design$row / block_nrows)
+        design$col_block <- ceiling(design$col / block_ncols)
+
+        ## design$col_block <- rep(
+        ##     1:nblocks_col,
+        ##     each = nrows * block_ncols
+        ## )
+        ## design$row_block <- rep(
+        ##     1:nblocks_row,
+        ##     each = block_nrows, times = ncols
+        ## )
+
+        ## Which block do the experimental units belong to?
+        design$block <- design$col_block + (design$row_block - 1) * nblocks_col
+        ## design$block <- (design$row_block - 1) * nblocks_col + design$col_block
+
+        ## For each block, assign treatments
+        for (blk in unique(design$block)) {
+            blk_idx <- which(design$block == blk)
+            design$treatment[blk_idx] <- unique(items)
+            ## design$treatment[blk_idx] <-
+            ##     rep_len(treatments, length(blk_idx))
+        }
+    }
+
+    return(design)
 }
 
 #' Shuffle Items in A Group
