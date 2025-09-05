@@ -186,22 +186,17 @@ sp_design <- speed(df_split,
 ### 2. Nested List Interface
 
 ```{r}
+# set up the parameters first for clarity
+wp <- list(swap = all("wp_treatment"), swap_within = "block")
+sp <- list(swap = "sp_treatment", swap_within = "wholeplot")
+sp_design <- speed(df_split, optimise = list(wp, sp))
+
+# or equivalently 
 sp_design <- speed(df_split,
                    optimise = list(wp = list(swap = all("wp_treatment"), 
                                              swap_within = "block"),
                                    sp = list(swap = "sp_treatment",
                                              swap_within = "wholeplot")))
-
-# or equivalently 
-# set up the parameters first for clarity
-sp_params <- list(swap = list(wp = "wp_treatment",
-                              sp = "sp_treatment", 
-                              linked = TRUE),
-                  swap_within = list(wp = "block",
-                                     sp = "wholeplot", 
-                                     linked = FALSE))
-sp_design <- speed(df_split,
-                   optimise = sp_params)
 ```
 
 ### 3. Formula Interface
@@ -229,117 +224,88 @@ rcb_design <- speed(df_split,
 
 ## Multi-Environment Trial Design Example
 
-In a MET, treatments will first be assigned to locations (sites), and then to plots within locations. Locations may share some treatments but not others, so the treatments are not strictly nested within locations. However, we may want to ensure that there is a certain level of connectivity between locations, so that some treatments are shared between locations. We may also want to ensure that the design is balanced within locations, so that each treatment appears a similar number of times within each location.
+In a MET, treatments (typically varieties) will first be allocated to locations (sites), and then to plots within locations. Locations may share some treatments but not others, so the treatments are not strictly nested within locations. However, we may want to ensure that there is a certain level of connectivity between locations, so that some treatments are shared between locations. We may also want to ensure that the design is balanced within locations, so that each treatment appears a similar number of times within each location.
 
 ### 1. Parallel lists style
 
 ```{r}
-sp_design <- speed(df_split,
-                   swap = list(con = "treatment", # connectivity
-                               bal = "treatment"), # balance
-                   swap_within = list(connectivity = "1", 
-                                      balance = "site"),
-                   spatial_factors = list(con = ~ site,
-                                          bal = ~ site_row + site_col + 
-                                            site_block))
+met_design <- speed(df_met,
+                    swap = list(con = "variety", # connectivity
+                                bal = "variety"), # balance
+                    swap_within = list(con = "1", 
+                                       bal = "site"),
+                    spatial_factors = list(con = ~ site,
+                                           bal = ~ site_row + site_col + site_block))
 ```
 
 ### 2. Nested List Interface
 
 ```{r}
-sp_design <- speed(df_split,
-                   optimise = list(wp = list(swap = all("wp_treatment"), 
-                                             swap_within = "block", 
-                                             linked = TRUE),
-                                   sp = list(swap = "sp_treatment",
-                                             swap_within = "wholeplot", 
-                                             linked = FALSE)))
+con <- list(swap = "variety", swap_within = "1", spatial_factors = ~ site)
+bal <- list(swap = "variety", swap_within = "site", spatial_factors = ~ site_row + 
+              site_col + site_block)
+met_design <- speed(df_met, optimise = list(con, bal))
 
 # or equivalently 
-sp_params <- list(swap = list(wp = all("wp_treatment"),
-                              sp = "sp_treatment", 
-                              linked = TRUE),
-                  swap_within = list(wp = "block",
-                                     sp = "wholeplot", 
-                                     linked = FALSE))
-sp_design <- speed(df_split,
-                   optimise = sp_params)
+met_design <- speed(df_met,
+                    optimise = list(con = list(swap = "variety", 
+                                               swap_within = "1", 
+                                               spatial_factors = ~ site),
+                                    bal = list(swap = "variety", 
+                                               swap_within = "site", 
+                                               spatial_factors = ~ site_row + 
+                                                 site_col + site_block)))
 ```
 
 ### 3. Formula Interface
 
 ```{r}
 # Parallel lists style
-rcb_design <- speed(df_split,
-                    swap = ~wp_treatment + sp_treatment,
-                    swap_within = ~block/wholeplot)
+met_design <- speed(df_met,
+                    swap = ~treatment,
+                    swap_within = ~ 1 + (site/block + site/row + site/col))
 
 # or equivalently 
-rcb_design <- speed(df_split,
-                    optimise = list(swap = ~wp_treatment + sp_treatment, 
-                                    swap_within = ~block/wholeplot))
+met_params <- list(swap = ~wp_treatment + sp_treatment, 
+                   swap_within = ~ 1 + (site/block + site/row + site/col))
+met_design <- speed(df_met,
+                    optimise = met_params)
 ```
-
 
 
 ## Factorial Design Example
 
+The complication with factorial designs is that there is no hierarchy, so all factors can move independently. However, we may want to ensure that the interaction structure of the design is maintained during swaps, so as to avoid breaking up treatment combinations that are important for estimating interaction effects and result in imbalanced designs. We propose to handle this by allowing users to specify interaction terms in the `swap` argument, e.g., `swap = c("A", "B", "A:B")`. This would indicate that both factors can be swapped independently, while also swapping and maintaining the interaction structure during the optimisation process.
+
 ### 1. Parallel lists style
 
 ```{r}
-sp_design <- speed(df_split,
-                   swap = list(wp = all("wp_treatment"),
-                               sp = "sp_treatment"),
-                   swap_within = list(wp = "block", 
-                                      sp = "wholeplot"))
-
-# alternatively
-
-sp_design <- speed(df_split,
-                   swap = list(wp = "wp_treatment",
-                               sp = "sp_treatment"),
-                   swap_within = list(wp = "block", 
-                                      sp = "wholeplot"),
-                    linked = list(wp = TRUE, sp = FALSE))
+fac_design <- speed(df_fac,
+                   swap = "A*B",   # Interpreted as c("A", "B", "A:B")
+                   swap_within = "block")
 ```
 
 ### 2. Nested List Interface
 
 ```{r}
-sp_design <- speed(df_split,
-                   optimise = list(wp = list(swap = all("wp_treatment"), 
-                                             swap_within = "block", 
-                                             linked = TRUE),
-                                   sp = list(swap = "sp_treatment",
-                                             swap_within = "wholeplot", 
-                                             linked = FALSE)))
+fac_params <- list(swap = "A*B", swap_within = "block")
+fac_design <- speed(df_fac, optimise = fac_params)
 
 # or equivalently 
-sp_params <- list(swap = list(wp = all("wp_treatment"),
-                              sp = "sp_treatment", 
-                              linked = TRUE),
-                  swap_within = list(wp = "block",
-                                     sp = "wholeplot", 
-                                     linked = FALSE))
-sp_design <- speed(df_split,
-                   optimise = sp_params)
+sp_design <- speed(df_fac, optimise = list(swap = "A*B", swap_within = "block"))
 ```
 
 ### 3. Formula Interface
 
 ```{r}
 # Parallel lists style
-rcb_design <- speed(df_split,
-                    swap = ~wp_treatment + sp_treatment,
-                    swap_within = ~block/wholeplot)
+fac_design <- speed(df_fac,
+                    swap = ~A*B,  # Or A + B + A:B
+                    swap_within = ~block)
 
-# or equivalently 
-rcb_design <- speed(df_split,
-                    optimise = list(swap = ~wp_treatment + sp_treatment, 
-                                    swap_within = ~block/wholeplot))
+# or alternatively 
+fac_design <- speed(df_fac, optimise = list(swap = ~A*B, swap_within = ~block))
 ```
-
-
 
 # Questions for Testers
 
