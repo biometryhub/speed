@@ -34,11 +34,7 @@ pseudo_inverse <- function(a_matrix, tolerance = 1e-10) {
   if (rank_a > 0) {
     diag_values <- numeric(ncol(svd_a$v))
     diag_values[1:rank_a] <- 1 / svd_a$d[1:rank_a]
-    return(
-      svd_a$v[, 1:rank_a] %*%
-        diag(diag_values) %*%
-        t(svd_a$u[, 1:rank_a])
-    )
+    return(svd_a$v %*% diag(diag_values) %*% t(svd_a$u))
   } else {
     matrix_name <- deparse(substitute(a_matrix))
     stop(paste0(matrix_name, " has rank 0 - design may be invalid"))
