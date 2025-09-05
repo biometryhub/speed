@@ -11,15 +11,15 @@ test_that("pseudo_inverse calculates Moore-Penrose inverse correctly", {
   expect_equal(dim(A_inv), c(2, 2))
 })
 
-# test_that("pseudo_inverse handles singular matrices", {
-#   # Test with a rank-deficient matrix (singular)
-#   singular_matrix <- matrix(c(1, 2, 2, 4), nrow = 2, ncol = 2)
-#
-#   # This should not throw an error but handle the rank deficiency
-#   result <- pseudo_inverse(singular_matrix)
-#   expect_true(is.matrix(result))
-#   expect_equal(dim(result), c(2, 2))
-# })
+test_that("pseudo_inverse handles singular matrices", {
+  # Test with a rank-deficient matrix (singular)
+  singular_matrix <- matrix(c(1, 2, 2, 4), nrow = 2, ncol = 2)
+
+  # This should not throw an error but handle the rank deficiency
+  result <- pseudo_inverse(singular_matrix)
+  expect_true(is.matrix(result))
+  expect_equal(dim(result), c(2, 2))
+})
 
 test_that("pseudo_inverse throws error for zero matrix", {
   # Test with a zero matrix (rank 0)
@@ -237,7 +237,7 @@ test_that("create_speed_input creates an input from a named list", {
     obj_function = objective_function,
     swap_all = TRUE
   )
-  keys <- names(speed_input)
+  keys <- names(speed_input[[1]])
   ordered_names <- keys[order(keys)]
 
   expect_equal(speed_input$wp[ordered_names], list(
@@ -288,5 +288,48 @@ test_that("create_speed_input creates an input from a string", {
       obj_function = objective_function,
       swap_all = FALSE
     )
+  )[ordered_names])
+})
+
+test_that("create_speed_input creates an input from optimize argument", {
+  optimize <- list(
+    connectivity = list(swap_within = "swappable_site", spatial_factors = ~site),
+    balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+  )
+
+  speed_input <- create_speed_input(
+    swap = "treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 1000,
+    obj_function = objective_function,
+    swap_all = FALSE,
+    optimize = optimize
+  )
+  keys <- names(speed_input[[1]])
+  ordered_names <- keys[order(keys)]
+
+  expect_equal(speed_input$connectivity[ordered_names], list(
+    swap = "treatment",
+    swap_within = "swappable_site",
+    spatial_factors = ~site,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 1000,
+    obj_function = objective_function,
+    swap_all = FALSE
+  )[ordered_names])
+
+  expect_equal(speed_input$balance[ordered_names], list(
+    swap = "treatment",
+    swap_within = "site",
+    spatial_factors = ~ site_col + site_block,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 1000,
+    obj_function = objective_function,
+    swap_all = FALSE
   )[ordered_names])
 })

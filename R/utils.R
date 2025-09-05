@@ -27,18 +27,20 @@ env_add_one <- function(env, key) {
 #'
 #' @keywords internal
 pseudo_inverse <- function(a_matrix, tolerance = 1e-10) {
-  matrix_name <- deparse(substitute(a_matrix))
   svd_a <- svd(a_matrix)
   rank_a <- sum(svd_a$d > tolerance)
 
   # Moore-Penrose inverse (variance matrix)
   if (rank_a > 0) {
+    diag_values <- numeric(ncol(svd_a$v))
+    diag_values[1:rank_a] <- 1 / svd_a$d[1:rank_a]
     return(
       svd_a$v[, 1:rank_a] %*%
-        diag(1 / svd_a$d[1:rank_a]) %*%
+        diag(diag_values) %*%
         t(svd_a$u[, 1:rank_a])
     )
   } else {
+    matrix_name <- deparse(substitute(a_matrix))
     stop(paste0(matrix_name, " has rank 0 - design may be invalid"))
   }
 }
@@ -125,6 +127,11 @@ to_types <- function(df, types) {
 #   return(parsed_args)
 # }
 
+#' Create Input for Internal speed Function
+#'
+#' @inheritParams speed
+#'
+#' @keywords internal
 create_speed_input <- function(swap,
                                swap_within,
                                spatial_factors,
