@@ -1,14 +1,16 @@
 ---
 title: "Proposed changes to speed function interface"
 author: "Sam Rogers"
-format: pdf
+format:
+  pdf:
+    number-sections: true
 execute: 
   eval: false
 ---
 
 # Summary
 
-Supporting complex designs such as crossed factorial designs and more complex hierarchical designs will require some changes to the interface of the `speed` function.
+Supporting complex designs such as crossed factorial designs and more complex hierarchical designs will likely require some changes to the interface of the `speed` function. We are considering two main options for the interface to better support complex designs while maintaining simplicity for basic designs. These options are not mutually exclusive, and we could potentially implement both. We are also open to other suggestions. A third option is a formula interface, which we are planning to implement regardless of which of the other two options we choose as an alternative interface for those who prefer it. We are seeking feedback from potential users on the proposed interface options based on the examples provided, and any other suggestions they may have.
 
 # Background
 
@@ -47,19 +49,19 @@ speed <- function(data,
                   ...)
 ```
 
-This interface is relatively straightforward and works well for simple designs. Arguments are given as single values or simple formulas. For more complex designs, such as split-plot designs, the user currently specifies the design using named lists to match the different components. This allows for a lot of flexibility, because it can enable the user to specify arbitrary nesting structures, and to create designs where different objective functions or different numbers of iterations are applied to different levels of the design for example. However, this gets complicated and verbose as designs increase in complexity, and it is not very intuitive for new users. It may be that a user ends up with several named lists to specify the design.
+We believe this interface is relatively straightforward and works well for simple designs. Arguments are given as single values or simple formulas. For more complex designs, such as split-plot designs, the user currently specifies the design using named lists to match the different components. This allows for a lot of flexibility, because it can enable the user to specify arbitrary nesting structures, and to create designs where different objective functions or different numbers of iterations are applied to different levels of the design for example. However, this may get complicated and verbose as designs increase in complexity, and it is not very intuitive for new users as it may be that a user ends up with several named lists to specify the design.
 
 # The Challenge
 
-The challenge is to find an interface that is both flexible enough to handle complex designs, while also being simple and intuitive for basic designs. We want to avoid a situation where the user has to learn a lot of new syntax or concepts to use the package effectively. We also want to ensure that the interface is consistent with other R packages and conventions, so that users can easily transfer their knowledge from one package to another.
+The challenge is to design an interface that is both flexible enough to handle complex designs, while also being simple and intuitive for basic designs. We want to avoid a situation where the user has to learn a lot of new syntax or concepts to use the package effectively. We also want to ensure that the interface is consistent with other R packages and conventions where possible, so that users can easily transfer their knowledge from one package to another.
 
 ## Design Cases
 
 At a conceptual level, there are three basic cases that we need to consider:
 
-1. Single factor designs (e.g. completely randomised, randomised complete block, Latin square, balanced incomplete block, 2D blocking). These are relatively straightforward, and can be handled with the current interface.
-2. Multi factor designs _with_ hierarchy (e.g. split-plot, strip-plot, MET). These are more complex, and require a more flexible interface to specify the different levels of nesting and the relationships between them. These designs are partially supported in the current interface.
-3. Multi factor designs _without_ hierarchy (e.g. factorial designs with multiple factors that are crossed). These are also complex, and require a different approach to specifying the design. These designs are not currently supported in the package.
+1. **Single factor designs** (e.g. completely randomised, randomised complete block, Latin square, balanced incomplete block, 2D blocking). These are relatively straightforward, and can be handled with the current interface. These cases only require a single simulated annealing optimisation based on user-specified arguments.
+2. **Multi factor designs _with_ hierarchy** (e.g. split-plot, strip-plot, MET). These are more complex, and require a more flexible interface to specify the different levels of nesting and the relationships between them. These designs are partially supported in the current interface. Heirarchical designs require multiple simulated annealing optimisations, potentially with different objective functions, iterations and/or spatial or grid factors at each level of the design, which increases complexity of user input.
+3. **Multi factor designs _without_ hierarchy** (e.g. factorial designs with multiple factors that are crossed). These are also complex, require a different approach to specifying the design, and as such are not currently supported in the package. Typically, a factorial structure will only require a single simulated annealing optimisation, but with multiple factors that need to be optimally allocated within the constraints of the design.
 
 Case 3 and some situations arising from case 2 are the main focus of the changes under consideration.
 
@@ -73,7 +75,7 @@ Case 3 and some situations arising from case 2 are the main focus of the changes
 
 We are considering two main options for the interface to better support complex designs while maintaining simplicity for basic designs. These options are not mutually exclusive, and we could potentially implement both. We are also open to other suggestions. The first option is basically an extension of the current interface, while the second option is a more radical change. A third option is a formula interface, which we are planning to implement regardless of which of the other two options we choose as an alternative interface for those who prefer it.
 
-## 1. Extended Current Interface (Parallel lists style)
+## Extended Current Interface (Parallel lists style)
 
 The current interface supports hierarchical designs using named lists to specify the different levels of the design across the different arguments. However, some designs, such as factorial designs, will not fit within this framework as they do not have a hierarchical structure. Similarly, MET designs may have a hierarchical structure, but the treatments typically do not follow a strict nesting structure, as locations may share some treatments but not others. This means that the current approach of using named lists to specify the different levels of the design may not be sufficient.
 
@@ -83,21 +85,21 @@ We propose to extend this approach to also support factorial designs by allowing
 
 ### Supporting Multi-Environment Trial Designs
 
-For hierarchical designs where treatments are linked such as a split-plot design, the user could continue to use named lists to specify the different levels of the design as they do currently, but they would need to use a different argument to indicate that the treatments are linked across the different levels. For example, a user could specify a split-plot design with two levels of treatments `wp_treatment` and `sp_treatment` as `swap = list(wp = "wp_treatment", wp = "sp_treatment")` and a new argument `linked = TRUE`. This would indicate that the same treatments are linked across the different levels of the design, and that the optimisation process should maintain this linkage during swaps. To generalise this further, we could allow the user to specify which factors are linked via a named list, e.g., `linked = list(wp = TRUE, sp = FALSE)`. This would allow for more complex designs where only some (or no) treatments are linked across levels.
+For hierarchical designs where treatments are linked such as a split-plot design, the user could continue to use named lists to specify the different levels of the design as they do currently, but they would need to use a different argument to indicate that the treatments are linked across the different levels. For example, a user could specify a split-plot design with two levels of treatments `wp_treatment` and `sp_treatment` as `swap = list(wp = "wp_treatment", wp = "sp_treatment")` and a new argument `linked = TRUE`. This would indicate that wholeplot treatments are made up of multiple subplots that are linked across the different levels of the design, and that the optimisation process should maintain this linkage during swaps. To generalise this further, we could allow the user to specify which factors are linked via an argument, either a named vector or list, e.g., `linked = list(wp = TRUE, sp = FALSE)`. This would allow for more complex designs where only some (or no) treatments are linked across levels.
 
-Alternatively, we could introduce a new function `all()` which would wrap around the factors that are linked, e.g., `swap = list(wp = all("wp_treatment"), sp = "sp_treatment")`. This would indicate that all the units with the same `wp_treatment` should move together during swaps, while the `sp_treatment` can move independently within the constraints of the `wp_treatment`. This approach would be more consistent with how other R packages handle similar situations (e.g., `dplyr::across()`).
+Alternatively, we could introduce a new function, for example `linked()` which would wrap around the factors that are linked, e.g., `swap = list(wp = linked("wp_treatment"), sp = "sp_treatment")`. This would indicate that all the units with the same `wp_treatment` are linked and should move together during swaps, while the `sp_treatment` can move independently within the constraints of the `wp_treatment`. This approach would be more consistent with how other R packages handle similar situations (e.g., `dplyr::across()`).
 
 #### Pros
 
-- Maintains signposting for people less familiar with R via auto-completion of argument names and popups in RStudio etc. This allows users to see all the available arguments and their descriptions easily.
+- Maintains signposting for people less familiar with R via auto-completion of argument names and popups in RStudio and similar editors. This allows users to see all the available arguments and their descriptions easily.
 
 #### Cons
 
 - May become verbose and complicated for very complex designs with many named lists.
 
-## 2. Nested List Interface
+## Nested List Interface
 
-For nested list interface, a new argument `optimise` is provided to accept a (named) list of named lists of speed arguments, so the optimisation algorithm can optimise the design with different arguments in order.
+For nested list interface, a new argument `optimise` is provided to accept a list of named speed arguments, so the optimisation algorithm can optimise the design with different arguments in order. This list can also be made up of multiple named lists, each containing the relevant arguments for a particular level of the design.
 
 #### Pros
 
@@ -107,9 +109,9 @@ For nested list interface, a new argument `optimise` is provided to accept a (na
 #### Cons
 
 - More complex syntax may be intimidating for new users
-- Less familiar for existing users
+- Lack of signposting for people less familiar with R, as users would need to refer to the documentation to see all the available arguments and their descriptions. This could be mitigated by providing good documentation and examples, however RStudio and similar editors would not be able to provide auto-completion or popups for the arguments within the nested lists.
 
-## 3. Formula Interface
+## Formula Interface
 
 We also plan to introduce a formula interface for specifying the experimental design. This would allow users to specify the design using a formula syntax similar to that used in other R packages (e.g., `lm`, `asreml`). For simple designs this wouldn't be very different to either of the current setups, but could be more intuitive for users with statistical modelling experience in more complex designs. For example, a user could specify a randomised complete block design as `swap = ~treatment`, `swap_within = ~block`. For a split-plot design, they could specify `swap = ~wp_treatment/sp_treatment`, `swap_within = ~block/wholeplot`. For a factorial design, they could specify `swap = ~A * B` to indicate that both factors and their interaction should be optimised. 
 
@@ -129,14 +131,12 @@ For simplicity in this discussion, we will assume a data frame `data` has been p
 
 ## RCB Design Example
 
-### 1. Parallel lists style
+### Parallel lists style
 
 ```{r}
 rcb_design <- speed(df_rcb,
                     swap = "treatment",
-                    swap_within = "block",
-                    # spatial_factors can be omitted to use its default value of ~ row + col
-                    spatial_factors = ~ row + col)
+                    swap_within = "block")
 ```
 
 ### 2. Nested List style
@@ -144,40 +144,30 @@ rcb_design <- speed(df_rcb,
 ```{r}
 rcb_design <- speed(df_rcb,
                     optimise = list(swap = "treatment",
-                                    swap_within = "block",
-                                    spatial_factors = ~ row + col))
+                                    swap_within = "block"))
 ```
 
-### 3. Formula Interface
+### Formula Interface
 
 ```{r}
 rcb_design <- speed(df_rcb,
                     swap = ~treatment,
-                    swap_within = ~block,
-                    spatial_factors = ~ row + col)
-
-# or equivalently
-
-rcb_design <- speed(df_rcb,
-                    optimise = list(swap = ~treatment,
-                                    swap_within = ~block,
-                                    spatial_factors = ~ row + col))
+                    swap_within = ~block)
 ```
 
 
 ## Split-Plot Design Example
 
-In this case, we have two levels of treatments: `wp_treatment` and `sp_treatment`. The whole-plot treatments are assigned to whole plots, which are nested within blocks. The subplot treatments are assigned to subplots, which are nested within whole plots. The whole plots move together during swaps, while the subplots can move independently within the constraints of the whole plots. This is signified by the `linked` argument or the `all()` function.
+In this case, we have two levels of treatments: `wp_treatment` and `sp_treatment`. The whole-plot treatments are assigned to whole plots, which are nested within blocks. The subplot treatments are assigned to subplots, which are nested within whole plots. The whole plots move together during swaps, while the subplots can move independently within the constraints of the whole plots. This is signified by the `linked` argument or the `linked()` function.
 
-### 1. Parallel lists style
+### Parallel lists style {#linked}
 
 ```{r}
 sp_design <- speed(df_split,
-                   swap = list(wp = all("wp_treatment"),
+                   swap = list(wp = linked("wp_treatment"),
                                sp = "sp_treatment"),
                    swap_within = list(wp = "block",
-                                      sp = "wholeplot"),
-                   spatial_factors = ~ row + col)
+                                      sp = "wholeplot"))
 
 # alternatively
 
@@ -186,59 +176,107 @@ sp_design <- speed(df_split,
                                sp = "sp_treatment"),
                    swap_within = list(wp = "block",
                                       sp = "wholeplot"),
-                   # same as spatial_factors = ~ row + col
-                   spatial_factors = list(wp = ~ row + col,
-                                          sp = ~ row + col),
                    linked = list(wp = TRUE, sp = FALSE))
 ```
 
-### 2. Nested List Interface
+### Nested List Interface
 
 ```{r}
 # set up the parameters first for clarity
-# again spatial_factors can always be omitted to use its default value
-wp <- list(swap = all("wp_treatment"), swap_within = "block", spatial_factors = ~ row + col)
-sp <- list(swap = "sp_treatment", swap_within = "wholeplot", spatial_factors = ~ row + col)
+wp <- list(swap = "wp_treatment", swap_within = "block", linked = TRUE)
+sp <- list(swap = "sp_treatment", swap_within = "wholeplot")
 sp_design <- speed(df_split, optimise = list(wp, sp))
 
 # or equivalently
 sp_design <- speed(df_split,
-                   optimise = list(wp = list(swap = all("wp_treatment"),
+                   optimise = list(wp = list(swap = "wp_treatment",
                                              swap_within = "block",
-                                             spatial_factors = ~ row + col),
+                                             linked = TRUE),
                                    sp = list(swap = "sp_treatment",
-                                             swap_within = "wholeplot",
-                                             spatial_factors = ~ row + col)))
+                                             swap_within = "wholeplot")))
 ```
 
-### 3. Formula Interface
+### Formula Interface
 
 ```{r}
 # Parallel lists style
-rcb_design <- speed(df_split,
-                    swap = ~all(wp_treatment)/sp_treatment,
+sp_design <- speed(df_split,
+                    swap = ~linked(wp_treatment)/sp_treatment,
                     swap_within = ~block/wholeplot)
 # or
-rcb_design <- speed(df_split,
+sp_design <- speed(df_split,
                     swap = ~ wp_treatment/sp_treatment,
                     swap_within = ~block/wholeplot,
                     linked = list(wp_treatment = TRUE,
                                   sp_treatment = FALSE))
-
-# or equivalently
-rcb_design <- speed(df_split,
-                    optimise = list(swap = ~wp_treatment/sp_treatment,
-                                    swap_within = ~block/wholeplot,
-                                    linked = list(wp_treatment = TRUE,
-                                                  sp_treatment = FALSE)))
 ```
 
+<!---
+## More Customised Split-Plot Design Example
+
+In this case, we are extending the split-plot example to show how different objective functions, iterations and/or spatial or grid factors can be applied at different levels of the design as well as the treatments. For example, we may want to apply a different objective function to the whole-plot and subplot levels, or we may want to apply different numbers of iterations to each level. We may also want to apply different spatial or grid factors to each level of the design. The main point in this example is to show what the model could look like when there are multiple levels of the design that need to be specified with different arguments.
+
+### Parallel lists style
+
+```{r}
+sp_design <- speed(df_split,
+                   swap = list(wp = linked("wp_treatment"),
+                               sp = "sp_treatment",),
+                   swap_within = list(wp = "block",
+                                      sp = "wholeplot"),
+                   obj_function = list(wp = objective_function,
+                                       sp = objective_function_2),
+                   iterations = list(wp = 5000,
+                                     sp = 10000),
+                   spatial_factors = list(wp = ~ row + col,
+                                          sp = ~ wholeplot:(row + col)),
+                   grid_factors = list(wp = list(dim1 = "row", dim2 = "col"),
+                                       sp = list(dim1 = "wholeplot_row", dim2 = "wholeplot_col")))
+```
+
+### Nested List Interface
+
+```{r}
+# set up the parameters first for clarity
+wp <- list(swap = "wp_treatment", 
+swap_within = "block", 
+obj_function = objective_function,
+  linked = TRUE)
+sp <- list(swap = "sp_treatment", swap_within = "wholeplot", obj_function = objective_function_2, iterations = 10000,
+           spatial_factors = ~ wholeplot:(row + col),
+           grid_factors = list(dim1 = "wholeplot_row", dim2 = "wholeplot_col"))
+sp_design <- speed(df_split, optimise = list(wp, sp))
+
+# or equivalently
+sp_design <- speed(df_split,
+                   optimise = list(wp = list(swap = linked("wp_treatment"),
+                                             swap_within = "block"),
+                                   sp = list(swap = "sp_treatment",
+                                             swap_within = "wholeplot")))
+```
+
+### Formula Interface
+
+```{r}
+# Parallel lists style
+sp_design <- speed(df_split,
+                    swap = ~linked(wp_treatment)/sp_treatment,
+                    swap_within = ~block/wholeplot)
+# or
+sp_design <- speed(df_split,
+                    swap = ~ wp_treatment/sp_treatment,
+                    swap_within = ~block/wholeplot,
+                    linked = list(wp_treatment = TRUE,
+                                  sp_treatment = FALSE))
+```
+
+-->
 
 ## Multi-Environment Trial Design Example
 
 In a MET, treatments (typically varieties) will first be allocated to locations (sites), and then to plots within locations. Locations may share some treatments but not others, so the treatments are not strictly nested within locations. However, we may want to ensure that there is a certain level of connectivity between locations, so that some treatments are shared between locations. We may also want to ensure that the design is balanced within locations, so that each treatment appears a similar number of times within each location.
 
-### 1. Parallel lists style
+### Parallel lists style
 
 ```{r}
 met_design <- speed(df_met,
@@ -251,7 +289,7 @@ met_design <- speed(df_met,
                                            bal = ~ site:(block + row + col)))
 ```
 
-### 2. Nested List Interface
+### Nested List Interface
 
 ```{r}
 # default swap_within is the whole design
@@ -268,7 +306,7 @@ met_design <- speed(df_met,
                                                spatial_factors = ~ site:(block + row + col))))
 ```
 
-### 3. Formula Interface
+### Formula Interface
 
 ```{r}
 # Parallel lists style
@@ -276,13 +314,6 @@ met_design <- speed(df_met,
                     swap = ~variety,
                     swap_within = ~1/site,
                     spatial_factors = ~ site/(site:(block + row + col)))
-
-# or equivalently 
-met_params <- list(swap = ~variety, 
-                   swap_within = ~1/site,
-                   spatial_factors = ~ site/(site:(block + row + col)))
-met_design <- speed(df_met,
-                    optimise = met_params)
 ```
 
 
@@ -290,7 +321,7 @@ met_design <- speed(df_met,
 
 The complication with factorial designs is that there is no hierarchy, so all factors can move independently. However, we may want to ensure that the interaction structure of the design is maintained during swaps, so as to avoid breaking up treatment combinations that are important for estimating interaction effects and result in imbalanced designs. We propose to handle this by allowing users to specify interaction terms in the `swap` argument, e.g., `swap = c("A", "B", "A:B")`. This would indicate that both factors can be swapped independently, while also swapping and maintaining the interaction structure during the optimisation process.
 
-### 1. Parallel lists style
+### Parallel lists style
 
 ```{r}
 fac_design <- speed(df_fac,
@@ -299,7 +330,7 @@ fac_design <- speed(df_fac,
                     spatial_factors = ~ row + col)
 ```
 
-### 2. Nested List Interface
+### Nested List Interface
 
 ```{r}
 fac_params <- list(swap = "A*B", swap_within = "block", spatial_factors = ~ row + col)
@@ -311,7 +342,7 @@ sp_design <- speed(df_fac, optimise = list(swap = "A*B",
                                            spatial_factors = ~ row + col))
 ```
 
-### 3. Formula Interface
+### Formula Interface
 
 ```{r}
 # Parallel lists style
@@ -319,21 +350,17 @@ fac_design <- speed(df_fac,
                     swap = ~A*B,  # Or A + B + A:B
                     swap_within = ~block,
                     spatial_factors = ~ row + col)
-
-# or alternatively
-fac_design <- speed(df_fac, optimise = list(swap = ~A*B,
-                                            swap_within = ~block,
-                                            spatial_factors = ~ row + col))
 ```
 
 # Questions for Potential Users
 
 Please consider the proposed alternative interface versions and provide feedback on any of the following questions:
 
-- Which signature feels most natural to use?
-- Which would you be most likely to adopt in your own work?
-- Are there specific features or arguments that must remain easy to access?
-- Do you see any barriers for new users learning the function?
-- Are there any specific use cases or designs that you would like to see supported?
-- Do you have any other suggestions for improving the clarity and/or flexibility of the interface?
+1. Which signature feels most natural to read, understand and use across different designs?
+1. Which would you be most likely to adopt in your own work?
+1. In order to specify treatments that are grouped together across different levels of a hierarchical design (e.g. split-plot, strip-plot), do you prefer the `linked` argument or the `linked()` function approach? See for example the split-plot design examples above in [6.2.1](#linked).
+1. Are there specific features or arguments that must remain easy to access?
+1. Do you see any barriers for new users learning the function?
+1. Are there any specific use cases or designs that you would like to see supported?
+1. Do you have any other suggestions for improving the clarity and/or flexibility of the interface?
 
