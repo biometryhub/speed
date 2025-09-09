@@ -4,18 +4,7 @@
 \alias{speed_hierarchical}
 \title{Speed function for hierarchical designs}
 \usage{
-speed_hierarchical(
-  data,
-  swap,
-  swap_within,
-  spatial_factors,
-  iterations,
-  early_stop_iterations,
-  obj_function,
-  quiet,
-  seed,
-  ...
-)
+speed_hierarchical(data, optimize, quiet, seed, ...)
 }
 \description{
 Speed function for hierarchical designs

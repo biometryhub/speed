@@ -1,14 +1,17 @@
 #' Generate a Neighbour Design by Swapping Treatments
 #'
 #' @param design Data frame containing the current design
-#' @param swap Column name of the treatment to swap, or named list for hierarchical designs
-#' @param swap_within Column name defining groups within which to swap treatments, or named list for hierarchical designs
-#' @param level The level of the design to be optimised in the current loop. Relevant for sequential designs. Simple designs pass this as `NULL`.
+#' @param swap Column name of the treatment to swap, or named list for
+#'   hierarchical designs
+#' @param swap_within Column name defining groups within which to swap
+#'   treatments, or named list for hierarchical designs
 #' @param swap_count Number of swaps to perform
 #' @param swap_all_blocks Whether to perform swaps in all blocks or just one
-#' @param swap_all Whether to swap all matching items or a single item at a time (default: FALSE)
+#' @param swap_all Whether to swap all matching items or a single item at a time
+#'   (default: FALSE)
 #'
-#' @return A list with the updated design after swapping and information about swapped items
+#' @return A list with the updated design after swapping and information about
+#'   swapped items
 #'
 #' @keywords internal
 # fmt: skip
@@ -298,4 +301,5 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
 
 # Alias for the function to maintain backward compatibility
 #' @rdname initialise_design_df
+#' @export
 initialize_design_df <- initialise_design_df

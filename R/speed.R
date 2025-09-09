@@ -111,6 +111,7 @@
 #' @export
 # fmt: skip
 speed <- function(data,
+                  # TODO: default for swap
                   swap,
                   swap_within = "1",
                   spatial_factors = ~ row + col,
@@ -126,7 +127,7 @@ speed <- function(data,
   rlang::check_dots_used()
 
   if (is.null(optimise)) {
-  # Check if this is a legacy hierarchical design
+    # Check if this is a legacy hierarchical design
     is_legacy <- is.list(swap) && !is.null(names(swap))
     if (is_legacy) {
       .verify_hierarchical_inputs(data, swap, swap_within, spatial_factors, iterations, early_stop_iterations,

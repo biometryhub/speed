@@ -13,6 +13,8 @@ speed(
   iterations = 10000,
   early_stop_iterations = 2000,
   obj_function = objective_function,
+  swap_all = FALSE,
+  optimise = NULL,
   quiet = FALSE,
   seed = NULL,
   ...
@@ -53,6 +55,12 @@ list with names matching \code{swap}.}
 \item{obj_function}{Objective function used to calculate score (lower is
 better) (default: \code{\link[=objective_function]{objective_function()}}). For hierarchical designs, can
 be a named list with names matching \code{swap}.}
+
+\item{swap_all}{Logical; Whether to swap all matching items or a single item
+at a time (default: FALSE)}
+
+\item{optimise}{Logical; Whether to swap all matching items or a single item
+at a time (default: FALSE)}
 
 \item{quiet}{Logical; if TRUE, suppresses progress messages (default: FALSE)}
 
