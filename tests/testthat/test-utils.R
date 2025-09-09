@@ -237,8 +237,7 @@ test_that("create_speed_input creates an input from a named list", {
     obj_function = objective_function,
     swap_all = TRUE
   )
-  keys <- names(speed_input[[1]])
-  ordered_names <- keys[order(keys)]
+  ordered_names <- sort(names(speed_input[[1]]))
 
   expect_equal(speed_input$wp[ordered_names], list(
     swap = "wholeplot_treatment",
@@ -274,8 +273,7 @@ test_that("create_speed_input creates an input from a string", {
     obj_function = objective_function,
     swap_all = FALSE
   )
-  keys <- names(speed_input)
-  ordered_names <- keys[order(keys)]
+  ordered_names <- sort(names(speed_input))
 
   expect_equal(speed_input[ordered_names], list(
     "single treatment within block" = list(
@@ -308,8 +306,7 @@ test_that("create_speed_input creates an input from optimize argument", {
     swap_all = FALSE,
     optimize = optimize
   )
-  keys <- names(speed_input[[1]])
-  ordered_names <- keys[order(keys)]
+  ordered_names <- sort(names(speed_input[[1]]))
 
   expect_equal(speed_input$connectivity[ordered_names], list(
     swap = "treatment",

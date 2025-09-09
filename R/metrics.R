@@ -202,18 +202,17 @@ objective_function_piepho <- function(design,
                                       ...) {
   design_matrix <- matrix(
     design[[swap]],
-    nrow = max(design$row),
-    ncol = max(design$col)
+    nrow = max(as.numeric(levels(design$row))),
+    ncol = max(as.numeric(levels(design$col)))
   )
 
   ed <- calculate_ed(design_matrix, current_score_obj$ed, swapped_items)
   # sum(1/) or 1/sum
-  ed_score <- 1 /
-    sum(vapply(ed, function(ed_rep) ed_rep$min_mst, numeric(1)))
+  ed_score <- 1 / sum(vapply(ed, function(ed_rep) ed_rep$min_mst, numeric(1)))
   nb <- calculate_nb(design_matrix, pair_mapping)
   nb_score <- nb$var
 
-  design[[swap]] <- as.vector(design_matrix)
+  design[[swap]] <- as.factor(design_matrix)
   bal_score <- calculate_balance_score(design, swap, spatial_cols)
   adj_score <- calculate_adjacency_score(design, swap, row_column, col_column)
 

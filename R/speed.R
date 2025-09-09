@@ -179,7 +179,8 @@ speed <- function(data,
     }
   }
 
-  design <- speed_hierarchical(data, optimize, quiet, seed, row_column = row_column, col_column = col_column)
+  design <- speed_hierarchical(data, optimize, quiet, seed, row_column = row_column, col_column = col_column,
+                               ...)
   design$design_df[[dummy_group]] <- NULL
   design$design_df <- to_types(design$design_df, factored$input_types)
 

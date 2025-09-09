@@ -1165,6 +1165,48 @@ test_that("speed handles MET with unequal site dimensions", {
   expect_equal(max(table(design_df$site_col, design_df$treatment)), 1)
 })
 
+test_that("speed runs without seed", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:5, times = 4),
+    col = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    quiet = TRUE
+  )
+  expect_s3_class(result, "design")
+})
+
+test_that("speed runs with piepho objective", {
+  treatments <- rep(1:6)
+  df_initial <- initialise_design_df(treatments, 6, 3)
+  pair_mapping <- create_pair_mapping(treatments)
+
+  df_initial$row <- factor(df_initial$row)
+  df_initial$col <- factor(df_initial$col)
+  initial_score <- objective_function_piepho(df_initial, "treatment", c("row", "col"))$score
+
+  withr::with_options(list(speed.random_initialisation = TRUE), {
+    speed_design <- speed(
+      data = df_initial,
+      swap = "treatment",
+      spatial_factors = ~ row + col,
+      seed = 112,
+      quiet = TRUE,
+      obj_function = objective_function_piepho,
+      pair_mapping = pair_mapping
+    )
+  })
+
+  expect_lt(speed_design$score, initial_score)
+})
+
 # TODO: Test cases to add/update
 # - Add more detailed checking of current designs
 # - NSE
