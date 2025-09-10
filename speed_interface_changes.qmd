@@ -282,7 +282,8 @@ In a MET, treatments (typically varieties) will first be allocated to locations 
 met_design <- speed(df_met,
                     swap = list(con = "variety", # connectivity
                                 bal = "variety"), # balance
-                    # default swap_within is the whole design, so connectivity can be left out
+                    # default swap_within is the whole design, so 
+                    # connectivity can be left out
                     swap_within = list(bal = "site"),
                     spatial_factors = list(con = ~ site,
                                            # same as ~ site_row + site_col + site_block
@@ -294,7 +295,8 @@ met_design <- speed(df_met,
 ```{r}
 # default swap_within is the whole design
 con <- list(swap = "variety", spatial_factors = ~ site)
-bal <- list(swap = "variety", swap_within = "site", spatial_factors = ~ site:(block + row + col))
+bal <- list(swap = "variety", swap_within = "site", 
+            spatial_factors = ~ site:(block + row + col))
 met_design <- speed(df_met, optimise = list(con, bal))
 
 # or equivalently
@@ -303,7 +305,9 @@ met_design <- speed(df_met,
                                                spatial_factors = ~ site),
                                     bal = list(swap = "variety",
                                                swap_within = "site",
-                                               spatial_factors = ~ site:(block + row + col))))
+                                               spatial_factors = ~ site:(block + 
+                                                                           row +
+                                                                           col))))
 ```
 
 ### Formula Interface
@@ -333,7 +337,8 @@ fac_design <- speed(df_fac,
 ### Nested List Interface
 
 ```{r}
-fac_params <- list(swap = "A*B", swap_within = "block", spatial_factors = ~ row + col)
+fac_params <- list(swap = "A*B", swap_within = "block", 
+                   spatial_factors = ~ row + col)
 fac_design <- speed(df_fac, optimise = fac_params)
 
 # or equivalently
