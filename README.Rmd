@@ -132,10 +132,11 @@ autoplot(result)
 
 For more detailed examples, see the [getting started vignette][getting-started] or the vignette about
 [more complex examples][complex-examples] including, but not limited to:
-  * [Split-plot design][split-plot]
-  * [Strip-plot design][strip-plot]
-  * [P-rep design][p-rep]
-  * [BIBD][bibd]
+
+* [Split-plot design][split-plot]
+* [Strip-plot design][strip-plot]
+* [P-rep design][p-rep]
+* [BIBD][bibd]
 
 ## Citation
 
