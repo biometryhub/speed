@@ -130,7 +130,12 @@ autoplot(result)
 
 ### More Examples
 
-For more detailed examples, see the [getting started vignette](https://biometryhub.github.io/speed/articles/speed.html) or the vignette about [more complex examples](https://biometryhub.github.io/speed/articles/complex_designs.html).
+For more detailed examples, see the [getting started vignette][getting-started] or the vignette about
+[more complex examples][complex-examples] including, but not limited to:
+  * [Split-plot design][split-plot]
+  * [Strip-plot design][strip-plot]
+  * [P-rep design][p-rep]
+  * [BIBD][bibd]
 
 ## Citation
 
@@ -146,6 +151,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) f
 
 <!-- external -->
 
+[getting-started]: https://biometryhub.github.io/speed/articles/speed.html
+[complex-examples]: https://biometryhub.github.io/speed/articles/complex_designs.html
 [split-plot]: https://biometryhub.github.io/speed/articles/speed.html#split-plot-design
 [strip-plot]: https://biometryhub.github.io/speed/articles/complex_designs.html#strip-plot-designs
 [p-rep]: https://biometryhub.github.io/speed/articles/complex_designs.html#p-rep-partially-replicated-designs
