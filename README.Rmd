@@ -25,19 +25,19 @@ knitr::opts_chunk$set(
 
 ## Table of Contents
 
-<!-- vim-markdown-toc GFM -->
-
 * [Overview](#overview)
 * [Installation](#installation)
 * [Features](#features)
 * [Example](#example)
   * [Basic](#basic)
   * [Blocked design](#blocked-design)
+  * [Split-plot design][split-plot]
+  * [Strip-plot design][strip-plot]
+  * [P-rep design][p-rep]
+  * [BIBD][bibd]
   * [More Examples](#more-examples)
 * [Citation](#citation)
 * [License](#license)
-
-<!-- vim-markdown-toc -->
 
 ## Overview
 
@@ -64,7 +64,6 @@ devtools::install_github("biometryhub/speed")
 # remotes
 if (!require("remotes", quietly = TRUE)) install.packages("remotes")
 remotes::install_github("biometryhub/speed")
-
 ```
 
 ## Features
@@ -144,3 +143,10 @@ citation("speed")
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
+
+<!-- external -->
+
+[split-plot]: https://biometryhub.github.io/speed/articles/speed.html#split-plot-design
+[strip-plot]: https://biometryhub.github.io/speed/articles/complex_designs.html#strip-plot-designs
+[p-rep]: https://biometryhub.github.io/speed/articles/complex_designs.html#p-rep-partially-replicated-designs
+[bibd]: https://biometryhub.github.io/speed/articles/complex_designs.html#balanced-incomplete-block-design-bibd

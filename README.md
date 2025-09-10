@@ -17,19 +17,22 @@ coverage](https://codecov.io/gh/biometryhub/speed/graph/badge.svg)](https://app.
 
 ## Table of Contents
 
-<!-- vim-markdown-toc GFM -->
-
 - [Overview](#overview)
 - [Installation](#installation)
 - [Features](#features)
 - [Example](#example)
   - [Basic](#basic)
   - [Blocked design](#blocked-design)
+  - [Split-plot
+    design](https://biometryhub.github.io/speed/articles/speed.html#split-plot-design)
+  - [Strip-plot
+    design](https://biometryhub.github.io/speed/articles/complex_designs.html#strip-plot-designs)
+  - [P-rep
+    design](https://biometryhub.github.io/speed/articles/complex_designs.html#p-rep-partially-replicated-designs)
+  - [BIBD](https://biometryhub.github.io/speed/articles/complex_designs.html#balanced-incomplete-block-design-bibd)
   - [More Examples](#more-examples)
 - [Citation](#citation)
 - [License](#license)
-
-<!-- vim-markdown-toc -->
 
 ## Overview
 
@@ -173,3 +176,5 @@ If you use `speed` in your research, please cite:
 
 This project is licensed under the MIT License - see the
 [LICENSE](LICENSE.md) file for details.
+
+<!-- external -->
