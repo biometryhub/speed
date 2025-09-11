@@ -171,12 +171,25 @@ generate_sequential_neighbour <- function(design,
 #' - **col** - Name of the column column
 #'
 #' @keywords internal
-infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "col"), quiet = FALSE) {
-  if (grid_factors$dim1 %in% names(layout_df) && grid_factors$dim2 %in% names(layout_df)) {
+infer_row_col <- function(
+  layout_df,
+  grid_factors = list(dim1 = "row", dim2 = "col"),
+  quiet = FALSE
+) {
+  if (
+    grid_factors$dim1 %in%
+      names(layout_df) &&
+      grid_factors$dim2 %in% names(layout_df)
+  ) {
     row_col <- grid_factors$dim1
     col_col <- grid_factors$dim2
     if (!quiet) {
-      message(row_col, " and ", col_col, " are used as row and column, respectively.")
+      message(
+        row_col,
+        " and ",
+        col_col,
+        " are used as row and column, respectively."
+      )
     }
     return(list(inferred = TRUE, row = row_col, col = col_col))
   }
@@ -204,7 +217,12 @@ infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "c
     return(list(inferred = FALSE))
   }
   if (!quiet) {
-    message(row_col, " and ", col_col, " are used as row and column, respectively.")
+    message(
+      row_col,
+      " and ",
+      col_col,
+      " are used as row and column, respectively."
+    )
   }
   return(list(inferred = TRUE, row = row_col, col = col_col))
 }
@@ -214,8 +232,7 @@ infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "c
 #' @description
 #' Initialise a design data frame with or without blocking.
 #'
-#' @param items Items to be placed in the design. Either a single numeric value (the number of
-#' equally replicated items), or a vector of items.
+#' @param treatments Treatment names
 #' @param nrows Number of rows in the design
 #' @param ncols Number of columns in the design
 #' @param block_nrows Number of rows in each block
@@ -249,7 +266,7 @@ initialise_design_df <- function(items,
                                  block_nrows = 1,
                                  block_ncols = 1) {
 
-    speed:::.verify_initialise_design_df(nrows, ncols, block_nrows, block_ncols)
+    .verify_initialise_design_df(nrows, ncols, block_nrows, block_ncols)
 
     ## If items is number of treatments
     if (length(items) == 1 && is.numeric(items)) items <- paste0("T", 1:items)
@@ -267,26 +284,15 @@ initialise_design_df <- function(items,
         design$row_block <- ceiling(design$row / block_nrows)
         design$col_block <- ceiling(design$col / block_ncols)
 
-        ## design$col_block <- rep(
-        ##     1:nblocks_col,
-        ##     each = nrows * block_ncols
-        ## )
-        ## design$row_block <- rep(
-        ##     1:nblocks_row,
-        ##     each = block_nrows, times = ncols
-        ## )
-
         ## Which block do the experimental units belong to?
         design$block <- design$col_block + (design$row_block - 1) * nblocks_col
-        ## design$block <- (design$row_block - 1) * nblocks_col + design$col_block
 
         ## For each block, assign treatments
-        for (blk in unique(design$block)) {
-            blk_idx <- which(design$block == blk)
-            design$treatment[blk_idx] <- unique(items)
-            ## design$treatment[blk_idx] <-
-            ##     rep_len(treatments, length(blk_idx))
-        }
+        design$treatment[order(design$block)] <- items
+        ## for (blk in unique(design$block)) {
+        ##     blk_idx <- which(design$block == blk)
+        ##     design$treatment[blk_idx] <- unique(items)
+        ## }
     }
 
     return(design)
