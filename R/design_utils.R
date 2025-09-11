@@ -232,7 +232,7 @@ infer_row_col <- function(
 #' @description
 #' Initialise a design data frame with or without blocking.
 #'
-#' @param treatments Treatment names
+#' @param items Treatment names
 #' @param nrows Number of rows in the design
 #' @param ncols Number of columns in the design
 #' @param block_nrows Number of rows in each block
@@ -259,43 +259,45 @@ infer_row_col <- function(
 #'   block_ncols = 3
 #' )
 #' @export
-# fmt: skip
-initialise_design_df <- function(items,
-                                 nrows,
-                                 ncols,
-                                 block_nrows = 1,
-                                 block_ncols = 1) {
+initialise_design_df <- function(
+  items,
+  nrows,
+  ncols,
+  block_nrows = 1,
+  block_ncols = 1
+) {
+  .verify_initialise_design_df(nrows, ncols, block_nrows, block_ncols)
 
-    .verify_initialise_design_df(nrows, ncols, block_nrows, block_ncols)
+  ## If items is number of treatments
+  if (length(items) == 1 && is.numeric(items)) {
+    items <- paste0("T", 1:items)
+  }
 
-    ## If items is number of treatments
-    if (length(items) == 1 && is.numeric(items)) items <- paste0("T", 1:items)
+  ## Create grid
+  design <- expand.grid(row = 1:nrows, col = 1:ncols)
+  design$treatment <- items
 
-    ## Create grid
-    design <- expand.grid(row = 1:nrows, col = 1:ncols)
-    design$treatment <- items
+  ## If blocked design
+  if (block_nrows != 1 || block_ncols != 1) {
+    nblocks_row <- nrows / block_nrows
+    nblocks_col <- ncols / block_ncols
 
-    ## If blocked design
-    if (block_nrows != 1 || block_ncols != 1) {
-        nblocks_row <- nrows / block_nrows
-        nblocks_col <- ncols / block_ncols
+    ## Which block do the columns and rows belong to?
+    design$row_block <- ceiling(design$row / block_nrows)
+    design$col_block <- ceiling(design$col / block_ncols)
 
-        ## Which block do the columns and rows belong to?
-        design$row_block <- ceiling(design$row / block_nrows)
-        design$col_block <- ceiling(design$col / block_ncols)
+    ## Which block do the experimental units belong to?
+    design$block <- design$col_block + (design$row_block - 1) * nblocks_col
 
-        ## Which block do the experimental units belong to?
-        design$block <- design$col_block + (design$row_block - 1) * nblocks_col
+    ## For each block, assign treatments
+    design$treatment[order(design$block)] <- items
+    ## for (blk in unique(design$block)) {
+    ##     blk_idx <- which(design$block == blk)
+    ##     design$treatment[blk_idx] <- unique(items)
+    ## }
+  }
 
-        ## For each block, assign treatments
-        design$treatment[order(design$block)] <- items
-        ## for (blk in unique(design$block)) {
-        ##     blk_idx <- which(design$block == blk)
-        ##     design$treatment[blk_idx] <- unique(items)
-        ## }
-    }
-
-    return(design)
+  return(design)
 }
 
 #' Shuffle Items in A Group
