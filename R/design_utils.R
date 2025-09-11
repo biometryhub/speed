@@ -232,7 +232,8 @@ infer_row_col <- function(
 #' @description
 #' Initialise a design data frame with or without blocking.
 #'
-#' @param items Treatment names
+#' @param items Items to be placed in the design. Either a single numeric value
+#'   (the number of equally replicated items), or a vector of items.
 #' @param nrows Number of rows in the design
 #' @param ncols Number of columns in the design
 #' @param block_nrows Number of rows in each block

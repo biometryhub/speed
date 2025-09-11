@@ -10,6 +10,9 @@ initialise_design_df(items, nrows, ncols, block_nrows = 1, block_ncols = 1)
 initialize_design_df(items, nrows, ncols, block_nrows = 1, block_ncols = 1)
 }
 \arguments{
+\item{items}{Items to be placed in the design. Either a single numeric value
+(the number of equally replicated items), or a vector of items.}
+
 \item{nrows}{Number of rows in the design}
 
 \item{ncols}{Number of columns in the design}
@@ -17,8 +20,6 @@ initialize_design_df(items, nrows, ncols, block_nrows = 1, block_ncols = 1)
 \item{block_nrows}{Number of rows in each block}
 
 \item{block_ncols}{Number of columns in each block}
-
-\item{treatments}{Treatment names}
 }
 \value{
 A data frame containing the design
