@@ -171,6 +171,7 @@ generate_sequential_neighbour <- function(design,
 #' - **col** - Name of the column column
 #'
 #' @keywords internal
+#' fmt: skip
 infer_row_col <- function(
   layout_df,
   grid_factors = list(dim1 = "row", dim2 = "col"),
@@ -260,6 +261,7 @@ infer_row_col <- function(
 #'   block_ncols = 3
 #' )
 #' @export
+#' fmt: skip
 initialise_design_df <- function(
   items,
   nrows,
@@ -269,36 +271,34 @@ initialise_design_df <- function(
 ) {
   .verify_initialise_design_df(nrows, ncols, block_nrows, block_ncols)
 
-  ## If items is number of treatments
+  # If items is number of treatments
   if (length(items) == 1 && is.numeric(items)) {
     items <- paste0("T", 1:items)
   }
 
-  ## Create grid
-  design <- expand.grid(row = 1:nrows, col = 1:ncols)
-  design$treatment <- items
+  # Create grid
+  df <- expand.grid(row = 1:nrows, col = 1:ncols)
+  df$treatment <- items
 
-  ## If blocked design
+  # If blocked design
   if (block_nrows != 1 || block_ncols != 1) {
     nblocks_row <- nrows / block_nrows
     nblocks_col <- ncols / block_ncols
 
-    ## Which block do the columns and rows belong to?
-    design$row_block <- ceiling(design$row / block_nrows)
-    design$col_block <- ceiling(design$col / block_ncols)
+    # Which block do the columns and rows belong to?
+    df$row_block <- ceiling(df$row / block_nrows)
+    df$col_block <- ceiling(df$col / block_ncols)
 
-    ## Which block do the experimental units belong to?
-    design$block <- design$col_block + (design$row_block - 1) * nblocks_col
+    # Which block do the experimental units belong to?
+    df$block <- as.numeric(df$row_block) +
+      nblocks_row * (as.numeric(df$col_block) - 1)
+    df$block <- df$col_block + (df$row_block - 1) * nblocks_col
 
-    ## For each block, assign treatments
-    design$treatment[order(design$block)] <- items
-    ## for (blk in unique(design$block)) {
-    ##     blk_idx <- which(design$block == blk)
-    ##     design$treatment[blk_idx] <- unique(items)
-    ## }
+    # For each block, assign treatments
+    df$treatment[order(df$block)] <- items
   }
 
-  return(design)
+  return(df)
 }
 
 #' Shuffle Items in A Group
@@ -309,6 +309,7 @@ initialise_design_df <- function(
 #' @return A data frame with the items shuffled
 #'
 #' @keywords internal
+#' fmt: skip
 shuffle_items <- function(design, swap, swap_within, seed = NULL) {
   if (!is.null(seed)) {
     set.seed(seed)
