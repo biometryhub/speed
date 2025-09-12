@@ -171,26 +171,13 @@ generate_sequential_neighbour <- function(design,
 #' - **col** - Name of the column column
 #'
 #' @keywords internal
-#' fmt: skip
-infer_row_col <- function(
-  layout_df,
-  grid_factors = list(dim1 = "row", dim2 = "col"),
-  quiet = FALSE
-) {
-  if (
-    grid_factors$dim1 %in%
-      names(layout_df) &&
-      grid_factors$dim2 %in% names(layout_df)
-  ) {
+# fmt: skip
+infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "col"), quiet = FALSE) {
+  if (grid_factors$dim1 %in% names(layout_df) && grid_factors$dim2 %in% names(layout_df)) {
     row_col <- grid_factors$dim1
     col_col <- grid_factors$dim2
     if (!quiet) {
-      message(
-        row_col,
-        " and ",
-        col_col,
-        " are used as row and column, respectively."
-      )
+      message(row_col, " and ", col_col, " are used as row and column, respectively.")
     }
     return(list(inferred = TRUE, row = row_col, col = col_col))
   }
@@ -218,12 +205,7 @@ infer_row_col <- function(
     return(list(inferred = FALSE))
   }
   if (!quiet) {
-    message(
-      row_col,
-      " and ",
-      col_col,
-      " are used as row and column, respectively."
-    )
+    message(row_col, " and ", col_col, " are used as row and column, respectively.")
   }
   return(list(inferred = TRUE, row = row_col, col = col_col))
 }
@@ -233,8 +215,8 @@ infer_row_col <- function(
 #' @description
 #' Initialise a design data frame with or without blocking.
 #'
-#' @param items Items to be placed in the design. Either a single numeric value
-#'   (the number of equally replicated items), or a vector of items.
+#' @param items Items to be placed in the design. Either a single numeric value (the number of
+#' equally replicated items), or a vector of items.
 #' @param nrows Number of rows in the design
 #' @param ncols Number of columns in the design
 #' @param block_nrows Number of rows in each block
@@ -261,17 +243,15 @@ infer_row_col <- function(
 #'   block_ncols = 3
 #' )
 #' @export
-#' fmt: skip
-initialise_design_df <- function(
-  items,
-  nrows,
-  ncols,
-  block_nrows = 1,
-  block_ncols = 1
-) {
+# fmt: skip
+initialise_design_df <- function(items,
+                                 nrows,
+                                 ncols,
+                                 block_nrows = 1,
+                                 block_ncols = 1) {
   .verify_initialise_design_df(nrows, ncols, block_nrows, block_ncols)
 
-  # If items is number of treatments
+  # If items is a single numeric value, take it as the number of equally replicated treatments
   if (length(items) == 1 && is.numeric(items)) {
     items <- paste0("T", 1:items)
   }
@@ -290,8 +270,6 @@ initialise_design_df <- function(
     df$col_block <- ceiling(df$col / block_ncols)
 
     # Which block do the experimental units belong to?
-    df$block <- as.numeric(df$row_block) +
-      nblocks_row * (as.numeric(df$col_block) - 1)
     df$block <- df$col_block + (df$row_block - 1) * nblocks_col
 
     # For each block, assign treatments
@@ -309,7 +287,7 @@ initialise_design_df <- function(
 #' @return A data frame with the items shuffled
 #'
 #' @keywords internal
-#' fmt: skip
+# fmt: skip
 shuffle_items <- function(design, swap, swap_within, seed = NULL) {
   if (!is.null(seed)) {
     set.seed(seed)
