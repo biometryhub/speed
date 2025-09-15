@@ -121,7 +121,7 @@ test_that("initialise_design_df works for multi sites", {
   df <- rbind(df_site1, df_site2, df_site3)
   df$treatment <- items
 
-  df_speed <- initialise_design_df(
+  design_df <- initialise_design_df(
     items = items,
     designs = list(
       a = list(nrows = 10, ncols = 3),
@@ -131,7 +131,8 @@ test_that("initialise_design_df works for multi sites", {
   )
 
   expect_setequal(names(design_df), c("row", "col", "treatment", "site"))
-  expect_equal(nrow(design_df), n_items)
-  expect_setequal(design_df$treatment, items)
+  expect_equal(sort(design_df$row), sort(df$row))
+  expect_equal(sort(design_df$col), sort(df$col))
+  expect_equal(sort(design_df$treatment), sort(items))
   expect_setequal(unique(design_df$site), c("a", "b", "c"))
 })

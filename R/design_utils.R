@@ -272,6 +272,7 @@ initialise_design_df <- function(items = NULL,
 
       df_sub <- initialise_design_df(items_sub, design_args$nrows, design_args$ncols)
       df_sub[[design_col]] <- design_name
+      df <- rbind(df, df_sub)
     }
 
     if (no_items) {
@@ -330,7 +331,9 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
                                          block_ncols,
                                          designs,
                                          design_col) {
-  verify_positive_whole_number(length(items), nrows, ncols)
+  if (is.null(designs)) {
+    verify_positive_whole_number(length(items), nrows, ncols)
+  }
   verify_character(design_col)
 
   if (
