@@ -160,6 +160,7 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
 #' - **col** - Name of the column column
 #'
 #' @keywords internal
+# fmt: skip
 infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "col"), quiet = FALSE) {
   if (grid_factors$dim1 %in% names(layout_df) && grid_factors$dim2 %in% names(layout_df)) {
     row_col <- grid_factors$dim1
@@ -222,6 +223,14 @@ infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "c
 #' # blocking
 #' initialise_design_df(rep(1:8, 4), 8, 4, 2, 2)
 #'
+#' # another blocking example
+#' initialise_design_df(
+#'   items = paste0("T", 1:6),
+#'   nrows = 4,
+#'   ncols = 6,
+#'   block_nrows = 2,
+#'   block_ncols = 3
+#' )
 #' @export
 # fmt: skip
 initialise_design_df <- function(items,
@@ -236,22 +245,22 @@ initialise_design_df <- function(items,
     items <- paste0("T", 1:items)
   }
 
-  rows <- rep(1:nrows, ncols)
-  cols <- rep(1:ncols, each = nrows)
-  df <- data.frame(
-    row = rows,
-    col = cols,
-    treatment = items
-  )
+  # Create grid
+  df <- expand.grid(row = 1:nrows, col = 1:ncols)
+  df$treatment <- items
+
+  # If blocked design
   if (!is.null(block_nrows)) {
     nblocks_row <- nrows / block_nrows
-    nblocks_col <- ncols / block_ncols
 
-    df$row_block <- rep(1:nblocks_row, ncols, each = block_nrows)
-    df$col_block <- rep(1:nblocks_col, each = nrows * block_ncols)
-    df$block <- as.numeric(df$row_block) +
-      nblocks_row * (as.numeric(df$col_block) - 1)
+    df$row_block <- ceiling(df$row / block_nrows)
+    df$col_block <- ceiling(df$col / block_ncols)
+    df$block <- df$row_block + nblocks_row * (df$col_block - 1)
+
+    # For each block, assign treatments
+    df$treatment[order(df$block)] <- items
   }
+
   return(df)
 }
 
@@ -263,6 +272,7 @@ initialise_design_df <- function(items,
 #' @return A data frame with the items shuffled
 #'
 #' @keywords internal
+# fmt: skip
 shuffle_items <- function(design, swap, swap_within, seed = NULL) {
   if (!is.null(seed)) {
     set.seed(seed)

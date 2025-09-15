@@ -49,4 +49,12 @@ initialise_design_df(
 # blocking
 initialise_design_df(rep(1:8, 4), 8, 4, 2, 2)
 
+# another blocking example
+initialise_design_df(
+  items = paste0("T", 1:6),
+  nrows = 4,
+  ncols = 6,
+  block_nrows = 2,
+  block_ncols = 3
+)
 }
