@@ -73,7 +73,7 @@
       stop(paste("Column", swap[[level]], "not found in data"))
     }
     if (!swap_within[[level]] %in% names(data) &&
-        !(swap_within[[level]] %in% c("1", "none"))) {
+      !(swap_within[[level]] %in% c("1", "none"))) {
       stop(paste("Column", swap_within[[level]], "not found in data"))
     }
   }
@@ -222,6 +222,10 @@ verify_multiple_of <- function(..., var_names = NULL) {
 
 verify_positive_whole_number <- function(..., var_names = NULL) {
   verify_data_type(is_positive_whole_number, "a positive whole number", var_names, ...)
+}
+
+verify_character <- function(..., var_names = NULL) {
+  verify_data_type(is.character, "a character", var_names, ...)
 }
 
 verify_positive_whole_numbers <- function(..., var_names = NULL) {

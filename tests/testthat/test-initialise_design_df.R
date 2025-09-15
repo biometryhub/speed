@@ -12,7 +12,50 @@ test_that("initialise_design_df works", {
   expect_equal(sort(design_df$col), sort(rep(1:ncols, nrows)))
 })
 
+test_that("an alias initialize_design_df works", {
+  items <- c(1, 2, 2, 1, 3, 3, 1, 3, 3)
+  nrows <- 3
+  ncols <- 3
+
+  design_df <- initialize_design_df(items, nrows, ncols)
+
+  expect_setequal(names(design_df), c("row", "col", "treatment"))
+  expect_equal(nrow(design_df), nrows * ncols)
+  expect_equal(design_df$treatment, items)
+  expect_equal(sort(design_df$row), sort(rep(1:nrows, ncols)))
+  expect_equal(sort(design_df$col), sort(rep(1:ncols, nrows)))
+})
+
 test_that("initialise_design_df works with blocking", {
+  items <- rep(1:8, 4)
+  nrows <- 8
+  ncols <- 4
+  nrows_block <- 2
+  ncols_block <- 4
+
+  n_items <- length(items)
+
+  design_df <- initialise_design_df(items, nrows, ncols, nrows_block, ncols_block)
+
+  expect_setequal(names(design_df), c("row", "col", "treatment", "row_block", "col_block", "block"))
+  expect_equal(nrow(design_df), n_items)
+  expect_equal(sort(design_df$row), sort(rep(1:nrows, ncols)))
+  expect_equal(sort(design_df$col), sort(rep(1:ncols, nrows)))
+
+  # check each block
+  for (block in unique(design_df$block)) {
+    expect_setequal(design_df$treatment[design_df$block == block], 1:8)
+  }
+
+  rows_block <- nrows / nrows_block
+  cols_block <- ncols / ncols_block
+  n_blocks <- rows_block * cols_block
+  expect_equal(sort(design_df$row_block), sort(rep(1:rows_block, n_items / rows_block)))
+  expect_equal(sort(design_df$col_block), sort(rep(1:cols_block, n_items / cols_block)))
+  expect_equal(sort(design_df$block), sort(rep(1:n_blocks, n_items / n_blocks)))
+})
+
+test_that("initialise_design_df works with blocking with different items", {
   items <- rep(1:8, 4)
   nrows <- 8
   ncols <- 4
@@ -25,9 +68,13 @@ test_that("initialise_design_df works with blocking", {
 
   expect_setequal(names(design_df), c("row", "col", "treatment", "row_block", "col_block", "block"))
   expect_equal(nrow(design_df), n_items)
-  expect_setequal(design_df$treatment, items)
   expect_equal(sort(design_df$row), sort(rep(1:nrows, ncols)))
   expect_equal(sort(design_df$col), sort(rep(1:ncols, nrows)))
+
+  # check each block
+  for (block in unique(design_df$block)) {
+    expect_setequal(length(unique(design_df$treatment[design_df$block == block])), 4)
+  }
 
   rows_block <- nrows / nrows_block
   cols_block <- ncols / ncols_block
@@ -61,4 +108,30 @@ test_that("initialise_design_df converts single numeric to treatment labels", {
   # Verify the condition doesn't trigger when items is non-numeric
   result5 <- initialise_design_df(items = c("A", "B", "C"), nrows = 3, ncols = 1)
   expect_equal(result5$treatment, c("A", "B", "C"))
+})
+
+test_that("initialise_design_df works for multi sites", {
+  items <- c(rep(1:10, 6), rep(11:20, 8))
+  df_site1 <- expand.grid(row = 1:10, col = 1:3)
+  df_site1$site <- "a"
+  df_site2 <- expand.grid(row = 1:10, col = 1:5)
+  df_site2$site <- "b"
+  df_site3 <- expand.grid(row = 1:10, col = 1:6)
+  df_site3$site <- "c"
+  df <- rbind(df_site1, df_site2, df_site3)
+  df$treatment <- items
+
+  df_speed <- initialise_design_df(
+    items = items,
+    designs = list(
+      a = list(nrows = 10, ncols = 3),
+      b = list(nrows = 10, ncols = 5),
+      c = list(nrows = 10, ncols = 6)
+    )
+  )
+
+  expect_setequal(names(design_df), c("row", "col", "treatment", "site"))
+  expect_equal(nrow(design_df), n_items)
+  expect_setequal(design_df$treatment, items)
+  expect_setequal(unique(design_df$site), c("a", "b", "c"))
 })

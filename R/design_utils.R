@@ -242,18 +242,43 @@ infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "c
 #'   block_nrows = 2,
 #'   block_ncols = 3
 #' )
+#'
 #' @export
 # fmt: skip
-initialise_design_df <- function(items,
-                                 nrows,
-                                 ncols,
+initialise_design_df <- function(items = NULL,
+                                 nrows = NULL,
+                                 ncols = NULL,
                                  block_nrows = NULL,
-                                 block_ncols = NULL) {
-  .verify_initialise_design_df(nrows, ncols, block_nrows, block_ncols)
+                                 block_ncols = NULL,
+                                 designs = NULL,
+                                 design_col = "site") {
+  .verify_initialise_design_df(items, nrows, ncols, block_nrows, block_ncols, designs, design_col)
 
   # If items is a single numeric value, take it as the number of equally replicated treatments
   if (length(items) == 1 && is.numeric(items)) {
     items <- paste0("T", 1:items)
+  }
+
+  if (!is.null(designs)) {
+    no_items <- FALSE
+    df <- data.frame()
+    for (design_name in names(designs)) {
+      design_args <- designs[[design_name]]
+      items_sub <- design_args$items
+      if (is.null(items_sub)) {
+        items_sub <- 1
+        no_items <- TRUE
+      }
+
+      df_sub <- initialise_design_df(items_sub, design_args$nrows, design_args$ncols)
+      df_sub[[design_col]] <- design_name
+    }
+
+    if (no_items) {
+      df$treatment <- items
+    }
+
+    return(df)
   }
 
   # Create grid
@@ -298,11 +323,15 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
 }
 
 # fmt: skip
-.verify_initialise_design_df <- function(nrows,
+.verify_initialise_design_df <- function(items,
+                                         nrows,
                                          ncols,
                                          block_nrows,
-                                         block_ncols) {
-  verify_positive_whole_number(nrows, ncols)
+                                         block_ncols,
+                                         designs,
+                                         design_col) {
+  verify_positive_whole_number(length(items), nrows, ncols)
+  verify_character(design_col)
 
   if (
     (!is.null(block_nrows) && is.null(block_ncols)) ||
@@ -317,9 +346,11 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
 
     verify_multiple_of(nrows, block_nrows)
     verify_multiple_of(ncols, block_ncols)
+    verify_multiple_of(nrows * ncols, length(items))
   }
 }
 
 # Alias for the function to maintain backward compatibility
 #' @rdname initialise_design_df
+#' @export
 initialize_design_df <- initialise_design_df
