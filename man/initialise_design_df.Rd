@@ -5,13 +5,25 @@
 \alias{initialize_design_df}
 \title{Initialise Design Data Frame}
 \usage{
-initialise_design_df(items, nrows, ncols, block_nrows = 1, block_ncols = 1)
+initialise_design_df(
+  items,
+  nrows,
+  ncols,
+  block_nrows = NULL,
+  block_ncols = NULL
+)
 
-initialize_design_df(items, nrows, ncols, block_nrows = 1, block_ncols = 1)
+initialize_design_df(
+  items,
+  nrows,
+  ncols,
+  block_nrows = NULL,
+  block_ncols = NULL
+)
 }
 \arguments{
-\item{items}{Items to be placed in the design. Either a single numeric value
-(the number of equally replicated items), or a vector of items.}
+\item{items}{Items to be placed in the design. Either a single numeric value (the number of
+equally replicated items), or a vector of items.}
 
 \item{nrows}{Number of rows in the design}
 
