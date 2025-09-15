@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   complex_designs: complex_designs.html
   speed: speed.html
-last_built: 2025-09-15T01:38Z
+last_built: 2025-09-15T01:59Z
 urls:
   reference: https://biometryhub.github.io/speed/reference
   article: https://biometryhub.github.io/speed/articles
