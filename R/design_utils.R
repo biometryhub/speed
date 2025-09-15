@@ -247,8 +247,8 @@ infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "c
 initialise_design_df <- function(items,
                                  nrows,
                                  ncols,
-                                 block_nrows = 1,
-                                 block_ncols = 1) {
+                                 block_nrows = NULL,
+                                 block_ncols = NULL) {
   .verify_initialise_design_df(nrows, ncols, block_nrows, block_ncols)
 
   # If items is a single numeric value, take it as the number of equally replicated treatments
@@ -261,16 +261,12 @@ initialise_design_df <- function(items,
   df$treatment <- items
 
   # If blocked design
-  if (block_nrows != 1 || block_ncols != 1) {
+  if (!is.null(block_nrows)) {
     nblocks_row <- nrows / block_nrows
-    nblocks_col <- ncols / block_ncols
 
-    # Which block do the columns and rows belong to?
     df$row_block <- ceiling(df$row / block_nrows)
     df$col_block <- ceiling(df$col / block_ncols)
-
-    # Which block do the experimental units belong to?
-    df$block <- df$col_block + (df$row_block - 1) * nblocks_col
+    df$block <- df$row_block + nblocks_row * (df$col_block - 1)
 
     # For each block, assign treatments
     df$treatment[order(df$block)] <- items
