@@ -124,7 +124,72 @@ of treatment replications in row-column designs. Biometrical journal. Biometrisc
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">pair_mapping</span> <span class="op">&lt;-</span> <span class="fu"><a href="create_pair_mapping.html">create_pair_mapping</a></span><span class="op">(</span><span class="va">design_df</span><span class="op">$</span><span class="va">treatment</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">objective_function_piepho</span><span class="op">(</span><span class="va">design_df</span>, <span class="st">"treatment"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row"</span>, <span class="st">"col"</span><span class="op">)</span>, pair_mapping <span class="op">=</span> <span class="va">pair_mapping</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in matrix(design[[swap]], nrow = max(as.numeric.factor(design$row)),     ncol = max(as.numeric.factor(design$col))):</span> invalid 'nrow' value (too large or NA)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $score</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 16.36667</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $ed</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $ed$`2`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $ed$`2`$msts</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $ed$`2`$msts$`2`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $ed$`2`$min_mst</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $ed$`2`$min_items</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "2"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $ed$`4`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $ed$`4`$msts</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $ed$`4`$msts$`3`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $ed$`4`$min_mst</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $ed$`4`$min_items</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "3"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $ed$`3`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $ed$`3`$msts</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $ed$`3`$msts$`1`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $ed$`3`$min_mst</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $ed$`3`$min_items</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "1"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $bal</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $adj</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $nb</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $nb$nb</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sorted_pairs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1,1 1,2 1,3 2,2 2,3 3,3 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2   1   2   1   2   4 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $nb$max_nb</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $nb$max_pairs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "3,3"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $nb$var</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="co"># usage in speed, speed(..., obj_function = objective_function_piepho, pair_mapping = pair_mapping)</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
