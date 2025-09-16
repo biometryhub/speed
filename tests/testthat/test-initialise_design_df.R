@@ -136,3 +136,30 @@ test_that("initialise_design_df works for multi sites", {
   expect_equal(sort(design_df$treatment), sort(items))
   expect_setequal(unique(design_df$site), c("a", "b", "c"))
 })
+
+test_that("initialise_design_df works for multi sites w/o names", {
+  items <- c(rep(1:10, 6), rep(11:20, 8))
+  df_site1 <- expand.grid(row = 1:10, col = 1:3)
+  df_site1$site <- "1"
+  df_site2 <- expand.grid(row = 1:10, col = 1:5)
+  df_site2$site <- "2"
+  df_site3 <- expand.grid(row = 1:10, col = 1:6)
+  df_site3$site <- "c"
+  df <- rbind(df_site1, df_site2, df_site3)
+  df$treatment <- items
+
+  design_df <- initialise_design_df(
+    items = items,
+    designs = list(
+      list(nrows = 10, ncols = 3),
+      list(nrows = 10, ncols = 5),
+      c = list(nrows = 10, ncols = 6)
+    )
+  )
+
+  expect_setequal(names(design_df), c("row", "col", "treatment", "site"))
+  expect_equal(sort(design_df$row), sort(df$row))
+  expect_equal(sort(design_df$col), sort(df$col))
+  expect_equal(sort(design_df$treatment), sort(items))
+  expect_setequal(unique(design_df$site), c("1", "2", "c"))
+})

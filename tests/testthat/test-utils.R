@@ -205,3 +205,33 @@ test_that("to_types converts data frame data to input types", {
   expect_equal(typed_data$numeric_col, test_data$numeric_col)
   expect_equal(typed_data$logical_col, test_data$logical_col)
 })
+
+test_that("add_names adds names to a list", {
+  a_list <- list(1, 2, 3, "a")
+  named_list <- add_names(a_list)
+
+  expect_equal(unname(named_list), a_list)
+  expect_false(is.null(names(named_list)))
+  expect_equal(length(names(named_list)), length(a_list))
+  expect_equal(length(unique(names(named_list))), length(a_list))
+})
+
+test_that("add_names adds names to a named list", {
+  a_list <- list(1, 2, 3, b = "a")
+  named_list <- add_names(a_list)
+
+  expect_equal(unname(named_list), unname(a_list))
+  expect_false(is.null(names(named_list)))
+  expect_equal(length(names(named_list)), length(a_list))
+  expect_equal(length(unique(names(named_list))), length(a_list))
+})
+
+test_that("add_names adds names to a named list with numbered names", {
+  a_list <- list(1, "2" = 2, "1" = 3, b = "a")
+  named_list <- add_names(a_list)
+
+  expect_equal(unname(named_list), unname(a_list))
+  expect_false(is.null(names(named_list)))
+  expect_equal(length(names(named_list)), length(a_list))
+  expect_equal(length(unique(names(named_list))), length(a_list))
+})

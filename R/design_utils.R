@@ -251,7 +251,8 @@ initialise_design_df <- function(items = NULL,
                                  block_nrows = NULL,
                                  block_ncols = NULL,
                                  designs = NULL,
-                                 design_col = "site") {
+                                 design_col = "site",
+                                 blocking = NULL) {
   .verify_initialise_design_df(items, nrows, ncols, block_nrows, block_ncols, designs, design_col)
 
   # If items is a single numeric value, take it as the number of equally replicated treatments
@@ -259,24 +260,21 @@ initialise_design_df <- function(items = NULL,
     items <- paste0("T", 1:items)
   }
 
+  # if designs is provided, usually for multi-site
   if (!is.null(designs)) {
-    no_items <- FALSE
     df <- data.frame()
     for (design_name in names(designs)) {
       design_args <- designs[[design_name]]
       items_sub <- design_args$items
       if (is.null(items_sub)) {
-        items_sub <- 1
-        no_items <- TRUE
+        item_idx <- seq_len(design_args$nrows * design_args$ncols)
+        items_sub <- items[item_idx]
+        items <- items[-item_idx]
       }
 
       df_sub <- initialise_design_df(items_sub, design_args$nrows, design_args$ncols)
       df_sub[[design_col]] <- design_name
       df <- rbind(df, df_sub)
-    }
-
-    if (no_items) {
-      df$treatment <- items
     }
 
     return(df)

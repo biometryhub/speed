@@ -113,3 +113,40 @@ to_types <- function(df, types) {
 
   return(df)
 }
+
+#' Add Names to A List
+#'
+#' @description
+#' Add names to a list if not exist or fill in missing names.
+#'
+#' @param a_list A list
+#'
+#' @return A named list
+#'
+#' @keywords internal
+add_names <- function(a_list) {
+  if (is.null(names(a_list))) {
+    names(a_list) <- seq_along(a_list)
+  } else {
+    existing_names <- new.env()
+    for (name in names(a_list)) {
+      if (name != "") {
+        existing_names[[name]] <- TRUE
+      }
+    }
+
+    running_name <- 1
+    for (i in seq_along(a_list)) {
+      if (names(a_list)[[i]] == "") {
+        while (exists(as.character(running_name), existing_names)) {
+          running_name <- running_name + 1
+        }
+
+        names(a_list)[[i]] <- running_name
+        running_name <- running_name + 1
+      }
+    }
+  }
+
+  return(a_list)
+}
