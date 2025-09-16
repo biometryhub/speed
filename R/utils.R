@@ -119,4 +119,4 @@ to_types <- function(df, types) {
 #' @param x A factor
 #' @returns A numeric vector
 #' @keywords internal
-as.numeric.factor <- function(x) {as.numeric(levels(x))[x]}
+as.numeric.factor <- function(x) {as.numeric(as.character(x))}
