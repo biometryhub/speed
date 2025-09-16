@@ -113,3 +113,10 @@ to_types <- function(df, types) {
 
   return(df)
 }
+
+#' Convert Factor to Numeric
+#'
+#' @param x A factor
+#' @returns A numeric vector
+#' @keywords internal
+as.numeric.factor <- function(x) {as.numeric(levels(x))[x]}
