@@ -713,6 +713,240 @@ test_that("speed handles strip plot designs", {
   vdiffr::expect_doppelganger("speed_strip_vt", autoplot(result, treatments = "vertical_treatment"))
 })
 
+# Test autoplot with factor columns
+test_that("autoplot handles factor row and column inputs", {
+  # Sample data with factor row and col
+  test_data <- data.frame(
+    row = factor(rep(1:5, times = 4)),
+    col = factor(rep(1:4, each = 5)),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should not error when plotting with factor columns
+  expect_no_error({
+    plot <- autoplot(result)
+  })
+
+  plot <- autoplot(result)
+  expect_contains(class(plot), "ggplot")
+
+  vdiffr::expect_doppelganger("autoplot_factor_row_col", autoplot(result))
+})
+
+test_that("autoplot handles factor row only", {
+  # Sample data with factor row but numeric col
+  test_data <- data.frame(
+    row = factor(rep(1:5, times = 4)),
+    col = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should not error when plotting with factor row
+  expect_no_error({
+    plot <- autoplot(result)
+  })
+
+  plot <- autoplot(result)
+  expect_contains(class(plot), "ggplot")
+
+  vdiffr::expect_doppelganger("autoplot_factor_row", autoplot(result))
+})
+
+test_that("autoplot handles factor column only", {
+  # Sample data with numeric row but factor col
+  test_data <- data.frame(
+    row = rep(1:5, times = 4),
+    col = factor(rep(1:4, each = 5)),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should not error when plotting with factor column
+  expect_no_error({
+    plot <- autoplot(result)
+  })
+
+  plot <- autoplot(result)
+  expect_contains(class(plot), "ggplot")
+
+  vdiffr::expect_doppelganger("autoplot_factor_col", autoplot(result))
+})
+
+test_that("autoplot handles factor columns with blocks", {
+  # Sample data with factor row/col and blocks
+  test_data <- data.frame(
+    row = factor(rep(1:6, each = 4)),
+    col = factor(rep(1:4, times = 6)),
+    treatment = rep(LETTERS[1:8], 3),
+    block = rep(1:3, each = 8)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should not error when plotting with factor columns and blocks
+  expect_no_error({
+    plot <- autoplot(result)
+  })
+
+  plot <- autoplot(result)
+  expect_contains(class(plot), "ggplot")
+
+  vdiffr::expect_doppelganger("autoplot_factor_with_blocks", autoplot(result))
+})
+
+test_that("autoplot handles factor columns with custom column names", {
+  # Sample data with custom column names that are factors
+  test_data <- data.frame(
+    Row = factor(rep(1:5, times = 4)),
+    Column = factor(rep(1:4, each = 5)),
+    trt = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "trt",
+    spatial_factors = ~ Row + Column,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should not error when plotting with custom factor column names
+  expect_no_error({
+    plot <- autoplot(result, row = Row, column = Column, treatments = trt)
+  })
+
+  plot <- autoplot(result, row = Row, column = Column, treatments = trt)
+  expect_contains(class(plot), "ggplot")
+
+  vdiffr::expect_doppelganger("autoplot_factor_custom_names",
+                              autoplot(result, row = Row, column = Column, treatments = trt))
+})
+
+test_that("autoplot fails with factor columns with character levels", {
+  # Sample data with factor columns that have character levels
+  # Too hard to predict plot layout with character levels
+  test_data <- data.frame(
+    row = factor(rep(paste0("R", 1:5), times = 4)),
+    col = factor(rep(paste0("C", 1:4), each = 5)),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  expect_warning(
+    expect_warning(
+      expect_warning(
+        expect_warning(
+          expect_warning(
+            expect_error(speed(data = test_data, swap = "treatment", iterations = 100, seed = 42, quiet = TRUE),
+                         "invalid 'nrow' value \\(too large or NA\\)"),
+            "NAs introduced by coercion"),
+          "no non-missing arguments to max; returning -Inf"),
+        "no non-missing arguments to max; returning -Inf"),
+      "NAs introduced by coercion to integer range"),
+    "NAs introduced by coercion")
+})
+
+test_that("autoplot handles mixed factor and numeric columns in hierarchical designs", {
+  # Hierarchical design with mixed factor/numeric columns
+  df_split <- data.frame(
+    row = factor(rep(1:12, times = 6)),
+    col = rep(1:6, each = 12),  # Keep col as numeric
+    block = rep(1:6, each = 12),
+    wholeplot_treatment = rep(rep(paste0("WP", LETTERS[1:3]), each = 4), times = 6),
+    subplot_treatment = rep(paste0("SP", letters[1:4]), times = 18)
+  )
+
+  result <- speed(df_split,
+                  swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+                  swap_within = list(wp = "block", sp = "wholeplot_treatment"),
+                  spatial_factors = ~ row + col,
+                  iterations = 100,
+                  seed = 42,
+                  quiet = TRUE)
+
+  # Should not error with mixed factor/numeric in hierarchical design
+  expect_no_error({
+    plot_wp <- autoplot(result, treatments = "wholeplot_treatment")
+    plot_sp <- autoplot(result, treatments = "subplot_treatment")
+  })
+
+  plot_wp <- autoplot(result, treatments = "wholeplot_treatment")
+  plot_sp <- autoplot(result, treatments = "subplot_treatment")
+  expect_contains(class(plot_wp), "ggplot")
+  expect_contains(class(plot_sp), "ggplot")
+
+  vdiffr::expect_doppelganger("autoplot_hierarchical_mixed_factors_wp", plot_wp)
+  vdiffr::expect_doppelganger("autoplot_hierarchical_mixed_factors_sp", plot_sp)
+})
+
+test_that("autoplot error handling with missing columns still works with factors", {
+  # Test that error handling works even when some columns are factors
+  test_data <- data.frame(
+    row = factor(rep(1:5, times = 4)),
+    col = factor(rep(1:4, each = 5)),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should give helpful error when specifying non-existent column
+  expect_error(
+    autoplot(result, row = nonexistent_row),
+    "'nonexistent_row' not found"
+  )
+
+  expect_error(
+    autoplot(result, column = nonexistent_col),
+    "'nonexistent_col' not found"
+  )
+
+  expect_error(
+    autoplot(result, treatments = nonexistent_treatment),
+    "'nonexistent_treatment' not found"
+  )
+})
+
 # Test autoplot legend parameter
 test_that("autoplot legend parameter controls legend visibility", {
   # Sample data for testing

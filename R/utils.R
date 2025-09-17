@@ -179,3 +179,10 @@ rbind_fill <- function(..., fill = NA) {
 
   return(do.call(rbind, dfs_filled))
 }
+
+#' Convert Factor to Numeric
+#'
+#' @param x A factor
+#' @returns A numeric vector
+#' @keywords internal
+as_numeric_factor <- function(x) as.numeric(as.character(x))

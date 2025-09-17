@@ -190,18 +190,18 @@ verify_between <- function(
       object_type <- paste0("at most ", upper)
     }
   }
-  object_type <- paste0(object_type, ".")
 
-  verify_data_type(is_between_(lower, upper), object_type, var_names, ...)
+  verify_data_type(is_between_(lower, upper, lower_exclude, upper_exclude), object_type, var_names, ...)
 }
 
 verify_boolean <- function(..., var_names = NULL) {
   verify_data_type(is_boolean, "a boolean", var_names, ...)
 }
 
-verify_column_exists <- function(col, data, prefix) {
+verify_column_exists <- function(col, data, suffix = NULL) {
   if (!(col %in% names(data))) {
-    stop(paste0("'", col, "' not found in ", paste(colnames(data), collapse = ", ")), call. = FALSE)
+    msg <- c(paste0("'", col, "' not found in ", paste(colnames(data), collapse = ", "), ". "), suffix)
+    stop(msg, call. = FALSE)
   }
 }
 
@@ -255,6 +255,10 @@ verify_data_type <- function(verify_func, data_type, var_names = NULL, ...) {
 get_literal_values <- function(values) {
   n_values <- length(values)
   literal_values <- literal(values[[1]])
+  if(n_values == 1) {
+    return(literal_values)
+  }
+
   if (n_values == 2) {
     return(paste0(literal_values, " or ", literal(values[[2]])))
   }
@@ -266,6 +270,7 @@ get_literal_values <- function(values) {
       literal_values <- paste0(literal_values, ", or ", literal(values[[i]]))
     }
   }
+  return(literal_values)
 }
 
 get_var_names <- function(...) {

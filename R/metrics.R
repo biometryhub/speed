@@ -139,8 +139,8 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 calculate_adjacency_score <- function(layout_df, swap, row_column = "row", col_column = "col") {
   layout_df <- matrix(
     layout_df[[swap]],
-    nrow = max(as.numeric(as.character(layout_df[[row_column]])), na.rm = TRUE),
-    ncol = max(as.numeric(as.character(layout_df[[col_column]])), na.rm = TRUE),
+    nrow = max(as_numeric_factor(layout_df[[row_column]]), na.rm = TRUE),
+    ncol = max(as_numeric_factor(layout_df[[col_column]]), na.rm = TRUE),
     byrow = TRUE
   )
 
@@ -202,8 +202,8 @@ objective_function_piepho <- function(design,
                                       ...) {
   design_matrix <- matrix(
     design[[swap]],
-    nrow = max(design$row),
-    ncol = max(design$col)
+    nrow = max(as_numeric_factor(design$row), na.rm = TRUE),
+    ncol = max(as_numeric_factor(design$col), na.rm = TRUE)
   )
 
   ed <- calculate_ed(design_matrix, current_score_obj$ed, swapped_items)
@@ -636,8 +636,8 @@ calculate_efficiency_factor <- function(design_df, item) {
   # Design parameters
   encoded_items <- as.integer(as.factor(design_df[[item]]))
   n_treatments <- length(unique(encoded_items))
-  n_rows <- max(as.numeric(as.character(design_df$row)))
-  n_cols <- max(as.numeric(as.character(design_df$col)))
+  n_rows <- max(as_numeric_factor(design_df$row), na.rm = TRUE)
+  n_cols <- max(as_numeric_factor(design_df$col), na.rm = TRUE)
   n_plots <- nrow(design_df)
 
   # Create design matrix X for treatments
