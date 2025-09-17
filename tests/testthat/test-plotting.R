@@ -678,3 +678,138 @@ test_that("plot_progress works with single iteration result", {
   expect_equal(length(result$scores), 1)
   expect_equal(length(result$temperatures), 1)
 })
+
+# Test autoplot margin parameter
+test_that("autoplot margin parameter controls plot margins", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Test default behavior (margin = FALSE)
+  plot_no_margin <- autoplot(result, margin = FALSE)
+  expect_contains(class(plot_no_margin), "ggplot")
+
+  # Test with margin = TRUE
+  plot_with_margin <- autoplot(result, margin = TRUE)
+  expect_contains(class(plot_with_margin), "ggplot")
+
+  # Both plots should be generated without error
+  expect_no_error({
+    autoplot(result, margin = FALSE)
+  })
+
+  expect_no_error({
+    autoplot(result, margin = TRUE)
+  })
+
+  # Check that the plots have different scale properties
+  # margin = FALSE should have expand = c(0, 0) for both x and y scales
+  # margin = TRUE should not have expand = c(0, 0)
+
+  # Build the plots to access their internal structure
+  built_no_margin <- ggplot2::ggplot_build(plot_no_margin)
+  built_with_margin <- ggplot2::ggplot_build(plot_with_margin)
+
+  # The plots should have the same data but different scale ranges
+  expect_equal(built_no_margin$data, built_with_margin$data)
+
+  # Visual regression tests to capture the differences
+  vdiffr::expect_doppelganger("autoplot_margin_false", autoplot(result, margin = FALSE))
+  vdiffr::expect_doppelganger("autoplot_margin_true", autoplot(result, margin = TRUE))
+})
+
+test_that("autoplot margin parameter works with blocked designs", {
+  # Sample data with blocks for more complex margin testing
+  test_data <- data.frame(
+    row = rep(1:6, each = 4),
+    col = rep(1:4, times = 6),
+    treatment = rep(LETTERS[1:6], 4),
+    block = rep(1:3, each = 8)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Test margin parameter with blocked designs
+  expect_no_error({
+    plot_no_margin_blocked <- autoplot(result, margin = FALSE)
+  })
+
+  expect_no_error({
+    plot_with_margin_blocked <- autoplot(result, margin = TRUE)
+  })
+
+  plot_no_margin_blocked <- autoplot(result, margin = FALSE)
+  plot_with_margin_blocked <- autoplot(result, margin = TRUE)
+
+  expect_contains(class(plot_no_margin_blocked), "ggplot")
+  expect_contains(class(plot_with_margin_blocked), "ggplot")
+
+  # Visual regression tests for blocked designs with different margin settings
+  vdiffr::expect_doppelganger("autoplot_blocked_margin_false", autoplot(result, margin = FALSE))
+  vdiffr::expect_doppelganger("autoplot_blocked_margin_true", autoplot(result, margin = TRUE))
+})
+
+test_that("autoplot margin parameter works with different palettes", {
+  # Test that margin parameter works correctly with different palette options
+  test_data <- data.frame(
+    row = rep(1:5, times = 4),
+    col = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Test different combinations of margin and palette parameters
+  test_combinations <- list(
+    list(margin = FALSE, palette = "viridis"),
+    list(margin = TRUE, palette = "viridis"),
+    list(margin = FALSE, palette = "Set3"),
+    list(margin = TRUE, palette = "Set3"),
+    list(margin = FALSE, palette = c("#FF5733", "#33FF57", "#3357FF", "#FF33F5")),
+    list(margin = TRUE, palette = c("#FF5733", "#33FF57", "#3357FF", "#FF33F5"))
+  )
+
+  for (combo in test_combinations) {
+    expect_no_error({
+      autoplot(result, margin = combo$margin, palette = combo$palette)
+    })
+
+    plot <- autoplot(result, margin = combo$margin, palette = combo$palette)
+    expect_contains(class(plot), "ggplot")
+  }
+
+  # Visual regression tests for key combinations
+  vdiffr::expect_doppelganger("autoplot_margin_false_viridis",
+                              autoplot(result, margin = FALSE, palette = "viridis"))
+  vdiffr::expect_doppelganger("autoplot_margin_true_set3",
+                              autoplot(result, margin = TRUE, palette = "Set3"))
+})
