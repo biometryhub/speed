@@ -2,73 +2,133 @@
 % Please edit documentation in R/speed.R
 \name{speed}
 \alias{speed}
-\title{Optimize Experimental Design Layout Using Simulated Annealing}
+\title{Optimise Experimental Design Layout Using Simulated Annealing}
 \usage{
 speed(
   data,
   swap,
   swap_within = "1",
   spatial_factors = ~row + col,
+  grid_factors = list(dim1 = "row", dim2 = "col"),
   iterations = 10000,
   early_stop_iterations = 2000,
-  obj_function = objective_function(),
+  obj_function = objective_function,
   quiet = FALSE,
-  seed = NULL
+  seed = NULL,
+  ...
 )
 }
 \arguments{
-\item{data}{A data frame containing the initial design layout with row and col coordinates}
+\item{data}{A data frame containing the experimental design with spatial
+coordinates}
 
-\item{swap}{A column name of the item to be swapped (e.g., \code{treatment})}
+\item{swap}{A column name of the items to be swapped (e.g., \code{treatment},
+\code{variety}, \code{genotype}, etc). For hierarchical designs, provide a named
+list where each name corresponds to a hierarchy level (e.g.,
+\code{list(wp = "wholeplot_treatment", sp = "subplot_treatment")}).
+See details for more information.}
 
-\item{swap_within}{A string specifying the blocking variable that is a boundary within which to swap items.
-Specify \code{"1"} or \code{"none"} for no boundary (default: \code{"1"})}
+\item{swap_within}{A string specifying the variable that defines a boundary
+within which to swap treatments. Specify \code{"1"} or \code{"none"} for no boundary
+(default: \code{"1"}). Other examples might be \code{"block"} or \code{"replicate"} or
+even \code{"site"}. For hierarchical designs, provide a named list with names
+matching \code{swap} to optimise a hierarchical design such as a split-plot.
+See details for more information.}
 
-\item{spatial_factors}{A one-sided formula specifying spatial factors to consider for balance (default:
-\code{~row + col})}
+\item{spatial_factors}{A one-sided formula specifying spatial factors to
+consider for balance (default: \code{~row + col}).}
 
-\item{iterations}{Maximum number of iterations for the simulated annealing algorithm (default: 10000)}
+\item{grid_factors}{A named list specifying grid factors to construct a
+matrix for calculating adjacency score, \code{dim1} for row and \code{dim2} for
+column. (default: \code{list(dim1 = "row", dim2 = "col")}).}
 
-\item{early_stop_iterations}{Number of iterations without improvement before early stopping (default: 2000)}
+\item{iterations}{Maximum number of iterations for the simulated annealing
+algorithm (default: 10000). For hierarchical designs, can be a named list
+with names matching \code{swap}.}
 
-\item{obj_function}{Objective function used to calculate score (lower is better) (default:
-\link{objective_function})}
+\item{early_stop_iterations}{Number of iterations without improvement before
+early stopping (default: 2000). For hierarchical designs, can be a named
+list with names matching \code{swap}.}
+
+\item{obj_function}{Objective function used to calculate score (lower is
+better) (default: \code{\link[=objective_function]{objective_function()}}). For hierarchical designs, can
+be a named list with names matching \code{swap}.}
 
 \item{quiet}{Logical; if TRUE, suppresses progress messages (default: FALSE)}
 
-\item{seed}{A numeric value for random seed. If provided, it ensures reproducibility of results (default:
-NULL).}
+\item{seed}{A numeric value for random seed. If provided, it ensures
+reproducibility of results (default: \code{NULL}).}
+
+\item{...}{Other arguments passed through to objective functions.}
 }
 \value{
 A list containing:
 \itemize{
-\item design - Matrix of optimized treatment layout
-\item design_df - Data frame of optimized design
-\item score - Final optimization score
-\item adjacency_score - Score for treatment adjacencies
-\item balance_score - Score for spatial balance
-\item scores - Vector of scores across iterations
-\item temperatures - Vector of temperatures across iterations
-\item iterations_run - Total number of iterations performed
-\item stopped_early - Logical indicating if optimization stopped early
-\item treatments - Vector of unique treatments
-\item seed - Random seed used for reproducibility of the design. If not set in the function, the seed is
-set to the second element of .Random.seed.
+\item \strong{design_df} - Data frame of optimised design
+\item \strong{score} - Final optimisation score
+\item \strong{scores} - Vector of scores across iterations (for simple designs) or
+named list of score vectors (for hierarchical designs)
+\item \strong{temperatures} - Vector of temperatures across iterations
+\item \strong{iterations_run} - Total number of iterations performed
+\item \strong{stopped_early} - Logical indicating if optimisation stopped early
+(for simple designs) or named logical vector (for hierarchical designs)
+\item \strong{treatments} - Vector of unique treatments (for simple designs) or
+named list of treatment vectors (for hierarchical designs)
+\item \strong{seed} - Random seed used for reproducibility of the design. If not set
+in the function, the seed is set to the third element of \code{.Random.seed}.
 }
 }
 \description{
-Optimizes the spatial layout of experimental designs using simulated annealing to minimize
-treatment adjacency and maintain treatment balance across spatial factors.
+Optimises the spatial layout of experimental designs using simulated
+annealing to minimise treatment adjacency and maintain treatment balance
+across spatial factors. Works with regular or irregular spatial designs.
+}
+\details{
+This function provides a very general interface for producing experimental
+designs of different types. For hierarchical designs such as split-plots,
+strip plots, split-split plots and similar nested structures, the key
+arguments (\code{swap}, \code{swap_within}, \code{iterations}, \code{early_stop_iterations} and
+\code{obj_function}) can be provided as named lists where each name corresponds
+to a level in the hierarchy (e.g., "wholeplot", "subplot"). When these
+arguments are provided as named lists with matching names, the optimisation
+is applied sequentially at each hierarchical level, starting with the first
+level and progressing through the hierarchy. This allows for different
+optimisation parameters and objective functions to be applied at different
+levels of the design structure. For simple (non-hierarchical) designs, these
+arguments can be provided as single values. For more examples and detailed
+usage, see the package vignettes.
 }
 \examples{
 # Create a simple design with 3 replicates of 4 treatments in a 4x3 layout
 df <- data.frame(
-  row = rep(1:4, each = 3),
-  col = rep(1:3, times = 4),
-  treatment = rep(LETTERS[1:4], 3)
+  row = rep(1:4, times = 5),
+  col = rep(1:5, each = 4),
+  treatment = rep(LETTERS[1:4], 5)
 )
 
-# Optimize the design
-result <- speed(df, swap = "treatment")
+# Optimise the design
+result <- speed(df, swap = "treatment", seed = 42)
+autoplot(result)
+
+# Hierarchical split-plot design
+df_split <- data.frame(
+  row = rep(1:12, each = 4),
+  col = rep(1:4, times = 12),
+  block = rep(1:4, each = 12),
+  wholeplot = rep(1:12, each = 4),
+  wholeplot_treatment = rep(rep(LETTERS[1:3], each = 4), times = 4),
+  subplot_treatment = rep(letters[1:4], 12)
+)
+
+result <- speed(df_split,
+                swap = list(wp = "wholeplot_treatment",
+                            sp = "subplot_treatment"),
+                swap_within = list(wp = "block", sp = "wholeplot"),
+                seed = 42)
+
+# Plot wholeplot allocations within blocks
+autoplot(result, treatments = "wholeplot_treatment")
+# Plot subplot allocations within wholeplots
+autoplot(result, treatments = "subplot_treatment", block = "wholeplot")
 
 }

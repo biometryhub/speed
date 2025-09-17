@@ -1,53 +1,158 @@
-#' Default Objective Function
+#' Default objective functions
 #'
 #' @description
-#' A default objective function that combines adjacency and balance scores.
+#' Default Objective Function for Design Optimization
 #'
-#' @param adj_weight Weight for adjacency score (default: 0)
-#' @param bal_weight Weight for balance score (default: 1)
+#' @rdname objective_functions
+#'
+#' @param layout_df A data frame representing the current design
+#' @param swap A column name of the items to be swapped
+#' @param spatial_cols Column name(s) of the spatial factors
+#' @param ... Extra parameters passed from [speed]
 #'
 #' @examples
-#' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
 #' layout_df <- data.frame(
 #'   row = rep(1:3, each = 3),
-#'   col = rep(1:3, times = 3)
+#'   col = rep(1:3, times = 3),
+#'   treatment = rep(letters[1:3], 3)
 #' )
-#' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
+#' objective_function(layout_df, "treatment", c("row", "col"))
 #'
+#' @return A numeric value representing the score of the design (lower is better)
+#' @export
+# fmt: skip
+objective_function_signature <- function(layout_df,
+                                         swap,
+                                         spatial_cols,
+                                         ...) {
+  stop("This is a dummy function for documentation purposes only")
+}
 
-#' @return A function which returns a named list of numeric values with one required name `score` representing
-#'   the score of the design (lower is better) with a signature
-#'   `function(design_matrix, layout_df, swap, spatial_cols, previous_score, swapped_items)`. See signature
-#'   details in [objective_function_signature].
+#' Default Objective Function for Design Optimization
 #'
-#' @seealso [objective_function_piepho()]
+#' @param adj_weight Weight for adjacency score (default: 1)
+#' @param bal_weight Weight for balance score (default: 1)
+#' @param row_column Name of column representing the row of the design (default: "row")
+#' @param col_column Name of column representing the column of the design (default: "col")
+#'
+#' @rdname objective_functions
+#' @export
+# fmt: skip
+objective_function <- function(layout_df,
+                               swap,
+                               spatial_cols,
+                               adj_weight = getOption("speed.adj_weight", 1),
+                               bal_weight = getOption("speed.bal_weight", 1),
+                               row_column = "row",
+                               col_column = "col",
+                               ...) {
+  # Check if there are only two treatments - adjacency becomes deterministic
+  n_treatments <- length(unique(layout_df[[swap]]))
+  if (n_treatments == 2 && adj_weight != 0) {
+    warning("Only 2 treatments detected in '", swap, "'. Adjacency optimization becomes deterministic (checkerboard pattern). Setting adjacency weight to 0.",
+      call. = FALSE
+    )
+    adj_weight <- 0
+  }
+
+  adj_score <- ifelse(adj_weight != 0,
+    calculate_adjacency_score(layout_df, swap, row_column, col_column),
+    0
+  )
+
+  bal_score <- ifelse(bal_weight != 0,
+    calculate_balance_score(layout_df, swap, spatial_cols),
+    0
+  )
+
+  return(list(
+    score = round(adj_weight * adj_score + bal_weight * bal_score, 10)
+  ))
+}
+
+#' Calculate Balance Score for Experimental Design
+#'
+#' @description
+#' Calculates a balance score that measures how evenly treatments are distributed
+#'   across spatial factors in an experimental design. Lower scores indicate better balance.
+#'
+#' @inheritParams objective_function_signature
+#'
+#' @return Numeric value representing the total balance score. Lower values indicate
+#'   better balance of treatments across spatial factors.
+#'
+#' @examples
+#' layout_df <- data.frame(
+#'   row = rep(1:3, each = 3),
+#'   col = rep(1:3, times = 3),
+#'   treatment = rep(letters[1:3], 3)
+#' )
+#' calculate_balance_score(layout_df, "treatment", c("row", "col"))
 #'
 #' @export
-objective_function <- function(
-    adj_weight = getOption("speed.adj_weight", 0),
-    bal_weight = getOption("speed.bal_weight", 1)) {
-  return(
-    function(design_matrix, layout_df, swap, spatial_cols, ...) {
-      if (adj_weight != 0) {
-        adj <- calculate_adjacency_score(design_matrix)
+calculate_balance_score <- function(layout_df, swap, spatial_cols) {
+  score <- sapply(spatial_cols, function(el) {
+    sum(
+      matrixStats::rowVars(
+        table(layout_df[[el]], layout_df[[swap]]),
+        na.rm = TRUE
+      ),
+      na.rm = TRUE
+    )
+  })
+  return(sum(score))
+}
 
-        if (bal_weight == 0) {
-          return(list(score = adj))
-        }
-      }
-
-      if (bal_weight != 0) {
-        layout_df[[swap]] <- as.vector(design_matrix)
-        bal <- calculate_balance_score(layout_df, swap, spatial_cols)
-
-        if (adj_weight == 0) {
-          return(list(score = bal))
-        }
-      }
-
-      return(list(score = adj_weight * adj + bal_weight * bal))
-    }
+#' Calculate Adjacency Score for Design
+#'
+#' @description
+#' Calculates the adjacency score for a given experimental design. The adjacency score
+#' represents the number of adjacent plots with the same treatment. Lower scores indicate
+#' better separation of treatments.
+#'
+#' @inheritParams objective_function_signature
+#'
+#' @return Numeric score for treatment adjacencies (lower is better)
+#'
+#' @examples
+#' # Example 1: Design with no adjacencies
+#' design_no_adj <- data.frame(
+#'   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
+#'   col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
+#'   treatment = c("A", "B", "A", "B", "A", "B", "A", "B", "A")
+#' )
+#'
+#' # Gives 0
+#' calculate_adjacency_score(design_no_adj, "treatment")
+#'
+#' # Example 2: Design with adjacencies
+#' design_with_adj <- data.frame(
+#'   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
+#'   col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
+#'   treatment = c("A", "A", "A", "B", "B", "B", "A", "A", "A")
+#' )
+#'
+#' # Gives value 6
+#' calculate_adjacency_score(design_with_adj, "treatment")
+#'
+#' @export
+calculate_adjacency_score <- function(layout_df, swap, row_column = "row", col_column = "col") {
+  layout_df <- matrix(
+    layout_df[[swap]],
+    nrow = max(as.numeric.factor(layout_df[[row_column]]), na.rm = TRUE),
+    ncol = max(as.numeric.factor(layout_df[[col_column]]), na.rm = TRUE),
+    byrow = TRUE
   )
+
+  row_adjacencies <- sum(
+    layout_df[, -ncol(layout_df)] == layout_df[, -1],
+    na.rm = TRUE
+  )
+  col_adjacencies <- sum(
+    layout_df[-nrow(layout_df), ] == layout_df[-1, ],
+    na.rm = TRUE
+  )
+  return(row_adjacencies + col_adjacencies)
 }
 
 #' Objective Function with Metric from Piepho
@@ -55,50 +160,79 @@ objective_function <- function(
 #' @description
 #' Create an objective function including even distribution and neighbor balance introduced by Piepho 2018.
 #'
+#' @inheritParams objective_function_signature
+#' @inheritParams objective_function
 #' @inheritParams calculate_nb
+#' @inheritParams calculate_ed
+#' @param design A data frame representing the spatial information of the design
+#' @param current_score_obj A named list containing the current score
 #'
 #' @examples
-#' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
-#' layout_df <- data.frame(
-#'   row = rep(1:3, each = 3),
-#'   col = rep(1:3, times = 3)
+#' design_df <- initialise_design_df(
+#'   items = c(1, 2, 2, 1, 3, 3, 1, 3, 3),
+#'   nrows = 3,
+#'   ncols = 3
 #' )
-#' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
 #'
-#' pair_mapping <- create_pair_mapping(c(design_matrix))
-#' obj_function_piepho <- function(pair_mapping) {
-#'   obj_function_piepho(design_matrix, layout_df, "treatment", c("row", "col"))
-#' }
-#' # usage in speed, speed(..., obj_function = obj_function_piepho)
+#' pair_mapping <- create_pair_mapping(design_df$treatment)
+#' objective_function_piepho(design_df, "treatment", c("row", "col"), pair_mapping = pair_mapping)
+#' # usage in speed, speed(..., obj_function = objective_function_piepho, pair_mapping = pair_mapping)
 #'
 #' @return A function which returns a named list of numeric values with one required name `score` representing
-#'   the score of the design (lower is better) with a signature
-#'   `function(design_matrix, layout_df, swap, spatial_cols, previous_score, swapped_items)`. See signature
+#'   the score of the design (lower is better) with a signature `function(design_df, swap, spatial_cols, ...)`.
+#'   See signature
 #'   details in [objective_function_signature].
+#'
+#' @references Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of distribution
+#'   of treatment replications in row-column designs. Biometrical journal. Biometrische Zeitschrift, 60(6),
+#'   1172–1189. <https://doi.org/10.1002/bimj.201800013>
 #'
 #' @seealso [objective_function()], [create_pair_mapping()]
 #'
 #' @export
-objective_function_piepho <- function(pair_mapping = NULL) {
-  return(
-    function(design_matrix, layout_df, swap, spatial_cols, previous_score = NULL, swapped_items = NULL) {
-      ed <- calculate_ed(design_matrix, previous_score$ed, swapped_items)
-      ed_score <- -sum(vapply(ed, function(ed_rep) ed_rep$min_mst, numeric(1)))
-      nb_score <- calculate_nb(design_matrix, pair_mapping)$max_nb
-      bal_score <- calculate_balance_score(layout_df, swap, spatial_cols)
-
-      return(list(score = nb_score + ed_score + bal_score, ed = ed))
-    }
+# fmt: skip
+objective_function_piepho <- function(design,
+                                      swap,
+                                      spatial_cols,
+                                      current_score_obj = NULL,
+                                      swapped_items = NULL,
+                                      pair_mapping = NULL,
+                                      row_column = "row",
+                                      col_column = "col",
+                                      ...) {
+  design_matrix <- matrix(
+    design[[swap]],
+    nrow = max(as.numeric.factor(design$row)),
+    ncol = max(as.numeric.factor(design$col))
   )
+
+  ed <- calculate_ed(design_matrix, current_score_obj$ed, swapped_items)
+  # sum(1/) or 1/sum
+  ed_score <- 1 /
+    sum(vapply(ed, function(ed_rep) ed_rep$min_mst, numeric(1)))
+  nb <- calculate_nb(design_matrix, pair_mapping)
+  nb_score <- nb$var
+
+  design[[swap]] <- as.vector(design_matrix)
+  bal_score <- calculate_balance_score(design, swap, spatial_cols)
+  adj_score <- calculate_adjacency_score(design, swap, row_column, col_column)
+
+  return(list(
+    score = round(nb_score + ed_score + bal_score + adj_score, 10),
+    ed = ed,
+    bal = bal_score,
+    adj = adj_score,
+    nb = nb
+  ))
 }
 
-#' Neighbor Balance Calculation
+#' Neighbour Balance Calculation
 #'
 #' @description
 #' A metric that counts the occurrence of the same adjacent pairs. Only horizontal and vertical pairs are
 #'   counted.
 #'
-#' @inheritParams objective_function_signature
+#' @param design_matrix A matrix representing the design
 #' @param pair_mapping A named vector of pairs generated from [create_pair_mapping]
 #'
 #' @examples
@@ -137,7 +271,8 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
   return(list(
     nb = nb,
     max_nb = max_nb,
-    max_pairs = max_pairs
+    max_pairs = max_pairs,
+    var = var(nb)
   ))
 }
 
@@ -147,7 +282,7 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #' A metric that counts the occurrence of the same adjacent pairs. Only horizontal and vertical pairs are
 #'   counted.
 #'
-#' @inheritParams objective_function_signature
+#' @inheritParams calculate_nb
 #'
 #' @return Named list containing:
 #' \itemize{
@@ -158,7 +293,6 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #'
 #' @keywords internal
 .calculate_nb <- function(design_matrix) {
-  # TODO: check function overloading
   n_rows <- dim(design_matrix)[1]
   n_cols <- dim(design_matrix)[2]
   # env is faster than list
@@ -192,12 +326,14 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
   }
 
   nb <- as.list(nb)
-  max_nb <- max(unlist(nb))
+  nb_values <- unlist(nb)
+  max_nb <- max(nb_values)
   max_pairs <- names(nb[nb == max_nb])
   return(list(
     nb = nb,
     max_nb = max_nb,
-    max_pairs = max_pairs
+    max_pairs = max_pairs,
+    var = var(nb_values)
   ))
 }
 
@@ -206,8 +342,9 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #' @description
 #' A metric that represents the even distribution of each item with their minimum spanning tree (mst).
 #'
-#' @inheritParams objective_function_signature
-#' @param previous_ed Named list of the previous ed calculation
+#' @inheritParams calculate_nb
+#' @param current_ed Named list of the current ed calculation
+#' @param swapped_items The items that had just been swapped
 #'
 #' @examples
 #' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
@@ -226,10 +363,13 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #' @seealso [objective_function_piepho()]
 #'
 #' @export
-calculate_ed <- function(design_matrix, previous_ed = NULL, swapped_items = NULL) {
+calculate_ed <- function(
+    design_matrix,
+    current_ed = NULL,
+    swapped_items = NULL) {
   if (!is.null(swapped_items)) {
     design_matrix[!(design_matrix %in% swapped_items)] <- NA
-    msts <- lapply(previous_ed, function(ed_by_rep) ed_by_rep$msts)
+    msts <- lapply(current_ed, function(ed_by_rep) ed_by_rep$msts)
   } else {
     msts <- list()
   }
@@ -255,11 +395,16 @@ calculate_ed <- function(design_matrix, previous_ed = NULL, swapped_items = NULL
         # initialize a fully-connected graph without weights
         # 1--2, 1--3, ..., 1--n-1, 1--n, 2--3, 2--4, ..., n-1--n
         edge_table <- t(combn(1:reps, 2))
-        sub_graph[[reps_char]] <- igraph::graph_from_edgelist(edge_table, directed = FALSE)
+        sub_graph[[reps_char]] <- igraph::graph_from_edgelist(
+          edge_table,
+          directed = FALSE
+        )
       }
 
       igraph::E(sub_graph[[reps_char]])$weight <- edges[[item]]
-      msts[[reps_char]][[item]] <- sum(igraph::E(igraph::mst(sub_graph[[reps_char]]))$weight)
+      msts[[reps_char]][[item]] <- sum(
+        igraph::E(igraph::mst(sub_graph[[reps_char]]))$weight
+      )
     }
   }
 
@@ -276,7 +421,7 @@ calculate_ed <- function(design_matrix, previous_ed = NULL, swapped_items = NULL
   })
 
   if (length(edges_3_reps) > 0) {
-    ed$`3` <- .calculate_ed_3_reps(edges_3_reps, previous_ed)
+    ed$`3` <- .calculate_ed_3_reps(edges_3_reps, current_ed)
   }
 
   return(ed)
@@ -287,7 +432,7 @@ calculate_ed <- function(design_matrix, previous_ed = NULL, swapped_items = NULL
 #' @description
 #' Get the vertices of each item in a design matrix.
 #'
-#' @inheritParams objective_function_signature
+#' @inheritParams calculate_nb
 #'
 #' @examples
 #' design_matrix <- matrix(c(1, 2, 2, 1, 3, 2, 1, 3, 3), nrow = 3, ncol = 3)
@@ -374,6 +519,8 @@ get_edges <- function(vertices) {
 #'
 #' @param edges A list of vectors of edge weights
 #'
+#' @importFrom utils modifyList
+#'
 #' @return Named list containing:
 #' \itemize{
 #'   \item msts - Named list of pairs of items and their mst
@@ -384,16 +531,17 @@ get_edges <- function(vertices) {
 #' @seealso [get_edges()]
 #'
 #' @keywords internal
-.calculate_ed_3_reps <- function(edges, previous_ed = NULL) {
+.calculate_ed_3_reps <- function(edges, current_ed = NULL) {
   # pick 2 shortest connections for 3 reps
   ed <- lapply(
-    edges, function(weights) {
+    edges,
+    function(weights) {
       sum(weights) - max(weights)
     }
   )
 
-  if (!is.null(previous_ed)) {
-    ed <- modifyList(previous_ed$`3`$msts, ed)
+  if (!is.null(current_ed)) {
+    ed <- modifyList(current_ed$`3`$msts, ed)
   }
 
   min_mst <- min(unlist(ed))
@@ -405,44 +553,14 @@ get_edges <- function(vertices) {
   ))
 }
 
-#' Calculate Adjacency Score for Experimental Design
-#'
-#' @description
-#' Calculates the number of adjacent treatments that are the same in an experimental
-#'   design layout. Lower scores indicate better separation of treatments.
-#'
-#' @param design A matrix containing the experimental design layout with treatments
-#'
-#' @return Numeric value representing the total number of adjacent same treatments.
-#'   The score is the sum of same treatments that are adjacent horizontally
-#'   and vertically.
-#'
-#' @examples
-#' design <- matrix(
-#'   c(
-#'     "A", "B", "A",
-#'     "B", "A", "B",
-#'     "A", "B", "A"
-#'   ),
-#'   nrow = 3, byrow = TRUE
-#' )
-#' calculate_adjacency_score(design) # Returns the number of adjacent matches
-#'
-#' @export
-calculate_adjacency_score <- function(design) {
-  # row_adjacencies <- rowSums(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
-  # col_adjacencies <- colSums(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
-  row_adjacencies <- sum(design[, -ncol(design)] == design[, -1], na.rm = TRUE)
-  col_adjacencies <- sum(design[-nrow(design), ] == design[-1, ], na.rm = TRUE)
-  return(row_adjacencies + col_adjacencies)
-}
-
 #' Create Pair Mapping
 #'
 #' @description
 #' Create an item pair mapping for [calculate_nb].
 #'
 #' @param items Vector of items for the design
+#'
+#' @importFrom stats setNames
 #'
 #' @examples
 #' treatments <- c(rep(1:10, 4), rep(11:16, 3), rep(17:27, 2))
@@ -476,68 +594,115 @@ create_pair_mapping <- function(items) {
 
   identical_pairs <- paste(items, items, sep = ",")
   pairs <- paste(combinations[1, ], combinations[2, ], sep = ",")
-  pairs_r <- sapply(pairs, function(k) paste(rev(strsplit(k, ",")[[1]]), collapse = ","))
+  pairs_r <- sapply(
+    pairs,
+    function(k) paste(rev(strsplit(k, ",")[[1]]), collapse = ",")
+  )
 
-  pair_mapping <- setNames(c(pairs, identical_pairs), c(pairs_r, identical_pairs))
+  pair_mapping <- setNames(
+    c(pairs, identical_pairs),
+    c(pairs_r, identical_pairs)
+  )
   return(pair_mapping)
 }
 
-#' Calculate Balance Score for Experimental Design
+#' Calculate Efficiency Factor according Piepho
 #'
 #' @description
-#' Calculates a balance score that measures how evenly treatments are distributed
-#'   across spatial factors in an experimental design. Lower scores indicate better balance.
+#' Calculates an efficiency factor of a design according to Piepho 2015.
 #'
-#' @inheritParams objective_function_signature
-#'
-#' @return Numeric value representing the total balance score. Lower values indicate
-#'   better balance of treatments across spatial factors.
+#' @param design_df A data frame containing the experimental design with spatial coordinates
+#' @param item A column name of the items in the design (e.g., `treatment`, `variety`, `genotype`, etc)
 #'
 #' @examples
-#' layout_df <- data.frame(
-#'   row = rep(1:3, each = 3),
-#'   col = rep(1:3, times = 3),
-#'   treatment = rep(letters[1:3], 3)
-#' )
-#' calculate_balance_score(layout_df, "treatment", c("row", "col"))
+#' df_design <- initialise_design_df(c(
+#'   "a", "b", "d", "c",
+#'   "e", "a", "f", "b",
+#'   "c", "f", "e", "d"
+#' ), 3, 4)
+#'
+#' calculate_efficiency_factor(df_design, "treatment")
+#'
+#' @return A numeric value representing the efficiency factor of the design. Higher values indicate more efficient designs.
+#'
+#' @references Piepho, H. P., Williams, E., & Michel, V. (2015). Nonresolvable Row-Column Designs with an Even
+#'   Distribution of Treatment Replications. Journal of Agricultural, Biological, and Environmental Statistics,
+#'   21, 227-242 (2016). <https://doi.org/10.1007/s13253-015-0241-2>
 #'
 #' @export
-calculate_balance_score <- function(layout_df, swap, spatial_cols) {
-  score <- sapply(spatial_cols, function(el) {
-    sum(apply(table(layout_df[[el]], layout_df[[swap]]), 1, var))
-  })
-  return(sum(score))
-}
+calculate_efficiency_factor <- function(design_df, item) {
+  item <- as.character(substitute(item))
 
-#' Objective Function Signature
-#'
-#' @description
-#' A signature for an objective function
-#'
-#' @param design_matrix A design matrix
-#' @param layout_df A data frame representing the spatial information of the design
-#' @param swap A column name of the items
-#' @param spatial_cols Column names of the spatial factors
-#' @param previous_score A named list of numeric values with one required name `score` representing the score of
-#'   the design (lower is better)
-#' @param swapped_items Items which were swapped during the current iteration
-#'
-#' @examples
-#' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
-#' layout_df <- data.frame(
-#'   row = rep(1:3, each = 3),
-#'   col = rep(1:3, times = 3)
-#' )
-#' objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
-#'
-#' @return A named list of numeric values with one required name `score` representing the score of the design
-#'   (lower is better)
-objective_function_signature <- function(
-    design_matrix,
-    layout_df,
-    swap,
-    spatial_cols,
-    previous_score,
-    swapped_items) {
-  stop("This is a dummy fucntion for documentation purposes only")
+  # Design parameters
+  encoded_items <- as.integer(as.factor(design_df[[item]]))
+  n_treatments <- length(unique(encoded_items))
+  n_rows <- max(as.numeric.factor(design_df$row))
+  n_cols <- max(as.numeric.factor(design_df$col))
+  n_plots <- nrow(design_df)
+
+  # Create design matrix X for treatments
+  X <- matrix(0, nrow = n_plots, ncol = n_treatments)
+  for (i in 1:n_plots) {
+    X[i, encoded_items[i]] <- 1
+  }
+
+  # Create design matrix Z for rows and columns
+  # Row and col effects (excluding last row and col to avoid singularity)
+  Z_row <- matrix(0, nrow = n_plots, ncol = n_rows - 1)
+  Z_col <- matrix(0, nrow = n_plots, ncol = n_cols - 1)
+  plot_index <- 1
+  for (i in 1:n_rows) {
+    for (j in 1:n_cols) {
+      if (i < n_rows) {
+        Z_row[plot_index, i] <- 1
+      }
+      if (j < n_cols) {
+        Z_col[plot_index, j] <- 1
+      }
+      plot_index <- plot_index + 1
+    }
+  }
+
+  # Combine row and column design matrices
+  Z <- cbind(Z_row, Z_col)
+
+  # Check if Z^TZ is invertible
+  ZtZ <- t(Z) %*% Z
+  condition_number <- kappa(ZtZ)
+
+  # Use Moore-Penrose inverse if matrix is near singular
+  if (condition_number > 1e12) {
+    ZtZ_inv <- pseudo_inverse(ZtZ)
+  } else {
+    ZtZ_inv <- solve(ZtZ)
+  }
+
+  # Calculate treatment information matrix A_RC
+  # A_RC = X^T (I - P_Z) X
+  P_Z <- Z %*% ZtZ_inv %*% t(Z)
+  I_n <- diag(n_plots)
+  A_RC <- t(X) %*% (I_n - P_Z) %*% X
+
+  # Calculate Moore-Penrose inverse of A_RC, variance matrix
+  V <- pseudo_inverse(A_RC)
+
+  # Calculate average pairwise variance (apv)
+  apv <- 0
+  count <- 0
+  for (i in 1:(n_treatments - 1)) {
+    for (j in (i + 1):n_treatments) {
+      pairwise_var <- V[i, i] + V[j, j] - 2 * V[i, j]
+      apv <- apv + pairwise_var
+      count <- count + 1
+    }
+  }
+  apv <- apv / count
+
+  # Calculate harmonic means of replications
+  r_i <- colSums(X)
+  r_h <- length(r_i) / sum(1 / r_i)
+
+  # Calculate average efficiency factor
+  f_A <- (2 / r_h) / apv
+  return(f_A)
 }

@@ -1,7 +1,7 @@
 Type: Package
 Package: speed
 Title: Generate Spatially Efficient Experimental Designs
-Version: 0.0.1
+Version: 0.0.2
 Authors@R: 
     c(person(given = "Sam",
              family = "Rogers",
@@ -25,12 +25,12 @@ Authors@R:
       person(given = "Grains Research and Development Corporation",
              role = c("cph", "fnd"),
              comment = "https://grdc.com.au/"))
-Description: The Speed package optimizes spatial experimental designs by rearranging 
+Description: The Speed package optimises spatial experimental designs by rearranging 
     treatments to improve statistical efficiency while maintaining statistical validity. 
     It employs customisable optimisation metrics, with a default approach that balances 
     minimising treatment adjacency and maintaining spatial balance. Users can supply their 
     own optimisation metrics to tailor designs to specific experimental requirements. 
-    The package also includes visualisation tools that allow researchers to inspect 
+    The package also includes visualisation tools that allow users to inspect 
     optimised designs.
 License: MIT + file LICENSE
 URL: https://biometryhub.github.io/speed/
@@ -38,11 +38,14 @@ BugReports: https://github.com/biometryhub/speed/issues
 Imports: 
     farver,
     ggplot2,
-    igraph,
+    matrixStats,
     rlang,
     scales,
     stringi
 Suggests: 
+    igraph,
+    patchwork,
+    quarto,
     testthat (>= 3.0.0),
     vdiffr
 Config/testthat/edition: 3
@@ -50,3 +53,4 @@ Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+VignetteBuilder: quarto

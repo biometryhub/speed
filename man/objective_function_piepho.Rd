@@ -4,34 +4,62 @@
 \alias{objective_function_piepho}
 \title{Objective Function with Metric from Piepho}
 \usage{
-objective_function_piepho(pair_mapping = NULL)
+objective_function_piepho(
+  design,
+  swap,
+  spatial_cols,
+  current_score_obj = NULL,
+  swapped_items = NULL,
+  pair_mapping = NULL,
+  row_column = "row",
+  col_column = "col",
+  ...
+)
 }
 \arguments{
+\item{design}{A data frame representing the spatial information of the design}
+
+\item{swap}{A column name of the items to be swapped}
+
+\item{spatial_cols}{Column name(s) of the spatial factors}
+
+\item{current_score_obj}{A named list containing the current score}
+
+\item{swapped_items}{The items that had just been swapped}
+
 \item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
+
+\item{row_column}{Name of column representing the row of the design (default: "row")}
+
+\item{col_column}{Name of column representing the column of the design (default: "col")}
+
+\item{...}{Extra parameters passed from \link{speed}}
 }
 \value{
 A function which returns a named list of numeric values with one required name \code{score} representing
-the score of the design (lower is better) with a signature
-\verb{function(design_matrix, layout_df, swap, spatial_cols, previous_score, swapped_items)}. See signature
+the score of the design (lower is better) with a signature \verb{function(design_df, swap, spatial_cols, ...)}.
+See signature
 details in \link{objective_function_signature}.
 }
 \description{
 Create an objective function including even distribution and neighbor balance introduced by Piepho 2018.
 }
 \examples{
-design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
-layout_df <- data.frame(
-  row = rep(1:3, each = 3),
-  col = rep(1:3, times = 3)
+design_df <- initialise_design_df(
+  items = c(1, 2, 2, 1, 3, 3, 1, 3, 3),
+  nrows = 3,
+  ncols = 3
 )
-objective_function()(design_matrix, layout_df, "treatment", c("row", "col"))
 
-pair_mapping <- create_pair_mapping(c(design_matrix))
-obj_function_piepho <- function(pair_mapping) {
-  obj_function_piepho(design_matrix, layout_df, "treatment", c("row", "col"))
+pair_mapping <- create_pair_mapping(design_df$treatment)
+objective_function_piepho(design_df, "treatment", c("row", "col"), pair_mapping = pair_mapping)
+# usage in speed, speed(..., obj_function = objective_function_piepho, pair_mapping = pair_mapping)
+
 }
-# usage in speed, speed(..., obj_function = obj_function_piepho)
-
+\references{
+Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of distribution
+of treatment replications in row-column designs. Biometrical journal. Biometrische Zeitschrift, 60(6),
+1172–1189. \url{https://doi.org/10.1002/bimj.201800013}
 }
 \seealso{
 \code{\link[=objective_function]{objective_function()}}, \code{\link[=create_pair_mapping]{create_pair_mapping()}}

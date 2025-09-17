@@ -35,7 +35,7 @@ df <- data.frame(
   treatment = rep(LETTERS[1:3], 3)
 )
 
-# Optimize the design
+# Optimise the design
 result <- speed(df, "treatment")
 
 # Plot optimization progress

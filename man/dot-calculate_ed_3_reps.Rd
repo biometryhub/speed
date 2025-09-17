@@ -4,7 +4,7 @@
 \alias{.calculate_ed_3_reps}
 \title{Even Distribution Calculation for 3 Replications}
 \usage{
-.calculate_ed_3_reps(edges, previous_ed = NULL)
+.calculate_ed_3_reps(edges, current_ed = NULL)
 }
 \arguments{
 \item{edges}{A list of vectors of edge weights}

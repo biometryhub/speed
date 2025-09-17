@@ -1,3 +1,4 @@
+# fmt: skip
 design_matrix <- matrix(c(
   1, 1, 1,
   2, 2, 3,
@@ -23,6 +24,7 @@ test_that("calculate_nb works with pair mapping", {
   expect_mapequal(as.list(nb$nb), expected_nb$nb)
   expect_equal(nb$max_nb, expected_nb$max_nb)
   expect_setequal(nb$max_pairs, expected_nb$max_pairs)
+  expect_equal(nb$var, var(unlist(expected_nb$nb)))
 })
 
 test_that("calculate_nb works without pair mapping", {
@@ -42,4 +44,5 @@ test_that("calculate_nb works without pair mapping", {
   expect_mapequal(nb$nb, expected_nb$nb)
   expect_equal(nb$max_nb, expected_nb$max_nb)
   expect_setequal(nb$max_pairs, expected_nb$max_pairs)
+  expect_equal(nb$var, var(unlist(expected_nb$nb)))
 })

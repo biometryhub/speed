@@ -4,14 +4,14 @@
 \alias{calculate_ed}
 \title{Even Distribution Calculation}
 \usage{
-calculate_ed(design_matrix, previous_ed = NULL, swapped_items = NULL)
+calculate_ed(design_matrix, current_ed = NULL, swapped_items = NULL)
 }
 \arguments{
-\item{design_matrix}{A design matrix}
+\item{design_matrix}{A matrix representing the design}
 
-\item{previous_ed}{Named list of the previous ed calculation}
+\item{current_ed}{Named list of the current ed calculation}
 
-\item{swapped_items}{Items which were swapped during the current iteration}
+\item{swapped_items}{The items that had just been swapped}
 }
 \value{
 Named list containing:

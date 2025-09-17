@@ -7,7 +7,7 @@
 get_vertices(design_matrix)
 }
 \arguments{
-\item{design_matrix}{A design matrix}
+\item{design_matrix}{A matrix representing the design}
 }
 \value{
 Named list containing:

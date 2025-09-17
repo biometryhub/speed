@@ -2,31 +2,51 @@
 % Please edit documentation in R/metrics.R
 \name{calculate_adjacency_score}
 \alias{calculate_adjacency_score}
-\title{Calculate Adjacency Score for Experimental Design}
+\title{Calculate Adjacency Score for Design}
 \usage{
-calculate_adjacency_score(design)
+calculate_adjacency_score(
+  layout_df,
+  swap,
+  row_column = "row",
+  col_column = "col"
+)
 }
 \arguments{
-\item{design}{A matrix containing the experimental design layout with treatments}
+\item{layout_df}{A data frame representing the current design}
+
+\item{swap}{A column name of the items to be swapped}
+
+\item{row_column}{Name of column representing the row of the design (default: "row")}
+
+\item{col_column}{Name of column representing the column of the design (default: "col")}
 }
 \value{
-Numeric value representing the total number of adjacent same treatments.
-The score is the sum of same treatments that are adjacent horizontally
-and vertically.
+Numeric score for treatment adjacencies (lower is better)
 }
 \description{
-Calculates the number of adjacent treatments that are the same in an experimental
-design layout. Lower scores indicate better separation of treatments.
+Calculates the adjacency score for a given experimental design. The adjacency score
+represents the number of adjacent plots with the same treatment. Lower scores indicate
+better separation of treatments.
 }
 \examples{
-design <- matrix(
-  c(
-    "A", "B", "A",
-    "B", "A", "B",
-    "A", "B", "A"
-  ),
-  nrow = 3, byrow = TRUE
+# Example 1: Design with no adjacencies
+design_no_adj <- data.frame(
+  row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
+  col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
+  treatment = c("A", "B", "A", "B", "A", "B", "A", "B", "A")
 )
-calculate_adjacency_score(design) # Returns the number of adjacent matches
+
+# Gives 0
+calculate_adjacency_score(design_no_adj, "treatment")
+
+# Example 2: Design with adjacencies
+design_with_adj <- data.frame(
+  row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
+  col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
+  treatment = c("A", "A", "A", "B", "B", "B", "A", "A", "A")
+)
+
+# Gives value 6
+calculate_adjacency_score(design_with_adj, "treatment")
 
 }

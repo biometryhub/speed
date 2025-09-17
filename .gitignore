@@ -4,3 +4,6 @@
 .Ruserdata
 lib/
 docs
+
+/.quarto/
+inst/doc

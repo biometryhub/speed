@@ -1,4 +1,5 @@
 test_that("get_vertices works", {
+  # fmt: skip
   design_matrix <- matrix(c(
     1, 1, 1,
     2, 3, 3,

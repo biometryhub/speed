@@ -16,42 +16,72 @@ knitr::opts_chunk$set(
 # speed - Spatially Efficient Experimental Designs
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/biometryhub/speed-sam/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/biometryhub/speed-sam/actions/workflows/R-CMD-check.yaml)
+[![Project Status: Active:  The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![R-CMD-check](https://github.com/biometryhub/speed/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/biometryhub/speed/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/biometryhub/speed/graph/badge.svg)](https://app.codecov.io/gh/biometryhub/speed)
+[![Licence](https://img.shields.io/github/license/mashape/apistatus.svg)](https://choosealicense.com/licenses/mit/)
+![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fbiometryhub.github.io%2Fspeed&label=Hits&icon=arrow-down-circle&color=%23198754)
 <!-- badges: end -->
 
+## Table of Contents
+
+* [Overview](#overview)
+* [Installation](#installation)
+* [Features](#features)
+* [Example](#example)
+  * [Basic](#basic)
+  * [Blocked design](#blocked-design)
+  * [Split-plot design][split-plot]
+  * [Strip-plot design][strip-plot]
+  * [P-rep design][p-rep]
+  * [BIBD][bibd]
+  * [More Examples](#more-examples)
+* [Citation](#citation)
+* [License](#license)
 
 ## Overview
 
-The `speed` package optimizes spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It uses simulated annealing to:
+The `speed` package optimises spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It uses simulated annealing to:
 
-- Minimize treatment adjacency (reducing neighbor effects)
+- Minimise treatment adjacency (reducing neighbour effects)
 - Maintain spatial balance across rows and columns
 - Respect blocking constraints if specified
-- Provide visualization tools for design evaluation
+- Provide visualisation tools for design evaluation
 
 ## Installation
 
 You can install the development version of speed from [GitHub](https://github.com/biometryhub/speed) with:
 
-```r
-# install.packages("pak")
+```{r, eval = FALSE}
+# pak
+if (!require("pak", quietly = TRUE)) install.packages("pak")
 pak::pak("biometryhub/speed")
+
+# devtools
+if (!require("devtools", quietly = TRUE)) install.packages("devtools")
+devtools::install_github("biometryhub/speed")
+
+# remotes
+if (!require("remotes", quietly = TRUE)) install.packages("remotes")
+remotes::install_github("biometryhub/speed")
 ```
 
 ## Features
 
-- Flexible optimization of experimental designs
+- Flexible optimisation of experimental designs
 - Support for blocked designs
-- Customizable optimization parameters
-- Built-in visualization functions
-- Progress tracking during optimization
+- Customisable optimisation parameters
+- Built-in visualisation functions
+- Progress tracking during optimisation
 - Early stopping when convergence is reached
 
 See the package documentation for more detailed examples and options.
 
-## Basic Example
+## Example
 
-A simple example optimizing a 4×3 completely randomised design with 4 treatments:
+### Basic
+
+A simple example optimising a 4×3 completely randomised design with 4 treatments:
 
 ```{r example}
 library(speed)
@@ -60,25 +90,22 @@ library(speed)
 df <- data.frame(
   row = rep(1:4, each = 3),
   col = rep(1:3, times = 4),
-  treatment = rep(LETTERS[1:4], 3)
+  treatment = rep(LETTERS[1:4], each = 3)
 )
 
-# Set seed for reproducibility
-set.seed(42)
+# Optimise the design with seed for reproducibility
+result <- speed(df, "treatment", seed = 42)
 
-# Optimize the design
-result <- speed(df, "treatment")
-
-# Plot the optimized design
+# Plot the optimised design
 autoplot(result)
 
-# View optimization progress
+# View optimisation progress
 plot_progress(result)
 ```
 
-## Blocked design
+### Blocked design
 
-You can also optimize designs within blocks:
+You can also optimise designs within blocks:
 
 ```{r blocks}
 # Create a design with blocks
@@ -89,17 +116,45 @@ df <- data.frame(
   block = rep(1:3, each = 8)
 )
 
-# Set seed for reproducibility
-set.seed(42)
-
-# Optimize while respecting blocks
-result <- speed(df, 
-                "treatment",
-                swap_within = "block",
-                iterations = 5000)
+# Optimise while respecting blocks
+result <- speed(df,
+  "treatment",
+  swap_within = "block",
+  iterations = 5000,
+  seed = 42
+)
 
 # Plot the design with block boundaries
 autoplot(result)
 ```
 
+### More Examples
 
+For more detailed examples, see the [getting started vignette][getting-started] or the vignette about
+[more complex examples][complex-examples] including, but not limited to:
+
+* [Split-plot design][split-plot]
+* [Strip-plot design][strip-plot]
+* [P-rep design][p-rep]
+* [BIBD][bibd]
+
+## Citation
+
+If you use `speed` in your research, please cite:
+
+```{r citation, echo=FALSE, results="hold", comment=""}
+citation("speed")
+```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
+
+<!-- external -->
+
+[getting-started]: https://biometryhub.github.io/speed/articles/speed.html
+[complex-examples]: https://biometryhub.github.io/speed/articles/complex_designs.html
+[split-plot]: https://biometryhub.github.io/speed/articles/speed.html#split-plot-design
+[strip-plot]: https://biometryhub.github.io/speed/articles/complex_designs.html#strip-plot-designs
+[p-rep]: https://biometryhub.github.io/speed/articles/complex_designs.html#p-rep-partially-replicated-designs
+[bibd]: https://biometryhub.github.io/speed/articles/complex_designs.html#balanced-incomplete-block-design-bibd

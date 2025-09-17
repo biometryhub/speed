@@ -1,3 +1,97 @@
+#' Verify Inputs for `speed`
+#'
+#' @description
+#' Verify inputs for the `speed` function.
+#'
+#' @rdname verify
+#'
+#' @inheritParams speed
+#' @param swap_count Number of item swaps per iteration (default: 1)
+#' @param swap_all_blocks Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)
+#' @param adaptive_swaps Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)
+#' @param start_temp Starting temperature for simulated annealing (default: 100)
+#' @param cooling_rate Rate at which temperature decreases (default: 0.99)
+#' @param random_initialisation Logical; if TRUE, randomly shuffle items within `swap_within` (default: FALSE)
+#'
+#' @keywords internal
+.verify_speed_inputs <- function(data,
+                                 swap,
+                                 swap_within,
+                                 spatial_factors,
+                                 iterations,
+                                 early_stop_iterations,
+                                 quiet,
+                                 seed,
+                                 swap_count,
+                                 swap_all_blocks,
+                                 adaptive_swaps,
+                                 start_temp,
+                                 cooling_rate,
+                                 random_initialisation) {
+  if (!is.data.frame(data)) {
+    stop("`data` must be an initial data frame of the design")
+  }
+
+  verify_column_exists(swap, data, "treatment")
+
+  # currently support only 1 constraint
+  if (swap_within != "1") {
+    verify_column_exists(swap_within, data, "constraint")
+  }
+
+  if (!inherits(spatial_factors, "formula")) {
+    stop("spatial_factors must be a one sided formula", call. = FALSE)
+  }
+
+  for (col in all.vars(spatial_factors)) {
+    verify_column_exists(col, data, "spatial factor")
+  }
+
+  verify_positive_whole_number(iterations, early_stop_iterations, swap_count)
+  verify_non_negative_whole(start_temp)
+  verify_boolean(quiet, adaptive_swaps, swap_all_blocks, random_initialisation)
+  verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
+  if (!is.null(seed)) {
+    verify_between(seed, lower = -.Machine$integer.max, upper = .Machine$integer.max)
+  }
+}
+
+#' Verify hierarchical inputs
+#' @rdname verify
+#' @keywords internal
+.verify_hierarchical_inputs <- function(data, swap, swap_within, spatial_factors,
+                                        iterations, early_stop_iterations, obj_function,
+                                        quiet, seed) {
+  # Check that swap and swap_within have same names
+  if (!all(names(swap) == names(swap_within))) {
+    stop("Names of `swap` and `swap_within` must match for hierarchical designs")
+  }
+
+  # Check that all specified columns exist in data
+  for (level in names(swap)) {
+    if (!swap[[level]] %in% names(data)) {
+      stop(paste("Column", swap[[level]], "not found in data"))
+    }
+    if (!swap_within[[level]] %in% names(data) &&
+        !(swap_within[[level]] %in% c("1", "none"))) {
+      stop(paste("Column", swap_within[[level]], "not found in data"))
+    }
+  }
+
+  # Verify other parameters
+  if (!is.logical(quiet)) {
+    stop("`quiet` must be logical")
+  }
+
+  if (!is.null(seed) && !is.numeric(seed)) {
+    stop("`seed` must be numeric or NULL")
+  }
+}
+
+
+
+# Other functions for verifying
+
 default_tolerance <- .Machine$double.eps^0.5
 
 is_between_ <- function(lower, upper, lower_exclude = FALSE, upper_exclude = FALSE) {
@@ -25,7 +119,7 @@ is_boolean <- function(v) {
 }
 
 is_non_negative_whole_number <- function(x, tol = default_tolerance) {
-  return(is_whole_number(x, tol) && x >= 0)
+  return(is_whole_number(x, tol) & x >= 0)
 }
 
 is_multiple_of <- function(x, y) {
@@ -33,7 +127,7 @@ is_multiple_of <- function(x, y) {
 }
 
 is_positive_whole_number <- function(x, tol = default_tolerance) {
-  return(is_whole_number(x, tol) && x > 0)
+  return(is_whole_number(x, tol) & x > 0)
 }
 
 is_whole_number <- function(x, tol = default_tolerance) {
@@ -45,10 +139,8 @@ is_whole_number <- function(x, tol = default_tolerance) {
 }
 
 is_positive_whole_numbers <- function(x, tol = default_tolerance) {
-  for (i in x) {
-    if (!is_positive_whole_number(i, tol)) {
-      return(FALSE)
-    }
+  if (!all(is_positive_whole_number(x, tol))) {
+    return(FALSE)
   }
   return(TRUE)
 }
@@ -109,7 +201,7 @@ verify_boolean <- function(..., var_names = NULL) {
 
 verify_column_exists <- function(col, data, prefix) {
   if (!(col %in% names(data))) {
-    stop(paste0(prefix, ' "', col, '" not found in data frame columns: ', names(data), collapse = ", "))
+    stop(paste0("'", col, "' not found in ", paste(colnames(data), collapse = ", ")), call. = FALSE)
   }
 }
 
@@ -124,7 +216,7 @@ verify_multiple_of <- function(..., var_names = NULL) {
 
   args <- list(...)
   if (!is_multiple_of(args[[1]], args[[2]])) {
-    stop(paste0("`", var_names[[1]], "` must be a multiple of `", var_names[[2]], "`."))
+    stop(paste0("`", var_names[[1]], "` must be a multiple of `", var_names[[2]], "`."), call. = FALSE)
   }
 }
 
@@ -179,7 +271,7 @@ get_var_names <- function(...) {
 }
 
 data_type_error <- function(var_name, expected_data_type) {
-  stop(paste0("`", var_name, "` must be ", expected_data_type, "."))
+  stop(paste0("`", var_name, "` must be ", expected_data_type, "."), call. = FALSE)
 }
 
 literal <- function(v) {

@@ -2,12 +2,12 @@
 % Please edit documentation in R/metrics.R
 \name{calculate_nb}
 \alias{calculate_nb}
-\title{Neighbor Balance Calculation}
+\title{Neighbour Balance Calculation}
 \usage{
 calculate_nb(design_matrix, pair_mapping = NULL)
 }
 \arguments{
-\item{design_matrix}{A design matrix}
+\item{design_matrix}{A matrix representing the design}
 
 \item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
 }
