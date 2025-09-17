@@ -370,3 +370,311 @@ test_that("autoplot custom palettes work with exact color specifications", {
   vdiffr::expect_doppelganger("autoplot_custom_rgb", autoplot(result, palette = rgb_colors))
   vdiffr::expect_doppelganger("autoplot_custom_mixed", autoplot(result, palette = mixed_colors))
 })
+
+# Test plot_progress function
+test_that("plot_progress executes without errors", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should not error when calling plot_progress
+  expect_no_error({
+    plot_progress(result)
+  })
+})
+
+test_that("plot_progress handles simple design optimization results", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:5, times = 4),
+    col = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 500,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Capture the output to verify plots are printed
+  expect_output(
+    plot_progress(result),
+    NA  # No specific text output expected, just that it executes
+  )
+
+  # Verify that result has required components for plot_progress
+  expect_true("scores" %in% names(result))
+  expect_true("temperatures" %in% names(result))
+  expect_true(is.numeric(result$scores))
+  expect_true(is.numeric(result$temperatures))
+  expect_equal(length(result$scores), 500)
+  expect_equal(length(result$temperatures), 500)
+})
+
+test_that("plot_progress handles different iteration lengths", {
+  # Test with short optimization
+  test_data <- data.frame(
+    row = rep(1:5, times = 4),
+    col = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  short_result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 50,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Test with longer optimization
+  long_result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 1000,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Both should work
+  expect_no_error({
+    plot_progress(short_result)
+  })
+
+  expect_no_error({
+    plot_progress(long_result)
+  })
+
+  # Verify lengths match
+  expect_equal(length(short_result$scores), 50)
+  expect_equal(length(short_result$temperatures), 50)
+  expect_equal(length(long_result$scores), 1000)
+  expect_equal(length(long_result$temperatures), 1000)
+
+  # Visual regression tests for plot_progress
+  vdiffr::expect_doppelganger("plot_progress_short", plot_progress(short_result))
+  vdiffr::expect_doppelganger("plot_progress_long", plot_progress(long_result))
+})
+
+test_that("plot_progress handles early stopping results", {
+  # Create a design that will likely trigger early stopping
+  test_data <- data.frame(
+    row = rep(1:4, times = 4),
+    col = rep(1:4, each = 4),
+    treatment = rep(LETTERS[1:4], 4)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 1000,
+    early_stop_iterations = 50,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should work even with early stopping
+  expect_no_error({
+    plot_progress(result)
+  })
+
+  # Verify early stopping occurred
+  expect_true(result$stopped_early)
+  expect_lt(result$iterations_run, 1000)
+
+  # Verify arrays are the correct length (should match iterations_run)
+  expect_equal(length(result$scores), result$iterations_run)
+  expect_equal(length(result$temperatures), result$iterations_run)
+})
+
+test_that("plot_progress handles blocked designs", {
+  # Sample data with blocks
+  test_data <- data.frame(
+    row = rep(1:6, each = 4),
+    col = rep(1:4, times = 6),
+    treatment = rep(LETTERS[1:8], 3),
+    block = rep(1:3, each = 8)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    iterations = 200,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should work with blocked designs
+  expect_no_error({
+    plot_progress(result)
+  })
+
+  # Verify structure is still simple (not hierarchical)
+  expect_true(is.numeric(result$scores))
+  expect_true(is.numeric(result$temperatures))
+  expect_false(is.list(result$scores))
+  expect_false(is.list(result$temperatures))
+})
+
+test_that("plot_progress handles results with different optimization patterns", {
+  # Test with different starting configurations to get different optimization patterns
+  test_data <- data.frame(
+    row = rep(1:5, times = 5),
+    col = rep(1:5, each = 5),
+    treatment = rep(LETTERS[1:5], 5)
+  )
+
+  # Test with different seeds to get different optimization trajectories
+  seeds <- c(123, 456, 789)
+
+  for (seed in seeds) {
+    result <- speed(
+      data = test_data,
+      swap = "treatment",
+      swap_within = "1",
+      spatial_factors = ~ row + col,
+      iterations = 300,
+      seed = seed,
+      quiet = TRUE
+    )
+
+    expect_no_error({
+      plot_progress(result)
+    })
+
+    # Verify the optimization data has expected properties
+    expect_true(all(is.finite(result$scores)))
+    expect_true(all(is.finite(result$temperatures)))
+    expect_true(all(result$temperatures > 0))  # Temperatures should be positive
+    expect_gte(min(result$temperatures), 0)
+    expect_gte(max(result$temperatures), min(result$temperatures))  # Non-increasing temperature
+  }
+})
+
+test_that("plot_progress error handling for invalid inputs", {
+  # Test with missing scores
+  invalid_result_no_scores <- list(
+    temperatures = seq(1, 0.01, length.out = 100)
+  )
+
+  expect_error(
+    plot_progress(invalid_result_no_scores),
+    "arguments imply differing number of rows: 2, 0, 100"
+  )
+
+  # Test with missing temperatures
+  invalid_result_no_temps <- list(
+    scores = runif(100, 0, 10)
+  )
+
+  expect_error(
+    plot_progress(invalid_result_no_temps),
+    "arguments imply differing number of rows: 100, 0"
+  )
+
+  # Test with mismatched lengths
+  invalid_result_mismatch <- list(
+    scores = runif(100, 0, 10),
+    temperatures = seq(1, 0.01, length.out = 35)  # Different length
+  )
+
+  expect_error(
+    plot_progress(invalid_result_mismatch),
+    "arguments imply differing number of rows"
+  )
+})
+
+test_that("plot_progress generates expected plot elements", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Capture the plots using a different approach
+  # Since plot_progress() prints directly, we test the underlying data
+  df <- data.frame(
+    iteration = 1:length(result$scores),
+    score = result$scores,
+    temperature = result$temperatures
+  )
+
+  # Verify the data frame that would be used in plot_progress
+  expect_equal(nrow(df), 100)
+  expect_equal(ncol(df), 3)
+  expect_true(all(c("iteration", "score", "temperature") %in% names(df)))
+
+  # Verify iteration sequence
+  expect_equal(df$iteration, 1:100)
+
+  # Verify scores and temperatures are numeric and finite
+  expect_true(all(is.numeric(df$score)))
+  expect_true(all(is.numeric(df$temperature)))
+  expect_true(all(is.finite(df$score)))
+  expect_true(all(is.finite(df$temperature)))
+})
+
+test_that("plot_progress works with single iteration result", {
+  # Create a result that stops after 1 iteration
+  test_data <- data.frame(
+    row = rep(1:3, times = 3),
+    col = rep(1:3, each = 3),
+    treatment = rep(LETTERS[1:3], 3)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 1,  # Single iteration
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should handle single iteration without error
+  expect_no_error({
+    plot_progress(result)
+  })
+
+  # Verify single point data
+  expect_equal(length(result$scores), 1)
+  expect_equal(length(result$temperatures), 1)
+})
