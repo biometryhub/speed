@@ -5,6 +5,7 @@
     "ghcr.io/rocker-org/devcontainer-features/r-packages:1": {
       "packages": [
         "ggplot2",
+        "roxygen2",
         "testthat",
         "vdiffr",
         "igraph",

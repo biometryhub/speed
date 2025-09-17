@@ -73,7 +73,7 @@
       stop(paste("Column", swap[[level]], "not found in data"))
     }
     if (!swap_within[[level]] %in% names(data) &&
-        !(swap_within[[level]] %in% c("1", "none"))) {
+      !(swap_within[[level]] %in% c("1", "none"))) {
       stop(paste("Column", swap_within[[level]], "not found in data"))
     }
   }
@@ -224,6 +224,14 @@ verify_positive_whole_number <- function(..., var_names = NULL) {
   verify_data_type(is_positive_whole_number, "a positive whole number", var_names, ...)
 }
 
+verify_character <- function(..., var_names = NULL) {
+  verify_data_type(is.character, "a character", var_names, ...)
+}
+
+verify_list <- function(..., var_names = NULL) {
+  verify_data_type(is.list, "a list", var_names, ...)
+}
+
 verify_positive_whole_numbers <- function(..., var_names = NULL) {
   verify_data_type(is_positive_whole_numbers, "a vector of positive whole numbers", var_names, ...)
 }
@@ -251,7 +259,7 @@ verify_data_type <- function(verify_func, data_type, var_names = NULL, ...) {
 get_literal_values <- function(values) {
   n_values <- length(values)
   literal_values <- literal(values[[1]])
-  if(n_values == 1) {
+  if (n_values == 1) {
     return(literal_values)
   }
 
