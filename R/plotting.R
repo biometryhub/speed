@@ -193,7 +193,7 @@ autoplot.design <- function(object,
     }
 
     plt <- ggplot2::ggplot(...) +
-      ggplot2::geom_tile(data = object, mapping = ggplot2::aes(x = as.numeric.factor(.data[[column_expr]]), y = as.numeric.factor(.data[[row_expr]]), fill = .data[[trt_expr]]), colour = "black") +
+      ggplot2::geom_tile(data = object, mapping = ggplot2::aes(x = as.numeric.factor(.data[[column_expr]]), y = as.numeric.factor(.data[[row_expr]]), fill = factor(.data[[trt_expr]])), colour = "black") +
       ggplot2::geom_text(data = object, mapping = ggplot2::aes(x = as.numeric.factor(.data[[column_expr]]), y = as.numeric.factor(.data[[row_expr]]), label = .data[[trt_expr]]), colour = object$text_col, angle = rotation, size = size, ...) +
       ggplot2::geom_rect(
         data = blkdf,
@@ -208,9 +208,9 @@ autoplot.design <- function(object,
       ggplot2::theme_bw()
   }
 
-  plt <- plt + scale_fill_manual(values = colour_palette, name = tools::toTitleCase(trt_expr)) +
+  plt <- plt + ggplot2::scale_fill_manual(values = colour_palette, name = tools::toTitleCase(trt_expr)) +
     ggplot2::coord_transform(reverse = "y") +
-    ggplot2::labs(x = column_expr, y = row_expr)
+    ggplot2::labs(x = column_expr, y = row_expr, fill = trt_expr)
 
   # Control legend visibility
   if (!legend) {
