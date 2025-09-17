@@ -236,3 +236,32 @@ test_that("initialise_design_df works for multi sites with partial blocking", {
   expect_equal(sort(design_df_sitec$col_block), sort(rep(1:2, 30)))
   expect_equal(sort(design_df_sitec$block), sort(rep(1:4, 15)))
 })
+
+test_that("initialize_design_df throws error for invalid inputs", {
+  expect_error(initialise_design_df(1:16, 0, 4, 2, 2))
+  expect_error(initialise_design_df(1:16, 4, 0, 2, 2))
+  expect_error(initialise_design_df(1:16, 4, 4, 2))
+  expect_error(initialise_design_df(1:16, 4, 4, NULL, 2))
+  expect_error(initialise_design_df(1:16, 4, 4, 0, 2))
+  expect_error(initialise_design_df(1:16, 4, 4, 2, 0))
+
+  expect_error(initialise_design_df(1:16, designs = list(
+    list(nrows = 4, ncols = 4),
+    list(nrows = 4, ncols = 4, nn = 1)
+  )), "`nn` is an invalid argument")
+
+  expect_error(initialise_design_df(1:16, designs = list(
+    list(nrows = 4, ncols = 4),
+    list(nrows = 4)
+  )), "`nrows` and `ncols` must be provided for each design")
+
+  expect_error(initialise_design_df(designs = list(
+    list(items = 1:4, nrows = 4, ncols = 4),
+    list(nrows = 4, ncols = 4)
+  )), "`items` must be provided for all designs")
+
+  expect_error(initialise_design_df(designs = list(
+    list(nrows = 4, ncols = 4),
+    list(nrows = 4, ncols = 4)
+  )), "`items` must be provided for all designs or `items` must be provided to `initialise_design_df`")
+})

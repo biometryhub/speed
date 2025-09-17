@@ -228,6 +228,10 @@ verify_character <- function(..., var_names = NULL) {
   verify_data_type(is.character, "a character", var_names, ...)
 }
 
+verify_list <- function(..., var_names = NULL) {
+  verify_data_type(is.list, "a list", var_names, ...)
+}
+
 verify_positive_whole_numbers <- function(..., var_names = NULL) {
   verify_data_type(is_positive_whole_numbers, "a vector of positive whole numbers", var_names, ...)
 }
@@ -255,7 +259,7 @@ verify_data_type <- function(verify_func, data_type, var_names = NULL, ...) {
 get_literal_values <- function(values) {
   n_values <- length(values)
   literal_values <- literal(values[[1]])
-  if(n_values == 1) {
+  if (n_values == 1) {
     return(literal_values)
   }
 

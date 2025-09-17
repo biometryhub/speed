@@ -364,8 +364,35 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
                                          block_ncols,
                                          designs,
                                          design_col) {
+  if (is.null(designs) && is.null(nrows) && is.null(ncols)) {
+    stop("Either `nrows` and `ncols` or `designs` must be provided")
+  }
+
   if (is.null(designs)) {
     verify_positive_whole_number(length(items), nrows, ncols)
+  } else {
+    verify_list(designs)
+    valid_args <- c("items", "nrows", "ncols", "block_nrows", "block_ncols")
+    for (design in designs) {
+      verify_list(design)
+      for (arg in names(design)) {
+        if (!(arg %in% valid_args)) {
+          stop(paste0("`", arg, "` is an invalid argument"))
+        }
+      }
+      if (length(setdiff(c("nrows", "ncols"), names(design))) > 0) {
+        stop("`nrows` and `ncols` must be provided for each design")
+      }
+    }
+
+    # check items
+    items_exist <- unlist(lapply(designs, function(x) "items" %in% names(x)))
+    if (any(items_exist) && !all(items_exist)) {
+      stop("`items` must be provided for all designs")
+    }
+    if (all(!items_exist) && is.null(items)) {
+      stop("`items` must be provided for all designs or `items` must be provided to `initialise_design_df`")
+    }
   }
   verify_character(design_col)
 
