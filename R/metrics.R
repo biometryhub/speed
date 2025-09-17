@@ -202,8 +202,8 @@ objective_function_piepho <- function(design,
                                       ...) {
   design_matrix <- matrix(
     design[[swap]],
-    nrow = max(as.numeric.factor(design$row)),
-    ncol = max(as.numeric.factor(design$col))
+    nrow = max(as.numeric.factor(design$row), na.rm = TRUE),
+    ncol = max(as.numeric.factor(design$col), na.rm = TRUE)
   )
 
   ed <- calculate_ed(design_matrix, current_score_obj$ed, swapped_items)
@@ -636,8 +636,8 @@ calculate_efficiency_factor <- function(design_df, item) {
   # Design parameters
   encoded_items <- as.integer(as.factor(design_df[[item]]))
   n_treatments <- length(unique(encoded_items))
-  n_rows <- max(as.numeric.factor(design_df$row))
-  n_cols <- max(as.numeric.factor(design_df$col))
+  n_rows <- max(as.numeric.factor(design_df$row), na.rm = TRUE)
+  n_cols <- max(as.numeric.factor(design_df$col), na.rm = TRUE)
   n_plots <- nrow(design_df)
 
   # Create design matrix X for treatments
