@@ -186,15 +186,15 @@ autoplot.design <- function(object,
     }
     for (i in 1:nrow(blkdf)) {
       tmp <- object[object[[block_expr]] == blkdf$block[i], ]
-      blkdf[i, "ymin"] <- (min(as.numeric.factor(tmp[[row_expr]])) - 0.5)
-      blkdf[i, "ymax"] <- (max(as.numeric.factor(tmp[[row_expr]])) + 0.5)
-      blkdf[i, "xmin"] <- (min(as.numeric.factor(tmp[[column_expr]])) - 0.5)
-      blkdf[i, "xmax"] <- (max(as.numeric.factor(tmp[[column_expr]])) + 0.5)
+      blkdf[i, "ymin"] <- (min(as_numeric_factor(tmp[[row_expr]])) - 0.5)
+      blkdf[i, "ymax"] <- (max(as_numeric_factor(tmp[[row_expr]])) + 0.5)
+      blkdf[i, "xmin"] <- (min(as_numeric_factor(tmp[[column_expr]])) - 0.5)
+      blkdf[i, "xmax"] <- (max(as_numeric_factor(tmp[[column_expr]])) + 0.5)
     }
 
     plt <- ggplot2::ggplot(...) +
-      ggplot2::geom_tile(data = object, mapping = ggplot2::aes(x = as.numeric.factor(.data[[column_expr]]), y = as.numeric.factor(.data[[row_expr]]), fill = factor(.data[[trt_expr]])), colour = "black") +
-      ggplot2::geom_text(data = object, mapping = ggplot2::aes(x = as.numeric.factor(.data[[column_expr]]), y = as.numeric.factor(.data[[row_expr]]), label = .data[[trt_expr]]), colour = object$text_col, angle = rotation, size = size, ...) +
+      ggplot2::geom_tile(data = object, mapping = ggplot2::aes(x = as_numeric_factor(.data[[column_expr]]), y = as_numeric_factor(.data[[row_expr]]), fill = factor(.data[[trt_expr]])), colour = "black") +
+      ggplot2::geom_text(data = object, mapping = ggplot2::aes(x = as_numeric_factor(.data[[column_expr]]), y = as_numeric_factor(.data[[row_expr]]), label = .data[[trt_expr]]), colour = object$text_col, angle = rotation, size = size, ...) +
       ggplot2::geom_rect(
         data = blkdf,
         mapping = ggplot2::aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
@@ -218,12 +218,12 @@ autoplot.design <- function(object,
   }
 
   if(!margin) {
-    plt <- plt + ggplot2::scale_x_continuous(expand = c(0, 0), breaks = seq(1, max(as.numeric.factor(object[[column_expr]])), 1)) +
-      ggplot2::scale_y_continuous(expand = c(0, 0), breaks = seq(1, max(as.numeric.factor(object[[row_expr]])), 1))
+    plt <- plt + ggplot2::scale_x_continuous(expand = c(0, 0), breaks = seq(1, max(as_numeric_factor(object[[column_expr]])), 1)) +
+      ggplot2::scale_y_continuous(expand = c(0, 0), breaks = seq(1, max(as_numeric_factor(object[[row_expr]])), 1))
   }
   else {
-    plt <- plt + ggplot2::scale_x_continuous(breaks = seq(1, max(as.numeric.factor(object[[column_expr]])), 1)) +
-      ggplot2::scale_y_continuous(breaks = seq(1, max(as.numeric.factor(object[[row_expr]])), 1))
+    plt <- plt + ggplot2::scale_x_continuous(breaks = seq(1, max(as_numeric_factor(object[[column_expr]])), 1)) +
+      ggplot2::scale_y_continuous(breaks = seq(1, max(as_numeric_factor(object[[row_expr]])), 1))
   }
 
   return(plt)
