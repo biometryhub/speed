@@ -1710,6 +1710,209 @@ test_that("speed prints progress output at correct intervals", {
   expect_match(output, "Iteration: 2000")
 })
 
+# Test print.design method
+test_that("print.design works for simple designs", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Capture print output
+  output <- capture_output(print(result))
+
+  # Check that the printed output contains expected elements
+  expect_match(output, "Optimised Experimental Design")
+  expect_match(output, "Score:")
+  expect_match(output, "Iterations Run:")
+  expect_match(output, "Stopped Early:")
+  expect_match(output, "Treatments:")
+  expect_match(output, "Seed:")
+
+  # Check specific values
+  expect_match(output, paste("Score:", result$score))
+  expect_match(output, paste("Iterations Run:", result$iterations_run))
+  expect_match(output, paste("Stopped Early:", result$stopped_early))
+  expect_match(output, paste("Seed:", result$seed))
+
+  # Check treatments are displayed correctly for simple design
+  expected_treatments <- paste(result$treatments, collapse = ", ")
+  expect_match(output, paste("Treatments:", expected_treatments))
+
+  # Verify invisible return
+  expect_identical(print(result), result)
+})
+
+test_that("print.design works for hierarchical designs", {
+  # Hierarchical split-plot design
+  df_split <- data.frame(
+    row = rep(1:6, each = 4),
+    col = rep(1:4, times = 6),
+    wholeplot_treatment = rep(LETTERS[1:3], each = 8),
+    subplot_treatment = rep(letters[1:4], 6),
+    block = rep(1:2, each = 12)
+  )
+
+  result <- speed(df_split,
+                  swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+                  swap_within = list(wp = "block", sp = "wholeplot_treatment"),
+                  spatial_factors = ~ row + col,
+                  iterations = list(wp = 50, sp = 50),
+                  seed = 42,
+                  quiet = TRUE)
+
+  # Capture print output
+  output <- capture_output(print.design(result))
+
+  # Check that the printed output contains expected elements
+  expect_match(output, "Optimised Experimental Design")
+  expect_match(output, "Score:")
+  expect_match(output, "Iterations Run:")
+  expect_match(output, "Stopped Early:")
+  expect_match(output, "Treatments:")
+  expect_match(output, "Seed:")
+
+  # Check hierarchical-specific formatting
+  expect_match(output, "wp:")  # Level name should be shown
+  expect_match(output, "sp:")  # Level name should be shown
+
+  # Check that treatments for each level are displayed
+  for (level_name in names(result$treatments)) {
+    expected_treatments <- paste(result$treatments[[level_name]], collapse = ", ")
+    expect_match(output, paste0(level_name, ": ", expected_treatments))
+  }
+
+  # Verify stopped_early is shown correctly for hierarchical (should show both levels)
+  expect_match(output, "Stopped Early:")
+
+  # Verify invisible return
+  expect_identical(print(result), result)
+})
+
+test_that("print.design handles different stopped_early formats", {
+  # Test with simple design where stopped_early is logical
+  test_data <- data.frame(
+    row = rep(1:3, times = 3),
+    col = rep(1:3, each = 3),
+    treatment = rep(LETTERS[1:3], 3)
+  )
+
+  result_simple <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 50,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  output_simple <- capture_output(print(result_simple))
+  expect_match(output_simple, "Stopped Early: (TRUE|FALSE)")
+
+  # Test with hierarchical design where stopped_early is named logical vector
+  df_split <- data.frame(
+    row = rep(1:4, each = 3),
+    col = rep(1:3, times = 4),
+    wholeplot_treatment = rep(LETTERS[1:2], each = 6),
+    subplot_treatment = rep(letters[1:3], 4),
+    block = rep(1:1, each = 12)
+  )
+
+  result_hierarchical <- speed(df_split,
+                              swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+                              swap_within = list(wp = "block", sp = "wholeplot_treatment"),
+                              spatial_factors = ~ row + col,
+                              iterations = list(wp = 30, sp = 30),
+                              seed = 42,
+                              quiet = TRUE)
+
+  output_hierarchical <- capture_output(print(result_hierarchical))
+  expect_match(output_hierarchical, "Stopped Early:")
+})
+
+test_that("print.design displays correct treatment counts and names", {
+  # Test with different numbers of treatments
+  test_data_few <- data.frame(
+    row = rep(1:4, times = 2),
+    col = rep(1:2, each = 4),
+    treatment = rep(LETTERS[1:2], 4)
+  )
+
+  test_data_many <- data.frame(
+    row = rep(1:5, times = 6),
+    col = rep(1:6, each = 5),
+    treatment = rep(LETTERS[1:6], 5)
+  )
+
+  result_few <- speed(
+    data = test_data_few,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 50,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  result_many <- speed(
+    data = test_data_many,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 50,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Test few treatments
+  output_few <- capture_output(print(result_few))
+  expect_match(output_few, "A, B")  # Should show both treatments
+
+  # Test many treatments
+  output_many <- capture_output(print(result_many))
+  expect_match(output_many, "A, B, C, D, E, F")  # Should show all treatments
+})
+
+test_that("print.design works with extra arguments via ...", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:3, times = 3),
+    col = rep(1:3, each = 3),
+    treatment = rep(LETTERS[1:3], 3)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 50,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should not error with extra arguments (though they're not used)
+  expect_no_error({
+    print(result, extra_param = "test")
+  })
+
+  # Output should still be correct
+  output <- capture_output(print(result, unused_param = 123))
+  expect_match(output, "Optimised Experimental Design")
+})
+
 # TODO: Test cases to add/update
 # - Add more detailed checking of current designs
 # - NSE
