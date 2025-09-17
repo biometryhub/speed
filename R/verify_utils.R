@@ -199,9 +199,10 @@ verify_boolean <- function(..., var_names = NULL) {
   verify_data_type(is_boolean, "a boolean", var_names, ...)
 }
 
-verify_column_exists <- function(col, data, prefix) {
+verify_column_exists <- function(col, data, suffix = NULL) {
   if (!(col %in% names(data))) {
-    stop(paste0("'", col, "' not found in ", paste(colnames(data), collapse = ", ")), call. = FALSE)
+    msg <- c(paste0("'", col, "' not found in ", paste(colnames(data), collapse = ", "), ". "), suffix)
+    stop(msg, call. = FALSE)
   }
 }
 
