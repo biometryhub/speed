@@ -1340,4 +1340,4 @@ test_that("speed runs with grid_factors", {
 # - Objective function not numeric result
 # - swap_all_blocks
 # - Print method output
-# - Plotting
+
