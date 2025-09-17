@@ -215,12 +215,17 @@ infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "c
 #' @description
 #' Initialise a design data frame with or without blocking.
 #'
-#' @param items Items to be placed in the design. Either a single numeric value (the number of
-#' equally replicated items), or a vector of items.
-#' @param nrows Number of rows in the design
-#' @param ncols Number of columns in the design
-#' @param block_nrows Number of rows in each block
-#' @param block_ncols Number of columns in each block
+#' @param items Items to be placed in the design. Either a single numeric value
+#'   (the number of equally replicated items), or a vector of items. (default:
+#'   `NULL`)
+#' @param nrows Number of rows in the design (default: `NULL`)
+#' @param ncols Number of columns in the design (default: `NULL`)
+#' @param block_nrows Number of rows in each block (default: `NULL`)
+#' @param block_ncols Number of columns in each block (default: `NULL`)
+#' @param designs A list of named arguments describing design specifications,
+#'   required if `nrows` and `ncols` are absent. (default: `NULL`)
+#' @param design_col A column name to distinguish different designs (default:
+#'   `"site"`)
 #'
 #' @return A data frame containing the design
 #'
@@ -243,6 +248,25 @@ infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "c
 #'   block_ncols = 3
 #' )
 #'
+#' # MET
+#' initialise_design_df(
+#'   items = c(rep(1:10, 6), rep(11:20, 8)),
+#'   designs = list(
+#'     a = list(nrows = 10, ncols = 3),
+#'     b = list(nrows = 10, ncols = 5),
+#'     c = list(nrows = 10, ncols = 6)
+#'   )
+#' )
+#'
+#' # MET with different items for each site
+#' initialise_design_df(
+#'   designs = list(
+#'     a = list(items = 1:30, nrows = 10, ncols = 6),
+#'     b = list(items = 1:25, nrows = 10, ncols = 5),
+#'     c = list(items = 16:30, nrows = 10, ncols = 3)
+#'   )
+#' )
+#'
 #' @export
 # fmt: skip
 initialise_design_df <- function(items = NULL,
@@ -251,8 +275,7 @@ initialise_design_df <- function(items = NULL,
                                  block_nrows = NULL,
                                  block_ncols = NULL,
                                  designs = NULL,
-                                 design_col = "site",
-                                 blocking = NULL) {
+                                 design_col = "site") {
   .verify_initialise_design_df(items, nrows, ncols, block_nrows, block_ncols, designs, design_col)
 
   # If items is a single numeric value, take it as the number of equally replicated treatments
@@ -262,22 +285,7 @@ initialise_design_df <- function(items = NULL,
 
   # if designs is provided, usually for multi-site
   if (!is.null(designs)) {
-    df <- data.frame()
-    for (design_name in names(designs)) {
-      design_args <- designs[[design_name]]
-      items_sub <- design_args$items
-      if (is.null(items_sub)) {
-        item_idx <- seq_len(design_args$nrows * design_args$ncols)
-        items_sub <- items[item_idx]
-        items <- items[-item_idx]
-      }
-
-      df_sub <- initialise_design_df(items_sub, design_args$nrows, design_args$ncols)
-      df_sub[[design_col]] <- design_name
-      df <- rbind(df, df_sub)
-    }
-
-    return(df)
+    return(initialise_multiple_designs_df(items, designs, design_col))
   }
 
   # Create grid
@@ -294,6 +302,33 @@ initialise_design_df <- function(items = NULL,
 
     # For each block, assign treatments
     df$treatment[order(df$block)] <- items
+  }
+
+  return(df)
+}
+
+#' Initialise Multiple Design Data Frames
+#'
+#' @inheritParams initialise_design_df
+#'
+#' @keywords internal
+initialise_multiple_designs_df <- function(items, designs, design_col) {
+  designs <- add_names(designs)
+  df <- data.frame()
+  for (design_name in names(designs)) {
+    design_args <- designs[[design_name]]
+    items_sub <- design_args$items
+    if (is.null(items_sub)) {
+      item_idx <- seq_len(design_args$nrows * design_args$ncols)
+      items_sub <- items[item_idx]
+      items <- items[-item_idx]
+    }
+
+    df_sub <- initialise_design_df(
+      items_sub, design_args$nrows, design_args$ncols, design_args$block_nrows, design_args$block_ncols
+    )
+    df_sub[[design_col]] <- design_name
+    df <- rbind_fill(df, df_sub)
   }
 
   return(df)

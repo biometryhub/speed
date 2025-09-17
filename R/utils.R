@@ -150,3 +150,32 @@ add_names <- function(a_list) {
 
   return(a_list)
 }
+
+#' `rbind` for Unequal Columns
+#'
+#' @param ... Data frames to be combined
+#' @param fill A filling value for missing columns (default: `NA`)
+#'
+#' @return A combined data frame
+#'
+#' @keywords internal
+rbind_fill <- function(..., fill = NA) {
+  dfs <- list(...)
+  all_cols <- unique(unlist(lapply(dfs, names)))
+
+  dfs_filled <- lapply(dfs, function(df) {
+    if (length(df) == 0) {
+      return(df)
+    }
+
+    missing_cols <- setdiff(all_cols, names(df))
+    for (col in missing_cols) {
+      df[[col]] <- fill
+    }
+
+    df <- df[all_cols]
+    return(df)
+  })
+
+  return(do.call(rbind, dfs_filled))
+}

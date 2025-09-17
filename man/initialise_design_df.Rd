@@ -6,32 +6,43 @@
 \title{Initialise Design Data Frame}
 \usage{
 initialise_design_df(
-  items,
-  nrows,
-  ncols,
+  items = NULL,
+  nrows = NULL,
+  ncols = NULL,
   block_nrows = NULL,
-  block_ncols = NULL
+  block_ncols = NULL,
+  designs = NULL,
+  design_col = "site"
 )
 
 initialize_design_df(
-  items,
-  nrows,
-  ncols,
+  items = NULL,
+  nrows = NULL,
+  ncols = NULL,
   block_nrows = NULL,
-  block_ncols = NULL
+  block_ncols = NULL,
+  designs = NULL,
+  design_col = "site"
 )
 }
 \arguments{
-\item{items}{Items to be placed in the design. Either a single numeric value (the number of
-equally replicated items), or a vector of items.}
+\item{items}{Items to be placed in the design. Either a single numeric value
+(the number of equally replicated items), or a vector of items. (default:
+\code{NULL})}
 
-\item{nrows}{Number of rows in the design}
+\item{nrows}{Number of rows in the design (default: \code{NULL})}
 
-\item{ncols}{Number of columns in the design}
+\item{ncols}{Number of columns in the design (default: \code{NULL})}
 
-\item{block_nrows}{Number of rows in each block}
+\item{block_nrows}{Number of rows in each block (default: \code{NULL})}
 
-\item{block_ncols}{Number of columns in each block}
+\item{block_ncols}{Number of columns in each block (default: \code{NULL})}
+
+\item{designs}{A list of named arguments describing design specifications,
+required if \code{nrows} and \code{ncols} are absent. (default: \code{NULL})}
+
+\item{design_col}{A column name to distinguish different designs (default:
+\code{"site"})}
 }
 \value{
 A data frame containing the design
@@ -56,6 +67,25 @@ initialise_design_df(
   ncols = 6,
   block_nrows = 2,
   block_ncols = 3
+)
+
+# MET
+initialise_design_df(
+  items = c(rep(1:10, 6), rep(11:20, 8)),
+  designs = list(
+    a = list(nrows = 10, ncols = 3),
+    b = list(nrows = 10, ncols = 5),
+    c = list(nrows = 10, ncols = 6)
+  )
+)
+
+# MET with different items for each site
+initialise_design_df(
+  designs = list(
+    a = list(items = 1:30, nrows = 10, ncols = 6),
+    b = list(items = 1:25, nrows = 10, ncols = 5),
+    c = list(items = 16:30, nrows = 10, ncols = 3)
+  )
 )
 
 }
