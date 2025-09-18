@@ -209,3 +209,10 @@ create_speed_input <- function(swap,
 }
 
 `%||%` <- function(a, b) if (!is.null(a)) a else b
+
+#' Convert Factor to Numeric
+#'
+#' @param x A factor
+#' @returns A numeric vector
+#' @keywords internal
+as_numeric_factor <- function(x) {as.numeric(as.character(x))}

@@ -200,18 +200,18 @@ verify_between <- function(
       object_type <- paste0("at most ", upper)
     }
   }
-  object_type <- paste0(object_type, ".")
 
-  verify_data_type(is_between_(lower, upper), object_type, var_names, ...)
+  verify_data_type(is_between_(lower, upper, lower_exclude, upper_exclude), object_type, var_names, ...)
 }
 
 verify_boolean <- function(..., var_names = NULL) {
   verify_data_type(is_boolean, "a boolean", var_names, ...)
 }
 
-verify_column_exists <- function(col, data, prefix) {
+verify_column_exists <- function(col, data, suffix = NULL) {
   if (!(col %in% names(data))) {
-    stop(paste0("'", col, "' not found in ", paste(colnames(data), collapse = ", ")), call. = FALSE)
+    msg <- c(paste0("'", col, "' not found in ", paste(colnames(data), collapse = ", "), ". "), suffix)
+    stop(msg, call. = FALSE)
   }
 }
 
@@ -238,6 +238,11 @@ verify_positive_whole_numbers <- function(..., var_names = NULL) {
   verify_data_type(is_positive_whole_numbers, "a vector of positive whole numbers", var_names, ...)
 }
 
+verify_must_be <- function(..., valid_values, var_names = NULL) {
+  literal_values <- get_literal_values(valid_values)
+  verify_data_type(must_be_(valid_values), literal_values, var_names, ...)
+}
+
 verify_data_type <- function(verify_func, data_type, var_names = NULL, ...) {
   if (is.null(var_names)) {
     var_names <- get_var_names(...)
@@ -251,6 +256,27 @@ verify_data_type <- function(verify_func, data_type, var_names = NULL, ...) {
       data_type_error(var_names[[i]], data_type)
     }
   }
+}
+
+get_literal_values <- function(values) {
+  n_values <- length(values)
+  literal_values <- literal(values[[1]])
+  if (n_values == 1) {
+    return(literal_values)
+  }
+
+  if (n_values == 2) {
+    return(paste0(literal_values, " or ", literal(values[[2]])))
+  }
+
+  for (i in 2:n_values) {
+    if (i < n_values) {
+      literal_values <- paste0(literal_values, ", ", literal(values[[i]]))
+    } else {
+      literal_values <- paste0(literal_values, ", or ", literal(values[[i]]))
+    }
+  }
+  return(literal_values)
 }
 
 get_var_names <- function(...) {
