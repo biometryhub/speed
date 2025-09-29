@@ -114,9 +114,75 @@ to_types <- function(df, types) {
   return(df)
 }
 
+#' Add Names to A List
+#'
+#' @description
+#' Add names to a list if not exist or fill in missing names.
+#'
+#' @param a_list A list
+#'
+#' @return A named list
+#'
+#' @keywords internal
+add_names <- function(a_list) {
+  if (is.null(names(a_list))) {
+    names(a_list) <- seq_along(a_list)
+  } else {
+    existing_names <- new.env()
+    for (name in names(a_list)) {
+      if (name != "") {
+        existing_names[[name]] <- TRUE
+      }
+    }
+
+    running_name <- 1
+    for (i in seq_along(a_list)) {
+      if (names(a_list)[[i]] == "") {
+        while (exists(as.character(running_name), existing_names)) {
+          running_name <- running_name + 1
+        }
+
+        names(a_list)[[i]] <- running_name
+        running_name <- running_name + 1
+      }
+    }
+  }
+
+  return(a_list)
+}
+
+#' `rbind` for Unequal Columns
+#'
+#' @param ... Data frames to be combined
+#' @param fill A filling value for missing columns (default: `NA`)
+#'
+#' @return A combined data frame
+#'
+#' @keywords internal
+rbind_fill <- function(..., fill = NA) {
+  dfs <- list(...)
+  all_cols <- unique(unlist(lapply(dfs, names)))
+
+  dfs_filled <- lapply(dfs, function(df) {
+    if (length(df) == 0) {
+      return(df)
+    }
+
+    missing_cols <- setdiff(all_cols, names(df))
+    for (col in missing_cols) {
+      df[[col]] <- fill
+    }
+
+    df <- df[all_cols]
+    return(df)
+  })
+
+  return(do.call(rbind, dfs_filled))
+}
+
 #' Convert Factor to Numeric
 #'
 #' @param x A factor
 #' @returns A numeric vector
 #' @keywords internal
-as_numeric_factor <- function(x) {as.numeric(as.character(x))}
+as_numeric_factor <- function(x) as.numeric(as.character(x))
