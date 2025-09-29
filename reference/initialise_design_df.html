@@ -44,19 +44,23 @@
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">initialise_design_df</span><span class="op">(</span></span>
-<span>  <span class="va">items</span>,</span>
-<span>  <span class="va">nrows</span>,</span>
-<span>  <span class="va">ncols</span>,</span>
+<span>  items <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  nrows <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ncols <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  block_nrows <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  block_ncols <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  block_ncols <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  designs <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  design_col <span class="op">=</span> <span class="st">"site"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">initialize_design_df</span><span class="op">(</span></span>
-<span>  <span class="va">items</span>,</span>
-<span>  <span class="va">nrows</span>,</span>
-<span>  <span class="va">ncols</span>,</span>
+<span>  items <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  nrows <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ncols <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  block_nrows <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  block_ncols <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  block_ncols <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  designs <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  design_col <span class="op">=</span> <span class="st">"site"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -65,24 +69,35 @@
 
 
 <dl><dt id="arg-items">items<a class="anchor" aria-label="anchor" href="#arg-items"></a></dt>
-<dd><p>Items to be placed in the design. Either a single numeric value (the number of
-equally replicated items), or a vector of items.</p></dd>
+<dd><p>Items to be placed in the design. Either a single numeric value
+(the number of equally replicated items), or a vector of items. (default:
+<code>NULL</code>)</p></dd>
 
 
 <dt id="arg-nrows">nrows<a class="anchor" aria-label="anchor" href="#arg-nrows"></a></dt>
-<dd><p>Number of rows in the design</p></dd>
+<dd><p>Number of rows in the design (default: <code>NULL</code>)</p></dd>
 
 
 <dt id="arg-ncols">ncols<a class="anchor" aria-label="anchor" href="#arg-ncols"></a></dt>
-<dd><p>Number of columns in the design</p></dd>
+<dd><p>Number of columns in the design (default: <code>NULL</code>)</p></dd>
 
 
 <dt id="arg-block-nrows">block_nrows<a class="anchor" aria-label="anchor" href="#arg-block-nrows"></a></dt>
-<dd><p>Number of rows in each block</p></dd>
+<dd><p>Number of rows in each block (default: <code>NULL</code>)</p></dd>
 
 
 <dt id="arg-block-ncols">block_ncols<a class="anchor" aria-label="anchor" href="#arg-block-ncols"></a></dt>
-<dd><p>Number of columns in each block</p></dd>
+<dd><p>Number of columns in each block (default: <code>NULL</code>)</p></dd>
+
+
+<dt id="arg-designs">designs<a class="anchor" aria-label="anchor" href="#arg-designs"></a></dt>
+<dd><p>A list of named arguments describing design specifications,
+required if <code>nrows</code> and <code>ncols</code> are absent. (default: <code>NULL</code>)</p></dd>
+
+
+<dt id="arg-design-col">design_col<a class="anchor" aria-label="anchor" href="#arg-design-col"></a></dt>
+<dd><p>A column name to distinguish different designs (default:
+<code>"site"</code>)</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -177,6 +192,308 @@ equally replicated items), or a vector of items.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 22   2   6        T6         1         2     3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 23   3   6        T5         2         2     4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 24   4   6        T6         2         2     4</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># MET</span></span></span>
+<span class="r-in"><span><span class="fu">initialise_design_df</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  items <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="fl">6</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">11</span><span class="op">:</span><span class="fl">20</span>, <span class="fl">8</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  designs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrows <span class="op">=</span> <span class="fl">10</span>, ncols <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrows <span class="op">=</span> <span class="fl">10</span>, ncols <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    c <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrows <span class="op">=</span> <span class="fl">10</span>, ncols <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     row col treatment site</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1     1   1         1    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2     2   1         2    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3     3   1         3    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4     4   1         4    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5     5   1         5    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6     6   1         6    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7     7   1         7    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8     8   1         8    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9     9   1         9    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10   10   1        10    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11    1   2         1    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12    2   2         2    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13    3   2         3    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14    4   2         4    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15    5   2         5    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16    6   2         6    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17    7   2         7    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18    8   2         8    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19    9   2         9    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20   10   2        10    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21    1   3         1    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22    2   3         2    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23    3   3         3    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24    4   3         4    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25    5   3         5    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26    6   3         6    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27    7   3         7    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28    8   3         8    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29    9   3         9    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30   10   3        10    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31    1   1         1    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32    2   1         2    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33    3   1         3    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34    4   1         4    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 35    5   1         5    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 36    6   1         6    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 37    7   1         7    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 38    8   1         8    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 39    9   1         9    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 40   10   1        10    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 41    1   2         1    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 42    2   2         2    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 43    3   2         3    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 44    4   2         4    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 45    5   2         5    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 46    6   2         6    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 47    7   2         7    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 48    8   2         8    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 49    9   2         9    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 50   10   2        10    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 51    1   3         1    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 52    2   3         2    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 53    3   3         3    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 54    4   3         4    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 55    5   3         5    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 56    6   3         6    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 57    7   3         7    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 58    8   3         8    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 59    9   3         9    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 60   10   3        10    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 61    1   4        11    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 62    2   4        12    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 63    3   4        13    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 64    4   4        14    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 65    5   4        15    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 66    6   4        16    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 67    7   4        17    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 68    8   4        18    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 69    9   4        19    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 70   10   4        20    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 71    1   5        11    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 72    2   5        12    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 73    3   5        13    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 74    4   5        14    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 75    5   5        15    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 76    6   5        16    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 77    7   5        17    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 78    8   5        18    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 79    9   5        19    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 80   10   5        20    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 81    1   1        11    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 82    2   1        12    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 83    3   1        13    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 84    4   1        14    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 85    5   1        15    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 86    6   1        16    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 87    7   1        17    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 88    8   1        18    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 89    9   1        19    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 90   10   1        20    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 91    1   2        11    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 92    2   2        12    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 93    3   2        13    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 94    4   2        14    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 95    5   2        15    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 96    6   2        16    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 97    7   2        17    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 98    8   2        18    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 99    9   2        19    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 100  10   2        20    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 101   1   3        11    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 102   2   3        12    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 103   3   3        13    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 104   4   3        14    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 105   5   3        15    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 106   6   3        16    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 107   7   3        17    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 108   8   3        18    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 109   9   3        19    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 110  10   3        20    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 111   1   4        11    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 112   2   4        12    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 113   3   4        13    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 114   4   4        14    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 115   5   4        15    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 116   6   4        16    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 117   7   4        17    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 118   8   4        18    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 119   9   4        19    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 120  10   4        20    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 121   1   5        11    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 122   2   5        12    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 123   3   5        13    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 124   4   5        14    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 125   5   5        15    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 126   6   5        16    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 127   7   5        17    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 128   8   5        18    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 129   9   5        19    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 130  10   5        20    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 131   1   6        11    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 132   2   6        12    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 133   3   6        13    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 134   4   6        14    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 135   5   6        15    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 136   6   6        16    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 137   7   6        17    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 138   8   6        18    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 139   9   6        19    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 140  10   6        20    c</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># MET with different items for each site</span></span></span>
+<span class="r-in"><span><span class="fu">initialise_design_df</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  designs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>items <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">30</span>, nrows <span class="op">=</span> <span class="fl">10</span>, ncols <span class="op">=</span> <span class="fl">6</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>items <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">25</span>, nrows <span class="op">=</span> <span class="fl">10</span>, ncols <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    c <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>items <span class="op">=</span> <span class="fl">16</span><span class="op">:</span><span class="fl">30</span>, nrows <span class="op">=</span> <span class="fl">10</span>, ncols <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     row col treatment site</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1     1   1         1    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2     2   1         2    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3     3   1         3    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4     4   1         4    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5     5   1         5    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6     6   1         6    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7     7   1         7    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8     8   1         8    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9     9   1         9    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10   10   1        10    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11    1   2        11    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12    2   2        12    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13    3   2        13    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14    4   2        14    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15    5   2        15    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16    6   2        16    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17    7   2        17    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18    8   2        18    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19    9   2        19    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20   10   2        20    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21    1   3        21    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22    2   3        22    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23    3   3        23    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24    4   3        24    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25    5   3        25    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26    6   3        26    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27    7   3        27    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28    8   3        28    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29    9   3        29    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30   10   3        30    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31    1   4         1    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32    2   4         2    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33    3   4         3    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34    4   4         4    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 35    5   4         5    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 36    6   4         6    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 37    7   4         7    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 38    8   4         8    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 39    9   4         9    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 40   10   4        10    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 41    1   5        11    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 42    2   5        12    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 43    3   5        13    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 44    4   5        14    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 45    5   5        15    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 46    6   5        16    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 47    7   5        17    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 48    8   5        18    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 49    9   5        19    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 50   10   5        20    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 51    1   6        21    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 52    2   6        22    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 53    3   6        23    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 54    4   6        24    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 55    5   6        25    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 56    6   6        26    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 57    7   6        27    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 58    8   6        28    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 59    9   6        29    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 60   10   6        30    a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 61    1   1         1    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 62    2   1         2    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 63    3   1         3    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 64    4   1         4    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 65    5   1         5    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 66    6   1         6    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 67    7   1         7    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 68    8   1         8    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 69    9   1         9    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 70   10   1        10    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 71    1   2        11    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 72    2   2        12    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 73    3   2        13    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 74    4   2        14    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 75    5   2        15    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 76    6   2        16    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 77    7   2        17    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 78    8   2        18    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 79    9   2        19    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 80   10   2        20    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 81    1   3        21    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 82    2   3        22    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 83    3   3        23    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 84    4   3        24    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 85    5   3        25    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 86    6   3         1    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 87    7   3         2    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 88    8   3         3    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 89    9   3         4    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 90   10   3         5    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 91    1   4         6    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 92    2   4         7    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 93    3   4         8    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 94    4   4         9    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 95    5   4        10    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 96    6   4        11    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 97    7   4        12    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 98    8   4        13    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 99    9   4        14    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 100  10   4        15    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 101   1   5        16    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 102   2   5        17    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 103   3   5        18    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 104   4   5        19    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 105   5   5        20    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 106   6   5        21    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 107   7   5        22    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 108   8   5        23    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 109   9   5        24    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 110  10   5        25    b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 111   1   1        16    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 112   2   1        17    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 113   3   1        18    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 114   4   1        19    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 115   5   1        20    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 116   6   1        21    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 117   7   1        22    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 118   8   1        23    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 119   9   1        24    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 120  10   1        25    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 121   1   2        26    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 122   2   2        27    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 123   3   2        28    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 124   4   2        29    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 125   5   2        30    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 126   6   2        16    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 127   7   2        17    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 128   8   2        18    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 129   9   2        19    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 130  10   2        20    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 131   1   3        21    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 132   2   3        22    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 133   3   3        23    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 134   4   3        24    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 135   5   3        25    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 136   6   3        26    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 137   7   3        27    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 138   8   3        28    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 139   9   3        29    c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 140  10   3        30    c</span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

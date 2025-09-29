@@ -7,6 +7,7 @@
 <url><loc>https://biometryhub.github.io/speed/articles/speed.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/authors.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/index.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/add_names.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/as_numeric_factor.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/autoplot.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/calculate_adjacency_score.html</loc></url>
@@ -26,11 +27,13 @@
 <url><loc>https://biometryhub.github.io/speed/reference/index.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/infer_row_col.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/initialise_design_df.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/initialise_multiple_designs_df.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/objective_function_piepho.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/objective_functions.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/plot_progress.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/print.design.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/pseudo_inverse.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/rbind_fill.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/shuffle_items.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/speed-options.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/speed-package.html</loc></url>
