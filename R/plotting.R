@@ -31,7 +31,7 @@ ggplot2::autoplot
 #'
 #' @importFrom farver decode_colour
 #' @importFrom grDevices colorRampPalette
-#' @importFrom ggplot2 ggplot geom_tile aes geom_text theme_bw scale_fill_manual scale_x_continuous scale_y_continuous scale_y_reverse
+#' @importFrom ggplot2 ggplot geom_tile aes geom_text theme_bw scale_fill_manual scale_x_continuous scale_y_continuous scale_y_reverse labs
 #' @importFrom scales brewer_pal reverse_trans viridis_pal
 #' @importFrom stringi stri_sort
 #' @importFrom rlang check_dots_used enquo sym quo_is_null quo_name
@@ -77,7 +77,12 @@ autoplot.design <- function(object,
                             legend = FALSE, ...) {
   stopifnot(inherits(object, "design"))
   rlang::check_dots_used()
+  stopifnot(inherits(object, "design"))
+  rlang::check_dots_used()
 
+  if(inherits(object, "list")) {
+    object <- object$design_df
+  }
   if(inherits(object, "list")) {
     object <- object$design_df
   }
@@ -355,25 +360,25 @@ calculate_block_boundaries <- function(object, block_expr) {
 #' @importFrom ggplot2 ggplot aes geom_line labs theme_minimal
 #' @export
 plot_progress <- function(result) {
-    df <- data.frame(
-        iteration = 1:length(result$scores),
-        score = result$scores,
-        temperature = result$temperatures
-    )
+  df <- data.frame(
+    iteration = 1:length(result$scores),
+    score = result$scores,
+    temperature = result$temperatures
+  )
 
-    p1 <- ggplot2::ggplot(df, ggplot2::aes(x = iteration, y = score)) +
-        ggplot2::geom_line() +
-        ggplot2::labs(title = "Objective Score Over Iterations",
-                      x = "Iteration", y = "Score") +
-        ggplot2::theme_minimal()
+  p1 <- ggplot2::ggplot(df, ggplot2::aes(x = iteration, y = score)) +
+    ggplot2::geom_line() +
+    ggplot2::labs(title = "Objective Score Over Iterations",
+                  x = "Iteration", y = "Score") +
+    ggplot2::theme_minimal()
 
-    p2 <- ggplot2::ggplot(df, ggplot2::aes(x = iteration, y = temperature)) +
-        ggplot2::geom_line() +
-        ggplot2::labs(title = "Temperature Over Iterations",
-                      x = "Iteration", y = "Temperature") +
-        ggplot2::theme_minimal()
+  p2 <- ggplot2::ggplot(df, ggplot2::aes(x = iteration, y = temperature)) +
+    ggplot2::geom_line() +
+    ggplot2::labs(title = "Temperature Over Iterations",
+                  x = "Iteration", y = "Temperature") +
+    ggplot2::theme_minimal()
 
-    print(p1)
-    print(p2)
+  print(p1)
+  print(p2)
 }
 

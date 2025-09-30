@@ -171,6 +171,7 @@ generate_sequential_neighbour <- function(design,
 #' - **col** - Name of the column column
 #'
 #' @keywords internal
+# fmt: skip
 infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "col"), quiet = FALSE) {
   if (grid_factors$dim1 %in% names(layout_df) && grid_factors$dim2 %in% names(layout_df)) {
     row_col <- grid_factors$dim1
@@ -214,12 +215,17 @@ infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "c
 #' @description
 #' Initialise a design data frame with or without blocking.
 #'
-#' @param items Items to be placed in the design. Either a single numeric value (the number of
-#' equally replicated items), or a vector of items.
-#' @param nrows Number of rows in the design
-#' @param ncols Number of columns in the design
-#' @param block_nrows Number of rows in each block
-#' @param block_ncols Number of columns in each block
+#' @param items Items to be placed in the design. Either a single numeric value
+#'   (the number of equally replicated items), or a vector of items. (default:
+#'   `NULL`)
+#' @param nrows Number of rows in the design (default: `NULL`)
+#' @param ncols Number of columns in the design (default: `NULL`)
+#' @param block_nrows Number of rows in each block (default: `NULL`)
+#' @param block_ncols Number of columns in each block (default: `NULL`)
+#' @param designs A list of named arguments describing design specifications,
+#'   required if `nrows` and `ncols` are absent. (default: `NULL`)
+#' @param design_col A column name to distinguish different designs (default:
+#'   `"site"`)
 #'
 #' @return A data frame containing the design
 #'
@@ -233,36 +239,98 @@ infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "c
 #' # blocking
 #' initialise_design_df(rep(1:8, 4), 8, 4, 2, 2)
 #'
+#' # another blocking example
+#' initialise_design_df(
+#'   items = paste0("T", 1:6),
+#'   nrows = 4,
+#'   ncols = 6,
+#'   block_nrows = 2,
+#'   block_ncols = 3
+#' )
+#'
+#' # MET
+#' initialise_design_df(
+#'   items = c(rep(1:10, 6), rep(11:20, 8)),
+#'   designs = list(
+#'     a = list(nrows = 10, ncols = 3),
+#'     b = list(nrows = 10, ncols = 5),
+#'     c = list(nrows = 10, ncols = 6)
+#'   )
+#' )
+#'
+#' # MET with different items for each site
+#' initialise_design_df(
+#'   designs = list(
+#'     a = list(items = 1:30, nrows = 10, ncols = 6),
+#'     b = list(items = 1:25, nrows = 10, ncols = 5),
+#'     c = list(items = 16:30, nrows = 10, ncols = 3)
+#'   )
+#' )
+#'
 #' @export
 # fmt: skip
-initialise_design_df <- function(items,
-                                 nrows,
-                                 ncols,
+initialise_design_df <- function(items = NULL,
+                                 nrows = NULL,
+                                 ncols = NULL,
                                  block_nrows = NULL,
-                                 block_ncols = NULL) {
-  .verify_initialise_design_df(nrows, ncols, block_nrows, block_ncols)
+                                 block_ncols = NULL,
+                                 designs = NULL,
+                                 design_col = "site") {
+  .verify_initialise_design_df(items, nrows, ncols, block_nrows, block_ncols, designs, design_col)
 
   # If items is a single numeric value, take it as the number of equally replicated treatments
   if (length(items) == 1 && is.numeric(items)) {
     items <- paste0("T", 1:items)
   }
 
-  rows <- rep(1:nrows, ncols)
-  cols <- rep(1:ncols, each = nrows)
-  df <- data.frame(
-    row = rows,
-    col = cols,
-    treatment = items
-  )
+  # if designs is provided, usually for multi-site
+  if (!is.null(designs)) {
+    return(initialise_multiple_designs_df(items, designs, design_col))
+  }
+
+  # Create grid
+  df <- expand.grid(row = 1:nrows, col = 1:ncols)
+  df$treatment <- items
+
+  # If blocked design
   if (!is.null(block_nrows)) {
     nblocks_row <- nrows / block_nrows
-    nblocks_col <- ncols / block_ncols
 
-    df$row_block <- rep(1:nblocks_row, ncols, each = block_nrows)
-    df$col_block <- rep(1:nblocks_col, each = nrows * block_ncols)
-    df$block <- as.numeric(df$row_block) +
-      nblocks_row * (as.numeric(df$col_block) - 1)
+    df$row_block <- ceiling(df$row / block_nrows)
+    df$col_block <- ceiling(df$col / block_ncols)
+    df$block <- df$row_block + nblocks_row * (df$col_block - 1)
+
+    # For each block, assign treatments
+    df$treatment[order(df$block)] <- items
   }
+
+  return(df)
+}
+
+#' Initialise Multiple Design Data Frames
+#'
+#' @inheritParams initialise_design_df
+#'
+#' @keywords internal
+initialise_multiple_designs_df <- function(items, designs, design_col) {
+  designs <- add_names(designs)
+  df <- data.frame()
+  for (design_name in names(designs)) {
+    design_args <- designs[[design_name]]
+    items_sub <- design_args$items
+    if (is.null(items_sub)) {
+      item_idx <- seq_len(design_args$nrows * design_args$ncols)
+      items_sub <- items[item_idx]
+      items <- items[-item_idx]
+    }
+
+    df_sub <- initialise_design_df(
+      items_sub, design_args$nrows, design_args$ncols, design_args$block_nrows, design_args$block_ncols
+    )
+    df_sub[[design_col]] <- design_name
+    df <- rbind_fill(df, df_sub)
+  }
+
   return(df)
 }
 
@@ -274,6 +342,7 @@ initialise_design_df <- function(items,
 #' @return A data frame with the items shuffled
 #'
 #' @keywords internal
+# fmt: skip
 shuffle_items <- function(design, swap, swap_within, seed = NULL) {
   if (!is.null(seed)) {
     set.seed(seed)
@@ -288,11 +357,44 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
 }
 
 # fmt: skip
-.verify_initialise_design_df <- function(nrows,
+.verify_initialise_design_df <- function(items,
+                                         nrows,
                                          ncols,
                                          block_nrows,
-                                         block_ncols) {
-  verify_positive_whole_number(nrows, ncols)
+                                         block_ncols,
+                                         designs,
+                                         design_col) {
+  if (is.null(designs) && is.null(nrows) && is.null(ncols)) {
+    stop("Either `nrows` and `ncols` or `designs` must be provided")
+  }
+
+  if (is.null(designs)) {
+    verify_positive_whole_number(length(items), nrows, ncols)
+  } else {
+    verify_list(designs)
+    valid_args <- c("items", "nrows", "ncols", "block_nrows", "block_ncols")
+    for (design in designs) {
+      verify_list(design)
+      for (arg in names(design)) {
+        if (!(arg %in% valid_args)) {
+          stop(paste0("`", arg, "` is an invalid argument"))
+        }
+      }
+      if (length(setdiff(c("nrows", "ncols"), names(design))) > 0) {
+        stop("`nrows` and `ncols` must be provided for each design")
+      }
+    }
+
+    # check items
+    items_exist <- unlist(lapply(designs, function(x) "items" %in% names(x)))
+    if (any(items_exist) && !all(items_exist)) {
+      stop("`items` must be provided for all designs")
+    }
+    if (all(!items_exist) && is.null(items)) {
+      stop("`items` must be provided for all designs or `items` must be provided to `initialise_design_df`")
+    }
+  }
+  verify_character(design_col)
 
   if (
     (!is.null(block_nrows) && is.null(block_ncols)) ||
@@ -307,9 +409,11 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
 
     verify_multiple_of(nrows, block_nrows)
     verify_multiple_of(ncols, block_ncols)
+    verify_multiple_of(nrows * ncols, length(items))
   }
 }
 
 # Alias for the function to maintain backward compatibility
 #' @rdname initialise_design_df
+#' @export
 initialize_design_df <- initialise_design_df

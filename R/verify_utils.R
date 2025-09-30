@@ -73,7 +73,7 @@
       stop(paste("Column", swap[[level]], "not found in data"))
     }
     if (!swap_within[[level]] %in% names(data) &&
-        !(swap_within[[level]] %in% c("1", "none"))) {
+      !(swap_within[[level]] %in% c("1", "none"))) {
       stop(paste("Column", swap_within[[level]], "not found in data"))
     }
   }
@@ -190,18 +190,18 @@ verify_between <- function(
       object_type <- paste0("at most ", upper)
     }
   }
-  object_type <- paste0(object_type, ".")
 
-  verify_data_type(is_between_(lower, upper), object_type, var_names, ...)
+  verify_data_type(is_between_(lower, upper, lower_exclude, upper_exclude), object_type, var_names, ...)
 }
 
 verify_boolean <- function(..., var_names = NULL) {
   verify_data_type(is_boolean, "a boolean", var_names, ...)
 }
 
-verify_column_exists <- function(col, data, prefix) {
+verify_column_exists <- function(col, data, suffix = NULL) {
   if (!(col %in% names(data))) {
-    stop(paste0("'", col, "' not found in ", paste(colnames(data), collapse = ", ")), call. = FALSE)
+    msg <- c(paste0("'", col, "' not found in ", paste(colnames(data), collapse = ", "), ". "), suffix)
+    stop(msg, call. = FALSE)
   }
 }
 
@@ -222,6 +222,14 @@ verify_multiple_of <- function(..., var_names = NULL) {
 
 verify_positive_whole_number <- function(..., var_names = NULL) {
   verify_data_type(is_positive_whole_number, "a positive whole number", var_names, ...)
+}
+
+verify_character <- function(..., var_names = NULL) {
+  verify_data_type(is.character, "a character", var_names, ...)
+}
+
+verify_list <- function(..., var_names = NULL) {
+  verify_data_type(is.list, "a list", var_names, ...)
 }
 
 verify_positive_whole_numbers <- function(..., var_names = NULL) {
@@ -251,6 +259,10 @@ verify_data_type <- function(verify_func, data_type, var_names = NULL, ...) {
 get_literal_values <- function(values) {
   n_values <- length(values)
   literal_values <- literal(values[[1]])
+  if (n_values == 1) {
+    return(literal_values)
+  }
+
   if (n_values == 2) {
     return(paste0(literal_values, " or ", literal(values[[2]])))
   }
@@ -262,6 +274,7 @@ get_literal_values <- function(values) {
       literal_values <- paste0(literal_values, ", or ", literal(values[[i]]))
     }
   }
+  return(literal_values)
 }
 
 get_var_names <- function(...) {
