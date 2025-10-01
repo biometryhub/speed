@@ -270,15 +270,15 @@ apply_axis_styling <- function(plot, margin, object, row_expr, column_expr) {
   if(!margin) {
     # No margin - expand plot to edges with no white space
     plot <- plot + ggplot2::scale_x_continuous(expand = c(0, 0),
-                                               breaks = seq(1, max(object[[column_expr]]), 1)) +
+                                               breaks = seq(1, max(as_numeric_factor(object[[column_expr]])), 1)) +
       ggplot2::scale_y_continuous(expand = c(0, 0),
                                   trans = scales::reverse_trans(),
-                                  breaks = seq(1, max(object[[row_expr]]), 1))
+                                  breaks = seq(1, max(as_numeric_factor(object[[row_expr]])), 1))
   } else {
     # With margin - default ggplot spacing
-    plot <- plot + ggplot2::scale_x_continuous(breaks = seq(1, max(object[[column_expr]]), 1)) +
+    plot <- plot + ggplot2::scale_x_continuous(breaks = seq(1, max(as_numeric_factor(object[[column_expr]])), 1)) +
       ggplot2::scale_y_continuous(trans = scales::reverse_trans(),
-                                  breaks = seq(1, max(object[[row_expr]]), 1))
+                                  breaks = seq(1, max(as_numeric_factor(object[[row_expr]])), 1))
   }
   return(plot)
 }
@@ -291,10 +291,10 @@ calculate_block_boundaries <- function(object, block_expr) {
 
   for (i in 1:nrow(blkdf)) {
     tmp <- object[object[[block_expr]] == blkdf$block[i], ]
-    blkdf[i, "ymin"] <- (min(tmp$row) - 0.5)
-    blkdf[i, "ymax"] <- (max(tmp$row) + 0.5)
-    blkdf[i, "xmin"] <- (min(tmp$col) - 0.5)
-    blkdf[i, "xmax"] <- (max(tmp$col) + 0.5)
+    blkdf[i, "ymin"] <- (min(as_numeric_factor(tmp$row)) - 0.5)
+    blkdf[i, "ymax"] <- (max(as_numeric_factor(tmp$row)) + 0.5)
+    blkdf[i, "xmin"] <- (min(as_numeric_factor(tmp$col)) - 0.5)
+    blkdf[i, "xmax"] <- (max(as_numeric_factor(tmp$col)) + 0.5)
   }
 
   return(blkdf)
