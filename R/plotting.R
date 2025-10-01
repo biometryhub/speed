@@ -77,31 +77,44 @@ autoplot.design <- function(object,
                             legend = FALSE, ...) {
   stopifnot(inherits(object, "design"))
   rlang::check_dots_used()
-  stopifnot(inherits(object, "design"))
-  rlang::check_dots_used()
 
   if(inherits(object, "list")) {
     object <- object$design_df
   }
-  if(inherits(object, "list")) {
-    object <- object$design_df
-  }
 
-  # Handle column name expressions (existing code)
   row_expr <- rlang::enquo(row)
   column_expr <- rlang::enquo(column)
   block_expr <- rlang::enquo(block)
   trt_expr <- rlang::enquo(treatments)
 
-  if(rlang::quo_is_null(row_expr)) row_expr <- rlang::sym("row")
-  if(rlang::quo_is_null(column_expr)) column_expr <- rlang::sym("col")
-  if(rlang::quo_is_null(block_expr)) block_expr <- rlang::sym("block")
-  if(rlang::quo_is_null(trt_expr)) trt_expr <- rlang::sym("treatment")
+  # If row and column are not provided, set default values
+  if(rlang::quo_is_null(row_expr)) {
+    row_expr <- rlang::sym("row")  # Default to the row column
+  }
+  if(rlang::quo_is_null(column_expr)) {
+    column_expr <- rlang::sym("col")  # Default to the col column
+  }
+  if(rlang::quo_is_null(block_expr)) {
+    block_expr <- rlang::sym("block")  # Default to the block column
+  }
+  if(rlang::quo_is_null(trt_expr)) {
+    trt_expr <- rlang::sym("treatment")  # Default to the treatments column
+  }
 
   row_expr <- rlang::quo_name(row_expr)
   column_expr <- rlang::quo_name(column_expr)
   block_expr <- rlang::quo_name(block_expr)
   trt_expr <- rlang::quo_name(trt_expr)
+
+  # Verify that required columns exist in the data
+  verify_column_exists(row_expr, object, suffix = "Please specify the appropriate column using the 'row' argument.")
+  verify_column_exists(column_expr, object, suffix = "Please specify the appropriate column using the 'column' argument.")
+  verify_column_exists(trt_expr, object, suffix = "Please specify the appropriate column using the 'treatments' argument.")
+
+  # Only verify block column if it's being used (i.e., if blocks exist in data)
+  if(any(grepl("block", tolower(names(object))))) {
+    verify_column_exists(block_expr, object, suffix = "Please specify the appropriate column using the 'block' argument.")
+  }
 
   # Set up treatments and colours
   if("buffer" %in% as.character(object[[trt_expr]])) {
@@ -115,7 +128,7 @@ autoplot.design <- function(object,
     object[[trt_expr]] <- factor(as.character(object[[trt_expr]]), levels = factor_levels)
     ntrt <- length(treatments_sorted)  # Number of actual treatments (excluding buffer)
   } else {
-    # Original logic for designs without buffers
+    # Logic for designs without buffers
     object[[trt_expr]] <- factor(as.character(object[[trt_expr]]),
                                  levels = unique(stringi::stri_sort(as.character(object[[trt_expr]]), numeric = TRUE)))
     ntrt <- nlevels(object[[trt_expr]])

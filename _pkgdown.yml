@@ -29,6 +29,7 @@ reference:
   - contents:
       - create_pair_mapping
       - initialise_design_df
+      - add_buffers
   - title: Advanced options
   - contents:
       - speed-options
