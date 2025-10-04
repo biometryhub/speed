@@ -556,8 +556,6 @@ test_that("speed handles split plot designs", {
   expect_equal(result$iterations_run, 1726)
   expect_equal(result$stopped_early, c(wp = TRUE, sp = TRUE))
 
-  # expect_identical(which(is.na(result$design_df$treatment)), which(is.na(irregular_large_data$treatment)))
-
   vdiffr::expect_doppelganger("speed_splitplot_wp", autoplot(result, treatments = "wholeplot_treatment"))
   vdiffr::expect_doppelganger("speed_splitplot_sp", autoplot(result, treatments = "subplot_treatment"))
 })

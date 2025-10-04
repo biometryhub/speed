@@ -330,3 +330,89 @@ test_that("create_speed_input creates an input from optimize argument", {
     swap_all = FALSE
   )[ordered_names])
 })
+
+test_that("add_names adds names to a list", {
+  a_list <- list(1, 2, 3, "a")
+  named_list <- add_names(a_list)
+
+  expect_equal(unname(named_list), a_list)
+  expect_false(is.null(names(named_list)))
+  expect_equal(length(names(named_list)), length(a_list))
+  expect_equal(length(unique(names(named_list))), length(a_list))
+})
+
+test_that("add_names adds names to a named list", {
+  a_list <- list(1, 2, 3, b = "a")
+  named_list <- add_names(a_list)
+
+  expect_equal(unname(named_list), unname(a_list))
+  expect_false(is.null(names(named_list)))
+  expect_equal(length(names(named_list)), length(a_list))
+  expect_equal(length(unique(names(named_list))), length(a_list))
+})
+
+test_that("add_names adds names to a named list with numbered names", {
+  a_list <- list(1, "2" = 2, "1" = 3, b = "a")
+  named_list <- add_names(a_list)
+
+  expect_equal(unname(named_list), unname(a_list))
+  expect_false(is.null(names(named_list)))
+  expect_equal(length(names(named_list)), length(a_list))
+  expect_equal(length(unique(names(named_list))), length(a_list))
+})
+
+test_that("rbind_fill does simple rbind", {
+  a <- expand.grid(x = 1:2, y = 1:2)
+  b <- expand.grid(x = 1:3, y = 1:4)
+  ab <- rbind(a, b)
+  ab_fill <- rbind_fill(a, b)
+
+  expect_setequal(names(ab_fill), names(ab))
+  expect_equal(ab_fill$x, ab$x)
+  expect_equal(ab_fill$y, ab$y)
+})
+
+test_that("rbind_fill awares of column names", {
+  a <- expand.grid(x = 1:2, y = 1:2)
+  b <- expand.grid(y = 1:3, x = 1:4)
+  ab <- rbind(a, b)
+  ab_fill <- rbind_fill(a, b)
+
+  expect_setequal(names(ab_fill), names(ab))
+  expect_equal(ab_fill$x, ab$x)
+  expect_equal(ab_fill$y, ab$y)
+})
+
+test_that("rbind_fill fills missing columns", {
+  a <- expand.grid(x = 1:2, y = 1:2, z = 1:2)
+  b <- expand.grid(x = 1:3, y = 1:4, w = 1:5)
+  ab_fill <- rbind_fill(a, b)
+
+  expect_setequal(names(ab_fill), c("w", "x", "y", "z"))
+  expect_equal(ab_fill$x, c(a$x, b$x))
+  expect_equal(ab_fill$y, c(a$y, b$y))
+  expect_equal(ab_fill$z, c(a$z, rep(NA, nrow(b))))
+  expect_equal(ab_fill$w, c(rep(NA, nrow(a)), b$w))
+})
+
+test_that("rbind_fill fills with missing values", {
+  a <- expand.grid(x = 1:2, y = 1:2, z = 1:2)
+  b <- expand.grid(x = 1:3, y = 1:4, w = 1:5)
+  ab_fill <- rbind_fill(a, b, fill = "a")
+
+  expect_setequal(names(ab_fill), c("w", "x", "y", "z"))
+  expect_equal(ab_fill$x, c(a$x, b$x))
+  expect_equal(ab_fill$y, c(a$y, b$y))
+  expect_equal(ab_fill$z, c(a$z, rep("a", nrow(b))))
+  expect_equal(ab_fill$w, c(rep("a", nrow(a)), b$w))
+})
+
+test_that("rbind_fill works with an empty data frame", {
+  a <- expand.grid(x = 1:2, y = 1:2)
+  b <- data.frame()
+  ab_fill <- rbind_fill(a, b)
+
+  expect_setequal(names(ab_fill), c("x", "y"))
+  expect_equal(ab_fill$x, a$x)
+  expect_equal(ab_fill$y, a$y)
+})
