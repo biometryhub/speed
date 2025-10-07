@@ -43,8 +43,6 @@ autoplot(object, ...)
 \item{treatments}{A variable to plot a column from \code{object} as treatments.}
 
 \item{legend}{Logical (default \code{FALSE}). If \code{TRUE}, displays the legend for treatment colors.}
-
-\item{buffer}{A string specifying the buffer plots to include for plotting. Default is \code{NULL} (no buffers plotted). Other options are "edge" (outer edge of trial area), "rows" (between rows), "columns" (between columns), "double row" (a buffer row each side of a treatment row) or "double column" (a buffer row each side of a treatment column). "blocks" (a buffer around each treatment block) will be implemented in a future release.}
 }
 \value{
 A \code{ggplot2} object.

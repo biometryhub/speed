@@ -733,7 +733,7 @@ test_that("autoplot handles factor row and column inputs", {
 
   # Should not error when plotting with factor columns
   expect_no_error({
-    plot <- autoplot(result)
+    autoplot(result)
   })
 
   plot <- autoplot(result)

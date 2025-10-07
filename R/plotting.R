@@ -5,7 +5,6 @@
 #' @param rotation Rotate the x axis labels and the treatment group labels within the plot. Allows for easier reading of long axis or treatment labels. Number between 0 and 360 (inclusive) - default 0
 #' @param margin Logical (default `FALSE`). A value of `FALSE` will expand the plot to the edges of the plotting area i.e. remove white space between plot and axes.
 #' @param palette A string specifying the colour scheme to use for plotting or a vector of custom colours to use as the palette. Default is equivalent to "Spectral". Colour blind friendly palettes can also be provided via options `"colour blind"` (or `"color blind"`, both equivalent to `"viridis"`), `"magma"`, `"inferno"`, `"plasma"`, `"cividis"`, `"rocket"`, `"mako"` or `"turbo"`. Other palettes from [scales::brewer_pal()] are also possible.
-#' @param buffer A string specifying the buffer plots to include for plotting. Default is `NULL` (no buffers plotted). Other options are "edge" (outer edge of trial area), "rows" (between rows), "columns" (between columns), "double row" (a buffer row each side of a treatment row) or "double column" (a buffer row each side of a treatment column). "blocks" (a buffer around each treatment block) will be implemented in a future release.
 #' @param block A variable to plot a column from `object` as blocks.
 #' @param row A variable to plot a column from `object` as rows.
 #' @param column A variable to plot a column from `object` as columns.
@@ -31,7 +30,7 @@ ggplot2::autoplot
 #'
 #' @importFrom farver decode_colour
 #' @importFrom grDevices colorRampPalette
-#' @importFrom ggplot2 ggplot geom_tile aes geom_text theme_bw scale_fill_manual scale_x_continuous scale_y_continuous scale_y_reverse labs
+#' @importFrom ggplot2 ggplot geom_tile aes geom_text theme_bw scale_fill_manual scale_x_continuous scale_y_continuous scale_x_discrete scale_y_discrete scale_y_reverse labs
 #' @importFrom scales brewer_pal reverse_trans viridis_pal
 #' @importFrom stringi stri_sort
 #' @importFrom rlang check_dots_used enquo sym quo_is_null quo_name
@@ -280,19 +279,38 @@ create_blocked_plot <- function(object, row_expr, column_expr, block_expr, trt_e
 }
 
 apply_axis_styling <- function(plot, margin, object, row_expr, column_expr) {
-  if(!margin) {
-    # No margin - expand plot to edges with no white space
-    plot <- plot + ggplot2::scale_x_continuous(expand = c(0, 0),
-                                               breaks = seq(1, max(as_numeric_factor(object[[column_expr]])), 1)) +
-      ggplot2::scale_y_continuous(expand = c(0, 0),
-                                  trans = scales::reverse_trans(),
-                                  breaks = seq(1, max(as_numeric_factor(object[[row_expr]])), 1))
+  # Determine if row and column are numeric/integer or factor/character
+  is_row_numeric <- is.numeric(object[[row_expr]]) || is.integer(object[[row_expr]])
+  is_col_numeric <- is.numeric(object[[column_expr]]) || is.integer(object[[column_expr]])
+
+  # Set expand parameter based on margin setting
+  expand_param <- if(margin) ggplot2::waiver() else c(0, 0)
+
+  # Apply x-axis scale
+  if(is_col_numeric) {
+    plot <- plot + ggplot2::scale_x_continuous(
+      expand = expand_param,
+      breaks = seq(1, max(as_numeric_factor(object[[column_expr]])), 1)
+    )
   } else {
-    # With margin - default ggplot spacing
-    plot <- plot + ggplot2::scale_x_continuous(breaks = seq(1, max(as_numeric_factor(object[[column_expr]])), 1)) +
-      ggplot2::scale_y_continuous(trans = scales::reverse_trans(),
-                                  breaks = seq(1, max(as_numeric_factor(object[[row_expr]])), 1))
+    plot <- plot + ggplot2::scale_x_discrete(expand = expand_param)
   }
+
+  # Apply y-axis scale
+  if(is_row_numeric) {
+    plot <- plot + ggplot2::scale_y_continuous(
+      expand = expand_param,
+      trans = scales::reverse_trans(),
+      breaks = seq(1, max(as_numeric_factor(object[[row_expr]])), 1)
+    )
+  } else {
+    # For discrete y-axis, reverse the factor levels instead of using reverse_trans
+    plot <- plot + ggplot2::scale_y_discrete(
+      expand = expand_param,
+      limits = rev(levels(factor(object[[row_expr]])))
+    )
+  }
+
   return(plot)
 }
 
