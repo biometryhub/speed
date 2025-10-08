@@ -199,6 +199,7 @@ Figure 1: Initial layout of the split-split-plot design showing systematic trea
 <span>                   early_stop_iterations <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>wp <span class="op">=</span> <span class="fl">1000</span>, </span>
 <span>                                                sp <span class="op">=</span> <span class="fl">3000</span>, </span>
 <span>                                                ssp <span class="op">=</span> <span class="fl">5000</span><span class="op">)</span>,</span>
+<span>                   swap_all <span class="op">=</span> <span class="cn">TRUE</span>, </span>
 <span>                   seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>row and col are used as row and column, respectively.</code></pre>
@@ -353,7 +354,8 @@ Figure 3: Initial layout of the strip plot design showing systematic treatment 
 <div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">strip_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span><span class="va">df_strip</span>,</span>
 <span>                      swap <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>ht <span class="op">=</span> <span class="st">"horizontal_treatment"</span>, vt <span class="op">=</span> <span class="st">"vertical_treatment"</span><span class="op">)</span>,</span>
-<span>                      swap_within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>ht <span class="op">=</span> <span class="st">"block"</span>, vt <span class="op">=</span> <span class="st">"block"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>                      swap_within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>ht <span class="op">=</span> <span class="st">"block"</span>, vt <span class="op">=</span> <span class="st">"block"</span><span class="op">)</span>,</span>
+<span>                      swap_all <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>row and col are used as row and column, respectively.</code></pre>
 </div>
@@ -522,9 +524,10 @@ Figure 4: Initial layout of the resolvable incomplete block design showing syst
 <pre><code>row and col are used as row and column, respectively.</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Iteration: 1000 Score: 1.8 Best: 1.8 Since Improvement: 527
-Iteration: 2000 Score: 1.8 Best: 1.8 Since Improvement: 1527
-Early stopping at iteration 2473 </code></pre>
+<pre><code>Optimising level: single treatment within replicate
+Level: single treatment within replicate Iteration: 1000 Score: 1.8 Best: 1.8 Since Improvement: 527
+Level: single treatment within replicate Iteration: 2000 Score: 1.8 Best: 1.8 Since Improvement: 1527
+Early stopping at iteration 2473 for level single treatment within replicate </code></pre>
 </div>
 </div>
 </section><section class="level3"><h4 id="output-of-the-optimisation-2">Output of the Optimisation<a class="anchor" aria-label="anchor" href="#output-of-the-optimisation-2"></a>
@@ -554,7 +557,7 @@ Seed: 42 </code></pre>
  $ score         : num 1.8
  $ scores        : num [1:2474] 9 7.4 5.8 6.8 5.4 4.6 4.2 4.2 4.2 4.2 ...
  $ temperatures  : num [1:2474] 100 99 98 97 96.1 ...
- $ iterations_run: int 2474
+ $ iterations_run: num 2474
  $ stopped_early : logi TRUE
  $ treatments    : chr [1:6] "V1" "V2" "V3" "V4" ...
  $ seed          : num 42
@@ -687,10 +690,11 @@ Figure 6: Initial layout of the p-rep design showing systematic treatment distr
 <pre><code>row and col are used as row and column, respectively.</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Iteration: 1000 Score: 2.993939 Best: 2.993939 Since Improvement: 5
-Iteration: 2000 Score: 2.913131 Best: 2.913131 Since Improvement: 818
-Iteration: 3000 Score: 2.913131 Best: 2.913131 Since Improvement: 1818
-Early stopping at iteration 3182 </code></pre>
+<pre><code>Optimising level: single entry within whole design
+Level: single entry within whole design Iteration: 1000 Score: 2.993939 Best: 2.993939 Since Improvement: 5
+Level: single entry within whole design Iteration: 2000 Score: 2.913131 Best: 2.913131 Since Improvement: 818
+Level: single entry within whole design Iteration: 3000 Score: 2.913131 Best: 2.913131 Since Improvement: 1818
+Early stopping at iteration 3182 for level single entry within whole design </code></pre>
 </div>
 </div>
 </section><section class="level3"><h4 id="output-of-the-optimisation-3">Output of the Optimisation<a class="anchor" aria-label="anchor" href="#output-of-the-optimisation-3"></a>
@@ -720,7 +724,7 @@ Seed: 42 </code></pre>
  $ score         : num 2.91
  $ scores        : num [1:3183] 4.53 4.49 4.45 4.37 4.37 ...
  $ temperatures  : num [1:3183] 100 99 98 97 96.1 ...
- $ iterations_run: int 3183
+ $ iterations_run: num 3183
  $ stopped_early : logi TRUE
  $ treatments    : chr [1:100] "V1" "V2" "V3" "V4" ...
  $ seed          : num 42

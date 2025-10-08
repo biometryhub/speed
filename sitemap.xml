@@ -20,13 +20,14 @@
 <url><loc>https://biometryhub.github.io/speed/reference/calculate_nb.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/create_buffers.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/create_pair_mapping.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/create_speed_input.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-calculate_ed_3_reps.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-calculate_nb.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-is_light_colour.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/env_add_one.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/generate_multi_swap_neighbour.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/generate_neighbour.html</loc></url>
-<url><loc>https://biometryhub.github.io/speed/reference/generate_sequential_neighbour.html</loc></url>
-<url><loc>https://biometryhub.github.io/speed/reference/generate_simple_neighbour.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/generate_single_swap_neighbour.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/get_edges.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/get_vertices.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/index.html</loc></url>
@@ -44,7 +45,6 @@
 <url><loc>https://biometryhub.github.io/speed/reference/speed-package.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/speed.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/speed_hierarchical.html</loc></url>
-<url><loc>https://biometryhub.github.io/speed/reference/speed_simple.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/to_factor.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/to_types.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/verify.html</loc></url>

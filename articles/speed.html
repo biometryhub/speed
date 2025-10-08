@@ -131,9 +131,10 @@
 <pre><code>row and col are used as row and column, respectively.</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Iteration: 1000 Score: 2.285714 Best: 2.285714 Since Improvement: 271
-Iteration: 2000 Score: 2.285714 Best: 2.285714 Since Improvement: 1271
-Early stopping at iteration 2729 </code></pre>
+<pre><code>Optimising level: single treatment within whole design
+Level: single treatment within whole design Iteration: 1000 Score: 2.285714 Best: 2.285714 Since Improvement: 271
+Level: single treatment within whole design Iteration: 2000 Score: 2.285714 Best: 2.285714 Since Improvement: 1271
+Early stopping at iteration 2729 for level single treatment within whole design </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">crd_result</span></span></code></pre></div>
@@ -168,7 +169,7 @@ Seed: 42 </code></pre>
  $ score         : num 2.29
  $ scores        : num [1:2730] 40 36.3 32.4 28.3 24.1 ...
  $ temperatures  : num [1:2730] 100 99 98 97 96.1 ...
- $ iterations_run: int 2730
+ $ iterations_run: num 2730
  $ stopped_early : logi TRUE
  $ treatments    : chr [1:8] "T1" "T2" "T3" "T4" ...
  $ seed          : num 42
@@ -242,9 +243,10 @@ Seed: 42 </code></pre>
 <pre><code>row and col are used as row and column, respectively.</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Iteration: 1000 Score: 1.6 Best: 1.6 Since Improvement: 672
-Iteration: 2000 Score: 1.6 Best: 1.6 Since Improvement: 1672
-Early stopping at iteration 2328 </code></pre>
+<pre><code>Optimising level: single treatment within block
+Level: single treatment within block Iteration: 1000 Score: 1.6 Best: 1.6 Since Improvement: 672
+Level: single treatment within block Iteration: 2000 Score: 1.6 Best: 1.6 Since Improvement: 1672
+Early stopping at iteration 2328 for level single treatment within block </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rcbd_result</span></span></code></pre></div>
@@ -281,7 +283,7 @@ Seed: 42 </code></pre>
  $ score         : num 1.6
  $ scores        : num [1:2329] 34 29.6 25.2 21.6 18.4 16.2 13 12.2 8.6 10.4 ...
  $ temperatures  : num [1:2329] 100 99 98 97 96.1 ...
- $ iterations_run: int 2329
+ $ iterations_run: num 2329
  $ stopped_early : logi TRUE
  $ treatments    : chr [1:6] "V1" "V2" "V3" "V4" ...
  $ seed          : num 42
@@ -357,8 +359,9 @@ Seed: 42 </code></pre>
 <pre><code>row and col are used as row and column, respectively.</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Iteration: 1000 Score: 1 Best: 1 Since Improvement: 308
-Early stopping at iteration 1040 </code></pre>
+<pre><code>Optimising level: single treatment within whole design
+Level: single treatment within whole design Iteration: 1000 Score: 1 Best: 1 Since Improvement: 308
+Early stopping at iteration 1040 for level single treatment within whole design </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">latin_square_result</span></span></code></pre></div>
@@ -393,7 +396,7 @@ Seed: 42 </code></pre>
  $ score         : num 0
  $ scores        : num [1:1041] 45 39 37 33.5 30.5 32.5 32 30.5 26.5 29 ...
  $ temperatures  : num [1:1041] 100 99 98 97 96.1 ...
- $ iterations_run: int 1041
+ $ iterations_run: num 1041
  $ stopped_early : logi TRUE
  $ treatments    : chr [1:5] "T1" "T2" "T3" "T4" ...
  $ seed          : num 42
@@ -481,6 +484,7 @@ Seed: 42 </code></pre>
 <span>                           swap <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>wp <span class="op">=</span> <span class="st">"wholeplot_treatment"</span>,</span>
 <span>                                       sp <span class="op">=</span> <span class="st">"subplot_treatment"</span><span class="op">)</span>,</span>
 <span>                           swap_within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>wp <span class="op">=</span> <span class="st">"block"</span>, sp <span class="op">=</span> <span class="st">"wholeplot"</span><span class="op">)</span>,</span>
+<span>                           swap_all <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                           seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>row and col are used as row and column, respectively.</code></pre>
