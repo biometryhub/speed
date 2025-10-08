@@ -187,3 +187,9 @@ This project is licensed under the MIT License - see the
 [LICENSE](LICENSE.md) file for details.
 
 <!-- external -->
+
+## Code of Conduct
+
+Please note that the speed project is released with a [Contributor Code
+of Conduct](https://biometryhub.github.io/speed/CODE_OF_CONDUCT.html).
+By contributing to this project, you agree to abide by its terms.
