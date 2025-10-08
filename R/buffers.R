@@ -3,14 +3,16 @@
 #' @param design The data frame of the design.
 #' @param type The type of buffer. One of edge, row, column, double row, double column, or block (coming soon).
 #' @param blocks Does the design data frame contain blocks?
+#' @param treatment_cols Character vector of treatment column names to fill with "buffer".
+#'   If NULL (default), uses "treatment" column if it exists.
 #'
 #' @importFrom stats setNames aggregate
 #'
 #' @returns The original data frame, updated to include buffers
 #' @keywords internal
-create_buffers <- function(design, type, blocks = FALSE) {
-  nrow <- max(design$row)
-  ncol <- max(design$col)
+create_buffers <- function(design, type, blocks = FALSE, treatment_cols = NULL) {
+  nrow <- max(as_numeric_factor(design$row))
+  ncol <- max(as_numeric_factor(design$col))
 
   # Match edge, edges or e
   if(grepl("(^edges?$|^e$)", tolower(type))) {
@@ -23,7 +25,7 @@ create_buffers <- function(design, type, blocks = FALSE) {
     row <- c(rep(1, ncol+2), rep(nrow+2, ncol+2), rep(2:(nrow+1), 2))
     col <- c(rep(1:(ncol+2), 2), rep(1, nrow), rep(ncol+2, nrow))
     n_brow <- length(row)  # Number of rows to create in the buffer dataframe
-    treatments <- rep("buffer", n_brow)
+    treatment <- rep("buffer", n_brow)
   }
   # Match row, rows, r
   else if(grepl("(^rows?$|^r$)", tolower(type))) {
@@ -35,7 +37,7 @@ create_buffers <- function(design, type, blocks = FALSE) {
     row <- rep(seq(min_row-1, (2*nrow)+1, by = 2), each = ncol)
     col <- rep(seq(1, ncol),times = nrow+1)
     n_brow <- length(row)  # Number of rows to create in the buffer dataframe
-    treatments <- rep("buffer", n_brow)
+    treatment <- rep("buffer", n_brow)
   }
   # Match col, cols, column, columns or c
   else if(grepl("(^col(umn)?s?$|^c$)", tolower(type))) {
@@ -47,7 +49,7 @@ create_buffers <- function(design, type, blocks = FALSE) {
     row <- rep(seq(1, nrow), times = ncol+1)
     col <- rep(seq(min_col-1, (2*ncol)+1, by = 2), each = nrow)
     n_brow <- length(row)  # Number of rows to create in the buffer dataframe
-    treatments <- rep("buffer", n_brow)
+    treatment <- rep("buffer", n_brow)
   }
   # Match double row, double rows, or dr
   else if(grepl("(^double rows?$|^dr$)", tolower(type))) {
@@ -62,7 +64,7 @@ create_buffers <- function(design, type, blocks = FALSE) {
                  each = ncol))
     col <- seq(min_col, ncol)
     n_brow <- length(row)  # Number of rows to create in the buffer dataframe
-    treatments <- rep("buffer", n_brow)
+    treatment <- rep("buffer", n_brow)
   }
   # Match double col, double cols, double column, double columns, dc
   else if(grepl("(^double col(umn)?s?$|^dc$)", tolower(type))) {
@@ -77,7 +79,7 @@ create_buffers <- function(design, type, blocks = FALSE) {
              rep(seq(min_col+1, (3*ncol), by = 3),
                  each = nrow))
     n_brow <- length(col)  # Number of rows to create in the buffer dataframe
-    treatments <- rep("buffer", n_brow)
+    treatment <- rep("buffer", n_brow)
   }
   # Match block, blocks, or b
   else if(grepl("(^blocks?$|^b$)", tolower(type))) {
@@ -92,7 +94,24 @@ create_buffers <- function(design, type, blocks = FALSE) {
   buffers <- stats::setNames(buffers, names(design))
   buffers$row <- row
   buffers$col <- col
-  buffers$treatments <- factor(treatments)
+
+  # Determine which treatment columns to fill with "buffer"
+  if (is.null(treatment_cols)) {
+    # Default: look for a column named "treatment"
+    if ("treatment" %in% names(design)) {
+      treatment_cols <- "treatment"
+    } else {
+      # If no treatment column specified and none found, don't add buffer values
+      treatment_cols <- character(0)
+    }
+  }
+
+  # Set buffer values for all treatment columns
+  for (col_name in treatment_cols) {
+    if (col_name %in% names(buffers)) {
+      buffers[[col_name]] <- factor("buffer")
+    }
+  }
 
   if(blocks) {
     blocks_df <- stats::aggregate(cbind(row, col) ~ block, data = design, FUN = max)
@@ -118,10 +137,34 @@ add_buffers <- function(design_obj, type) {
   stopifnot(inherits(design_obj, "design"))
 
   # Determine if design has blocks
-  has_blocks <- any(grepl("block", tolower(names(design_obj$design))))
+  has_blocks <- any(grepl("block", tolower(names(design_obj$design_df))))
+
+  # Extract treatment column names from the design object
+  # For hierarchical designs, treatments is a named list
+  # For simple designs, treatments is a character vector (but we need the column name, not values)
+  treatment_cols <- NULL
+
+  if (!is.null(design_obj$treatments)) {
+    if (is.list(design_obj$treatments)) {
+      # Hierarchical design: extract all treatment column names from the list names
+      # These correspond to the column names in the design dataframe
+      # We need to get the actual column names from the swap parameter used
+      # The treatments list stores treatment values, but we need column names
+      # Look for columns ending in "treatment" or matching common patterns
+      all_cols <- names(design_obj$design_df)
+      treatment_cols <- all_cols[grepl("treatment", all_cols, ignore.case = TRUE)]
+    } else {
+      # Simple design: look for a "treatment" column
+      if ("treatment" %in% names(design_obj$design_df)) {
+        treatment_cols <- "treatment"
+      }
+    }
+  }
 
   # Create buffers and update the design dataframe
-  design_obj$design <- create_buffers(design_obj$design, type, blocks = has_blocks)
+  design_obj$design_df <- create_buffers(design_obj$design_df, type,
+                                         blocks = has_blocks,
+                                         treatment_cols = treatment_cols)
 
   return(design_obj)
 }
