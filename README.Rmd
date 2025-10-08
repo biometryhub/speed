@@ -158,3 +158,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) f
 [strip-plot]: https://biometryhub.github.io/speed/articles/complex_designs.html#strip-plot-designs
 [p-rep]: https://biometryhub.github.io/speed/articles/complex_designs.html#p-rep-partially-replicated-designs
 [bibd]: https://biometryhub.github.io/speed/articles/complex_designs.html#balanced-incomplete-block-design-bibd
+
+## Code of Conduct
+
+Please note that the speed project is released with a [Contributor Code of Conduct](https://biometryhub.github.io/speed/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.
