@@ -18,3 +18,4 @@ Testing_split_plot.R
 Cases.md
 codemeta.json
 ^vignettes/complex_designs_cache$
+^CODE_OF_CONDUCT\.md$
