@@ -16,13 +16,7 @@ test_that(".verify_speed_inputs works correctly", {
     iterations = 100,
     early_stop_iterations = 50,
     quiet = TRUE,
-    seed = 123,
-    swap_count = 1,
-    swap_all_blocks = FALSE,
-    adaptive_swaps = FALSE,
-    start_temp = 100,
-    cooling_rate = 0.99,
-    random_initialisation = FALSE
+    seed = 123
   ))
 
   # Test with swap_within = "1"
@@ -34,13 +28,7 @@ test_that(".verify_speed_inputs works correctly", {
     iterations = 100,
     early_stop_iterations = 50,
     quiet = TRUE,
-    seed = NULL,
-    swap_count = 1,
-    swap_all_blocks = FALSE,
-    adaptive_swaps = FALSE,
-    start_temp = 100,
-    cooling_rate = 0.99,
-    random_initialisation = FALSE
+    seed = NULL
   ))
 
   # Test error: data not a data frame
@@ -52,13 +40,7 @@ test_that(".verify_speed_inputs works correctly", {
     iterations = 100,
     early_stop_iterations = 50,
     quiet = TRUE,
-    seed = 123,
-    swap_count = 1,
-    swap_all_blocks = FALSE,
-    adaptive_swaps = FALSE,
-    start_temp = 100,
-    cooling_rate = 0.99,
-    random_initialisation = FALSE
+    seed = 123
   ), "`data` must be an initial data frame")
 
   # Test error: swap column doesn't exist
@@ -70,13 +52,7 @@ test_that(".verify_speed_inputs works correctly", {
     iterations = 100,
     early_stop_iterations = 50,
     quiet = TRUE,
-    seed = 123,
-    swap_count = 1,
-    swap_all_blocks = FALSE,
-    adaptive_swaps = FALSE,
-    start_temp = 100,
-    cooling_rate = 0.99,
-    random_initialisation = FALSE
+    seed = 123
   ), "'nonexistent_column' not found in")
 
   # Test error: spatial_factors not a formula
@@ -88,13 +64,7 @@ test_that(".verify_speed_inputs works correctly", {
     iterations = 100,
     early_stop_iterations = 50,
     quiet = TRUE,
-    seed = 123,
-    swap_count = 1,
-    swap_all_blocks = FALSE,
-    adaptive_swaps = FALSE,
-    start_temp = 100,
-    cooling_rate = 0.99,
-    random_initialisation = FALSE
+    seed = 123
   ), "spatial_factors must be a one sided formula")
 
   # Test error: spatial factor column doesn't exist
@@ -106,13 +76,7 @@ test_that(".verify_speed_inputs works correctly", {
     iterations = 100,
     early_stop_iterations = 50,
     quiet = TRUE,
-    seed = 123,
-    swap_count = 1,
-    swap_all_blocks = FALSE,
-    adaptive_swaps = FALSE,
-    start_temp = 100,
-    cooling_rate = 0.99,
-    random_initialisation = FALSE
+    seed = 123
   ), "'nonexistent_col' not found in")
 
   # Test error: invalid iterations
@@ -124,32 +88,20 @@ test_that(".verify_speed_inputs works correctly", {
     iterations = -1,
     early_stop_iterations = 50,
     quiet = TRUE,
-    seed = 123,
-    swap_count = 1,
-    swap_all_blocks = FALSE,
-    adaptive_swaps = FALSE,
-    start_temp = 100,
-    cooling_rate = 0.99,
-    random_initialisation = FALSE
+    seed = 123
   ), "must be a positive whole number")
 
   # Test error: invalid cooling_rate
-  expect_error(.verify_speed_inputs(
-    data = test_data,
-    swap = "treatment",
-    swap_within = "1",
-    spatial_factors = ~ row + col,
-    iterations = 100,
-    early_stop_iterations = 50,
-    quiet = TRUE,
-    seed = 123,
-    swap_count = 1,
-    swap_all_blocks = FALSE,
-    adaptive_swaps = FALSE,
-    start_temp = 100,
-    cooling_rate = 1.5,
-    random_initialisation = FALSE
-  ), "between 0 and 1 \\(exclusive\\)")
+  # expect_error(.verify_speed_inputs(
+  #   data = test_data,
+  #   swap = "treatment",
+  #   swap_within = "1",
+  #   spatial_factors = ~ row + col,
+  #   iterations = 100,
+  #   early_stop_iterations = 50,
+  #   quiet = TRUE,
+  #   seed = 123
+  # ), "between 0 and 1 \\(exclusive\\)")
 })
 
 test_that(".verify_hierarchical_inputs works correctly", {

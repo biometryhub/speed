@@ -11,15 +11,15 @@ test_that("pseudo_inverse calculates Moore-Penrose inverse correctly", {
   expect_equal(dim(A_inv), c(2, 2))
 })
 
-# test_that("pseudo_inverse handles singular matrices", {
-#   # Test with a rank-deficient matrix (singular)
-#   singular_matrix <- matrix(c(1, 2, 2, 4), nrow = 2, ncol = 2)
-#
-#   # This should not throw an error but handle the rank deficiency
-#   result <- pseudo_inverse(singular_matrix)
-#   expect_true(is.matrix(result))
-#   expect_equal(dim(result), c(2, 2))
-# })
+test_that("pseudo_inverse handles singular matrices", {
+  # Test with a rank-deficient matrix (singular)
+  singular_matrix <- matrix(c(1, 2, 2, 4), nrow = 2, ncol = 2)
+
+  # This should not throw an error but handle the rank deficiency
+  result <- pseudo_inverse(singular_matrix)
+  expect_true(is.matrix(result))
+  expect_equal(dim(result), c(2, 2))
+})
 
 test_that("pseudo_inverse throws error for zero matrix", {
   # Test with a zero matrix (rank 0)
@@ -204,6 +204,131 @@ test_that("to_types converts data frame data to input types", {
   expect_equal(typed_data$integer_col, test_data$integer_col)
   expect_equal(typed_data$numeric_col, test_data$numeric_col)
   expect_equal(typed_data$logical_col, test_data$logical_col)
+})
+
+# test_that("parse_swap_formula parses with defaults", {
+#   swap <- ~ single(treatment)
+#   parsed <- parse_swap_formula(swap)
+#
+#   expect_equal(parsed, list(
+#     "single treatment within whole design" = list("single", "treatment", c("row", "col"), "1")
+#   ))
+# })
+
+# test_that("parse_swap_formula parses with multiple terms", {
+#   swap <- ~ single(treatment) + all(sub_treatment, a_row + a_col, block) + single(z, a + b + c, d)
+#   parsed <- parse_swap_formula(swap)
+#
+#   expect_equal(parsed, list(
+#     "single treatment within whole design" = list("single", "treatment", c("row", "col"), "1"),
+#     "all sub_treatment within block" = list("all", "sub_treatment", c("a_row", "a_col"), "block"),
+#     "single z within d" = list("single", "z", c("a", "b", "c"), "d")
+#   ))
+# })
+
+test_that("create_speed_input creates an input from a named list", {
+  speed_input <- create_speed_input(
+    swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+    swap_within = list(wp = "block", sp = "wholeplot"),
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = list(wp = 1000, sp = 10000),
+    obj_function = objective_function,
+    swap_all = TRUE
+  )
+  ordered_names <- sort(names(speed_input[[1]]))
+
+  expect_equal(speed_input$wp[ordered_names], list(
+    swap = "wholeplot_treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 1000,
+    obj_function = objective_function,
+    swap_all = TRUE
+  )[ordered_names])
+
+  expect_equal(speed_input$sp[ordered_names], list(
+    swap = "subplot_treatment",
+    swap_within = "wholeplot",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 10000,
+    obj_function = objective_function,
+    swap_all = TRUE
+  )[ordered_names])
+})
+
+test_that("create_speed_input creates an input from a string", {
+  speed_input <- create_speed_input(
+    swap = "treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 1000,
+    obj_function = objective_function,
+    swap_all = FALSE
+  )
+  ordered_names <- sort(names(speed_input))
+
+  expect_equal(speed_input[ordered_names], list(
+    "single treatment within block" = list(
+      swap = "treatment",
+      swap_within = "block",
+      spatial_factors = ~ row + col,
+      grid_factors = list(dim1 = "row", dim2 = "col"),
+      iterations = 10000,
+      early_stop_iterations = 1000,
+      obj_function = objective_function,
+      swap_all = FALSE
+    )
+  )[ordered_names])
+})
+
+test_that("create_speed_input creates an input from optimize argument", {
+  optimize <- list(
+    connectivity = list(swap_within = "swappable_site", spatial_factors = ~site),
+    balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+  )
+
+  speed_input <- create_speed_input(
+    swap = "treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 1000,
+    obj_function = objective_function,
+    swap_all = FALSE,
+    optimize = optimize
+  )
+  ordered_names <- sort(names(speed_input[[1]]))
+
+  expect_equal(speed_input$connectivity[ordered_names], list(
+    swap = "treatment",
+    swap_within = "swappable_site",
+    spatial_factors = ~site,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 1000,
+    obj_function = objective_function,
+    swap_all = FALSE
+  )[ordered_names])
+
+  expect_equal(speed_input$balance[ordered_names], list(
+    swap = "treatment",
+    swap_within = "site",
+    spatial_factors = ~ site_col + site_block,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 1000,
+    obj_function = objective_function,
+    swap_all = FALSE
+  )[ordered_names])
 })
 
 test_that("add_names adds names to a list", {

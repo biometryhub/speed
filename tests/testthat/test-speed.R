@@ -484,16 +484,16 @@ test_that("speed runs with random initialisation", {
     quiet = TRUE
   )
 
-  options(speed.random_initialisation = TRUE)
-  result_random <- speed(
-    data = test_data,
-    swap = "treatment",
-    spatial_factors = ~ row + col,
-    iterations = 1000,
-    seed = 42,
-    quiet = TRUE
-  )
-  options(speed.random_initialisation = FALSE)
+  withr::with_options(list(speed.random_initialisation = TRUE), {
+    result_random <- speed(
+      data = test_data,
+      swap = "treatment",
+      spatial_factors = ~ row + col,
+      iterations = 1000,
+      seed = 42,
+      quiet = TRUE
+    )
+  })
 
   expect_named(
     result_random,
@@ -546,6 +546,7 @@ test_that("speed handles split plot designs", {
                   swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
                   swap_within = list(wp = "block", sp = "wholeplot"),
                   early_stop_iterations = list(wp = 1000, sp = 10000),
+                  swap_all = TRUE,
                   seed = 1, quiet = TRUE)
 
   # Check the result
@@ -582,6 +583,7 @@ test_that("speed handles split-split plot designs", {
                                      ssp = "subplot"),
                   iterations = list(wp = 500, sp = 500, ssp = 1000),
                   early_stop_iterations = list(wp = 200, sp = 200, ssp = 400),
+                  swap_all = TRUE,
                   seed = 42, quiet = TRUE)
 
   # Check the result
@@ -656,6 +658,7 @@ test_that("speed handles strip plot designs", {
                   swap_within = list(ht = "block", vt = "block"),
                   iterations = list(ht = 500, vt = 500),
                   early_stop_iterations = list(ht = 200, vt = 200),
+                  swap_all = TRUE,
                   seed = 42, quiet = TRUE)
 
   # Check the result
@@ -896,6 +899,7 @@ test_that("autoplot handles mixed factor and numeric columns in hierarchical des
                   spatial_factors = ~ row + col,
                   iterations = 100,
                   seed = 42,
+                  swap_all = TRUE,
                   quiet = TRUE)
 
   # Should not error with mixed factor/numeric in hierarchical design
@@ -1001,6 +1005,7 @@ test_that("autoplot legend parameter works with hierarchical designs", {
                   swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
                   swap_within = list(wp = "block", sp = "wholeplot"),
                   iterations = list(wp = 50, sp = 50),
+                  swap_all = TRUE,
                   seed = 42, quiet = TRUE)
 
   # Test with wholeplot treatments
@@ -1046,25 +1051,23 @@ test_that("speed handles 2D blocking with row and column blocks", {
   )
   dat_2d_blocking <- dat_2d_blocking[order(dat_2d_blocking$col, dat_2d_blocking$row), ]
 
-  # Store original options and set test options
-  old_options <- options()
-  on.exit(options(old_options))
-  options(
+  withr::with_options(list(
     speed.swap_count = 5,
     speed.swap_all_blocks = TRUE,
     speed.adaptive_swaps = TRUE,
     speed.cooling_rate = 0.99,
     speed.random_initialisation = TRUE
-  )
-
-  result <- speed(dat_2d_blocking,
-                  swap = "treat",
-                  swap_within = "rowBlock",
-                  spatial_factors = ~ colBlock,
-                  iterations = 1000,
-                  early_stop_iterations = 500,
-                  seed = 123,
-                  quiet = TRUE)
+  ), {
+    result <- speed(dat_2d_blocking,
+      swap = "treat",
+      swap_within = "rowBlock",
+      spatial_factors = ~colBlock,
+      iterations = 1000,
+      early_stop_iterations = 500,
+      seed = 123,
+      quiet = TRUE
+    )
+  })
 
   expect_s3_class(result, "design")
   expect_equal(nrow(result$design_df), 400)
@@ -1090,18 +1093,16 @@ test_that("speed handles RCBD with multiple treatment reps", {
     block = rep(1:50, each = 10)
   )
 
-  # Store original options and set test options
-  old_options <- options()
-  on.exit(options(old_options))
-  options(speed.swap_count = 3, speed.adaptive_swaps = TRUE)
-
-  result <- speed(dat_rcbd,
-                  swap = "treat",
-                  swap_within = "block",
-                  iterations = 2000,
-                  early_stop_iterations = 1000,
-                  seed = 42,
-                  quiet = TRUE)
+  withr::with_options(list(speed.swap_count = 3, speed.adaptive_swaps = TRUE), {
+    result <- speed(dat_rcbd,
+      swap = "treat",
+      swap_within = "block",
+      iterations = 2000,
+      early_stop_iterations = 1000,
+      seed = 42,
+      quiet = TRUE
+    )
+  })
 
   expect_s3_class(result, "design")
   expect_equal(nrow(result$design_df), 500)
@@ -1173,19 +1174,17 @@ test_that("speed handles large RCBD with 500 treatments", {
     block = rep(1:4, each = 500)
   )
 
-  # Store original options and set test options
-  old_options <- options()
-  on.exit(options(old_options))
-  options(speed.swap_count = 10)
-
-  result <- speed(dat_large,
-                  swap = "treat",
-                  swap_within = "block",
-                  spatial_factors = ~ row + col,
-                  iterations = 1000,
-                  early_stop_iterations = 400,
-                  seed = 42,
-                  quiet = TRUE)
+  withr::with_options(list(speed.swap_count = 10), {
+    result <- speed(dat_large,
+      swap = "treat",
+      swap_within = "block",
+      spatial_factors = ~ row + col,
+      iterations = 1000,
+      early_stop_iterations = 400,
+      seed = 42,
+      quiet = TRUE
+    )
+  })
 
   expect_s3_class(result, "design")
   expect_equal(nrow(result$design_df), 2000)
@@ -1301,32 +1300,146 @@ test_that("speed runs with grid_factors", {
   expect_equal(result$score, 1)
 })
 
-# for nse
-# test_that("speed runs within another function call", {
-#   wrapper <- function() {
-#     test_data <- data.frame(
-#       row = rep(1:5, times = 4),
-#       col = rep(1:4, each = 5),
-#       treatment = rep(LETTERS[1:4], 5)
-#     )
-#
-#     swap <- "treatment"
-#     swap_within <- "1"
-#
-#     return(speed(
-#       data = test_data,
-#       swap = swap,
-#       swap_within = swap_within,
-#       spatial_factors = ~ row + col,
-#       iterations = 100,
-#       seed = 42,
-#       quiet = TRUE
-#     ))
-#   }
-#
-#   result <- wrapper()
-#   expect_s3_class(result, "design")
-# })
+test_that("speed handles MET", {
+  # 5 sites, 100 treatments, 7 total reps
+  # 5x28x5
+  treatments <- rep(1:100, 7)
+  df_site <- initialise_design_df(1, 28, 5, 14, 5)
+  df_initial <- rbind(df_site, df_site, df_site, df_site, df_site)
+  df_initial$treatment <- treatments
+  df_initial$site <- rep(c("a", "b", "c", "d", "e"), each = 140)
+
+  # will be handled in speed function
+  df_initial$site_row <- paste(df_initial$site, df_initial$row, sep = "_")
+  df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
+  df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
+
+  optimize <- list(
+    connectivity = list(spatial_factors = ~site),
+    balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+  )
+
+  withr::with_options(list(speed.random_initialisation = TRUE, speed.adj_weight = 0), {
+    speed_design <- speed(
+      data = df_initial,
+      swap = "treatment",
+      optimise = optimize,
+      seed = 112,
+      quiet = TRUE
+    )
+  })
+  design_df <- speed_design$design_df
+
+  expect_equal(sort(design_df$treatment), sort(treatments))
+  expect_setequal(unique(table(design_df$treatment, design_df$site)), c(1, 2))
+  expect_equal(unique(matrixStats::rowVars(table(design_df$treatment, design_df$site))), 0.3)
+  expect_equal(max(table(design_df$site_row, design_df$treatment)), 1)
+  expect_equal(max(table(design_df$site_col, design_df$treatment)), 1)
+})
+
+test_that("speed handles MET with unequal site dimensions", {
+  # 5 sites, 57 treatments, 7-8 total reps
+  # 28x5, 20x3, 20x4, 15x4, 22x3
+  # all_treatments <- c(rep(1:50, 7), rep(51:57, 8))
+  locked_treatments <- c(rep(1:31, 2), rep(32:57, 3))
+  treatments <- c(rep(1:31, 5), rep(32:50, 4), rep(51:57, 5))
+
+  df_site_1 <- initialise_design_df(locked_treatments, 28, 5, 7, 5)
+  df_site_1$site <- "a"
+  df_site_2 <- initialise_design_df(1, 20, 3, 10, 3)
+  df_site_2$site <- "b"
+  df_site_3 <- initialise_design_df(1, 20, 4, 10, 4)
+  df_site_3$site <- "c"
+  df_site_4 <- initialise_design_df(1, 15, 4, 5, 4)
+  df_site_4$site <- "d"
+  df_site_5 <- initialise_design_df(1, 22, 3, 11, 3)
+  df_site_5$site <- "e"
+
+  df_initial <- rbind(df_site_1, df_site_2, df_site_3, df_site_4, df_site_5)
+  df_initial[df_initial$site != "a", ]$treatment <- treatments
+  df_initial$swappable_site <- df_initial$site != "a"
+
+  df_initial$site_row <- paste(df_initial$site, df_initial$row, sep = "_")
+  df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
+  df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
+
+  optimize <- list(
+    connectivity = list(swap_within = "swappable_site", spatial_factors = ~site),
+    balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+  )
+
+  withr::with_options(list(speed.random_initialisation = TRUE, speed.adj_weight = 0), {
+    speed_design <- speed(
+      data = df_initial,
+      swap = "treatment",
+      early_stop_iterations = 5000,
+      optimise = optimize,
+      seed = 112,
+      quiet = TRUE
+    )
+  })
+  design_df <- speed_design$design_df
+
+  expect_setequal(
+    unique(table(design_df[design_df$site == "a", ]$treatment, design_df[design_df$site == "a", ]$site)),
+    c(2, 3)
+  )
+  expect_setequal(
+    unique(table(design_df[design_df$site != "a", ]$treatment, design_df[design_df$site != "a", ]$site)),
+    c(1, 2)
+  )
+  expect_setequal(
+    table(design_df$treatment, design_df$site) |>
+      matrixStats::rowVars() |>
+      round(3) |>
+      unique(),
+    c(0.3, 0.8)
+  )
+  expect_equal(max(table(design_df$site_row, design_df$treatment)), 1)
+  expect_equal(max(table(design_df$site_col, design_df$treatment)), 1)
+})
+
+test_that("speed runs without seed", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:5, times = 4),
+    col = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    quiet = TRUE
+  )
+  expect_s3_class(result, "design")
+})
+
+test_that("speed runs with piepho objective", {
+  treatments <- rep(1:6)
+  df_initial <- initialise_design_df(treatments, 6, 3)
+  pair_mapping <- create_pair_mapping(treatments)
+
+  df_initial$row <- factor(df_initial$row)
+  df_initial$col <- factor(df_initial$col)
+  initial_score <- objective_function_piepho(df_initial, "treatment", c("row", "col"))$score
+
+  withr::with_options(list(speed.random_initialisation = TRUE), {
+    speed_design <- speed(
+      data = df_initial,
+      swap = "treatment",
+      spatial_factors = ~ row + col,
+      seed = 112,
+      quiet = TRUE,
+      obj_function = objective_function_piepho,
+      pair_mapping = pair_mapping
+    )
+  })
+
+  expect_lt(speed_design$score, initial_score)
+})
 
 # Test automatic seed generation in simple designs
 test_that("speed generates seed automatically from .Random.seed[3] when seed=NULL for simple designs", {

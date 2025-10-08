@@ -6,12 +6,6 @@
 #' @rdname verify
 #'
 #' @inheritParams speed
-#' @param swap_count Number of item swaps per iteration (default: 1)
-#' @param swap_all_blocks Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)
-#' @param adaptive_swaps Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)
-#' @param start_temp Starting temperature for simulated annealing (default: 100)
-#' @param cooling_rate Rate at which temperature decreases (default: 0.99)
-#' @param random_initialisation Logical; if TRUE, randomly shuffle items within `swap_within` (default: FALSE)
 #'
 #' @keywords internal
 .verify_speed_inputs <- function(data,
@@ -21,13 +15,7 @@
                                  iterations,
                                  early_stop_iterations,
                                  quiet,
-                                 seed,
-                                 swap_count,
-                                 swap_all_blocks,
-                                 adaptive_swaps,
-                                 start_temp,
-                                 cooling_rate,
-                                 random_initialisation) {
+                                 seed) {
   if (!is.data.frame(data)) {
     stop("`data` must be an initial data frame of the design")
   }
@@ -47,10 +35,9 @@
     verify_column_exists(col, data, "spatial factor")
   }
 
-  verify_positive_whole_number(iterations, early_stop_iterations, swap_count)
-  verify_non_negative_whole(start_temp)
-  verify_boolean(quiet, adaptive_swaps, swap_all_blocks, random_initialisation)
-  verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
+  verify_positive_whole_number(iterations, early_stop_iterations)
+  verify_boolean(quiet)
+  verify_between(lower = 0, upper = 1, upper_exclude = TRUE)
   if (!is.null(seed)) {
     verify_between(seed, lower = -.Machine$integer.max, upper = .Machine$integer.max)
   }
@@ -88,6 +75,29 @@
   }
 }
 
+#' Verify Options for `speed`
+#'
+#' @rdname verify
+#'
+#' @param swap_count Number of item swaps per iteration (default: 1)
+#' @param swap_all_blocks Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)
+#' @param adaptive_swaps Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)
+#' @param start_temp Starting temperature for simulated annealing (default: 100)
+#' @param cooling_rate Rate at which temperature decreases (default: 0.99)
+#' @param random_initialisation Logical; if TRUE, randomly shuffle items within `swap_within` (default: FALSE)
+#'
+#' @keywords internal
+.verify_speed_options <- function(swap_count,
+                                  swap_all_blocks,
+                                  adaptive_swaps,
+                                  start_temp,
+                                  cooling_rate,
+                                  random_initialisation) {
+  verify_positive_whole_number(swap_count)
+  verify_non_negative_whole(start_temp)
+  verify_boolean(adaptive_swaps, swap_all_blocks, random_initialisation)
+  verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
+}
 
 
 # Other functions for verifying

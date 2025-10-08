@@ -269,6 +269,7 @@ test_that("autoplot palettes work with hierarchical designs", {
                   spatial_factors = ~ row + col,
                   iterations = 100,
                   seed = 42,
+                  swap_all = TRUE,
                   quiet = TRUE)
 
   # Test different palettes work with hierarchical designs

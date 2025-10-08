@@ -27,53 +27,19 @@ env_add_one <- function(env, key) {
 #'
 #' @keywords internal
 pseudo_inverse <- function(a_matrix, tolerance = 1e-10) {
-  matrix_name <- deparse(substitute(a_matrix))
   svd_a <- svd(a_matrix)
   rank_a <- sum(svd_a$d > tolerance)
 
   # Moore-Penrose inverse (variance matrix)
   if (rank_a > 0) {
-    return(
-      svd_a$v[, 1:rank_a] %*%
-        diag(1 / svd_a$d[1:rank_a]) %*%
-        t(svd_a$u[, 1:rank_a])
-    )
+    diag_values <- numeric(ncol(svd_a$v))
+    diag_values[1:rank_a] <- 1 / svd_a$d[1:rank_a]
+    return(svd_a$v %*% diag(diag_values) %*% t(svd_a$u))
   } else {
+    matrix_name <- deparse(substitute(a_matrix))
     stop(paste0(matrix_name, " has rank 0 - design may be invalid"))
   }
 }
-
-# #' Evaluate NSE While Allowing Wrapping
-# #'
-# #' @description
-# #' Evaluates NSE while allowing wrapping of the variable in another function call.
-# #'
-# #' @param var A symbol or a string
-# #'
-# #' @return A string representing the symbol or the literal string
-# #'
-# #' @keywords internal
-# wrappable_nse <- function(var) {
-#   expr <- substitute(var)
-#
-#   # Try to evaluate to see if it's a string value being passed
-#   tryCatch(
-#     {
-#       # If we can evaluate it and it's a string, use the string value
-#       evaluated <- eval(expr, envir = parent.frame())
-#       if (is.character(evaluated)) {
-#         return(evaluated)
-#       } else {
-#         # If it evaluates but isn't a string, treat as NSE (return symbol name)
-#         return(deparse(expr))
-#       }
-#     },
-#     error = function(e) {
-#       # If evaluation fails (undefined variable), treat as NSE (return symbol name)
-#       return(deparse(expr))
-#     }
-#   )
-# }
 
 #' Convert Data Frame Data to Factors
 #'
@@ -114,6 +80,135 @@ to_types <- function(df, types) {
   return(df)
 }
 
+# parse_swap_formula <- function(formula) {
+#   # split a + b expression recursively
+#   split_terms <- function(expr) {
+#     if (is.call(expr) && identical(expr[[1]], as.name("+"))) {
+#       return(c(split_terms(expr[[2]]), split_terms(expr[[3]])))
+#     } else {
+#       return(list(expr))
+#     }
+#   }
+#
+#   parse_term <- function(call_expr) {
+#     fn_name <- as.character(call_expr[[1]])
+#     args <- as.list(call_expr[-1])
+#
+#     return(list(
+#       fn_name,
+#       if (length(args) >= 1) all.vars(args[[1]])[1] else stop("Missing first argument"),
+#       if (length(args) >= 2) all.vars(args[[2]]) else c("row", "col"),
+#       if (length(args) >= 3) all.vars(args[[3]])[1] else "1"
+#     ))
+#   }
+#
+#   rhs <- formula[[2]]
+#   terms <- split_terms(rhs)
+#
+#
+#   parsed_args <- lapply(terms, parse_term)
+#   names(parsed_args) <- sapply(
+#     parsed_args,
+#     function(swap) {
+#       paste0(
+#         swap[[1]],
+#         " ",
+#         swap[[2]],
+#         " within ",
+#         ifelse(swap[[4]] == "1", "whole design", swap[[4]])
+#       )
+#     }
+#   )
+#
+#   return(parsed_args)
+# }
+
+#' Create Input for Internal speed Function
+#'
+#' @inheritParams speed
+#'
+#' @keywords internal
+create_speed_input <- function(swap,
+                               swap_within,
+                               spatial_factors,
+                               grid_factors,
+                               iterations,
+                               early_stop_iterations,
+                               obj_function,
+                               swap_all,
+                               optimize = NULL) {
+  optimize_args <- c(
+    "swap",
+    "swap_within",
+    "spatial_factors",
+    "grid_factors",
+    "iterations",
+    "early_stop_iterations",
+    "obj_function",
+    "swap_all"
+  )
+
+  if (!is.null(optimize)) {
+    for (optimize_name in names(optimize)) {
+      for (arg in optimize_args) {
+        if (is.null(optimize[[optimize_name]][[arg]])) {
+          optimize[[optimize_name]][[arg]] <- get(arg)
+        }
+      }
+    }
+    return(optimize)
+  }
+
+  optimize <- list()
+  if (is.list(swap)) {
+    for (optimize_name in names(swap)) {
+      optimize[[optimize_name]] <- list(
+        swap = swap[[optimize_name]],
+        swap_within = swap_within[[optimize_name]] %||% .DEFAULT$swap_within,
+        grid_factors = if (is.list(grid_factors[[1]])) {
+          grid_factors[[optimize_name]] %||% .DEFAULT$grid_factors
+        } else {
+          grid_factors
+        }
+      )
+      for (arg in optimize_args) {
+        if (!(arg %in% c("swap", "swap_within", "grid_factors"))) {
+          if (is.null(optimize[[optimize_name]][[arg]])) {
+            optimize_var <- get(arg)
+            optimize[[optimize_name]][[arg]] <- if (is.list(optimize_var)) {
+              optimize_var[[optimize_name]] %||% .DEFAULT$spatial_factors
+            } else {
+              optimize_var
+            }
+          }
+        }
+      }
+    }
+  } else {
+    optimize_name <- paste(
+      ifelse(swap_all, "all", "single"),
+      swap,
+      "within",
+      ifelse(swap_within %in% c("1", "none"), "whole design", swap_within),
+      sep = " "
+    )
+
+    optimize[[optimize_name]] <- list(
+      swap = swap,
+      swap_within = swap_within,
+      spatial_factors = spatial_factors,
+      grid_factors = grid_factors,
+      iterations = iterations,
+      early_stop_iterations = early_stop_iterations,
+      obj_function = obj_function,
+      swap_all = swap_all
+    )
+  }
+
+  return(optimize)
+}
+
+`%||%` <- function(a, b) if (!is.null(a)) a else b
 #' Add Names to A List
 #'
 #' @description

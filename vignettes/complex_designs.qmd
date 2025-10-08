@@ -135,6 +135,7 @@ result_ss <- speed(split_split_df,
                    early_stop_iterations = list(wp = 1000, 
                                                 sp = 3000, 
                                                 ssp = 5000),
+                   swap_all = TRUE, 
                    seed = 42)
 ```
 
@@ -239,7 +240,8 @@ This shows the initial strip-plot layout with horizontal and vertical strips bef
 ```{r strip-plot-example}
 strip_result <- speed(df_strip,
                       swap = list(ht = "horizontal_treatment", vt = "vertical_treatment"),
-                      swap_within = list(ht = "block", vt = "block"))
+                      swap_within = list(ht = "block", vt = "block"),
+                      swap_all = TRUE)
 
 ```
 
