@@ -544,3 +544,30 @@ test_that("add_buffers works with different buffer types", {
   expect_false(nrow(result_edge$design) == nrow(result_row$design))
 })
 
+test_that("create_buffers handles design without treatment column", {
+  # Create a design with no column named "treatment"
+  df <- data.frame(
+    row = rep(1:2, each = 2),
+    col = rep(1:2, times = 2),
+    variety = rep(c("V1", "V2"), 2)  # Not named "treatment"
+  )
+
+  # Call create_buffers without specifying treatment_cols
+  # Should not error, but should not set any treatment values either
+  result <- create_buffers(df, type = "edge", blocks = FALSE)
+
+  # Should have added buffer rows
+  expect_gt(nrow(result), nrow(df))
+
+  # But variety column should have NAs for buffer plots (not "buffer")
+  buffer_rows <- result[result$row == 1 | result$row == max(result$row) | 
+                        result$col == 1 | result$col == max(result$col), ]
+  expect_true(all(is.na(buffer_rows$variety)))
+
+  # Now test with explicit treatment_cols parameter
+  result2 <- create_buffers(df, type = "edge", blocks = FALSE, treatment_cols = "variety")
+
+  # Should have "buffer" in the variety column
+  expect_true("buffer" %in% result2$variety)
+})
+

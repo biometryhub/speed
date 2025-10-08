@@ -4,7 +4,7 @@
 \alias{create_buffers}
 \title{Create buffers for design plots}
 \usage{
-create_buffers(design, type, blocks = FALSE)
+create_buffers(design, type, blocks = FALSE, treatment_cols = NULL)
 }
 \arguments{
 \item{design}{The data frame of the design.}
@@ -12,6 +12,9 @@ create_buffers(design, type, blocks = FALSE)
 \item{type}{The type of buffer. One of edge, row, column, double row, double column, or block (coming soon).}
 
 \item{blocks}{Does the design data frame contain blocks?}
+
+\item{treatment_cols}{Character vector of treatment column names to fill with "buffer".
+If NULL (default), uses "treatment" column if it exists.}
 }
 \value{
 The original data frame, updated to include buffers
