@@ -9,6 +9,7 @@
 <url><loc>https://biometryhub.github.io/speed/articles/speed.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/authors.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/index.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/add_buffers.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/add_names.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/as_numeric_factor.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/autoplot.html</loc></url>
@@ -17,9 +18,11 @@
 <url><loc>https://biometryhub.github.io/speed/reference/calculate_ed.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/calculate_efficiency_factor.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/calculate_nb.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/create_buffers.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/create_pair_mapping.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-calculate_ed_3_reps.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-calculate_nb.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/dot-is_light_colour.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/env_add_one.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/generate_neighbour.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/generate_sequential_neighbour.html</loc></url>
