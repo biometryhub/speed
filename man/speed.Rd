@@ -59,8 +59,8 @@ be a named list with names matching \code{swap}.}
 \item{swap_all}{Logical; Whether to swap all matching items or a single item
 at a time (default: FALSE)}
 
-\item{optimise}{Logical; Whether to swap all matching items or a single item
-at a time (default: FALSE)}
+\item{optimise}{A list of named arguments describing optimising parameters;
+see more in example.}
 
 \item{quiet}{Logical; if TRUE, suppresses progress messages (default: FALSE)}
 
@@ -138,5 +138,32 @@ result <- speed(df_split,
 autoplot(result, treatments = "wholeplot_treatment")
 # Plot subplot allocations within wholeplots
 autoplot(result, treatments = "subplot_treatment", block = "wholeplot")
+
+# using optimise parameter
+treatments <- rep(1:100, 7)
+df_site <- initialise_design_df(1, 28, 5, 14, 5)
+df_initial <- rbind(df_site, df_site, df_site, df_site, df_site)
+df_initial$treatment <- treatments
+df_initial$site <- rep(c("a", "b", "c", "d", "e"), each = 140)
+
+df_initial$site_row <- paste(df_initial$site, df_initial$row, sep = "_")
+df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
+df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
+
+optimize <- list(
+  connectivity = list(spatial_factors = ~site),
+  balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+)
+
+options(speed.random_initialisation = TRUE, speed.adj_weight = 0)
+result <- speed(
+  data = df_initial,
+  swap = "treatment",
+  optimise = optimize,
+  seed = 112,
+  quiet = TRUE
+)
+options(speed.random_initialisation = FALSE, speed.adj_weight = 1)
+autoplot(result, block = "site")
 
 }

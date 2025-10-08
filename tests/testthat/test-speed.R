@@ -1319,7 +1319,7 @@ test_that("speed handles MET", {
     balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
   )
 
-  withr::with_options(list(speed.random_initialisation = TRUE), {
+  withr::with_options(list(speed.random_initialisation = TRUE, speed.adj_weight = 0), {
     speed_design <- speed(
       data = df_initial,
       swap = "treatment",
@@ -1330,6 +1330,7 @@ test_that("speed handles MET", {
   })
   design_df <- speed_design$design_df
 
+  expect_equal(sort(design_df$treatment), sort(treatments))
   expect_setequal(unique(table(design_df$treatment, design_df$site)), c(1, 2))
   expect_equal(unique(matrixStats::rowVars(table(design_df$treatment, design_df$site))), 0.3)
   expect_equal(max(table(design_df$site_row, design_df$treatment)), 1)
