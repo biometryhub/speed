@@ -16,20 +16,22 @@ generate_neighbour(
 \arguments{
 \item{design}{Data frame containing the current design}
 
-\item{swap}{Column name of the treatment to swap, or named list for hierarchical designs}
+\item{swap}{Column name of the treatment to swap, or named list for
+hierarchical designs}
 
-\item{swap_within}{Column name defining groups within which to swap treatments, or named list for hierarchical designs}
+\item{swap_within}{Column name defining groups within which to swap
+treatments, or named list for hierarchical designs}
 
 \item{swap_count}{Number of swaps to perform}
 
 \item{swap_all_blocks}{Whether to perform swaps in all blocks or just one}
 
-\item{swap_all}{Whether to swap all matching items or a single item at a time (default: FALSE)}
-
-\item{level}{The level of the design to be optimised in the current loop. Relevant for sequential designs. Simple designs pass this as \code{NULL}.}
+\item{swap_all}{Whether to swap all matching items or a single item at a time
+(default: FALSE)}
 }
 \value{
-A list with the updated design after swapping and information about swapped items
+A list with the updated design after swapping and information about
+swapped items
 }
 \description{
 Generate a Neighbour Design by Swapping Treatments

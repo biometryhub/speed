@@ -273,6 +273,7 @@ split_plot_result <- speed(split_plot_design,
                            swap = list(wp = "wholeplot_treatment",
                                        sp = "subplot_treatment"),
                            swap_within = list(wp = "block", sp = "wholeplot"),
+                           swap_all = TRUE,
                            seed = 42)
 
 split_plot_result
