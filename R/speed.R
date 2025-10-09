@@ -133,6 +133,12 @@
 #'   quiet = TRUE
 #' )
 #' options(speed.random_initialisation = FALSE, speed.adj_weight = 1)
+#'
+#' sites <- result$design_df$site
+#' result$design_df[sites == "b", ]$col <- result$design_df[sites == "a", ]$col + 5
+#' result$design_df[sites == "c", ]$col <- result$design_df[sites == "b", ]$col + 5
+#' result$design_df[sites == "d", ]$col <- result$design_df[sites == "c", ]$col + 5
+#' result$design_df[sites == "e", ]$col <- result$design_df[sites == "d", ]$col + 5
 #' autoplot(result, block = "site")
 #'
 #' @export
