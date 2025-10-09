@@ -101,6 +101,7 @@
 #'                 swap = list(wp = "wholeplot_treatment",
 #'                             sp = "subplot_treatment"),
 #'                 swap_within = list(wp = "block", sp = "wholeplot"),
+#'                 swap_all = TRUE,
 #'                 seed = 42)
 #'
 #' # Plot wholeplot allocations within blocks
@@ -108,7 +109,7 @@
 #' # Plot subplot allocations within wholeplots
 #' autoplot(result, treatments = "subplot_treatment", block = "wholeplot")
 #'
-#' # using optimise parameter
+#' # Using optimise parameter
 #' treatments <- rep(1:100, 7)
 #' df_site <- initialise_design_df(1, 28, 5, 14, 5)
 #' df_initial <- rbind(df_site, df_site, df_site, df_site, df_site)
@@ -134,12 +135,9 @@
 #' )
 #' options(speed.random_initialisation = FALSE, speed.adj_weight = 1)
 #'
-#' sites <- result$design_df$site
-#' result$design_df[sites == "b", ]$col <- result$design_df[sites == "a", ]$col + 5
-#' result$design_df[sites == "c", ]$col <- result$design_df[sites == "b", ]$col + 5
-#' result$design_df[sites == "d", ]$col <- result$design_df[sites == "c", ]$col + 5
-#' result$design_df[sites == "e", ]$col <- result$design_df[sites == "d", ]$col + 5
-#' autoplot(result, block = "site")
+#' # Plot the MET design with
+#' autoplot(result, block = "site") +
+#' facet_wrap(~site)
 #'
 #' @export
 # fmt: skip
@@ -231,7 +229,7 @@ speed_hierarchical <- function(data, optimize, quiet, seed, ...) {
   start_temp <- getOption("speed.start_temp", 100)
   cooling_rate <- getOption("speed.cooling_rate", 0.99)
   random_initialisation <- getOption("speed.random_initialisation", FALSE)
-  .verify_speed_options(swap_count, swap_all_blocks, adaptive_swaps, start_temp, cooling_rate, 
+  .verify_speed_options(swap_count, swap_all_blocks, adaptive_swaps, start_temp, cooling_rate,
                         random_initialisation)
 
   hierarchy_levels <- names(optimize)
