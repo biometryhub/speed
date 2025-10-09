@@ -141,10 +141,11 @@ autoplot(result, treatments = "wholeplot_treatment")
 autoplot(result, treatments = "subplot_treatment", block = "wholeplot")
 
 # Using optimise parameter
-treatments <- rep(1:100, 7)
+# Multi-Environment Trial (MET) design
+lines <- rep(1:100, 7)
 df_site <- initialise_design_df(1, 28, 5, 14, 5)
 df_initial <- rbind(df_site, df_site, df_site, df_site, df_site)
-df_initial$treatment <- treatments
+df_initial$treatment <- lines
 df_initial$site <- rep(c("a", "b", "c", "d", "e"), each = 140)
 
 df_initial$site_row <- paste(df_initial$site, df_initial$row, sep = "_")
@@ -166,8 +167,8 @@ result <- speed(
 )
 options(speed.random_initialisation = FALSE, speed.adj_weight = 1)
 
-# Plot the MET design with
-autoplot(result, block = "site") +
+# Plot the MET design with facets
+autoplot(result, treatments = "lines") +
 ggplot2::facet_wrap(~site)
 
 }
