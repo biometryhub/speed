@@ -171,6 +171,7 @@ This function follows a very similar structure to the [default objective functio
 Now that we have our custom objective function, we can use it in the `speed` optimisation process. The `speed` package allows us to specify a custom objective function using the `objective_function` argument. We also need to ensure that our layout data frame has the necessary columns for blocks, treatments, and spatial coordinates.
 
 The following parameters will allow us to produce a valid BIBD layout:
+
 - `v` = 5 (number of treatments)
 - `b` = 10 (number of blocks)
 - `k` = 3 (number of plots per block)
@@ -218,12 +219,14 @@ result
 ```
 
 
-
 ```{r bibd_result-plot, eval=TRUE}
 autoplot(result)
 get_cooccurrence(result$design_df, "treatment")
 unique(unlist(get_cooccurrence(result$design_df, "treatment")))
 ```
+
+Visual inspection of the plot and the output above shows that each treatment appears exactly 3 times together as required. Hence we have successfully used our custom objective function to generate a type of design that is not possible with the default objective functions.
+
 
 <!---
 # Adjusting Optimisation Algorithm Parameters
