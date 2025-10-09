@@ -209,15 +209,15 @@ usage, see the package vignettes.</p>
 <span class="r-in"><span>                swap <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>wp <span class="op">=</span> <span class="st">"wholeplot_treatment"</span>,</span></span>
 <span class="r-in"><span>                            sp <span class="op">=</span> <span class="st">"subplot_treatment"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                swap_within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>wp <span class="op">=</span> <span class="st">"block"</span>, sp <span class="op">=</span> <span class="st">"wholeplot"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                swap_all <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>                seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> row and col are used as row and column, respectively.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Optimising level: wp </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Level: wp Iteration: 1000 Score: 10 Best: 10 Since Improvement: 3 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Level: wp Iteration: 2000 Score: 6 Best: 6 Since Improvement: 475 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Level: wp Iteration: 3000 Score: 6 Best: 6 Since Improvement: 1475 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Early stopping at iteration 3525 for level wp </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Level: wp Iteration: 1000 Score: 100 Best: 100 Since Improvement: 1000 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Level: wp Iteration: 2000 Score: 100 Best: 100 Since Improvement: 2000 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Early stopping at iteration 2000 for level wp </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Optimising level: sp </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Early stopping at iteration 502 for level sp </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Early stopping at iteration 570 for level sp </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Plot wholeplot allocations within blocks</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">result</span>, treatments <span class="op">=</span> <span class="st">"wholeplot_treatment"</span><span class="op">)</span></span></span>
@@ -252,13 +252,10 @@ usage, see the package vignettes.</p>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>speed.random_initialisation <span class="op">=</span> <span class="cn">FALSE</span>, speed.adj_weight <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">sites</span> <span class="op">&lt;-</span> <span class="va">result</span><span class="op">$</span><span class="va">design_df</span><span class="op">$</span><span class="va">site</span></span></span>
-<span class="r-in"><span><span class="va">result</span><span class="op">$</span><span class="va">design_df</span><span class="op">[</span><span class="va">sites</span> <span class="op">==</span> <span class="st">"b"</span>, <span class="op">]</span><span class="op">$</span><span class="va">col</span> <span class="op">&lt;-</span> <span class="va">result</span><span class="op">$</span><span class="va">design_df</span><span class="op">[</span><span class="va">sites</span> <span class="op">==</span> <span class="st">"a"</span>, <span class="op">]</span><span class="op">$</span><span class="va">col</span> <span class="op">+</span> <span class="fl">5</span></span></span>
-<span class="r-in"><span><span class="va">result</span><span class="op">$</span><span class="va">design_df</span><span class="op">[</span><span class="va">sites</span> <span class="op">==</span> <span class="st">"c"</span>, <span class="op">]</span><span class="op">$</span><span class="va">col</span> <span class="op">&lt;-</span> <span class="va">result</span><span class="op">$</span><span class="va">design_df</span><span class="op">[</span><span class="va">sites</span> <span class="op">==</span> <span class="st">"b"</span>, <span class="op">]</span><span class="op">$</span><span class="va">col</span> <span class="op">+</span> <span class="fl">5</span></span></span>
-<span class="r-in"><span><span class="va">result</span><span class="op">$</span><span class="va">design_df</span><span class="op">[</span><span class="va">sites</span> <span class="op">==</span> <span class="st">"d"</span>, <span class="op">]</span><span class="op">$</span><span class="va">col</span> <span class="op">&lt;-</span> <span class="va">result</span><span class="op">$</span><span class="va">design_df</span><span class="op">[</span><span class="va">sites</span> <span class="op">==</span> <span class="st">"c"</span>, <span class="op">]</span><span class="op">$</span><span class="va">col</span> <span class="op">+</span> <span class="fl">5</span></span></span>
-<span class="r-in"><span><span class="va">result</span><span class="op">$</span><span class="va">design_df</span><span class="op">[</span><span class="va">sites</span> <span class="op">==</span> <span class="st">"e"</span>, <span class="op">]</span><span class="op">$</span><span class="va">col</span> <span class="op">&lt;-</span> <span class="va">result</span><span class="op">$</span><span class="va">design_df</span><span class="op">[</span><span class="va">sites</span> <span class="op">==</span> <span class="st">"d"</span>, <span class="op">]</span><span class="op">$</span><span class="va">col</span> <span class="op">+</span> <span class="fl">5</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">result</span>, block <span class="op">=</span> <span class="st">"site"</span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="speed-4.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="co"># Plot the MET design with</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">result</span>, block <span class="op">=</span> <span class="st">"site"</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span><span class="fu">facet_wrap</span><span class="op">(</span><span class="op">~</span><span class="va">site</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in facet_wrap(~site):</span> could not find function "facet_wrap"</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
