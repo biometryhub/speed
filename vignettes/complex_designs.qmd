@@ -437,6 +437,12 @@ head(prep_design)
 #| fig-cap: "Initial layout of the p-rep design showing systematic treatment distribution."
 class(prep_design) <- c("design", class(prep_design))
 autoplot(prep_design, treatments = "entry")
+```
+
+```{r}
+#| echo: false
+#| label: fig-prepplot1
+#| fig-cap: "Initial layout of the p-rep design showing replicated treatments."
 autoplot(prep_design, treatments = "duplicated")
 ```
 
