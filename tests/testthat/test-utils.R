@@ -11,15 +11,15 @@ test_that("pseudo_inverse calculates Moore-Penrose inverse correctly", {
   expect_equal(dim(A_inv), c(2, 2))
 })
 
-# test_that("pseudo_inverse handles singular matrices", {
-#   # Test with a rank-deficient matrix (singular)
-#   singular_matrix <- matrix(c(1, 2, 2, 4), nrow = 2, ncol = 2)
-#
-#   # This should not throw an error but handle the rank deficiency
-#   result <- pseudo_inverse(singular_matrix)
-#   expect_true(is.matrix(result))
-#   expect_equal(dim(result), c(2, 2))
-# })
+test_that("pseudo_inverse handles singular matrices", {
+  # Test with a rank-deficient matrix (singular)
+  singular_matrix <- matrix(c(1, 2, 2, 4), nrow = 2, ncol = 2)
+
+  # This should not throw an error but handle the rank deficiency
+  result <- pseudo_inverse(singular_matrix)
+  expect_true(is.matrix(result))
+  expect_equal(dim(result), c(2, 2))
+})
 
 test_that("pseudo_inverse throws error for zero matrix", {
   # Test with a zero matrix (rank 0)
@@ -105,36 +105,61 @@ test_that("infer_row_col can infer row and column", {
   expect_equal(inferred$col, "col")
   expect_equal(inferred$row, "row")
 
-  inferred <- infer_row_col(data.frame(
-    Row = rep(1:4, each = 5),
-    column = rep(1:4, times = 5)
-  ), quiet = TRUE)
+  inferred <- infer_row_col(
+    data.frame(
+      Row = rep(1:4, each = 5),
+      column = rep(1:4, times = 5)
+    ),
+    quiet = TRUE
+  )
 
   expect_equal(inferred$inferred, TRUE)
   expect_equal(inferred$col, "column")
   expect_equal(inferred$row, "Row")
 
-  inferred <- infer_row_col(data.frame(
-    Rows = rep(1:4, each = 5),
-    range = rep(1:4, times = 5)
-  ), quiet = TRUE)
+  inferred <- infer_row_col(
+    data.frame(
+      Rows = rep(1:4, each = 5),
+      range = rep(1:4, times = 5)
+    ),
+    quiet = TRUE
+  )
 
   expect_equal(inferred$inferred, TRUE)
   expect_equal(inferred$col, "range")
   expect_equal(inferred$row, "Rows")
+
+  inferred <- infer_row_col(
+    data.frame(
+      lane = rep(1:4, each = 5),
+      position = rep(1:4, times = 5)
+    ),
+    grid_factors = list(dim1 = "lane", dim2 = "position"),
+    quiet = TRUE
+  )
+
+  expect_equal(inferred$inferred, TRUE)
+  expect_equal(inferred$row, "lane")
+  expect_equal(inferred$col, "position")
 })
 
 test_that("infer_row_col raise warning if cannot infer", {
   expect_warning(
     inferred <- infer_row_col(data.frame(row = rep(1:4, each = 5))),
-    "Cannot infer column in the design data frame. speed.adj_weight is set to 0 for this call."
+    paste0(
+      "Cannot infer column in the design data frame. speed.adj_weight is set to 0 for this call. If this is",
+      " not intended, provide `grid_factors` argument."
+    )
   )
 
   expect_equal(inferred$inferred, FALSE)
 
   expect_warning(
     inferred <- infer_row_col(data.frame(col = rep(1:4, each = 5))),
-    "Cannot infer row in the design data frame. speed.adj_weight is set to 0 for this call."
+    paste0(
+      "Cannot infer row in the design data frame. speed.adj_weight is set to 0 for this call. If this is not",
+      " intended, provide `grid_factors` argument."
+    )
   )
 
   expect_equal(inferred$inferred, FALSE)
@@ -179,4 +204,215 @@ test_that("to_types converts data frame data to input types", {
   expect_equal(typed_data$integer_col, test_data$integer_col)
   expect_equal(typed_data$numeric_col, test_data$numeric_col)
   expect_equal(typed_data$logical_col, test_data$logical_col)
+})
+
+# test_that("parse_swap_formula parses with defaults", {
+#   swap <- ~ single(treatment)
+#   parsed <- parse_swap_formula(swap)
+#
+#   expect_equal(parsed, list(
+#     "single treatment within whole design" = list("single", "treatment", c("row", "col"), "1")
+#   ))
+# })
+
+# test_that("parse_swap_formula parses with multiple terms", {
+#   swap <- ~ single(treatment) + all(sub_treatment, a_row + a_col, block) + single(z, a + b + c, d)
+#   parsed <- parse_swap_formula(swap)
+#
+#   expect_equal(parsed, list(
+#     "single treatment within whole design" = list("single", "treatment", c("row", "col"), "1"),
+#     "all sub_treatment within block" = list("all", "sub_treatment", c("a_row", "a_col"), "block"),
+#     "single z within d" = list("single", "z", c("a", "b", "c"), "d")
+#   ))
+# })
+
+test_that("create_speed_input creates an input from a named list", {
+  speed_input <- create_speed_input(
+    swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+    swap_within = list(wp = "block", sp = "wholeplot"),
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = list(wp = 1000, sp = 10000),
+    obj_function = objective_function,
+    swap_all = TRUE
+  )
+  ordered_names <- sort(names(speed_input[[1]]))
+
+  expect_equal(speed_input$wp[ordered_names], list(
+    swap = "wholeplot_treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 1000,
+    obj_function = objective_function,
+    swap_all = TRUE
+  )[ordered_names])
+
+  expect_equal(speed_input$sp[ordered_names], list(
+    swap = "subplot_treatment",
+    swap_within = "wholeplot",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 10000,
+    obj_function = objective_function,
+    swap_all = TRUE
+  )[ordered_names])
+})
+
+test_that("create_speed_input creates an input from a string", {
+  speed_input <- create_speed_input(
+    swap = "treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 1000,
+    obj_function = objective_function,
+    swap_all = FALSE
+  )
+  ordered_names <- sort(names(speed_input))
+
+  expect_equal(speed_input[ordered_names], list(
+    "single treatment within block" = list(
+      swap = "treatment",
+      swap_within = "block",
+      spatial_factors = ~ row + col,
+      grid_factors = list(dim1 = "row", dim2 = "col"),
+      iterations = 10000,
+      early_stop_iterations = 1000,
+      obj_function = objective_function,
+      swap_all = FALSE
+    )
+  )[ordered_names])
+})
+
+test_that("create_speed_input creates an input from optimize argument", {
+  optimize <- list(
+    connectivity = list(swap_within = "swappable_site", spatial_factors = ~site),
+    balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+  )
+
+  speed_input <- create_speed_input(
+    swap = "treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 1000,
+    obj_function = objective_function,
+    swap_all = FALSE,
+    optimize = optimize
+  )
+  ordered_names <- sort(names(speed_input[[1]]))
+
+  expect_equal(speed_input$connectivity[ordered_names], list(
+    swap = "treatment",
+    swap_within = "swappable_site",
+    spatial_factors = ~site,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 1000,
+    obj_function = objective_function,
+    swap_all = FALSE
+  )[ordered_names])
+
+  expect_equal(speed_input$balance[ordered_names], list(
+    swap = "treatment",
+    swap_within = "site",
+    spatial_factors = ~ site_col + site_block,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 10000,
+    early_stop_iterations = 1000,
+    obj_function = objective_function,
+    swap_all = FALSE
+  )[ordered_names])
+})
+
+test_that("add_names adds names to a list", {
+  a_list <- list(1, 2, 3, "a")
+  named_list <- add_names(a_list)
+
+  expect_equal(unname(named_list), a_list)
+  expect_false(is.null(names(named_list)))
+  expect_equal(length(names(named_list)), length(a_list))
+  expect_equal(length(unique(names(named_list))), length(a_list))
+})
+
+test_that("add_names adds names to a named list", {
+  a_list <- list(1, 2, 3, b = "a")
+  named_list <- add_names(a_list)
+
+  expect_equal(unname(named_list), unname(a_list))
+  expect_false(is.null(names(named_list)))
+  expect_equal(length(names(named_list)), length(a_list))
+  expect_equal(length(unique(names(named_list))), length(a_list))
+})
+
+test_that("add_names adds names to a named list with numbered names", {
+  a_list <- list(1, "2" = 2, "1" = 3, b = "a")
+  named_list <- add_names(a_list)
+
+  expect_equal(unname(named_list), unname(a_list))
+  expect_false(is.null(names(named_list)))
+  expect_equal(length(names(named_list)), length(a_list))
+  expect_equal(length(unique(names(named_list))), length(a_list))
+})
+
+test_that("rbind_fill does simple rbind", {
+  a <- expand.grid(x = 1:2, y = 1:2)
+  b <- expand.grid(x = 1:3, y = 1:4)
+  ab <- rbind(a, b)
+  ab_fill <- rbind_fill(a, b)
+
+  expect_setequal(names(ab_fill), names(ab))
+  expect_equal(ab_fill$x, ab$x)
+  expect_equal(ab_fill$y, ab$y)
+})
+
+test_that("rbind_fill awares of column names", {
+  a <- expand.grid(x = 1:2, y = 1:2)
+  b <- expand.grid(y = 1:3, x = 1:4)
+  ab <- rbind(a, b)
+  ab_fill <- rbind_fill(a, b)
+
+  expect_setequal(names(ab_fill), names(ab))
+  expect_equal(ab_fill$x, ab$x)
+  expect_equal(ab_fill$y, ab$y)
+})
+
+test_that("rbind_fill fills missing columns", {
+  a <- expand.grid(x = 1:2, y = 1:2, z = 1:2)
+  b <- expand.grid(x = 1:3, y = 1:4, w = 1:5)
+  ab_fill <- rbind_fill(a, b)
+
+  expect_setequal(names(ab_fill), c("w", "x", "y", "z"))
+  expect_equal(ab_fill$x, c(a$x, b$x))
+  expect_equal(ab_fill$y, c(a$y, b$y))
+  expect_equal(ab_fill$z, c(a$z, rep(NA, nrow(b))))
+  expect_equal(ab_fill$w, c(rep(NA, nrow(a)), b$w))
+})
+
+test_that("rbind_fill fills with missing values", {
+  a <- expand.grid(x = 1:2, y = 1:2, z = 1:2)
+  b <- expand.grid(x = 1:3, y = 1:4, w = 1:5)
+  ab_fill <- rbind_fill(a, b, fill = "a")
+
+  expect_setequal(names(ab_fill), c("w", "x", "y", "z"))
+  expect_equal(ab_fill$x, c(a$x, b$x))
+  expect_equal(ab_fill$y, c(a$y, b$y))
+  expect_equal(ab_fill$z, c(a$z, rep("a", nrow(b))))
+  expect_equal(ab_fill$w, c(rep("a", nrow(a)), b$w))
+})
+
+test_that("rbind_fill works with an empty data frame", {
+  a <- expand.grid(x = 1:2, y = 1:2)
+  b <- data.frame()
+  ab_fill <- rbind_fill(a, b)
+
+  expect_setequal(names(ab_fill), c("x", "y"))
+  expect_equal(ab_fill$x, a$x)
+  expect_equal(ab_fill$y, a$y)
 })

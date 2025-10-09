@@ -9,9 +9,12 @@ speed(
   swap,
   swap_within = "1",
   spatial_factors = ~row + col,
+  grid_factors = list(dim1 = "row", dim2 = "col"),
   iterations = 10000,
   early_stop_iterations = 2000,
   obj_function = objective_function,
+  swap_all = FALSE,
+  optimise = NULL,
   quiet = FALSE,
   seed = NULL,
   ...
@@ -37,6 +40,10 @@ See details for more information.}
 \item{spatial_factors}{A one-sided formula specifying spatial factors to
 consider for balance (default: \code{~row + col}).}
 
+\item{grid_factors}{A named list specifying grid factors to construct a
+matrix for calculating adjacency score, \code{dim1} for row and \code{dim2} for
+column. (default: \code{list(dim1 = "row", dim2 = "col")}).}
+
 \item{iterations}{Maximum number of iterations for the simulated annealing
 algorithm (default: 10000). For hierarchical designs, can be a named list
 with names matching \code{swap}.}
@@ -48,6 +55,12 @@ list with names matching \code{swap}.}
 \item{obj_function}{Objective function used to calculate score (lower is
 better) (default: \code{\link[=objective_function]{objective_function()}}). For hierarchical designs, can
 be a named list with names matching \code{swap}.}
+
+\item{swap_all}{Logical; Whether to swap all matching items or a single item
+at a time (default: FALSE)}
+
+\item{optimise}{A list of named arguments describing optimising parameters;
+see more in example.}
 
 \item{quiet}{Logical; if TRUE, suppresses progress messages (default: FALSE)}
 
@@ -119,11 +132,48 @@ result <- speed(df_split,
                 swap = list(wp = "wholeplot_treatment",
                             sp = "subplot_treatment"),
                 swap_within = list(wp = "block", sp = "wholeplot"),
+                swap_all = TRUE,
                 seed = 42)
 
 # Plot wholeplot allocations within blocks
 autoplot(result, treatments = "wholeplot_treatment")
 # Plot subplot allocations within wholeplots
 autoplot(result, treatments = "subplot_treatment", block = "wholeplot")
+
+# Using optimise parameter
+# Multi-Environment Trial (MET) design
+# With 7 replicates of 100 lines in this design, each line will appear
+# twice at two different sites and once at the rest of the sites.
+lines <- rep(1:100, 7)
+df_site <- initialise_design_df(1, 28, 5, 14, 5)
+df_initial <- rbind(df_site, df_site, df_site, df_site, df_site)
+df_initial$lines <- lines
+df_initial$site <- rep(c("a", "b", "c", "d", "e"), each = 140)
+
+df_initial$site_row <- paste(df_initial$site, df_initial$row, sep = "_")
+df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
+df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
+
+optimize <- list(
+  connectivity = list(spatial_factors = ~site),
+  balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+)
+
+options(speed.random_initialisation = TRUE, speed.adj_weight = 0)
+result <- speed(
+  data = df_initial,
+  swap = "lines",
+  optimise = optimize,
+  seed = 112,
+  quiet = TRUE
+)
+
+head(table(result$design_df$lines, result$design_df$site))
+
+options(speed.random_initialisation = FALSE, speed.adj_weight = 1)
+
+# Plot the MET design with facets
+autoplot(result, treatments = "lines") +
+ggplot2::facet_wrap(~site)
 
 }

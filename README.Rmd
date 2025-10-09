@@ -25,19 +25,19 @@ knitr::opts_chunk$set(
 
 ## Table of Contents
 
-<!-- vim-markdown-toc GFM -->
-
 * [Overview](#overview)
 * [Installation](#installation)
 * [Features](#features)
 * [Example](#example)
   * [Basic](#basic)
   * [Blocked design](#blocked-design)
+  * [Split-plot design][split-plot]
+  * [Strip-plot design][strip-plot]
+  * [P-rep design][p-rep]
+  * [BIBD][bibd]
   * [More Examples](#more-examples)
 * [Citation](#citation)
 * [License](#license)
-
-<!-- vim-markdown-toc -->
 
 ## Overview
 
@@ -53,8 +53,17 @@ The `speed` package optimises spatial experimental designs by rearranging treatm
 You can install the development version of speed from [GitHub](https://github.com/biometryhub/speed) with:
 
 ```{r, eval = FALSE}
-# install.packages("pak")
+# pak
+if (!require("pak", quietly = TRUE)) install.packages("pak")
 pak::pak("biometryhub/speed")
+
+# devtools
+if (!require("devtools", quietly = TRUE)) install.packages("devtools")
+devtools::install_github("biometryhub/speed")
+
+# remotes
+if (!require("remotes", quietly = TRUE)) install.packages("remotes")
+remotes::install_github("biometryhub/speed")
 ```
 
 ## Features
@@ -121,7 +130,13 @@ autoplot(result)
 
 ### More Examples
 
-For more detailed examples, see the [getting started vignette](articles/speed.html) or the vignette about [more complex examples](articles/complex_designs.html).
+For more detailed examples, see the [getting started vignette][getting-started] or the vignette about
+[more complex examples][complex-examples] including, but not limited to:
+
+* [Split-plot design][split-plot]
+* [Strip-plot design][strip-plot]
+* [P-rep design][p-rep]
+* [BIBD][bibd]
 
 ## Citation
 
@@ -134,3 +149,16 @@ citation("speed")
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
+
+<!-- external -->
+
+[getting-started]: https://biometryhub.github.io/speed/articles/speed.html
+[complex-examples]: https://biometryhub.github.io/speed/articles/complex_designs.html
+[split-plot]: https://biometryhub.github.io/speed/articles/speed.html#split-plot-design
+[strip-plot]: https://biometryhub.github.io/speed/articles/complex_designs.html#strip-plot-designs
+[p-rep]: https://biometryhub.github.io/speed/articles/complex_designs.html#p-rep-partially-replicated-designs
+[bibd]: https://biometryhub.github.io/speed/articles/complex_designs.html#balanced-incomplete-block-design-bibd
+
+## Code of Conduct
+
+Please note that the speed project is released with a [Contributor Code of Conduct](https://biometryhub.github.io/speed/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.

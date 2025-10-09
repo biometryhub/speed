@@ -15,17 +15,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(
-  cache = TRUE,
-  collapse = TRUE,
-  comment = "#>",
-  fig.width = 8,
-  fig.height = 6,
-  dpi = 150
-)
-```
-
 # Introduction
 
 This vignette covers advanced and complex experimental designs that are used in specialised agricultural research contexts. These designs are particularly useful for plant breeding programs, large-scale variety trials, and situations where standard complete block designs are impractical due to resource constraints or the nature of the treatments.
@@ -146,6 +135,7 @@ result_ss <- speed(split_split_df,
                    early_stop_iterations = list(wp = 1000, 
                                                 sp = 3000, 
                                                 ssp = 5000),
+                   swap_all = TRUE, 
                    seed = 42)
 ```
 
@@ -250,7 +240,8 @@ This shows the initial strip-plot layout with horizontal and vertical strips bef
 ```{r strip-plot-example}
 strip_result <- speed(df_strip,
                       swap = list(ht = "horizontal_treatment", vt = "vertical_treatment"),
-                      swap_within = list(ht = "block", vt = "block"))
+                      swap_within = list(ht = "block", vt = "block"),
+                      swap_all = TRUE)
 
 ```
 
@@ -446,6 +437,12 @@ head(prep_design)
 #| fig-cap: "Initial layout of the p-rep design showing systematic treatment distribution."
 class(prep_design) <- c("design", class(prep_design))
 autoplot(prep_design, treatments = "entry")
+```
+
+```{r}
+#| echo: false
+#| label: fig-prepplot2
+#| fig-cap: "Initial layout of the p-rep design showing replicated treatments."
 autoplot(prep_design, treatments = "duplicated")
 ```
 
@@ -917,7 +914,7 @@ When selecting and implementing complex designs, researchers should carefully ba
 
 ## Related Vignettes
 
-- **[Common Agricultural Experimental Designs with speed](speed.html)** - Foundational designs for most agricultural applications
+- [Common Agricultural Experimental Designs with speed](speed.html) - Foundational designs for most agricultural applications
 <!-- - **"Comparing Experimental Design Efficiency with speed"** - Tools for evaluating and comparing design efficiency -->
 
 ---

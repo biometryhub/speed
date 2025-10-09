@@ -6,12 +6,6 @@
 #' @rdname verify
 #'
 #' @inheritParams speed
-#' @param swap_count Number of item swaps per iteration (default: 1)
-#' @param swap_all_blocks Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)
-#' @param adaptive_swaps Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)
-#' @param start_temp Starting temperature for simulated annealing (default: 100)
-#' @param cooling_rate Rate at which temperature decreases (default: 0.99)
-#' @param random_initialisation Logical; if TRUE, randomly shuffle items within `swap_within` (default: FALSE)
 #'
 #' @keywords internal
 .verify_speed_inputs <- function(data,
@@ -21,13 +15,7 @@
                                  iterations,
                                  early_stop_iterations,
                                  quiet,
-                                 seed,
-                                 swap_count,
-                                 swap_all_blocks,
-                                 adaptive_swaps,
-                                 start_temp,
-                                 cooling_rate,
-                                 random_initialisation) {
+                                 seed) {
   if (!is.data.frame(data)) {
     stop("`data` must be an initial data frame of the design")
   }
@@ -47,10 +35,9 @@
     verify_column_exists(col, data, "spatial factor")
   }
 
-  verify_positive_whole_number(iterations, early_stop_iterations, swap_count)
-  verify_non_negative_whole(start_temp)
-  verify_boolean(quiet, adaptive_swaps, swap_all_blocks, random_initialisation)
-  verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
+  verify_positive_whole_number(iterations, early_stop_iterations)
+  verify_boolean(quiet)
+  verify_between(lower = 0, upper = 1, upper_exclude = TRUE)
   if (!is.null(seed)) {
     verify_between(seed, lower = -.Machine$integer.max, upper = .Machine$integer.max)
   }
@@ -73,7 +60,7 @@
       stop(paste("Column", swap[[level]], "not found in data"))
     }
     if (!swap_within[[level]] %in% names(data) &&
-        !(swap_within[[level]] %in% c("1", "none"))) {
+      !(swap_within[[level]] %in% c("1", "none"))) {
       stop(paste("Column", swap_within[[level]], "not found in data"))
     }
   }
@@ -88,6 +75,29 @@
   }
 }
 
+#' Verify Options for `speed`
+#'
+#' @rdname verify
+#'
+#' @param swap_count Number of item swaps per iteration (default: 1)
+#' @param swap_all_blocks Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)
+#' @param adaptive_swaps Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)
+#' @param start_temp Starting temperature for simulated annealing (default: 100)
+#' @param cooling_rate Rate at which temperature decreases (default: 0.99)
+#' @param random_initialisation Logical; if TRUE, randomly shuffle items within `swap_within` (default: FALSE)
+#'
+#' @keywords internal
+.verify_speed_options <- function(swap_count,
+                                  swap_all_blocks,
+                                  adaptive_swaps,
+                                  start_temp,
+                                  cooling_rate,
+                                  random_initialisation) {
+  verify_positive_whole_number(swap_count)
+  verify_non_negative_whole(start_temp)
+  verify_boolean(adaptive_swaps, swap_all_blocks, random_initialisation)
+  verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
+}
 
 
 # Other functions for verifying
@@ -190,18 +200,18 @@ verify_between <- function(
       object_type <- paste0("at most ", upper)
     }
   }
-  object_type <- paste0(object_type, ".")
 
-  verify_data_type(is_between_(lower, upper), object_type, var_names, ...)
+  verify_data_type(is_between_(lower, upper, lower_exclude, upper_exclude), object_type, var_names, ...)
 }
 
 verify_boolean <- function(..., var_names = NULL) {
   verify_data_type(is_boolean, "a boolean", var_names, ...)
 }
 
-verify_column_exists <- function(col, data, prefix) {
+verify_column_exists <- function(col, data, suffix = NULL) {
   if (!(col %in% names(data))) {
-    stop(paste0("'", col, "' not found in ", paste(colnames(data), collapse = ", ")), call. = FALSE)
+    msg <- c(paste0("'", col, "' not found in ", paste(colnames(data), collapse = ", "), ". "), suffix)
+    stop(msg, call. = FALSE)
   }
 }
 
@@ -222,6 +232,14 @@ verify_multiple_of <- function(..., var_names = NULL) {
 
 verify_positive_whole_number <- function(..., var_names = NULL) {
   verify_data_type(is_positive_whole_number, "a positive whole number", var_names, ...)
+}
+
+verify_character <- function(..., var_names = NULL) {
+  verify_data_type(is.character, "a character", var_names, ...)
+}
+
+verify_list <- function(..., var_names = NULL) {
+  verify_data_type(is.list, "a list", var_names, ...)
 }
 
 verify_positive_whole_numbers <- function(..., var_names = NULL) {
@@ -251,6 +269,10 @@ verify_data_type <- function(verify_func, data_type, var_names = NULL, ...) {
 get_literal_values <- function(values) {
   n_values <- length(values)
   literal_values <- literal(values[[1]])
+  if (n_values == 1) {
+    return(literal_values)
+  }
+
   if (n_values == 2) {
     return(paste0(literal_values, " or ", literal(values[[2]])))
   }
@@ -262,6 +284,7 @@ get_literal_values <- function(values) {
       literal_values <- paste0(literal_values, ", or ", literal(values[[i]]))
     }
   }
+  return(literal_values)
 }
 
 get_var_names <- function(...) {

@@ -484,16 +484,16 @@ test_that("speed runs with random initialisation", {
     quiet = TRUE
   )
 
-  options(speed.random_initialisation = TRUE)
-  result_random <- speed(
-    data = test_data,
-    swap = "treatment",
-    spatial_factors = ~ row + col,
-    iterations = 1000,
-    seed = 42,
-    quiet = TRUE
-  )
-  options(speed.random_initialisation = FALSE)
+  withr::with_options(list(speed.random_initialisation = TRUE), {
+    result_random <- speed(
+      data = test_data,
+      swap = "treatment",
+      spatial_factors = ~ row + col,
+      iterations = 1000,
+      seed = 42,
+      quiet = TRUE
+    )
+  })
 
   expect_named(
     result_random,
@@ -546,6 +546,7 @@ test_that("speed handles split plot designs", {
                   swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
                   swap_within = list(wp = "block", sp = "wholeplot"),
                   early_stop_iterations = list(wp = 1000, sp = 10000),
+                  swap_all = TRUE,
                   seed = 1, quiet = TRUE)
 
   # Check the result
@@ -554,8 +555,6 @@ test_that("speed handles split plot designs", {
   expect_equal(result$score, 100)
   expect_equal(result$iterations_run, 1726)
   expect_equal(result$stopped_early, c(wp = TRUE, sp = TRUE))
-
-  # expect_identical(which(is.na(result$design_df$treatment)), which(is.na(irregular_large_data$treatment)))
 
   vdiffr::expect_doppelganger("speed_splitplot_wp", autoplot(result, treatments = "wholeplot_treatment"))
   vdiffr::expect_doppelganger("speed_splitplot_sp", autoplot(result, treatments = "subplot_treatment"))
@@ -584,6 +583,7 @@ test_that("speed handles split-split plot designs", {
                                      ssp = "subplot"),
                   iterations = list(wp = 500, sp = 500, ssp = 1000),
                   early_stop_iterations = list(wp = 200, sp = 200, ssp = 400),
+                  swap_all = TRUE,
                   seed = 42, quiet = TRUE)
 
   # Check the result
@@ -658,6 +658,7 @@ test_that("speed handles strip plot designs", {
                   swap_within = list(ht = "block", vt = "block"),
                   iterations = list(ht = 500, vt = 500),
                   early_stop_iterations = list(ht = 200, vt = 200),
+                  swap_all = TRUE,
                   seed = 42, quiet = TRUE)
 
   # Check the result
@@ -715,6 +716,241 @@ test_that("speed handles strip plot designs", {
   vdiffr::expect_doppelganger("speed_strip_vt", autoplot(result, treatments = "vertical_treatment"))
 })
 
+# Test autoplot with factor columns
+test_that("autoplot handles factor row and column inputs", {
+  # Sample data with factor row and col
+  test_data <- data.frame(
+    row = factor(rep(1:5, times = 4)),
+    col = factor(rep(1:4, each = 5)),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should not error when plotting with factor columns
+  expect_no_error({
+    autoplot(result)
+  })
+
+  plot <- autoplot(result)
+  expect_contains(class(plot), "ggplot")
+
+  vdiffr::expect_doppelganger("autoplot_factor_row_col", autoplot(result))
+})
+
+test_that("autoplot handles factor row only", {
+  # Sample data with factor row but numeric col
+  test_data <- data.frame(
+    row = factor(rep(1:5, times = 4)),
+    col = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should not error when plotting with factor row
+  expect_no_error({
+    plot <- autoplot(result)
+  })
+
+  plot <- autoplot(result)
+  expect_contains(class(plot), "ggplot")
+
+  vdiffr::expect_doppelganger("autoplot_factor_row", autoplot(result))
+})
+
+test_that("autoplot handles factor column only", {
+  # Sample data with numeric row but factor col
+  test_data <- data.frame(
+    row = rep(1:5, times = 4),
+    col = factor(rep(1:4, each = 5)),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should not error when plotting with factor column
+  expect_no_error({
+    plot <- autoplot(result)
+  })
+
+  plot <- autoplot(result)
+  expect_contains(class(plot), "ggplot")
+
+  vdiffr::expect_doppelganger("autoplot_factor_col", autoplot(result))
+})
+
+test_that("autoplot handles factor columns with blocks", {
+  # Sample data with factor row/col and blocks
+  test_data <- data.frame(
+    row = factor(rep(1:6, each = 4)),
+    col = factor(rep(1:4, times = 6)),
+    treatment = rep(LETTERS[1:8], 3),
+    block = rep(1:3, each = 8)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should not error when plotting with factor columns and blocks
+  expect_no_error({
+    plot <- autoplot(result)
+  })
+
+  plot <- autoplot(result)
+  expect_contains(class(plot), "ggplot")
+
+  vdiffr::expect_doppelganger("autoplot_factor_with_blocks", autoplot(result))
+})
+
+test_that("autoplot handles factor columns with custom column names", {
+  # Sample data with custom column names that are factors
+  test_data <- data.frame(
+    Row = factor(rep(1:5, times = 4)),
+    Column = factor(rep(1:4, each = 5)),
+    trt = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "trt",
+    spatial_factors = ~ Row + Column,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should not error when plotting with custom factor column names
+  expect_no_error({
+    plot <- autoplot(result, row = Row, column = Column, treatments = trt)
+  })
+
+  plot <- autoplot(result, row = Row, column = Column, treatments = trt)
+  expect_contains(class(plot), "ggplot")
+
+  vdiffr::expect_doppelganger("autoplot_factor_custom_names",
+                              autoplot(result, row = Row, column = Column, treatments = trt))
+})
+
+test_that("autoplot fails with factor columns with character levels", {
+  # Sample data with factor columns that have character levels
+  # Too hard to predict plot layout with character levels
+  test_data <- data.frame(
+    row = factor(rep(paste0("R", 1:5), times = 4)),
+    col = factor(rep(paste0("C", 1:4), each = 5)),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  expect_warning(
+    expect_warning(
+      expect_warning(
+        expect_warning(
+          expect_warning(
+            expect_error(speed(data = test_data, swap = "treatment", iterations = 100, seed = 42, quiet = TRUE),
+                         "invalid 'nrow' value \\(too large or NA\\)"),
+            "NAs introduced by coercion"),
+          "no non-missing arguments to max; returning -Inf"),
+        "no non-missing arguments to max; returning -Inf"),
+      "NAs introduced by coercion to integer range"),
+    "NAs introduced by coercion")
+})
+
+test_that("autoplot handles mixed factor and numeric columns in hierarchical designs", {
+  # Hierarchical design with mixed factor/numeric columns
+  df_split <- data.frame(
+    row = factor(rep(1:12, times = 6)),
+    col = rep(1:6, each = 12),  # Keep col as numeric
+    block = rep(1:6, each = 12),
+    wholeplot_treatment = rep(rep(paste0("WP", LETTERS[1:3]), each = 4), times = 6),
+    subplot_treatment = rep(paste0("SP", letters[1:4]), times = 18)
+  )
+
+  result <- speed(df_split,
+                  swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+                  swap_within = list(wp = "block", sp = "wholeplot_treatment"),
+                  spatial_factors = ~ row + col,
+                  iterations = 100,
+                  seed = 42,
+                  swap_all = TRUE,
+                  quiet = TRUE)
+
+  # Should not error with mixed factor/numeric in hierarchical design
+  expect_no_error({
+    plot_wp <- autoplot(result, treatments = "wholeplot_treatment")
+    plot_sp <- autoplot(result, treatments = "subplot_treatment")
+  })
+
+  plot_wp <- autoplot(result, treatments = "wholeplot_treatment")
+  plot_sp <- autoplot(result, treatments = "subplot_treatment")
+  expect_contains(class(plot_wp), "ggplot")
+  expect_contains(class(plot_sp), "ggplot")
+
+  vdiffr::expect_doppelganger("autoplot_hierarchical_mixed_factors_wp", plot_wp)
+  vdiffr::expect_doppelganger("autoplot_hierarchical_mixed_factors_sp", plot_sp)
+})
+
+test_that("autoplot error handling with missing columns still works with factors", {
+  # Test that error handling works even when some columns are factors
+  test_data <- data.frame(
+    row = factor(rep(1:5, times = 4)),
+    col = factor(rep(1:4, each = 5)),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should give helpful error when specifying non-existent column
+  expect_error(
+    autoplot(result, row = nonexistent_row),
+    "'nonexistent_row' not found"
+  )
+
+  expect_error(
+    autoplot(result, column = nonexistent_col),
+    "'nonexistent_col' not found"
+  )
+
+  expect_error(
+    autoplot(result, treatments = nonexistent_treatment),
+    "'nonexistent_treatment' not found"
+  )
+})
+
 # Test autoplot legend parameter
 test_that("autoplot legend parameter controls legend visibility", {
   # Sample data for testing
@@ -769,6 +1005,7 @@ test_that("autoplot legend parameter works with hierarchical designs", {
                   swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
                   swap_within = list(wp = "block", sp = "wholeplot"),
                   iterations = list(wp = 50, sp = 50),
+                  swap_all = TRUE,
                   seed = 42, quiet = TRUE)
 
   # Test with wholeplot treatments
@@ -814,25 +1051,23 @@ test_that("speed handles 2D blocking with row and column blocks", {
   )
   dat_2d_blocking <- dat_2d_blocking[order(dat_2d_blocking$col, dat_2d_blocking$row), ]
 
-  # Store original options and set test options
-  old_options <- options()
-  on.exit(options(old_options))
-  options(
+  withr::with_options(list(
     speed.swap_count = 5,
     speed.swap_all_blocks = TRUE,
     speed.adaptive_swaps = TRUE,
     speed.cooling_rate = 0.99,
     speed.random_initialisation = TRUE
-  )
-
-  result <- speed(dat_2d_blocking,
-                  swap = "treat",
-                  swap_within = "rowBlock",
-                  spatial_factors = ~ colBlock,
-                  iterations = 1000,
-                  early_stop_iterations = 500,
-                  seed = 123,
-                  quiet = TRUE)
+  ), {
+    result <- speed(dat_2d_blocking,
+      swap = "treat",
+      swap_within = "rowBlock",
+      spatial_factors = ~colBlock,
+      iterations = 1000,
+      early_stop_iterations = 500,
+      seed = 123,
+      quiet = TRUE
+    )
+  })
 
   expect_s3_class(result, "design")
   expect_equal(nrow(result$design_df), 400)
@@ -858,18 +1093,16 @@ test_that("speed handles RCBD with multiple treatment reps", {
     block = rep(1:50, each = 10)
   )
 
-  # Store original options and set test options
-  old_options <- options()
-  on.exit(options(old_options))
-  options(speed.swap_count = 3, speed.adaptive_swaps = TRUE)
-
-  result <- speed(dat_rcbd,
-                  swap = "treat",
-                  swap_within = "block",
-                  iterations = 2000,
-                  early_stop_iterations = 1000,
-                  seed = 42,
-                  quiet = TRUE)
+  withr::with_options(list(speed.swap_count = 3, speed.adaptive_swaps = TRUE), {
+    result <- speed(dat_rcbd,
+      swap = "treat",
+      swap_within = "block",
+      iterations = 2000,
+      early_stop_iterations = 1000,
+      seed = 42,
+      quiet = TRUE
+    )
+  })
 
   expect_s3_class(result, "design")
   expect_equal(nrow(result$design_df), 500)
@@ -941,19 +1174,17 @@ test_that("speed handles large RCBD with 500 treatments", {
     block = rep(1:4, each = 500)
   )
 
-  # Store original options and set test options
-  old_options <- options()
-  on.exit(options(old_options))
-  options(speed.swap_count = 10)
-
-  result <- speed(dat_large,
-                  swap = "treat",
-                  swap_within = "block",
-                  spatial_factors = ~ row + col,
-                  iterations = 1000,
-                  early_stop_iterations = 400,
-                  seed = 42,
-                  quiet = TRUE)
+  withr::with_options(list(speed.swap_count = 10), {
+    result <- speed(dat_large,
+      swap = "treat",
+      swap_within = "block",
+      spatial_factors = ~ row + col,
+      iterations = 1000,
+      early_stop_iterations = 400,
+      seed = 42,
+      quiet = TRUE
+    )
+  })
 
   expect_s3_class(result, "design")
   expect_equal(nrow(result$design_df), 2000)
@@ -1004,7 +1235,6 @@ test_that("speed runs a with variation of row and column columns", {
 })
 
 test_that("speed runs a without row", {
-  # Sample data for testing
   test_data <- data.frame(
     col = rep(1:4, each = 5),
     treatment = rep(LETTERS[1:4], 5)
@@ -1019,12 +1249,14 @@ test_that("speed runs a without row", {
       seed = 42,
       quiet = TRUE
     ),
-    "Cannot infer row in the design data frame. speed.adj_weight is set to 0 for this call."
+    paste0(
+      "Cannot infer row in the design data frame. speed.adj_weight is set to 0 for this call. If this is not",
+      " intended, provide `grid_factors` argument."
+    )
   )
 })
 
 test_that("speed runs a without column", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:4, each = 5),
     treatment = rep(LETTERS[1:4], 5)
@@ -1039,36 +1271,758 @@ test_that("speed runs a without column", {
       seed = 42,
       quiet = TRUE
     ),
-    "Cannot infer column in the design data frame. speed.adj_weight is set to 0 for this call."
+    paste0(
+      "Cannot infer column in the design data frame. speed.adj_weight is set to 0 for this call. If this is",
+      " not intended, provide `grid_factors` argument."
+    )
   )
 })
 
-# for nse
-# test_that("speed runs within another function call", {
-#   wrapper <- function() {
-#     test_data <- data.frame(
-#       row = rep(1:5, times = 4),
-#       col = rep(1:4, each = 5),
-#       treatment = rep(LETTERS[1:4], 5)
-#     )
-#
-#     swap <- "treatment"
-#     swap_within <- "1"
-#
-#     return(speed(
-#       data = test_data,
-#       swap = swap,
-#       swap_within = swap_within,
-#       spatial_factors = ~ row + col,
-#       iterations = 100,
-#       seed = 42,
-#       quiet = TRUE
-#     ))
-#   }
-#
-#   result <- wrapper()
-#   expect_s3_class(result, "design")
-# })
+test_that("speed runs with grid_factors", {
+  test_data <- data.frame(
+    lane = rep(1:5, times = 4),
+    position = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ lane + position,
+    grid_factors = list(dim1 = "lane", dim2 = "position"),
+    iterations = 1000,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  expect_equal(nrow(result$design_df), 20)
+  expect_equal(ncol(result$design_df), 3)
+  expect_equal(result$score, 1)
+})
+
+test_that("speed handles MET", {
+  # 5 sites, 100 treatments, 7 total reps
+  # 5x28x5
+  treatments <- rep(1:100, 7)
+  df_site <- initialise_design_df(1, 28, 5, 14, 5)
+  df_initial <- rbind(df_site, df_site, df_site, df_site, df_site)
+  df_initial$treatment <- treatments
+  df_initial$site <- rep(c("a", "b", "c", "d", "e"), each = 140)
+
+  # will be handled in speed function
+  df_initial$site_row <- paste(df_initial$site, df_initial$row, sep = "_")
+  df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
+  df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
+
+  optimize <- list(
+    connectivity = list(spatial_factors = ~site),
+    balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+  )
+
+  withr::with_options(list(speed.random_initialisation = TRUE, speed.adj_weight = 0), {
+    speed_design <- speed(
+      data = df_initial,
+      swap = "treatment",
+      optimise = optimize,
+      seed = 112,
+      quiet = TRUE
+    )
+  })
+  design_df <- speed_design$design_df
+
+  expect_equal(sort(design_df$treatment), sort(treatments))
+  expect_setequal(unique(table(design_df$treatment, design_df$site)), c(1, 2))
+  expect_equal(unique(matrixStats::rowVars(table(design_df$treatment, design_df$site))), 0.3)
+  expect_equal(max(table(design_df$site_row, design_df$treatment)), 1)
+  expect_equal(max(table(design_df$site_col, design_df$treatment)), 1)
+})
+
+test_that("speed handles MET with unequal site dimensions", {
+  # 5 sites, 57 treatments, 7-8 total reps
+  # 28x5, 20x3, 20x4, 15x4, 22x3
+  # all_treatments <- c(rep(1:50, 7), rep(51:57, 8))
+  locked_treatments <- c(rep(1:31, 2), rep(32:57, 3))
+  treatments <- c(rep(1:31, 5), rep(32:50, 4), rep(51:57, 5))
+
+  df_site_1 <- initialise_design_df(locked_treatments, 28, 5, 7, 5)
+  df_site_1$site <- "a"
+  df_site_2 <- initialise_design_df(1, 20, 3, 10, 3)
+  df_site_2$site <- "b"
+  df_site_3 <- initialise_design_df(1, 20, 4, 10, 4)
+  df_site_3$site <- "c"
+  df_site_4 <- initialise_design_df(1, 15, 4, 5, 4)
+  df_site_4$site <- "d"
+  df_site_5 <- initialise_design_df(1, 22, 3, 11, 3)
+  df_site_5$site <- "e"
+
+  df_initial <- rbind(df_site_1, df_site_2, df_site_3, df_site_4, df_site_5)
+  df_initial[df_initial$site != "a", ]$treatment <- treatments
+  df_initial$swappable_site <- df_initial$site != "a"
+
+  df_initial$site_row <- paste(df_initial$site, df_initial$row, sep = "_")
+  df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
+  df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
+
+  optimize <- list(
+    connectivity = list(swap_within = "swappable_site", spatial_factors = ~site),
+    balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+  )
+
+  withr::with_options(list(speed.random_initialisation = TRUE, speed.adj_weight = 0), {
+    speed_design <- speed(
+      data = df_initial,
+      swap = "treatment",
+      early_stop_iterations = 5000,
+      optimise = optimize,
+      seed = 112,
+      quiet = TRUE
+    )
+  })
+  design_df <- speed_design$design_df
+
+  expect_setequal(
+    unique(table(design_df[design_df$site == "a", ]$treatment, design_df[design_df$site == "a", ]$site)),
+    c(2, 3)
+  )
+  expect_setequal(
+    unique(table(design_df[design_df$site != "a", ]$treatment, design_df[design_df$site != "a", ]$site)),
+    c(1, 2)
+  )
+  expect_setequal(
+    table(design_df$treatment, design_df$site) |>
+      matrixStats::rowVars() |>
+      round(3) |>
+      unique(),
+    c(0.3, 0.8)
+  )
+  expect_equal(max(table(design_df$site_row, design_df$treatment)), 1)
+  expect_equal(max(table(design_df$site_col, design_df$treatment)), 1)
+})
+
+test_that("speed runs without seed", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:5, times = 4),
+    col = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    quiet = TRUE
+  )
+  expect_s3_class(result, "design")
+})
+
+test_that("speed runs with piepho objective", {
+  treatments <- rep(1:6)
+  df_initial <- initialise_design_df(treatments, 6, 3)
+  pair_mapping <- create_pair_mapping(treatments)
+
+  df_initial$row <- factor(df_initial$row)
+  df_initial$col <- factor(df_initial$col)
+  initial_score <- objective_function_piepho(df_initial, "treatment", c("row", "col"))$score
+
+  withr::with_options(list(speed.random_initialisation = TRUE), {
+    speed_design <- speed(
+      data = df_initial,
+      swap = "treatment",
+      spatial_factors = ~ row + col,
+      seed = 112,
+      quiet = TRUE,
+      obj_function = objective_function_piepho,
+      pair_mapping = pair_mapping
+    )
+  })
+
+  expect_lt(speed_design$score, initial_score)
+})
+
+# Test automatic seed generation in simple designs
+test_that("speed generates seed automatically from .Random.seed[3] when seed=NULL for simple designs", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+
+  # Run speed with seed=NULL (default)
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 10,  # Very small number for quick test
+    seed = NULL,  # Explicitly set to NULL
+    quiet = TRUE
+  )
+
+  # Check that a seed was generated and stored
+  expect_true(is.numeric(result$seed))
+  expect_true(length(result$seed) == 1)
+  expect_false(is.na(result$seed))
+
+  # The seed should be within the range of possible .Random.seed[3] values
+  # (This is a reasonable but not strict test since .Random.seed[3] can vary widely)
+  expect_true(is.finite(result$seed))
+
+  # Test that the generated seed produces reproducible results
+  generated_seed <- result$seed
+
+  result_with_generated_seed <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 10,
+    seed = generated_seed,
+    quiet = TRUE
+  )
+
+  # Results should be identical when using the auto-generated seed
+  expect_equal(result$design_df, result_with_generated_seed$design_df)
+  expect_equal(result$seed, result_with_generated_seed$seed)
+})
+
+# Test automatic seed generation in hierarchical designs
+test_that("speed generates seed automatically from .Random.seed[3] when seed=NULL for hierarchical designs", {
+  # Hierarchical split-plot design
+  df_split <- data.frame(
+    row = rep(1:9, each = 3),
+    col = rep(1:3, times = 9),
+    wholeplot_treatment = rep(LETTERS[1:3], times = 9),
+    subplot_treatment = rep(rep(letters[1:3], 3), each = 3),
+    block = rep(1:3, each = 9)
+  )
+
+  # Run hierarchical speed with seed=NULL (default)
+  result <- speed(df_split,
+                  swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+                  swap_within = list(wp = "block", sp = "wholeplot_treatment"),
+                  spatial_factors = ~ row + col,
+                  iterations = list(wp = 5, sp = 5),  # Very small numbers for quick test
+                  seed = NULL,  # Explicitly set to NULL
+                  quiet = TRUE)
+
+  # Check that a seed was generated and stored
+  expect_true(is.numeric(result$seed))
+  expect_true(length(result$seed) == 1)
+  expect_false(is.na(result$seed))
+
+  # The seed should be within the range of possible .Random.seed[3] values
+  expect_true(is.finite(result$seed))
+
+  # Test that the generated seed produces reproducible results
+  generated_seed <- result$seed
+
+  result_with_generated_seed <- speed(df_split,
+                                      swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+                                      swap_within = list(wp = "block", sp = "wholeplot_treatment"),
+                                      spatial_factors = ~ row + col,
+                                      iterations = list(wp = 5, sp = 5),
+                                      seed = generated_seed,
+                                      quiet = TRUE)
+
+  # Results should be identical when using the auto-generated seed
+  expect_equal(result$design_df, result_with_generated_seed$design_df)
+  expect_equal(result$seed, result_with_generated_seed$seed)
+
+  # Check hierarchical structure is preserved
+  expect_true(is.list(result$scores))
+  expect_true(is.list(result$temperatures))
+  expect_true(is.list(result$treatments))
+})
+
+# Test that different runs without seed produce different results (non-deterministic behavior)
+test_that("speed produces different results when seed=NULL across different runs", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:5, times = 4),
+    col = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], each = 5)
+  )
+
+  # Run speed multiple times without setting seed
+  result1 <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 50,
+    seed = NULL,
+    quiet = TRUE
+  )
+
+  # Advance the random number generator state
+  set.seed(NULL)  # Reset to use current time
+  dummy <- runif(10)  # Advance the state
+
+  result2 <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 50,
+    seed = NULL,
+    quiet = TRUE
+  )
+
+  # Seeds should be different (with very high probability)
+  expect_false(identical(result1$seed, result2$seed))
+
+  # Results should be different (with very high probability due to different seeds)
+  # Note: There's a tiny chance they could be the same by coincidence, but extremely unlikely
+  expect_false(identical(result1$design_df$treatment, result2$design_df$treatment))
+})
+
+# Test progress output for simple designs
+test_that("speed prints progress output when quiet=FALSE for simple designs", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+
+  # Capture output with quiet=FALSE and enough iterations to trigger progress output
+  expect_snapshot(
+    result <- speed(
+      data = test_data,
+      swap = "treatment",
+      swap_within = "1",
+      spatial_factors = ~ row + col,
+      iterations = 2000,  # Enough to trigger progress output at 1000
+      seed = 42,
+      quiet = FALSE
+    )
+  )
+
+  # Check that progress messages are printed
+  # expect_match(output, "Iteration: 1000")
+  # expect_match(output, "Score:")
+  # expect_match(output, "Best:")
+  # expect_match(output, "Since Improvement:")
+
+  # Check that the function still works correctly
+  expect_s3_class(result, "design")
+  expect_true(is.numeric(result$score))
+})
+
+# Test early stopping output for simple designs
+test_that("speed prints early stopping message when quiet=FALSE for simple designs", {
+  # Sample data that will likely converge quickly (already optimal)
+  test_data <- data.frame(
+    row = rep(1:3, times = 4),
+    col = rep(1:4, each = 3),
+    treatment = LETTERS[1:4]  # Already well-distributed
+  )
+
+  # Capture output with early stopping likely to occur
+  expect_message(
+    output <- capture_output(
+      result <- speed(
+        data = test_data,
+        swap = "treatment",
+        swap_within = "1",
+        spatial_factors = ~ row + col,
+        iterations = 1000,
+        early_stop_iterations = 10,  # Low threshold for early stopping
+        seed = 42,
+        quiet = FALSE
+      )
+    ),
+    "row and col are used as row and column, respectively"
+  )
+
+  # Check that early stopping message is printed
+  expect_match(output, "Early stopping at iteration")
+
+  # Verify that early stopping actually occurred
+  expect_true(result$stopped_early)
+  expect_lt(result$iterations_run, 1000)
+})
+
+# Test progress output for hierarchical designs
+test_that("speed prints progress output when quiet=FALSE for hierarchical designs", {
+  # Hierarchical split-plot design
+  df_split <- data.frame(
+    row = rep(1:6, each = 4),
+    col = rep(1:4, times = 6),
+    wholeplot_treatment = rep(LETTERS[1:3], each = 8),
+    subplot_treatment = rep(letters[1:4], 6),
+    block = rep(1:2, each = 12)
+  )
+
+
+  # Capture output with quiet=FALSE and enough iterations to trigger progress output
+  expect_snapshot(
+    result <- speed(df_split,
+                    swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+                    swap_within = list(wp = "block", sp = "wholeplot_treatment"),
+                    spatial_factors = ~ row + col,
+                    iterations = list(wp = 1500, sp = 1500),  # Enough to trigger progress output
+                    seed = 42,
+                    quiet = FALSE)
+  )
+
+  # Check that hierarchical level messages are printed
+  # expect_match(output, "Optimising level: wp")
+  # expect_match(output, "Optimising level: sp")
+
+  # Check that progress messages include level information
+  # expect_match(output$stdout, "Level: wp")
+  # expect_match(output$stdout, "Level: sp")
+  # expect_match(output$stdout, "Iteration: 1000")
+  # expect_match(output$stdout, "Score:")
+  # expect_match(output$stdout, "Best:")
+  # expect_match(output$stdout, "Since Improvement:")
+
+  # Check that the function still works correctly
+  expect_s3_class(result, "design")
+  expect_true(is.list(result$scores))
+  expect_true(is.list(result$treatments))
+})
+
+# Test early stopping output for hierarchical designs
+test_that("speed prints early stopping messages when quiet=FALSE for hierarchical designs", {
+  # Simple hierarchical design that will likely converge quickly
+  df_split <- data.frame(
+    row = rep(1:6, each = 4),
+    col = rep(1:4, times = 6),
+    wholeplot_treatment = rep(LETTERS[1:3], each = 8),
+    subplot_treatment = rep(letters[1:4], 6),
+    block = rep(1:2, each = 12)
+  )
+
+  # Capture output with early stopping likely to occur
+  expect_message(
+    output <- capture_output(
+      result <- speed(df_split,
+                      swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+                      swap_within = list(wp = "1", sp = "wholeplot_treatment"),
+                      spatial_factors = ~ row + col,
+                      iterations = list(wp = 1000, sp = 1000),
+                      early_stop_iterations = list(wp = 5, sp = 5),  # Low threshold
+                      seed = 42,
+                      quiet = FALSE)
+    ),
+    "row and col are used as row and column, respectively"
+  )
+
+  # Check that early stopping messages are printed with level information
+  expect_match(output, "Early stopping at iteration .* for level wp")
+  expect_match(output, "Early stopping at iteration .* for level sp")
+
+  # Verify that early stopping actually occurred for at least one level
+  expect_true(any(result$stopped_early))
+})
+
+# Test that quiet=TRUE suppresses all output
+test_that("speed produces no output when quiet=TRUE", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+
+  # Capture output with quiet=TRUE
+  output <- capture_output(
+    result <- speed(
+      data = test_data,
+      swap = "treatment",
+      swap_within = "1",
+      spatial_factors = ~ row + col,
+      iterations = 2000,
+      seed = 42,
+      quiet = TRUE  # Should suppress all output
+    )
+  )
+
+  # Check that no output is produced
+  expect_equal(nchar(output), 0)
+  expect_equal(nchar(output), 0)
+
+  # Check that the function still works correctly
+  expect_s3_class(result, "design")
+  expect_true(is.numeric(result$score))
+})
+
+# Test that quiet=TRUE suppresses output in hierarchical designs
+test_that("speed produces no output when quiet=TRUE for hierarchical designs", {
+  # Hierarchical split-plot design
+  df_split <- data.frame(
+    row = rep(1:6, each = 4),
+    col = rep(1:4, times = 6),
+    wholeplot_treatment = rep(LETTERS[1:3], each = 8),
+    subplot_treatment = rep(letters[1:4], 6),
+    block = rep(1:2, each = 12)
+  )
+
+  # Capture output with quiet=TRUE
+  output <- capture_output(
+    result <- speed(df_split,
+                    swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+                    swap_within = list(wp = "block", sp = "wholeplot_treatment"),
+                    spatial_factors = ~ row + col,
+                    iterations = list(wp = 1500, sp = 1500),
+                    seed = 42,
+                    quiet = TRUE)  # Should suppress all output
+  )
+
+  # Check that no output is produced
+  expect_equal(nchar(output), 0)
+  expect_equal(nchar(output), 0)
+
+  # Check that the function still works correctly
+  expect_s3_class(result, "design")
+  expect_true(is.list(result$scores))
+  expect_true(is.list(result$treatments))
+})
+
+# Test progress output frequency (every 1000 iterations)
+test_that("speed prints progress output at correct intervals", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:5, times = 4),
+    col = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  # Capture output with enough iterations to trigger multiple progress outputs
+  expect_message(
+    output <- capture_output(
+      result <- speed(
+        data = test_data,
+        swap = "treatment",
+        swap_within = "1",
+        spatial_factors = ~ row + col,
+        iterations = 3500,  # Should trigger output at 1000, 2000, 3000
+        seed = 42,
+        quiet = FALSE
+      )
+    ),
+    "row and col are used as row and column, respectively"
+  )
+
+  # Count occurrences of "Iteration:" to verify frequency
+  iteration_matches <- regmatches(output, gregexpr("Iteration:", output))[[1]]
+
+  # Should have progress output at iterations 1000, 2000, 3000 (3 total)
+  # Plus potentially early stopping message, so at least 3
+  expect_gte(length(iteration_matches), 2)
+
+  # Check specific iteration numbers are present
+  expect_match(output, "Iteration: 1000")
+  expect_match(output, "Iteration: 2000")
+})
+
+# Test print.design method
+test_that("print.design works for simple designs", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Capture print output
+  output <- capture_output(print(result))
+
+  # Check that the printed output contains expected elements
+  expect_match(output, "Optimised Experimental Design")
+  expect_match(output, "Score:")
+  expect_match(output, "Iterations Run:")
+  expect_match(output, "Stopped Early:")
+  expect_match(output, "Treatments:")
+  expect_match(output, "Seed:")
+
+  # Check specific values
+  expect_match(output, paste("Score:", result$score))
+  expect_match(output, paste("Iterations Run:", result$iterations_run))
+  expect_match(output, paste("Stopped Early:", result$stopped_early))
+  expect_match(output, paste("Seed:", result$seed))
+
+  # Check treatments are displayed correctly for simple design
+  expected_treatments <- paste(result$treatments, collapse = ", ")
+  expect_match(output, paste("Treatments:", expected_treatments))
+
+  # Verify invisible return
+  expect_identical(print(result), result)
+})
+
+test_that("print.design works for hierarchical designs", {
+  # Hierarchical split-plot design
+  df_split <- data.frame(
+    row = rep(1:6, each = 4),
+    col = rep(1:4, times = 6),
+    wholeplot_treatment = rep(LETTERS[1:3], each = 8),
+    subplot_treatment = rep(letters[1:4], 6),
+    block = rep(1:2, each = 12)
+  )
+
+  result <- speed(df_split,
+                  swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+                  swap_within = list(wp = "block", sp = "wholeplot_treatment"),
+                  spatial_factors = ~ row + col,
+                  iterations = list(wp = 50, sp = 50),
+                  seed = 42,
+                  quiet = TRUE)
+
+  # Capture print output
+  output <- capture_output(print.design(result))
+
+  # Check that the printed output contains expected elements
+  expect_match(output, "Optimised Experimental Design")
+  expect_match(output, "Score:")
+  expect_match(output, "Iterations Run:")
+  expect_match(output, "Stopped Early:")
+  expect_match(output, "Treatments:")
+  expect_match(output, "Seed:")
+
+  # Check hierarchical-specific formatting
+  expect_match(output, "wp:")  # Level name should be shown
+  expect_match(output, "sp:")  # Level name should be shown
+
+  # Check that treatments for each level are displayed
+  for (level_name in names(result$treatments)) {
+    expected_treatments <- paste(result$treatments[[level_name]], collapse = ", ")
+    expect_match(output, paste0(level_name, ": ", expected_treatments))
+  }
+
+  # Verify stopped_early is shown correctly for hierarchical (should show both levels)
+  expect_match(output, "Stopped Early:")
+
+  # Verify invisible return
+  expect_identical(print(result), result)
+})
+
+test_that("print.design handles different stopped_early formats", {
+  # Test with simple design where stopped_early is logical
+  test_data <- data.frame(
+    row = rep(1:3, times = 3),
+    col = rep(1:3, each = 3),
+    treatment = rep(LETTERS[1:3], 3)
+  )
+
+  result_simple <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 50,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  output_simple <- capture_output(print(result_simple))
+  expect_match(output_simple, "Stopped Early: (TRUE|FALSE)")
+
+  # Test with hierarchical design where stopped_early is named logical vector
+  df_split <- data.frame(
+    row = rep(1:4, each = 3),
+    col = rep(1:3, times = 4),
+    wholeplot_treatment = rep(LETTERS[1:2], each = 6),
+    subplot_treatment = rep(letters[1:3], 4),
+    block = rep(1:1, each = 12)
+  )
+
+  result_hierarchical <- speed(df_split,
+                              swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+                              swap_within = list(wp = "block", sp = "wholeplot_treatment"),
+                              spatial_factors = ~ row + col,
+                              iterations = list(wp = 30, sp = 30),
+                              seed = 42,
+                              quiet = TRUE)
+
+  output_hierarchical <- capture_output(print(result_hierarchical))
+  expect_match(output_hierarchical, "Stopped Early:")
+})
+
+test_that("print.design displays correct treatment counts and names", {
+  # Test with different numbers of treatments
+  test_data_few <- data.frame(
+    row = rep(1:4, times = 2),
+    col = rep(1:2, each = 4),
+    treatment = rep(LETTERS[1:2], 4)
+  )
+
+  test_data_many <- data.frame(
+    row = rep(1:5, times = 6),
+    col = rep(1:6, each = 5),
+    treatment = rep(LETTERS[1:6], 5)
+  )
+
+  result_few <- speed(
+    data = test_data_few,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 50,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  result_many <- speed(
+    data = test_data_many,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 50,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Test few treatments
+  output_few <- capture_output(print(result_few))
+  expect_match(output_few, "A, B")  # Should show both treatments
+
+  # Test many treatments
+  output_many <- capture_output(print(result_many))
+  expect_match(output_many, "A, B, C, D, E, F")  # Should show all treatments
+})
+
+test_that("print.design works with extra arguments via ...", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:3, times = 3),
+    col = rep(1:3, each = 3),
+    treatment = rep(LETTERS[1:3], 3)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 50,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Should not error with extra arguments (though they're not used)
+  expect_no_error({
+    print(result, extra_param = "test")
+  })
+
+  # Output should still be correct
+  output <- capture_output(print(result, unused_param = 123))
+  expect_match(output, "Optimised Experimental Design")
+})
 
 # TODO: Test cases to add/update
 # - Add more detailed checking of current designs
@@ -1080,4 +2034,4 @@ test_that("speed runs a without column", {
 # - Objective function not numeric result
 # - swap_all_blocks
 # - Print method output
-# - Plotting
+
