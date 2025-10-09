@@ -140,7 +140,7 @@ autoplot(result, treatments = "wholeplot_treatment")
 # Plot subplot allocations within wholeplots
 autoplot(result, treatments = "subplot_treatment", block = "wholeplot")
 
-# using optimise parameter
+# Using optimise parameter
 treatments <- rep(1:100, 7)
 df_site <- initialise_design_df(1, 28, 5, 14, 5)
 df_initial <- rbind(df_site, df_site, df_site, df_site, df_site)
@@ -168,6 +168,6 @@ options(speed.random_initialisation = FALSE, speed.adj_weight = 1)
 
 # Plot the MET design with
 autoplot(result, block = "site") +
-facet_wrap(~site)
+ggplot2::facet_wrap(~site)
 
 }

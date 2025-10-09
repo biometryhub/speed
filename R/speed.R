@@ -137,7 +137,7 @@
 #'
 #' # Plot the MET design with
 #' autoplot(result, block = "site") +
-#' facet_wrap(~site)
+#' ggplot2::facet_wrap(~site)
 #'
 #' @export
 # fmt: skip

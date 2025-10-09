@@ -30,7 +30,7 @@ ggplot2::autoplot
 #'
 #' @importFrom farver decode_colour
 #' @importFrom grDevices colorRampPalette
-#' @importFrom ggplot2 ggplot geom_tile aes geom_text theme_bw scale_fill_manual scale_x_continuous scale_y_continuous scale_x_discrete scale_y_discrete scale_y_reverse labs facet_wrap
+#' @importFrom ggplot2 ggplot geom_tile aes geom_text theme_bw scale_fill_manual scale_x_continuous scale_y_continuous scale_x_discrete scale_y_discrete scale_y_reverse labs
 #' @importFrom scales brewer_pal reverse_trans viridis_pal
 #' @importFrom stringi stri_sort
 #' @importFrom rlang check_dots_used enquo sym quo_is_null quo_name
