@@ -217,7 +217,19 @@
 </section></section><section class="level2"><h3 id="using-the-custom-objective-function">Using the Custom Objective Function<a class="anchor" aria-label="anchor" href="#using-the-custom-objective-function"></a>
 </h3>
 <p>Now that we have our custom objective function, we can use it in the <code>speed</code> optimisation process. The <code>speed</code> package allows us to specify a custom objective function using the <code>objective_function</code> argument. We also need to ensure that our layout data frame has the necessary columns for blocks, treatments, and spatial coordinates.</p>
-<p>The following parameters will allow us to produce a valid BIBD layout: - <code>v</code> = 5 (number of treatments) - <code>b</code> = 10 (number of blocks) - <code>k</code> = 3 (number of plots per block) - <code>r</code> = 6 (number of replicates of each treatment) - <code>lambda</code> = 3 (number of times each treatment appears together)</p>
+<p>The following parameters will allow us to produce a valid BIBD layout:</p>
+<ul>
+<li>
+<code>v</code> = 5 (number of treatments)</li>
+<li>
+<code>b</code> = 10 (number of blocks)</li>
+<li>
+<code>k</code> = 3 (number of plots per block)</li>
+<li>
+<code>r</code> = 6 (number of replicates of each treatment)</li>
+<li>
+<code>lambda</code> = 3 (number of times each treatment appears together)</li>
+</ul>
 <section class="level3"><h4 id="setting-up-the-design-data-frame">Setting Up the Design Data Frame<a class="anchor" aria-label="anchor" href="#setting-up-the-design-data-frame"></a>
 </h4>
 <p>We will create a data frame representing the BIBD layout, and then run the <code>speed</code> optimisation with our custom objective function.</p>
@@ -319,6 +331,7 @@ Figure 1: Initial BIBD Layout
 <span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="fu">get_cooccurrence</span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">design_df</span>, <span class="st">"treatment"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 3</span></span></code></pre></div>
 </div>
+<p>Visual inspection of the plot and the output above shows that each treatment appears exactly 3 times together as required. Hence we have successfully used our custom objective function to generate a type of design that is not possible with the default objective functions.</p>
 <!---
 # Adjusting Optimisation Algorithm Parameters
 
