@@ -441,7 +441,7 @@ autoplot(prep_design, treatments = "entry")
 
 ```{r}
 #| echo: false
-#| label: fig-prepplot1
+#| label: fig-prepplot2
 #| fig-cap: "Initial layout of the p-rep design showing replicated treatments."
 autoplot(prep_design, treatments = "duplicated")
 ```
