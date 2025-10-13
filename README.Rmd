@@ -35,8 +35,8 @@ knitr::opts_chunk$set(
   * [Strip-plot design][strip-plot]
   * [P-rep design][p-rep]
   * [BIBD][bibd]
+  * [More Examples](#more-examples)
 * [How It Works](#how-it-works)
-* [More Examples](#more-examples)
 * [Citation](#citation)
 * [License](#license)
 
@@ -129,6 +129,16 @@ result <- speed(df,
 autoplot(result)
 ```
 
+### More Examples
+
+For more detailed examples, see the [getting started vignette][getting-started] or the vignette about
+[more complex examples][complex-examples] including, but not limited to:
+
+* [Split-plot design][split-plot]
+* [Strip-plot design][strip-plot]
+* [P-rep design][p-rep]
+* [BIBD][bibd]
+
 ## How It Works
 
 The `speed` package uses simulated annealing to optimise experimental designs by evaluating and improving layouts based on an objective function. By default the optimisation process:
@@ -142,15 +152,6 @@ The `speed` package uses simulated annealing to optimise experimental designs by
 
 You can customise the objective function and optimisation parameters to suit specific experimental needs (see [vignettes](https://biometryhub.github.io/speed/articles/custom_objective_functions.html) for details).
 
-## More Examples
-
-For more detailed examples, see the [getting started vignette][getting-started] or the vignette about
-[more complex examples][complex-examples] including, but not limited to:
-
-* [Split-plot design][split-plot]
-* [Strip-plot design][strip-plot]
-* [P-rep design][p-rep]
-* [BIBD][bibd]
 
 ## Citation
 

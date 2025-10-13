@@ -30,8 +30,8 @@ coverage](https://codecov.io/gh/biometryhub/speed/graph/badge.svg)](https://app.
   - [P-rep
     design](https://biometryhub.github.io/speed/articles/complex_designs.html#p-rep-partially-replicated-designs)
   - [BIBD](https://biometryhub.github.io/speed/articles/complex_designs.html#balanced-incomplete-block-design-bibd)
+  - [More Examples](#more-examples)
 - [How It Works](#how-it-works)
-- [More Examples](#more-examples)
 - [Citation](#citation)
 - [License](#license)
 
@@ -149,6 +149,22 @@ autoplot(result)
 
 <img src="man/figures/README-blocks-1.png" width="100%" />
 
+### More Examples
+
+For more detailed examples, see the [getting started
+vignette](https://biometryhub.github.io/speed/articles/speed.html) or
+the vignette about [more complex
+examples](https://biometryhub.github.io/speed/articles/complex_designs.html)
+including, but not limited to:
+
+- [Split-plot
+  design](https://biometryhub.github.io/speed/articles/speed.html#split-plot-design)
+- [Strip-plot
+  design](https://biometryhub.github.io/speed/articles/complex_designs.html#strip-plot-designs)
+- [P-rep
+  design](https://biometryhub.github.io/speed/articles/complex_designs.html#p-rep-partially-replicated-designs)
+- [BIBD](https://biometryhub.github.io/speed/articles/complex_designs.html#balanced-incomplete-block-design-bibd)
+
 ## How It Works
 
 The `speed` package uses simulated annealing to optimise experimental
@@ -170,22 +186,6 @@ You can customise the objective function and optimisation parameters to
 suit specific experimental needs (see
 [vignettes](https://biometryhub.github.io/speed/articles/custom_objective_functions.html)
 for details).
-
-## More Examples
-
-For more detailed examples, see the [getting started
-vignette](https://biometryhub.github.io/speed/articles/speed.html) or
-the vignette about [more complex
-examples](https://biometryhub.github.io/speed/articles/complex_designs.html)
-including, but not limited to:
-
-- [Split-plot
-  design](https://biometryhub.github.io/speed/articles/speed.html#split-plot-design)
-- [Strip-plot
-  design](https://biometryhub.github.io/speed/articles/complex_designs.html#strip-plot-designs)
-- [P-rep
-  design](https://biometryhub.github.io/speed/articles/complex_designs.html#p-rep-partially-replicated-designs)
-- [BIBD](https://biometryhub.github.io/speed/articles/complex_designs.html#balanced-incomplete-block-design-bibd)
 
 ## Citation
 
