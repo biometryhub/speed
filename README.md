@@ -20,7 +20,7 @@ coverage](https://codecov.io/gh/biometryhub/speed/graph/badge.svg)](https://app.
 - [Overview](#overview)
 - [Installation](#installation)
 - [Features](#features)
-- [Example](#example)
+- [Examples](#examples)
   - [Basic](#basic)
   - [Blocked design](#blocked-design)
   - [Split-plot
@@ -30,7 +30,8 @@ coverage](https://codecov.io/gh/biometryhub/speed/graph/badge.svg)](https://app.
   - [P-rep
     design](https://biometryhub.github.io/speed/articles/complex_designs.html#p-rep-partially-replicated-designs)
   - [BIBD](https://biometryhub.github.io/speed/articles/complex_designs.html#balanced-incomplete-block-design-bibd)
-  - [More Examples](#more-examples)
+- [How It Works](#how-it-works)
+- [More Examples](#more-examples)
 - [Citation](#citation)
 - [License](#license)
 
@@ -73,9 +74,11 @@ remotes::install_github("biometryhub/speed")
 - Progress tracking during optimisation
 - Early stopping when convergence is reached
 
-See the package documentation for more detailed examples and options.
+See the package
+[documentation](https://biometryhub.github.io/speed/reference/index.html)
+for more detailed examples and options.
 
-## Example
+## Examples
 
 ### Basic
 
@@ -95,9 +98,10 @@ df <- data.frame(
 # Optimise the design with seed for reproducibility
 result <- speed(df, "treatment", seed = 42)
 #> row and col are used as row and column, respectively.
-#> Iteration: 1000 Score: 1 Best: 1 Since Improvement: 475 
-#> Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1475 
-#> Early stopping at iteration 2525
+#> Optimising level: single treatment within whole design 
+#> Level: single treatment within whole design Iteration: 1000 Score: 1 Best: 1 Since Improvement: 475 
+#> Level: single treatment within whole design Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1475 
+#> Early stopping at iteration 2525 for level single treatment within whole design
 
 # Plot the optimised design
 autoplot(result)
@@ -134,9 +138,10 @@ result <- speed(df,
   seed = 42
 )
 #> row and col are used as row and column, respectively.
-#> Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 
-#> Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 
-#> Early stopping at iteration 2457
+#> Optimising level: single treatment within block 
+#> Level: single treatment within block Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 
+#> Level: single treatment within block Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 
+#> Early stopping at iteration 2457 for level single treatment within block
 
 # Plot the design with block boundaries
 autoplot(result)
@@ -144,7 +149,29 @@ autoplot(result)
 
 <img src="man/figures/README-blocks-1.png" width="100%" />
 
-### More Examples
+## How It Works
+
+The `speed` package uses simulated annealing to optimise experimental
+designs by evaluating and improving layouts based on an objective
+function. By default the optimisation process:
+
+- **Evaluates designs** using a score (lower is better) that combines:
+  - **Adjacency score**: Penalises treatments appearing next to each
+    other (reduces neighbour effects)
+  - **Balance score**: Rewards even distribution of treatments across
+    spatial factors (rows, columns, blocks)
+- **Proposes changes** by swapping treatments between plots
+- **Accepts improvements** and occasionally accepts worse solutions to
+  avoid local optima
+- **Converges** to an optimised layout through gradual “cooling” of the
+  acceptance threshold
+
+You can customise the objective function and optimisation parameters to
+suit specific experimental needs (see
+[vignettes](https://biometryhub.github.io/speed/articles/custom_objective_functions.html)
+for details).
+
+## More Examples
 
 For more detailed examples, see the [getting started
 vignette](https://biometryhub.github.io/speed/articles/speed.html) or
@@ -170,14 +197,14 @@ If you use `speed` in your research, please cite:
 
       Rogers S, Taylor J, Edson R, Pipattungsakul W (????). _speed:
       Generate Spatially Efficient Experimental Designs_. R package version
-      0.0.2, <https://biometryhub.github.io/speed/>.
+      0.0.3, <https://biometryhub.github.io/speed/>.
 
     A BibTeX entry for LaTeX users is
 
       @Manual{,
         title = {speed: Generate Spatially Efficient Experimental Designs},
         author = {Sam Rogers and Julian Taylor and Russell Edson and Wasin Pipattungsakul},
-        note = {R package version 0.0.2},
+        note = {R package version 0.0.3},
         url = {https://biometryhub.github.io/speed/},
       }
 

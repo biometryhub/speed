@@ -28,14 +28,15 @@ knitr::opts_chunk$set(
 * [Overview](#overview)
 * [Installation](#installation)
 * [Features](#features)
-* [Example](#example)
+* [Examples](#examples)
   * [Basic](#basic)
   * [Blocked design](#blocked-design)
   * [Split-plot design][split-plot]
   * [Strip-plot design][strip-plot]
   * [P-rep design][p-rep]
   * [BIBD][bibd]
-  * [More Examples](#more-examples)
+* [How It Works](#how-it-works)
+* [More Examples](#more-examples)
 * [Citation](#citation)
 * [License](#license)
 
@@ -75,9 +76,9 @@ remotes::install_github("biometryhub/speed")
 - Progress tracking during optimisation
 - Early stopping when convergence is reached
 
-See the package documentation for more detailed examples and options.
+See the package [documentation](https://biometryhub.github.io/speed/reference/index.html) for more detailed examples and options.
 
-## Example
+## Examples
 
 ### Basic
 
@@ -128,7 +129,20 @@ result <- speed(df,
 autoplot(result)
 ```
 
-### More Examples
+## How It Works
+
+The `speed` package uses simulated annealing to optimise experimental designs by evaluating and improving layouts based on an objective function. By default the optimisation process:
+
+- **Evaluates designs** using a score (lower is better) that combines:
+  - **Adjacency score**: Penalises treatments appearing next to each other (reduces neighbour effects)
+  - **Balance score**: Rewards even distribution of treatments across spatial factors (rows, columns, blocks)
+- **Proposes changes** by swapping treatments between plots
+- **Accepts improvements** and occasionally accepts worse solutions to avoid local optima
+- **Converges** to an optimised layout through gradual "cooling" of the acceptance threshold
+
+You can customise the objective function and optimisation parameters to suit specific experimental needs (see [vignettes](https://biometryhub.github.io/speed/articles/custom_objective_functions.html) for details).
+
+## More Examples
 
 For more detailed examples, see the [getting started vignette][getting-started] or the vignette about
 [more complex examples][complex-examples] including, but not limited to:
