@@ -66,7 +66,7 @@
 <li><a href="#installation">Installation</a></li>
 <li><a href="#features">Features</a></li>
 <li>
-<a href="#example">Example</a>
+<a href="#examples">Examples</a>
 <ul>
 <li><a href="#basic">Basic</a></li>
 <li><a href="#blocked-design">Blocked design</a></li>
@@ -74,9 +74,10 @@
 <li><a href="https://biometryhub.github.io/speed/articles/complex_designs.html#strip-plot-designs">Strip-plot design</a></li>
 <li><a href="https://biometryhub.github.io/speed/articles/complex_designs.html#p-rep-partially-replicated-designs">P-rep design</a></li>
 <li><a href="https://biometryhub.github.io/speed/articles/complex_designs.html#balanced-incomplete-block-design-bibd">BIBD</a></li>
-<li><a href="#more-examples">More Examples</a></li>
 </ul>
 </li>
+<li><a href="#how-it-works">How It Works</a></li>
+<li><a href="#more-examples">More Examples</a></li>
 <li><a href="#citation">Citation</a></li>
 <li><a href="#license">License</a></li>
 </ul>
@@ -120,10 +121,10 @@
 <li>Progress tracking during optimisation</li>
 <li>Early stopping when convergence is reached</li>
 </ul>
-<p>See the package documentation for more detailed examples and options.</p>
+<p>See the package <a href="https://biometryhub.github.io/speed/reference/index.html">documentation</a> for more detailed examples and options.</p>
 </div>
 <div class="section level2">
-<h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
+<h2 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a>
 </h2>
 <div class="section level3">
 <h3 id="basic">Basic<a class="anchor" aria-label="anchor" href="#basic"></a>
@@ -142,9 +143,10 @@
 <span><span class="co"># Optimise the design with seed for reproducibility</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/speed.html">speed</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"treatment"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
 <span><span class="co">#&gt; row and col are used as row and column, respectively.</span></span>
-<span><span class="co">#&gt; Iteration: 1000 Score: 1 Best: 1 Since Improvement: 475 </span></span>
-<span><span class="co">#&gt; Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1475 </span></span>
-<span><span class="co">#&gt; Early stopping at iteration 2525</span></span>
+<span><span class="co">#&gt; Optimising level: single treatment within whole design </span></span>
+<span><span class="co">#&gt; Level: single treatment within whole design Iteration: 1000 Score: 1 Best: 1 Since Improvement: 475 </span></span>
+<span><span class="co">#&gt; Level: single treatment within whole design Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1475 </span></span>
+<span><span class="co">#&gt; Early stopping at iteration 2525 for level single treatment within whole design</span></span>
 <span></span>
 <span><span class="co"># Plot the optimised design</span></span>
 <span><span class="fu"><a href="reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
@@ -176,17 +178,42 @@
 <span>  seed <span class="op">=</span> <span class="fl">42</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; row and col are used as row and column, respectively.</span></span>
-<span><span class="co">#&gt; Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 </span></span>
-<span><span class="co">#&gt; Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 </span></span>
-<span><span class="co">#&gt; Early stopping at iteration 2457</span></span>
+<span><span class="co">#&gt; Optimising level: single treatment within block </span></span>
+<span><span class="co">#&gt; Level: single treatment within block Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 </span></span>
+<span><span class="co">#&gt; Level: single treatment within block Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 </span></span>
+<span><span class="co">#&gt; Early stopping at iteration 2457 for level single treatment within block</span></span>
 <span></span>
 <span><span class="co"># Plot the design with block boundaries</span></span>
 <span><span class="fu"><a href="reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-blocks-1.png" width="100%"></p>
 </div>
-<div class="section level3">
-<h3 id="more-examples">More Examples<a class="anchor" aria-label="anchor" href="#more-examples"></a>
-</h3>
+</div>
+<div class="section level2">
+<h2 id="how-it-works">How It Works<a class="anchor" aria-label="anchor" href="#how-it-works"></a>
+</h2>
+<p>The <code>speed</code> package uses simulated annealing to optimise experimental designs by evaluating and improving layouts based on an objective function. By default the optimisation process:</p>
+<ul>
+<li>
+<strong>Evaluates designs</strong> using a score (lower is better) that combines:
+<ul>
+<li>
+<strong>Adjacency score</strong>: Penalises treatments appearing next to each other (reduces neighbour effects)</li>
+<li>
+<strong>Balance score</strong>: Rewards even distribution of treatments across spatial factors (rows, columns, blocks)</li>
+</ul>
+</li>
+<li>
+<strong>Proposes changes</strong> by swapping treatments between plots</li>
+<li>
+<strong>Accepts improvements</strong> and occasionally accepts worse solutions to avoid local optima</li>
+<li>
+<strong>Converges</strong> to an optimised layout through gradual “cooling” of the acceptance threshold</li>
+</ul>
+<p>You can customise the objective function and optimisation parameters to suit specific experimental needs (see <a href="https://biometryhub.github.io/speed/articles/custom_objective_functions.html">vignettes</a> for details).</p>
+</div>
+<div class="section level2">
+<h2 id="more-examples">More Examples<a class="anchor" aria-label="anchor" href="#more-examples"></a>
+</h2>
 <p>For more detailed examples, see the <a href="https://biometryhub.github.io/speed/articles/speed.html">getting started vignette</a> or the vignette about <a href="https://biometryhub.github.io/speed/articles/complex_designs.html">more complex examples</a> including, but not limited to:</p>
 <ul>
 <li><a href="https://biometryhub.github.io/speed/articles/speed.html#split-plot-design">Split-plot design</a></li>
@@ -194,7 +221,6 @@
 <li><a href="https://biometryhub.github.io/speed/articles/complex_designs.html#p-rep-partially-replicated-designs">P-rep design</a></li>
 <li><a href="https://biometryhub.github.io/speed/articles/complex_designs.html#balanced-incomplete-block-design-bibd">BIBD</a></li>
 </ul>
-</div>
 </div>
 <div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
@@ -206,14 +232,14 @@
 <span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a></span>
 <span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  Rogers S, Taylor J, Edson R, Pipattungsakul <span class="fu">W</span> (????). _speed<span class="sc">:</span></span>
 <span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  Generate Spatially Efficient Experimental Designs_. R package version</span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="dv">0</span>.<span class="fl">0.2</span>, <span class="sc">&lt;</span>https<span class="sc">:</span><span class="er">//</span>biometryhub.github.io<span class="sc">/</span>speed<span class="sc">/</span><span class="er">&gt;</span>.</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="dv">0</span>.<span class="fl">0.3</span>, <span class="sc">&lt;</span>https<span class="sc">:</span><span class="er">//</span>biometryhub.github.io<span class="sc">/</span>speed<span class="sc">/</span><span class="er">&gt;</span>.</span>
 <span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a></span>
 <span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>A BibTeX entry <span class="cf">for</span> LaTeX users is</span>
 <span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a></span>
 <span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  <span class="sc">@</span>Manual{,</span>
 <span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>    title <span class="ot">=</span> {speed<span class="sc">:</span> Generate Spatially Efficient Experimental Designs},</span>
 <span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>    author <span class="ot">=</span> {Sam Rogers and Julian Taylor and Russell Edson and Wasin Pipattungsakul},</span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>    note <span class="ot">=</span> {R package version <span class="dv">0</span>.<span class="fl">0.2</span>},</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>    note <span class="ot">=</span> {R package version <span class="dv">0</span>.<span class="fl">0.3</span>},</span>
 <span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>    url <span class="ot">=</span> {https<span class="sc">:</span><span class="er">//</span>biometryhub.github.io<span class="sc">/</span>speed<span class="sc">/</span>},</span>
 <span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>  }</span></code></pre></div>
 </div>
