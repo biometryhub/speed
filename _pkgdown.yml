@@ -32,4 +32,4 @@ reference:
       - add_buffers
   - title: Advanced options
   - contents:
-      - speed-options
+      - speed_options
