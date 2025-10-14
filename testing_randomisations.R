@@ -16,6 +16,7 @@ options(speed.random_initialisation = TRUE)
 # Storage for unique designs and their counts
 design_library <- list()
 design_counts <- integer(0)
+iteration_counts <- list()  # Store iteration counts for each occurrence
 
 # Number of simulations
 n_simulations <- 50000
@@ -27,24 +28,27 @@ start_time <- Sys.time()
 for (i in 1:n_simulations) {
   # Generate optimized design
   result <- speed(df, swap = "treatment", quiet = TRUE)
-  
+
   # Sort by row, then column, and extract treatment vector
   sorted_design <- result$design_df[order(result$design_df$row, result$design_df$col), ]
   design_signature <- paste(sorted_design$treatment, collapse = "")
-  
+
   # Check if this design already exists
   design_idx <- which(names(design_library) == design_signature)
-  
+
   if (length(design_idx) == 0) {
     # New design - add to library
     design_library[[design_signature]] <- sorted_design$treatment
     design_counts <- c(design_counts, 1)
     names(design_counts)[length(design_counts)] <- design_signature
+    # Initialize iteration counts list for this design
+    iteration_counts[[design_signature]] <- c(result$iterations_run)
   } else {
-    # Existing design - increment counter
+    # Existing design - increment counter and record iterations
     design_counts[design_idx] <- design_counts[design_idx] + 1
+    iteration_counts[[design_signature]] <- c(iteration_counts[[design_signature]], result$iterations_run)
   }
-  
+
   # Progress reporting every 5000 iterations
   if (i %% 5000 == 0) {
     cat("Completed", i, "iterations. Unique designs found:", length(design_library), "\n")
@@ -73,12 +77,21 @@ for (i in 1:length(sorted_counts)) {
 
 # Statistical tests
 cat("\n========== STATISTICAL ANALYSIS ==========\n")
-cat("Expected count per design (if equally probable):", 
+cat("Expected count per design (if equally probable):",
     round(n_simulations / length(design_library), 2), "\n")
 cat("Min count:", min(design_counts), "\n")
 cat("Max count:", max(design_counts), "\n")
 cat("Mean count:", round(mean(design_counts), 2), "\n")
 cat("Std dev:", round(sd(design_counts), 2), "\n")
+
+# Iteration statistics
+all_iterations <- unlist(iteration_counts)
+cat("\nIteration statistics (across all designs):\n")
+cat("  Mean iterations:", round(mean(all_iterations), 2), "\n")
+cat("  Median iterations:", median(all_iterations), "\n")
+cat("  Min iterations:", min(all_iterations), "\n")
+cat("  Max iterations:", max(all_iterations), "\n")
+cat("  Std dev:", round(sd(all_iterations), 2), "\n")
 
 # Chi-squared test for uniform distribution
 expected_freq <- n_simulations / length(design_library)
@@ -98,14 +111,14 @@ if (p_value < 0.05) {
 
 # Visualize the distribution
 cat("\n========== VISUALIZATION ==========\n")
-barplot(sorted_counts, 
+barplot(sorted_counts,
         main = "Frequency of Unique Latin Square Designs",
         xlab = "Design Index (sorted by frequency)",
         ylab = "Count",
         col = "steelblue",
         las = 2)
 abline(h = expected_freq, col = "red", lty = 2, lwd = 2)
-legend("topright", legend = c("Observed", "Expected (uniform)"), 
+legend("topright", legend = c("Observed", "Expected (uniform)"),
        col = c("steelblue", "red"), lty = c(1, 2), lwd = c(1, 2))
 
 # Optional: Print first few unique designs for inspection
@@ -128,28 +141,34 @@ latin_square_results <- list(
   n_simulations = n_simulations,
   unique_designs = length(design_library),
   elapsed_time = elapsed_time,
-  
+
   # Design data
   design_library = design_library,
   design_counts = design_counts,
   sorted_counts = sorted_counts,
-  
+  iteration_counts = iteration_counts,
+
   # Statistical summary
   summary_stats = list(
     expected_freq = expected_freq,
     min_count = min(design_counts),
     max_count = max(design_counts),
     mean_count = mean(design_counts),
-    sd_count = sd(design_counts)
+    sd_count = sd(design_counts),
+    mean_iterations = mean(all_iterations),
+    median_iterations = median(all_iterations),
+    min_iterations = min(all_iterations),
+    max_iterations = max(all_iterations),
+    sd_iterations = sd(all_iterations)
   ),
-  
+
   # Chi-squared test results
   chi_squared_test = list(
     statistic = chi_sq,
     df = df_chi,
     p_value = p_value
   ),
-  
+
   # Metadata
   timestamp = Sys.time(),
   r_version = R.version.string,
