@@ -27,7 +27,7 @@ start_time <- Sys.time()
 
 for (i in 1:n_simulations) {
   # Generate optimized design
-  result <- speed(df, swap = "treatment", quiet = TRUE)
+  result <- speed(df, swap = "treatment", quiet = TRUE, early_stop_iterations = 10000)
 
   # Sort by row, then column, and extract treatment vector
   sorted_design <- result$design_df[order(result$design_df$row, result$design_df$col), ]
