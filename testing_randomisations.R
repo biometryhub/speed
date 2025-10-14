@@ -2,6 +2,7 @@
 # Generate 50000 4x4 Latin squares and analyze their distribution
 
 library(speed)
+library(parallel)
 
 # Set up initial design
 df <- data.frame(
@@ -13,50 +14,89 @@ df <- data.frame(
 # Enable random initialization
 options(speed.random_initialisation = TRUE)
 
-# Storage for unique designs and their counts
-design_library <- list()
-design_counts <- integer(0)
-iteration_counts <- list()  # Store iteration counts for each occurrence
+# Parallel setup
+n_cores <- detectCores() - 1  # Leave one core free
+cat("Using", n_cores, "cores for parallel processing\n")
 
 # Number of simulations
 n_simulations <- 50000
 
+# Worker function to run simulations
+run_simulations <- function(n_sims, initial_df) {
+  # Storage for this worker
+  local_designs <- list()
+  local_iterations <- list()
+
+  for (i in 1:n_sims) {
+    # Generate optimized design
+    result <- speed(initial_df, swap = "treatment", quiet = TRUE, early_stop_iterations = 10000)
+
+    # Sort by row, then column, and extract treatment vector
+    sorted_design <- result$design_df[order(result$design_df$row, result$design_df$col), ]
+    design_signature <- paste(sorted_design$treatment, collapse = "")
+
+    # Store the design signature and iteration count
+    local_designs <- c(local_designs, design_signature)
+    local_iterations <- c(local_iterations, result$iterations_run)
+  }
+
+  return(list(designs = local_designs, iterations = local_iterations))
+}
+
+# Split work across cores
+sims_per_core <- rep(floor(n_simulations / n_cores), n_cores)
+sims_per_core[1] <- sims_per_core[1] + (n_simulations %% n_cores)  # Add remainder to first core
+
 # Progress reporting
 cat("Generating", n_simulations, "Latin square designs...\n")
+cat("Simulations per core:", paste(sims_per_core, collapse = ", "), "\n")
 start_time <- Sys.time()
 
-for (i in 1:n_simulations) {
-  # Generate optimized design
-  result <- speed(df, swap = "treatment", quiet = TRUE, early_stop_iterations = 10000)
+# Run parallel simulations
+cl <- makeCluster(n_cores)
+clusterExport(cl, c("df", "sims_per_core"), envir = environment())
+clusterEvalQ(cl, {
+  library(speed)
+  options(speed.random_initialisation = TRUE)
+})
 
-  # Sort by row, then column, and extract treatment vector
-  sorted_design <- result$design_df[order(result$design_df$row, result$design_df$col), ]
-  design_signature <- paste(sorted_design$treatment, collapse = "")
+results_list <- clusterMap(cl, run_simulations,
+                           n_sims = sims_per_core,
+                           MoreArgs = list(initial_df = df),
+                           SIMPLIFY = FALSE)
+stopCluster(cl)
 
-  # Check if this design already exists
+end_time <- Sys.time()
+elapsed_time <- difftime(end_time, start_time, units = "secs")
+
+# Combine results from all cores
+cat("\nCombining results from all cores...\n")
+all_designs <- unlist(lapply(results_list, function(x) x$designs))
+all_iterations_raw <- unlist(lapply(results_list, function(x) x$iterations))
+
+# Build design library and counts
+design_library <- list()
+design_counts <- integer(0)
+iteration_counts <- list()
+
+for (i in 1:length(all_designs)) {
+  design_signature <- all_designs[i]
+  iter_count <- all_iterations_raw[i]
+
   design_idx <- which(names(design_library) == design_signature)
 
   if (length(design_idx) == 0) {
     # New design - add to library
-    design_library[[design_signature]] <- sorted_design$treatment
+    design_library[[design_signature]] <- strsplit(design_signature, "")[[1]]
     design_counts <- c(design_counts, 1)
     names(design_counts)[length(design_counts)] <- design_signature
-    # Initialize iteration counts list for this design
-    iteration_counts[[design_signature]] <- c(result$iterations_run)
+    iteration_counts[[design_signature]] <- c(iter_count)
   } else {
     # Existing design - increment counter and record iterations
     design_counts[design_idx] <- design_counts[design_idx] + 1
-    iteration_counts[[design_signature]] <- c(iteration_counts[[design_signature]], result$iterations_run)
-  }
-
-  # Progress reporting every 5000 iterations
-  if (i %% 5000 == 0) {
-    cat("Completed", i, "iterations. Unique designs found:", length(design_library), "\n")
+    iteration_counts[[design_signature]] <- c(iteration_counts[[design_signature]], iter_count)
   }
 }
-
-end_time <- Sys.time()
-elapsed_time <- difftime(end_time, start_time, units = "secs")
 
 # Summary statistics
 cat("\n========== RESULTS ==========\n")
