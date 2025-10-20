@@ -377,6 +377,10 @@ random_initialize <- function(design, optimise, seed = NULL, ...) {
     }
 
     if (current_score < best_score) {
+      if (current_score == 0) {
+        return(shuffled_design)
+      }
+
       best_score <- current_score
       best_design <- shuffled_design
     }
