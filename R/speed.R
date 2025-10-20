@@ -210,13 +210,6 @@ speed <- function(data,
     }
   }
 
-  random_initialisation <- getOption("speed.random_initialisation", FALSE)
-  if (random_initialisation) {
-    for (opt in optimize) {
-      data <- shuffle_items(data, opt$swap, opt$swap_within, seed)
-    }
-  }
-
   design <- speed_hierarchical(data, optimize, quiet, seed, row_column = row_column, col_column = col_column,
                                ...)
   design$design_df[[dummy_group]] <- NULL
@@ -234,12 +227,12 @@ speed_hierarchical <- function(data, optimize, quiet, seed, ...) {
   adaptive_swaps <- getOption("speed.adaptive_swaps", FALSE)
   start_temp <- getOption("speed.start_temp", 100)
   cooling_rate <- getOption("speed.cooling_rate", 0.99)
-  random_initialisation <- getOption("speed.random_initialisation", FALSE)
+  random_initialisation <- as.numeric(getOption("speed.random_initialisation", 0))
   .verify_speed_options(swap_count, swap_all_blocks, adaptive_swaps, start_temp, cooling_rate,
                         random_initialisation)
 
   hierarchy_levels <- names(optimize)
-  layout_df <- data
+  layout_df <- random_initialize(data, optimize, seed, ...)
 
   # Initialise design
   current_design <- layout_df
