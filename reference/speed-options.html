@@ -79,10 +79,11 @@ landscapes. Lower values (e.g. 0.95–0.98) cool quickly, leading to faster
 convergence but greater risk of premature convergence to a suboptimal design.</p></dd>
 
 <dt><code>speed.random_initialisation</code></dt>
-<dd><p>Logical; if TRUE, randomly shuffle items within <code>swap_within</code> (default: FALSE)</p></dd>
+<dd><p>Number of times to randomly shuffle items within <code>swap_within</code>; the
+design with the best score is used as an initial design. (default: 0)</p></dd>
 
 <dt><code>speed.adj_weight</code></dt>
-<dd><p>Weight for adjacency score (default: 0).</p></dd>
+<dd><p>Weight for adjacency score (default: 1).</p></dd>
 
 <dt><code>speed.bal_weight</code></dt>
 <dd><p>Weight for balance score (default: 1).</p></dd>
