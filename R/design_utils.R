@@ -366,7 +366,7 @@ random_initialize <- function(design, optimise, seed = NULL, ...) {
   for (i in seq_len(random_initialisation)) {
     shuffled_design <- design
     for (opt in optimise) {
-      shuffled_design <- shuffle_items(shuffled_design, opt$swap, opt$swap_within, seed)
+      shuffled_design <- shuffle_items(shuffled_design, opt$swap, opt$swap_within, seed + i)
     }
 
     # scoring
