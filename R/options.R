@@ -23,7 +23,7 @@
 #'        convergence but greater risk of premature convergence to a suboptimal design.}
 #'   \item{`speed.random_initialisation`}{Number of times to randomly shuffle items within `swap_within`; the
 #' design with the best score is used as an initial design. (default: 0)}
-#'   \item{`speed.adj_weight`}{Weight for adjacency score (default: 0).}
+#'   \item{`speed.adj_weight`}{Weight for adjacency score (default: 1).}
 #'   \item{`speed.bal_weight`}{Weight for balance score (default: 1).}
 #' }
 #'
