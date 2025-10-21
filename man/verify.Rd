@@ -85,7 +85,7 @@ be a named list with names matching \code{swap}.}
 
 \item{cooling_rate}{Rate at which temperature decreases (default: 0.99)}
 
-\item{random_initialisation}{Logical; if TRUE, randomly shuffle items within \code{swap_within} (default: FALSE)}
+\item{random_initialisation}{Number; randomly shuffle items within \code{swap_within} n times (default: 0)}
 }
 \description{
 Verify inputs for the \code{speed} function.

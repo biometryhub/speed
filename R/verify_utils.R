@@ -84,7 +84,7 @@
 #' @param adaptive_swaps Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)
 #' @param start_temp Starting temperature for simulated annealing (default: 100)
 #' @param cooling_rate Rate at which temperature decreases (default: 0.99)
-#' @param random_initialisation Logical; if TRUE, randomly shuffle items within `swap_within` (default: FALSE)
+#' @param random_initialisation Number; randomly shuffle items within `swap_within` n times (default: 0)
 #'
 #' @keywords internal
 .verify_speed_options <- function(swap_count,
@@ -94,8 +94,8 @@
                                   cooling_rate,
                                   random_initialisation) {
   verify_positive_whole_number(swap_count)
-  verify_non_negative_whole(start_temp)
-  verify_boolean(adaptive_swaps, swap_all_blocks, random_initialisation)
+  verify_non_negative_whole(start_temp, random_initialisation)
+  verify_boolean(adaptive_swaps, swap_all_blocks)
   verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
 }
 
