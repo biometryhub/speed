@@ -2024,6 +2024,30 @@ test_that("print.design works with extra arguments via ...", {
   expect_match(output, "Optimised Experimental Design")
 })
 
+test_that("speed runs with n random initialisation", {
+  # Sample data for testing
+  df <- expand.grid(col = 1:4, row = 1:5)
+  df$treatment <- LETTERS[1:4]
+  initial_score <- objective_function(df, "treatment", c("row", "col"))$score
+
+
+  withr::with_options(list(speed.random_initialisation = 10), {
+    result <- speed(
+      data = df,
+      swap = "treatment",
+      iterations = 1000,
+      early_stop_iterations = 500,
+      seed = 112,
+      quiet = TRUE
+    )
+  })
+
+  expect_lt(result$scores[1], initial_score)
+  expect_equal(result$score, 1)
+  expect_true(is.data.frame(result$design_df))
+  expect_equal(sort(result$design_df$treatment), sort(df$treatment))
+})
+
 # TODO: Test cases to add/update
 # - Add more detailed checking of current designs
 # - NSE
