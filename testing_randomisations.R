@@ -5,98 +5,90 @@ library(speed)
 library(parallel)
 
 # Set up initial design
-df <- data.frame(
-  row = rep(1:4, times = 4),
-  col = rep(1:4, each = 4),
-  treatment = rep(LETTERS[1:4], 4)
-)
+# df <- initialise_design_df(6, 4, 6, 2, 3)
+df <- initialise_design_df(4, 4, 4)
 
 # Enable random initialization
 options(speed.random_initialisation = TRUE)
 
 # Parallel setup
-n_cores <- detectCores() - 1  # Leave one core free
+n_cores <- 4  # Leave one core free
 cat("Using", n_cores, "cores for parallel processing\n")
 
 # Number of simulations
 n_simulations <- 50000
 
-# Worker function to run simulations
-run_simulations <- function(n_sims, initial_df) {
-  # Storage for this worker
-  local_designs <- list()
-  local_iterations <- list()
-
-  for (i in 1:n_sims) {
-    # Generate optimized design
-    result <- speed(initial_df, swap = "treatment", quiet = TRUE, early_stop_iterations = 10000)
-
-    # Sort by row, then column, and extract treatment vector
-    sorted_design <- result$design_df[order(result$design_df$row, result$design_df$col), ]
-    design_signature <- paste(sorted_design$treatment, collapse = "")
-
-    # Store the design signature and iteration count
-    local_designs <- c(local_designs, design_signature)
-    local_iterations <- c(local_iterations, result$iterations_run)
-  }
-
-  return(list(designs = local_designs, iterations = local_iterations))
-}
-
-# Split work across cores
-sims_per_core <- rep(floor(n_simulations / n_cores), n_cores)
-sims_per_core[1] <- sims_per_core[1] + (n_simulations %% n_cores)  # Add remainder to first core
-
-# Progress reporting
-cat("Generating", n_simulations, "Latin square designs...\n")
-cat("Simulations per core:", paste(sims_per_core, collapse = ", "), "\n")
-start_time <- Sys.time()
-
-# Run parallel simulations
-cl <- makeCluster(n_cores)
-clusterExport(cl, c("df", "sims_per_core"), envir = environment())
-clusterEvalQ(cl, {
-  library(speed)
-  options(speed.random_initialisation = TRUE)
-})
-
-results_list <- clusterMap(cl, run_simulations,
-                           n_sims = sims_per_core,
-                           MoreArgs = list(initial_df = df),
-                           SIMPLIFY = FALSE)
-stopCluster(cl)
-
-end_time <- Sys.time()
-elapsed_time <- difftime(end_time, start_time, units = "secs")
-
-# Combine results from all cores
-cat("\nCombining results from all cores...\n")
-all_designs <- unlist(lapply(results_list, function(x) x$designs))
-all_iterations_raw <- unlist(lapply(results_list, function(x) x$iterations))
-
-# Build design library and counts
+# Storage for unique designs and their counts
 design_library <- list()
 design_counts <- integer(0)
 iteration_counts <- list()
 
-for (i in 1:length(all_designs)) {
-  design_signature <- all_designs[i]
-  iter_count <- all_iterations_raw[i]
+# Progress reporting
+cat("Generating", n_simulations, "Latin square designs...\n")
+start_time <- Sys.time()
 
+for (i in 1:n_simulations) {
+  # Generate optimized design
+  result <- speed(df, swap = "treatment", swap_within = "col", quiet = TRUE, early_stop_iterations = 10000)
+
+  # Post-optimization randomization: swap two random rows OR two random columns
+  design_df <- result$design_df
+
+  # Randomly choose to swap rows or columns
+  swap_dimension <- sample(c("row", "col"), 1)
+
+  if (swap_dimension == "row") {
+    # Select two random rows to swap
+    unique_rows <- unique(design_df$row)
+    swap_indices <- sample(unique_rows, 2)
+
+    # Swap the treatments between these two rows
+    row1_treatments <- design_df$treatment[design_df$row == swap_indices[1]]
+    row2_treatments <- design_df$treatment[design_df$row == swap_indices[2]]
+
+    design_df$treatment[design_df$row == swap_indices[1]] <- row2_treatments
+    design_df$treatment[design_df$row == swap_indices[2]] <- row1_treatments
+  } else {
+    # Select two random columns to swap
+    unique_cols <- unique(design_df$col)
+    swap_indices <- sample(unique_cols, 2)
+
+    # Swap the treatments between these two columns
+    col1_treatments <- design_df$treatment[design_df$col == swap_indices[1]]
+    col2_treatments <- design_df$treatment[design_df$col == swap_indices[2]]
+
+    design_df$treatment[design_df$col == swap_indices[1]] <- col2_treatments
+    design_df$treatment[design_df$col == swap_indices[2]] <- col1_treatments
+  }
+
+  # Sort by row, then column, and extract treatment vector
+  sorted_design <- design_df[order(design_df$row, design_df$col), ]
+  design_signature <- paste(sorted_design$treatment, collapse = "")
+
+  # Check if this design already exists
   design_idx <- which(names(design_library) == design_signature)
 
   if (length(design_idx) == 0) {
     # New design - add to library
-    design_library[[design_signature]] <- strsplit(design_signature, "")[[1]]
+    design_library[[design_signature]] <- sorted_design$treatment
     design_counts <- c(design_counts, 1)
     names(design_counts)[length(design_counts)] <- design_signature
-    iteration_counts[[design_signature]] <- c(iter_count)
+    # Initialize iteration counts list for this design
+    iteration_counts[[design_signature]] <- c(result$iterations_run)
   } else {
     # Existing design - increment counter and record iterations
     design_counts[design_idx] <- design_counts[design_idx] + 1
-    iteration_counts[[design_signature]] <- c(iteration_counts[[design_signature]], iter_count)
+    iteration_counts[[design_signature]] <- c(iteration_counts[[design_signature]], result$iterations_run)
+  }
+
+  # Progress reporting every 5000 iterations
+  if (i %% 5000 == 0) {
+    cat("Completed", i, "iterations. Unique designs found:", length(design_library), "\n")
   }
 }
+
+end_time <- Sys.time()
+elapsed_time <- difftime(end_time, start_time, units = "secs")
 
 # Summary statistics
 cat("\n========== RESULTS ==========\n")
