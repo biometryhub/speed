@@ -61,7 +61,6 @@ to_factor <- function(df) {
   return(list(df = df, input_types = input_types))
 }
 
-# TODO: generalize this, not excluding factors
 #' Convert Data Frame Data to Provided Types
 #'
 #' @inheritParams to_factor
@@ -71,12 +70,12 @@ to_factor <- function(df) {
 #'
 #' @keywords internal
 to_types <- function(df, types) {
-  for (col in names(df)) {
-    if (col %in% names(types) && types[col] != "factor") {
-      df[[col]] <- do.call(paste0("as.", types[[col]]), list(df[[col]]))
-    }
-  }
-
+  df[names(types)] <- mapply(
+    \(t, x) get(sprintf("as.%s", t), mode = "function")(x),
+    types,
+    df[names(types)],
+    SIMPLIFY = FALSE
+  )
   return(df)
 }
 
