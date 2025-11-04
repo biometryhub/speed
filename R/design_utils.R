@@ -60,22 +60,27 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
         # Select two random plots in this block
         swap_pair <- sample(block_indices, 2)
         to_be_swapped <- new_design[[swap]][swap_pair]
+        
+        # If both plots have the same treatment, try to find a different one
         if (to_be_swapped[1] == to_be_swapped[2]) {
           different_indices <- block_indices[new_design[[swap]][block_indices] != to_be_swapped[1]]
-          if (length(different_indices) == 0) {
-            # skip if no different treatments available
-            next
+          
+          # Only proceed with swap if different treatments are available
+          if (length(different_indices) > 0) {
+            swap_pair[[2]] <- sample(different_indices, 1)
+            to_be_swapped[2] <- new_design[[swap]][[swap_pair[[2]]]]
+          } else {
+            # Skip this swap - no different treatments available
+            to_be_swapped <- NULL
           }
-
-          swap_pair[[2]] <- sample(different_indices, 1)
-          to_be_swapped[2] <- new_design[[swap]][[swap_pair[[2]]]]
         }
 
-        # Swap treatments
-        new_design[[swap]][rev(swap_pair)] <- to_be_swapped
-        swapped_items[swapped_idx:(swapped_idx + 1)] <- to_be_swapped
-
-        swapped_idx <- swapped_idx + 2
+        # Perform the swap only if we have valid treatments to swap
+        if (!is.null(to_be_swapped)) {
+          new_design[[swap]][rev(swap_pair)] <- to_be_swapped
+          swapped_items[swapped_idx:(swapped_idx + 1)] <- to_be_swapped
+          swapped_idx <- swapped_idx + 2
+        }
       }
     }
   }
@@ -112,18 +117,15 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
 
     if (nrow(group_data) >= 2) {
       for (i in 1:swap_count) {
-        # Select two random treatments
-        swap_pair <- sample(group_treatments, 2)
-
-        # Ensure they're different treatments
-        if (swap_pair[1] == swap_pair[2]) {
-          different_treatments <- group_treatments[group_treatments != swap_pair[1]]
-          if (length(different_treatments) > 0) {
-            swap_pair[2] <- sample(different_treatments, 1)
-          } else {
-            next # Skip this swap if no different treatments available
-          }
+        # Only proceed if there are at least 2 different treatments
+        if (length(group_treatments) < 2) {
+          # Skip this swap - only one treatment in this group
+          next
         }
+        
+        # Select two different treatments
+        # Use sample with replace=FALSE to ensure they're different
+        swap_pair <- sample(group_treatments, 2, replace = FALSE)
 
         # Find all plots with these treatments in this group
         plots_1 <- which(group_filter & new_design[[swap]] == swap_pair[1])
