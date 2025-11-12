@@ -1,11 +1,11 @@
 pandoc: 3.1.11
-pkgdown: 2.1.3
+pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   complex_designs: complex_designs.html
   custom_objective_functions: custom_objective_functions.html
   speed: speed.html
-last_built: 2025-11-04T05:17Z
+last_built: 2025-11-12T06:30Z
 urls:
   reference: https://biometryhub.github.io/speed/reference
   article: https://biometryhub.github.io/speed/articles
