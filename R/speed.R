@@ -231,6 +231,11 @@ speed_hierarchical <- function(data, optimize, quiet, seed, ...) {
   .verify_speed_options(swap_count, swap_all_blocks, adaptive_swaps, start_temp, cooling_rate,
                         random_initialisation)
 
+  # Set seed for reproducibility
+  if (is.null(seed)) {
+    seed <- .GlobalEnv$.Random.seed[3]
+  }
+
   hierarchy_levels <- names(optimize)
   layout_df <- random_initialize(data, optimize, seed, ...)
 
@@ -238,17 +243,13 @@ speed_hierarchical <- function(data, optimize, quiet, seed, ...) {
   current_design <- layout_df
   best_design <- current_design
 
-  # Set seed for reproducibility
-  if (is.null(seed)) {
-    seed <- .GlobalEnv$.Random.seed[3]
-  }
-  set.seed(seed)
-
   # Sequential optimisation for each hierarchy level
   all_scores <- list()
   all_temperatures <- list()
   total_iterations <- 0  # TODO: Track total iterations across all levels
 
+  # Set seed for reproducibility
+  set.seed(seed)
   for (level in hierarchy_levels) {
     if (!quiet) cat("Optimising level:", level, "\n")
     opt <- optimize[[level]]
