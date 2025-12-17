@@ -235,7 +235,8 @@ test_that("create_speed_input creates an input from a named list", {
     iterations = 10000,
     early_stop_iterations = list(wp = 1000, sp = 10000),
     obj_function = objective_function,
-    swap_all = TRUE
+    swap_all = TRUE,
+    optimize_params = list(swap_count = 5, swap_all_blocks = TRUE)
   )
   ordered_names <- sort(names(speed_input[[1]]))
 
@@ -247,7 +248,8 @@ test_that("create_speed_input creates an input from a named list", {
     iterations = 10000,
     early_stop_iterations = 1000,
     obj_function = objective_function,
-    swap_all = TRUE
+    swap_all = TRUE,
+    optimize_params = list(swap_count = 5, swap_all_blocks = TRUE)
   )[ordered_names])
 
   expect_equal(speed_input$sp[ordered_names], list(
@@ -258,7 +260,8 @@ test_that("create_speed_input creates an input from a named list", {
     iterations = 10000,
     early_stop_iterations = 10000,
     obj_function = objective_function,
-    swap_all = TRUE
+    swap_all = TRUE,
+    optimize_params = list(swap_count = 5, swap_all_blocks = TRUE)
   )[ordered_names])
 })
 
@@ -271,7 +274,8 @@ test_that("create_speed_input creates an input from a string", {
     iterations = 10000,
     early_stop_iterations = 1000,
     obj_function = objective_function,
-    swap_all = FALSE
+    swap_all = FALSE,
+    optimize_params = list(swap_count = 5, swap_all_blocks = TRUE)
   )
   ordered_names <- sort(names(speed_input))
 
@@ -284,7 +288,8 @@ test_that("create_speed_input creates an input from a string", {
       iterations = 10000,
       early_stop_iterations = 1000,
       obj_function = objective_function,
-      swap_all = FALSE
+      swap_all = FALSE,
+      optimize_params = list(swap_count = 5, swap_all_blocks = TRUE)
     )
   )[ordered_names])
 })
@@ -304,6 +309,7 @@ test_that("create_speed_input creates an input from optimize argument", {
     early_stop_iterations = 1000,
     obj_function = objective_function,
     swap_all = FALSE,
+    optimize_params = list(swap_count = 5, swap_all_blocks = TRUE),
     optimize = optimize
   )
   ordered_names <- sort(names(speed_input[[1]]))
@@ -316,7 +322,8 @@ test_that("create_speed_input creates an input from optimize argument", {
     iterations = 10000,
     early_stop_iterations = 1000,
     obj_function = objective_function,
-    swap_all = FALSE
+    swap_all = FALSE,
+    optimize_params = list(swap_count = 5, swap_all_blocks = TRUE)
   )[ordered_names])
 
   expect_equal(speed_input$balance[ordered_names], list(
@@ -327,7 +334,8 @@ test_that("create_speed_input creates an input from optimize argument", {
     iterations = 10000,
     early_stop_iterations = 1000,
     obj_function = objective_function,
-    swap_all = FALSE
+    swap_all = FALSE,
+    optimize_params = list(swap_count = 5, swap_all_blocks = TRUE)
   )[ordered_names])
 })
 

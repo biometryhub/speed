@@ -75,28 +75,28 @@
   }
 }
 
-#' Verify Options for `speed`
+#' Verify Optimization Parameters for `speed`
 #'
 #' @rdname verify
 #'
-#' @param swap_count Number of item swaps per iteration (default: 1)
-#' @param swap_all_blocks Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)
-#' @param adaptive_swaps Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)
-#' @param start_temp Starting temperature for simulated annealing (default: 100)
-#' @param cooling_rate Rate at which temperature decreases (default: 0.99)
-#' @param random_initialisation Number; randomly shuffle items within `swap_within` n times (default: 0)
-#'
 #' @keywords internal
-.verify_speed_options <- function(swap_count,
-                                  swap_all_blocks,
-                                  adaptive_swaps,
-                                  start_temp,
-                                  cooling_rate,
-                                  random_initialisation) {
+.verify_optim_params <- function(swap_count,
+                                 swap_all_blocks,
+                                 adaptive_swaps,
+                                 start_temp,
+                                 cooling_rate,
+                                 random_initialisation,
+                                 adj_weight,
+                                 bal_weight) {
   verify_positive_whole_number(swap_count)
-  verify_non_negative_whole(start_temp, random_initialisation)
+  verify_non_negative_whole(start_temp)
   verify_boolean(adaptive_swaps, swap_all_blocks)
   verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
+  verify_numeric(adj_weight, bal_weight)
+
+  if (!(random_initialisation %in% c(TRUE, FALSE))) {
+    verify_non_negative_whole(random_initialisation)
+  }
 }
 
 
@@ -240,6 +240,10 @@ verify_character <- function(..., var_names = NULL) {
 
 verify_list <- function(..., var_names = NULL) {
   verify_data_type(is.list, "a list", var_names, ...)
+}
+
+verify_numeric <- function(..., var_names = NULL) {
+  verify_data_type(is.numeric, "a numeric", var_names, ...)
 }
 
 verify_positive_whole_numbers <- function(..., var_names = NULL) {

@@ -484,16 +484,15 @@ test_that("speed runs with random initialisation", {
     quiet = TRUE
   )
 
-  withr::with_options(list(speed.random_initialisation = TRUE), {
-    result_random <- speed(
-      data = test_data,
-      swap = "treatment",
-      spatial_factors = ~ row + col,
-      iterations = 1000,
-      seed = 42,
-      quiet = TRUE
-    )
-  })
+  result_random <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 1000,
+    optimize_params = optim_params(random_initialisation = TRUE),
+    seed = 42,
+    quiet = TRUE
+  )
 
   expect_named(
     result_random,
@@ -1051,23 +1050,22 @@ test_that("speed handles 2D blocking with row and column blocks", {
   )
   dat_2d_blocking <- dat_2d_blocking[order(dat_2d_blocking$col, dat_2d_blocking$row), ]
 
-  withr::with_options(list(
-    speed.swap_count = 5,
-    speed.swap_all_blocks = TRUE,
-    speed.adaptive_swaps = TRUE,
-    speed.cooling_rate = 0.99,
-    speed.random_initialisation = TRUE
-  ), {
-    result <- speed(dat_2d_blocking,
-      swap = "treat",
-      swap_within = "rowBlock",
-      spatial_factors = ~colBlock,
-      iterations = 1000,
-      early_stop_iterations = 500,
-      seed = 123,
-      quiet = TRUE
-    )
-  })
+  result <- speed(dat_2d_blocking,
+    swap = "treat",
+    swap_within = "rowBlock",
+    spatial_factors = ~colBlock,
+    iterations = 1000,
+    early_stop_iterations = 500,
+    optimize_params = optim_params(
+      swap_count = 5,
+      swap_all_blocks = TRUE,
+      adaptive_swaps = TRUE,
+      cooling_rate = 0.99,
+      random_initialisation = TRUE
+    ),
+    seed = 123,
+    quiet = TRUE
+  )
 
   expect_s3_class(result, "design")
   expect_equal(nrow(result$design_df), 400)
@@ -1093,16 +1091,15 @@ test_that("speed handles RCBD with multiple treatment reps", {
     block = rep(1:50, each = 10)
   )
 
-  withr::with_options(list(speed.swap_count = 3, speed.adaptive_swaps = TRUE), {
-    result <- speed(dat_rcbd,
-      swap = "treat",
-      swap_within = "block",
-      iterations = 2000,
-      early_stop_iterations = 1000,
-      seed = 42,
-      quiet = TRUE
-    )
-  })
+  result <- speed(dat_rcbd,
+    swap = "treat",
+    swap_within = "block",
+    iterations = 2000,
+    early_stop_iterations = 1000,
+    optimize_params = optim_params(swap_count = 3, adaptive_swaps = TRUE),
+    seed = 42,
+    quiet = TRUE
+  )
 
   expect_s3_class(result, "design")
   expect_equal(nrow(result$design_df), 500)
@@ -1174,17 +1171,16 @@ test_that("speed handles large RCBD with 500 treatments", {
     block = rep(1:4, each = 500)
   )
 
-  withr::with_options(list(speed.swap_count = 10), {
-    result <- speed(dat_large,
-      swap = "treat",
-      swap_within = "block",
-      spatial_factors = ~ row + col,
-      iterations = 1000,
-      early_stop_iterations = 400,
-      seed = 42,
-      quiet = TRUE
-    )
-  })
+  result <- speed(dat_large,
+    swap = "treat",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    iterations = 1000,
+    early_stop_iterations = 400,
+    optimize_params = optim_params(swap_count = 10),
+    seed = 42,
+    quiet = TRUE
+  )
 
   expect_s3_class(result, "design")
   expect_equal(nrow(result$design_df), 2000)
@@ -1319,15 +1315,14 @@ test_that("speed handles MET", {
     balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
   )
 
-  withr::with_options(list(speed.random_initialisation = TRUE, speed.adj_weight = 0), {
-    speed_design <- speed(
-      data = df_initial,
-      swap = "treatment",
-      optimise = optimize,
-      seed = 112,
-      quiet = TRUE
-    )
-  })
+  speed_design <- speed(
+    data = df_initial,
+    swap = "treatment",
+    optimise = optimize,
+    optimize_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
+    seed = 112,
+    quiet = TRUE
+  )
   design_df <- speed_design$design_df
 
   expect_equal(sort(design_df$treatment), sort(treatments))
@@ -1368,16 +1363,15 @@ test_that("speed handles MET with unequal site dimensions", {
     balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
   )
 
-  withr::with_options(list(speed.random_initialisation = TRUE, speed.adj_weight = 0), {
-    speed_design <- speed(
-      data = df_initial,
-      swap = "treatment",
-      early_stop_iterations = 5000,
-      optimise = optimize,
-      seed = 112,
-      quiet = TRUE
-    )
-  })
+  speed_design <- speed(
+    data = df_initial,
+    swap = "treatment",
+    early_stop_iterations = 5000,
+    optimise = optimize,
+    optimize_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
+    seed = 112,
+    quiet = TRUE
+  )
   design_df <- speed_design$design_df
 
   expect_setequal(
@@ -1426,17 +1420,16 @@ test_that("speed runs with piepho objective", {
   df_initial$col <- factor(df_initial$col)
   initial_score <- objective_function_piepho(df_initial, "treatment", c("row", "col"))$score
 
-  withr::with_options(list(speed.random_initialisation = TRUE), {
-    speed_design <- speed(
-      data = df_initial,
-      swap = "treatment",
-      spatial_factors = ~ row + col,
-      seed = 112,
-      quiet = TRUE,
-      obj_function = objective_function_piepho,
-      pair_mapping = pair_mapping
-    )
-  })
+  speed_design <- speed(
+    data = df_initial,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    optimize_params = optim_params(random_initialisation = TRUE),
+    seed = 112,
+    quiet = TRUE,
+    obj_function = objective_function_piepho,
+    pair_mapping = pair_mapping
+  )
 
   expect_lt(speed_design$score, initial_score)
 })
@@ -2031,16 +2024,15 @@ test_that("speed runs with n random initialisation", {
   initial_score <- objective_function(df, "treatment", c("row", "col"))$score
 
 
-  withr::with_options(list(speed.random_initialisation = 10), {
-    result <- speed(
-      data = df,
-      swap = "treatment",
-      iterations = 1000,
-      early_stop_iterations = 500,
-      seed = 112,
-      quiet = TRUE
-    )
-  })
+  result <- speed(
+    data = df,
+    swap = "treatment",
+    iterations = 1000,
+    early_stop_iterations = 500,
+    optimize_params = optim_params(random_initialisation = 10),
+    seed = 112,
+    quiet = TRUE
+  )
 
   expect_lt(result$scores[1], initial_score)
   expect_equal(result$score, 1)

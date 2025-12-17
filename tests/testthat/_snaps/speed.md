@@ -284,7 +284,7 @@
       row and col are used as row and column, respectively.
     Output
       Optimising level: wp 
-      Level: wp Iteration: 1000 Score: 12 Best: 12 Since Improvement: 703 
+      Level: wp Iteration: 1000 Score: 22 Best: 22 Since Improvement: 480 
       Optimising level: sp 
-      Level: sp Iteration: 1000 Score: 1.333333 Best: 1.333333 Since Improvement: 299 
+      Level: sp Iteration: 1000 Score: 1.333333 Best: 1.333333 Since Improvement: 14 
 

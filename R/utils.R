@@ -135,8 +135,9 @@ create_speed_input <- function(swap,
                                early_stop_iterations,
                                obj_function,
                                swap_all,
+                               optimize_params,
                                optimize = NULL) {
-  optimize_args <- c(
+  speed_args <- c(
     "swap",
     "swap_within",
     "spatial_factors",
@@ -144,12 +145,13 @@ create_speed_input <- function(swap,
     "iterations",
     "early_stop_iterations",
     "obj_function",
-    "swap_all"
+    "swap_all",
+    "optimize_params"
   )
 
   if (!is.null(optimize)) {
     for (optimize_name in names(optimize)) {
-      for (arg in optimize_args) {
+      for (arg in speed_args) {
         if (is.null(optimize[[optimize_name]][[arg]])) {
           optimize[[optimize_name]][[arg]] <- get(arg)
         }
@@ -168,10 +170,16 @@ create_speed_input <- function(swap,
           grid_factors[[optimize_name]] %||% .DEFAULT$grid_factors
         } else {
           grid_factors
+        },
+        optimize_params = if (is.list(optimize_params[[1]])) {
+          optimize_params[[optimize_name]]
+        } else {
+          optimize_params
         }
       )
-      for (arg in optimize_args) {
-        if (!(arg %in% c("swap", "swap_within", "grid_factors"))) {
+
+      for (arg in speed_args) {
+        if (!(arg %in% c("swap", "swap_within", "grid_factors", "optimize_params"))) {
           if (is.null(optimize[[optimize_name]][[arg]])) {
             optimize_var <- get(arg)
             optimize[[optimize_name]][[arg]] <- if (is.list(optimize_var)) {
@@ -200,7 +208,8 @@ create_speed_input <- function(swap,
       iterations = iterations,
       early_stop_iterations = early_stop_iterations,
       obj_function = obj_function,
-      swap_all = swap_all
+      swap_all = swap_all,
+      optimize_params = optimize_params
     )
   }
 
@@ -208,6 +217,7 @@ create_speed_input <- function(swap,
 }
 
 `%||%` <- function(a, b) if (!is.null(a)) a else b
+
 #' Add Names to A List
 #'
 #' @description
