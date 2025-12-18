@@ -3,7 +3,7 @@
 \name{.verify_speed_inputs}
 \alias{.verify_speed_inputs}
 \alias{.verify_hierarchical_inputs}
-\alias{.verify_speed_options}
+\alias{.verify_optim_params}
 \title{Verify Inputs for \code{speed}}
 \usage{
 .verify_speed_inputs(
@@ -29,13 +29,15 @@
   seed
 )
 
-.verify_speed_options(
+.verify_optim_params(
   swap_count,
   swap_all_blocks,
   adaptive_swaps,
   start_temp,
   cooling_rate,
-  random_initialisation
+  random_initialisation,
+  adj_weight,
+  bal_weight
 )
 }
 \arguments{
@@ -74,18 +76,6 @@ reproducibility of results (default: \code{NULL}).}
 \item{obj_function}{Objective function used to calculate score (lower is
 better) (default: \code{\link[=objective_function]{objective_function()}}). For hierarchical designs, can
 be a named list with names matching \code{swap}.}
-
-\item{swap_count}{Number of item swaps per iteration (default: 1)}
-
-\item{swap_all_blocks}{Logical; if TRUE, performs swaps in all blocks at each iteration (default: FALSE)}
-
-\item{adaptive_swaps}{Logical; if TRUE, adjusts swap parameters based on temperature (default: FALSE)}
-
-\item{start_temp}{Starting temperature for simulated annealing (default: 100)}
-
-\item{cooling_rate}{Rate at which temperature decreases (default: 0.99)}
-
-\item{random_initialisation}{Number; randomly shuffle items within \code{swap_within} n times (default: 0)}
 }
 \description{
 Verify inputs for the \code{speed} function.

@@ -34,6 +34,8 @@
 #'   be a named list with names matching `swap`.
 #' @param swap_all Logical; Whether to swap all matching items or a single item
 #'   at a time (default: FALSE)
+#' @param optimize_params Parameters used to control the behaviour of
+#'   simulated annealing algorithm. See [optim_params()] for more details.
 #' @param optimise A list of named arguments describing optimising parameters;
 #'   see more in example.
 #' @param quiet Logical; if TRUE, suppresses progress messages (default: FALSE)
@@ -128,18 +130,16 @@
 #'   balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
 #' )
 #'
-#' options(speed.random_initialisation = TRUE, speed.adj_weight = 0)
 #' result <- speed(
 #'   data = df_initial,
 #'   swap = "lines",
 #'   optimise = optimize,
+#'   optimize_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
 #'   seed = 112,
 #'   quiet = TRUE
 #' )
 #'
 #' head(table(result$design_df$lines, result$design_df$site))
-#'
-#' options(speed.random_initialisation = FALSE, speed.adj_weight = 1)
 #'
 #' # Plot the MET design with facets
 #' autoplot(result, treatments = "lines") +
@@ -176,10 +176,6 @@ speed <- function(data,
     }
   }
 
-  # prepare inputs
-  optimize <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
-                                 early_stop_iterations, obj_function, swap_all, optimize_params, optimise)
-
   # Infer row and column columns
   inferred <- infer_row_col(data, grid_factors, quiet)
   row_column <- inferred$row
@@ -198,6 +194,11 @@ speed <- function(data,
   dummy_group <- paste0("dummy_", as.integer(Sys.time()))
   data[[dummy_group]] <- factor(rep(1, nrow(data)))
 
+  # prepare inputs
+  optimize <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
+                                 early_stop_iterations, obj_function, swap_all, optimize_params, optimise,
+                                 inferred$inferred)
+
   # Handle swap_within for each level
   for (level in names(optimize)) {
     opt <- optimize[[level]]
@@ -206,7 +207,7 @@ speed <- function(data,
     }
   }
 
-  design <- speed_hierarchical(data, optimize, quiet, seed, inferred$inferred, row_column = row_column,
+  design <- speed_hierarchical(data, optimize, quiet, seed, row_column = row_column,
                                col_column = col_column, ...)
   design$design_df[[dummy_group]] <- NULL
   design$design_df <- to_types(design$design_df, factored$input_types)
@@ -219,7 +220,7 @@ speed <- function(data,
 #' Speed function for hierarchical designs
 #' @keywords internal
 # fmt: skip
-speed_hierarchical <- function(data, optimize, quiet, seed, row_col_inferred, ...) {
+speed_hierarchical <- function(data, optimize, quiet, seed, ...) {
   # Set seed for reproducibility
   if (is.null(seed)) {
     seed <- .GlobalEnv$.Random.seed[3]
@@ -246,7 +247,7 @@ speed_hierarchical <- function(data, optimize, quiet, seed, row_col_inferred, ..
     start_temp <- optimize_params$start_temp
     swap_count <- optimize_params$swap_count
     swap_all_blocks <- optimize_params$swap_all_blocks
-    adj_weight <- ifelse(row_col_inferred, optimize_params$adj_weight, 0)
+    adj_weight <- optimize_params$adj_weight
     bal_weight <- optimize_params$bal_weight
     spatial_cols <- all.vars(opt$spatial_factors)
 
@@ -343,14 +344,14 @@ speed_hierarchical <- function(data, optimize, quiet, seed, row_col_inferred, ..
   for (level in hierarchy_levels) {
     opt <- optimize[[level]]
     optimize_params <- do.call(optim_params, opt$optimize_params)
-    adj_weight <- ifelse(row_col_inferred, optimize_params$adj_weight, 0)
+    adj_weight <- optimize_params$adj_weight
     bal_weight <- optimize_params$bal_weight
     spatial_cols <- all.vars(opt$spatial_factors)
 
     # treatments and score for each level
     treatments[[level]] <- stringi::stri_sort(unique(as.vector(best_design[[opt$swap]])), numeric = TRUE)
-    level_scores[level] <- opt$obj_function(best_design,opt$swap, spatial_cols, adj_weight = adj_weight,
-                                            bal_weight = bal_weight,...)$score
+    level_scores[level] <- opt$obj_function(best_design, opt$swap, spatial_cols, adj_weight = adj_weight,
+                                            bal_weight = bal_weight, ...)$score
   }
 
   # Check which levels stopped early

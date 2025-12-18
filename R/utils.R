@@ -136,7 +136,8 @@ create_speed_input <- function(swap,
                                obj_function,
                                swap_all,
                                optimize_params,
-                               optimize = NULL) {
+                               optimize = NULL,
+                               row_col_inferred = TRUE) {
   speed_args <- c(
     "swap",
     "swap_within",
@@ -156,12 +157,13 @@ create_speed_input <- function(swap,
           optimize[[optimize_name]][[arg]] <- get(arg)
         }
       }
-    }
-    return(optimize)
-  }
 
-  optimize <- list()
-  if (is.list(swap)) {
+      # if (!row_col_inferred) {
+      #   optimize[[optimize_name]]$optimize_params$adj_weight <- 0
+      # }
+    }
+  } else if (is.list(swap)) {
+    optimize <- list()
     for (optimize_name in names(swap)) {
       optimize[[optimize_name]] <- list(
         swap = swap[[optimize_name]],
@@ -172,7 +174,7 @@ create_speed_input <- function(swap,
           grid_factors
         },
         optimize_params = if (is.list(optimize_params[[1]])) {
-          optimize_params[[optimize_name]]
+          optimize_params[[optimize_name]] %||% list()
         } else {
           optimize_params
         }
@@ -192,6 +194,7 @@ create_speed_input <- function(swap,
       }
     }
   } else {
+    optimize <- list()
     optimize_name <- paste(
       ifelse(swap_all, "all", "single"),
       swap,
@@ -211,6 +214,12 @@ create_speed_input <- function(swap,
       swap_all = swap_all,
       optimize_params = optimize_params
     )
+  }
+
+  if (!row_col_inferred) {
+    for (optimize_name in names(optimize)) {
+      optimize[[optimize_name]]$optimize_params$adj_weight <- 0
+    }
   }
 
   return(optimize)

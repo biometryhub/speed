@@ -375,7 +375,16 @@ random_initialize <- function(design, optimise, seed = NULL, ...) {
     current_score <- 0
     for (opt in optimise) {
       spatial_cols <- all.vars(opt$spatial_factors)
-      current_score <- current_score + opt$obj_function(shuffled_design, opt$swap, spatial_cols, ...)$score
+      adj_weight <- opt$optimize_params$adj_weight
+      bal_weight <- opt$optimize_params$bal_weight
+      current_score <- current_score + opt$obj_function(
+        shuffled_design,
+        opt$swap,
+        spatial_cols,
+        adj_weight = adj_weight,
+        bal_weight = bal_weight,
+        ...
+      )$score
     }
 
     if (current_score < best_score) {

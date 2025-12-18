@@ -47,18 +47,7 @@ optim_params <- function(swap_count = 1,
   )
 
   # check legacy options
-  option_names <- c(
-    "swap_count",
-    "swap_all_blocks",
-    "adaptive_swaps",
-    "start_temp",
-    "cooling_rate",
-    "random_initialisation",
-    "adj_weight",
-    "bal_weight"
-  )
-  legacy_options <- setNames(vector("list", length(option_names)), option_names)
-
+  legacy_options <- setNames(vector("list", length(params)), names(params))
   is_legacy <- FALSE
   for (legacy_option in names(legacy_options)) {
     option <- getOption(paste0("speed.", legacy_option))

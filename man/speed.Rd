@@ -15,6 +15,7 @@ speed(
   obj_function = objective_function,
   swap_all = FALSE,
   optimise = NULL,
+  optimize_params = optim_params(),
   quiet = FALSE,
   seed = NULL,
   ...
@@ -61,6 +62,9 @@ at a time (default: FALSE)}
 
 \item{optimise}{A list of named arguments describing optimising parameters;
 see more in example.}
+
+\item{optimize_params}{Parameters used to control the behaviour of
+simulated annealing algorithm. See \code{\link[=optim_params]{optim_params()}} for more details.}
 
 \item{quiet}{Logical; if TRUE, suppresses progress messages (default: FALSE)}
 
@@ -159,18 +163,16 @@ optimize <- list(
   balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
 )
 
-options(speed.random_initialisation = TRUE, speed.adj_weight = 0)
 result <- speed(
   data = df_initial,
   swap = "lines",
   optimise = optimize,
+  optimize_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
   seed = 112,
   quiet = TRUE
 )
 
 head(table(result$design_df$lines, result$design_df$site))
-
-options(speed.random_initialisation = FALSE, speed.adj_weight = 1)
 
 # Plot the MET design with facets
 autoplot(result, treatments = "lines") +

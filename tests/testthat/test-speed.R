@@ -1939,6 +1939,7 @@ test_that("print.design handles different stopped_early formats", {
                               swap_within = list(wp = "block", sp = "wholeplot_treatment"),
                               spatial_factors = ~ row + col,
                               iterations = list(wp = 30, sp = 30),
+                              optimize_params = list(wp = optim_params(adj_weight = 0)),
                               seed = 42,
                               quiet = TRUE)
 
@@ -1966,6 +1967,7 @@ test_that("print.design displays correct treatment counts and names", {
     swap_within = "1",
     spatial_factors = ~ row + col,
     iterations = 50,
+    optimize_params = optim_params(adj_weight = 0),
     seed = 42,
     quiet = TRUE
   )
