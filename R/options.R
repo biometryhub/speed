@@ -1,4 +1,4 @@
-#' Package Options for `speed`
+#' Package Options for `speed` (Deprecated)
 #'
 #' This page describes the options you can set to control the behaviour of the `speed`
 #' package, especially technical options in the `speed()` function controlling the
@@ -35,5 +35,5 @@
 #' options(speed.swap_count = 5, speed.swap_all_blocks = TRUE)
 #' ```
 #'
-#' @name speed-options
+#' @name speed-options-deprecated
 NULL

@@ -32,4 +32,5 @@ reference:
       - add_buffers
   - title: Advanced options
   - contents:
+      - optim_params
       - speed-options
