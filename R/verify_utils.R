@@ -148,6 +148,10 @@ is_whole_number <- function(x, tol = default_tolerance) {
   return(abs(x - round(x)) < tol)
 }
 
+is_single_numeric <- function(x) {
+  return(is.numeric(x) && length(x) == 1)
+}
+
 is_positive_whole_numbers <- function(x, tol = default_tolerance) {
   if (!all(is_positive_whole_number(x, tol))) {
     return(FALSE)
@@ -243,7 +247,7 @@ verify_list <- function(..., var_names = NULL) {
 }
 
 verify_numeric <- function(..., var_names = NULL) {
-  verify_data_type(is.numeric, "a numeric", var_names, ...)
+  verify_data_type(is_single_numeric, "a numeric", var_names, ...)
 }
 
 verify_positive_whole_numbers <- function(..., var_names = NULL) {

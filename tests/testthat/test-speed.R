@@ -2042,6 +2042,42 @@ test_that("speed runs with n random initialisation", {
   expect_equal(sort(result$design_df$treatment), sort(df$treatment))
 })
 
+test_that("speed runs with legacy options(speed.{option})", {
+  # Sample data for testing
+  test_data <- data.frame(
+    row = rep(1:5, times = 4),
+    col = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 1000,
+    optimize_params = optim_params(random_initialisation = TRUE),
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # expect deprecated warning
+  withr::with_options(list(speed.random_initialisation = TRUE), suppressWarnings(expect_warning(
+    {
+      result_legacy <- speed(
+        data = test_data,
+        swap = "treatment",
+        spatial_factors = ~ row + col,
+        iterations = 1000,
+        seed = 42,
+        quiet = TRUE
+      )
+    },
+    "Setting options with `options\\(speed.\\{option\\}=...\\)` is deprecated. Please use `optim_params\\(\\)` instead."
+  )))
+
+  expect_true(isTRUE(all.equal(result_legacy, result)))
+})
+
 # TODO: Test cases to add/update
 # - Add more detailed checking of current designs
 # - NSE
@@ -2052,4 +2088,3 @@ test_that("speed runs with n random initialisation", {
 # - Objective function not numeric result
 # - swap_all_blocks
 # - Print method output
-

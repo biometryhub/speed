@@ -47,14 +47,12 @@ optim_params <- function(swap_count = 1,
   )
 
   # check legacy options
-  legacy_options <- setNames(vector("list", length(params)), names(params))
   is_legacy <- FALSE
-  for (legacy_option in names(legacy_options)) {
-    option <- getOption(paste0("speed.", legacy_option))
-    legacy_options[[legacy_option]] <- option
-    if (!is.null(option)) {
+  for (option in names(params)) {
+    legacy_option <- getOption(paste0("speed.", option))
+    if (!is.null(legacy_option)) {
       is_legacy <- TRUE
-      params[[legacy_option]] <- option
+      params[[option]] <- legacy_option
     }
   }
 
