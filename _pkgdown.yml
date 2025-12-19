@@ -33,4 +33,4 @@ reference:
   - title: Advanced options
   - contents:
       - optim_params
-      - speed-options
+      - speed-options-deprecated
