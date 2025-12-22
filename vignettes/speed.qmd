@@ -279,6 +279,79 @@ split_plot_result <- speed(split_plot_design,
 split_plot_result
 ```
 
+# MET Design
+
+## Overview
+
+Multi-environment trials (MET) are experimental designs used to evaluate the performance of treatments across different environments. An environment typically represents a unique combination of location, year, season, or management practice. MET designs are essential for understanding genotype × environment (G×E) interactions, stability, and adaptability of treatments under different conditions.
+
+## When to Use
+
+- Treatment evaluation across multiple locations and/or years
+- Crop breeding and regional recommendation trials
+- Testing stability and adaptability
+- When results are intended for large geographic areas
+
+## Structure
+
+- **Sites**: Different locations of the trial
+- **Site-blocks**: Blocks within sites
+
+## Setting Up MET Design with speed
+
+Now we can create a data frame representing a MET design. Note that the `initalise_design_df` function does not currently support split plot designs directly, so we will create it manually.
+
+```{r met-df}
+all_treatments <- c(rep(1:50, 7), rep(51:57, 8))
+met_design <- initialise_design_df(
+  items = all_treatments,
+  designs = list(
+    a = list(nrows = 28, ncols = 5, block_nrows = 7, block_ncols = 5),
+    b = list(nrows = 20, ncols = 3, block_nrows = 10, block_ncols = 3),
+    c = list(nrows = 20, ncols = 4, block_nrows = 10, block_ncols = 4),
+    d = list(nrows = 15, ncols = 4, block_nrows = 5, block_ncols = 4),
+    e = list(nrows = 22, ncols = 3, block_nrows = 11, block_ncols = 3)
+  )
+)
+head(met_design)
+```
+
+```{r met-plot1}
+#| echo: false
+met_design$block <- factor(met_design$block)
+
+ggplot2::ggplot(met_design, aes(col, row, fill = block)) +
+  ggplot2::geom_tile(color = "black") +
+  ggplot2::scale_fill_viridis_d() +
+  ggplot2::facet_wrap(~site) +
+  ggplot2::scale_x_continuous(expand = c(0, 0), breaks = 1:max(met_design$col)) +
+  ggplot2::scale_y_continuous(expand = c(0, 0), breaks = 1:max(met_design$row), trans = scales::reverse_trans()) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank())
+```
+
+### Performing the Optimisation
+
+For MET designs, we use named lists to specify the hierarchical structure. The `swap` parameter defines what to optimise at each level, while `swap_within` defines the constraints for each level.
+
+```{r met-example}
+optimize <- list(
+  connectivity = list(spatial_factors = ~site),
+  balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+)
+
+met_result <- speed(
+  data = df_initial,
+  swap = "treatment",
+  early_stop_iterations = 5000,
+  optimise = optimize,
+  optimize_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
+  seed = 112
+)
+
+met_result
+```
+
 ### Output of the Optimisation
 
 The output shows optimisation results for the design. The score and iterations are combined for the entire design, while the treatments, and stopping criteria are reported separately for each level, allowing you to assess the quality of optimisation at each hierarchy level.
