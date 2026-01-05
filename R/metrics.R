@@ -70,6 +70,38 @@ objective_function <- function(layout_df,
   ))
 }
 
+#' Objective Function for Factorial Design Optimization
+#'
+#' @inheritParams objective_function
+#' @inheritDotParams objective_function
+#' @param factorial_separator A character used to separate treatments in the factorial design (default: "-")
+#'
+#' @export
+# fmt: skip
+objective_function_factorial <- function(layout_df,
+                                         swap,
+                                         spatial_cols,
+                                         factorial_separator = "-",
+                                         ...) {
+  subtreatments <- strsplit(as.character(layout_df[[swap]]), factorial_separator) |>
+    unlist() |>
+    matrix(ncol = 2, byrow = TRUE)
+
+  now <- as.numeric(Sys.time())
+  treatment_a <- paste0("treatment_", now)
+  treatment_b <- paste0("treatment_", now + 1)
+
+  layout_df[[treatment_a]] <- subtreatments[, 1]
+  layout_df[[treatment_b]] <- subtreatments[, 2]
+
+  treatment_score <- calculate_balance_score(layout_df, swap, spatial_cols)
+  subtreatment_scores <- vapply(c(treatment_a, treatment_b), function(treatment) {
+    objective_function(layout_df, treatment, spatial_cols, adj_weight = adj_weight, ...)$score
+  }, numeric(1))
+
+  return(list(score = sum(subtreatment_scores) + treatment_score))
+}
+
 #' Calculate Balance Score for Experimental Design
 #'
 #' @description
