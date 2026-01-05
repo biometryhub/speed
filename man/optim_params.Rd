@@ -49,3 +49,6 @@ A named list of optimization parameters.
 Create and verify optimization parameters. These parameters are used to control the behaviour of
 simulated annealing algorithm.
 }
+\seealso{
+\code{\link[=speed]{speed()}} for examples
+}
