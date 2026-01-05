@@ -25,7 +25,8 @@
 #'
 #' @returns A named list of optimization parameters.
 #'
-#' @examples
+#' @seealso [speed()] for examples
+#'
 #' @export
 optim_params <- function(swap_count = 1,
                          swap_all_blocks = FALSE,
