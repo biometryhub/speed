@@ -279,6 +279,23 @@ split_plot_result <- speed(split_plot_design,
 split_plot_result
 ```
 
+### Output of the Optimisation
+
+The output shows optimisation results for the design. The score and iterations are combined for the entire design, while the treatments, and stopping criteria are reported separately for each level, allowing you to assess the quality of optimisation at each hierarchy level.
+
+```{r split-plot-output}
+str(split_plot_result)
+```
+
+### Visualise the Output
+
+```{r split-plot-plot2}
+autoplot(split_plot_result, treatments = "wholeplot_treatment")
+autoplot(split_plot_result, treatments = "subplot_treatment", block = "wholeplot")
+```
+
+This design has now been optimised at both the whole plot level and the sub-plot level.
+
 # MET Design
 
 ## Overview
@@ -313,6 +330,10 @@ met_design <- initialise_design_df(
     e = list(nrows = 22, ncols = 3, block_nrows = 11, block_ncols = 3)
   )
 )
+
+met_design$site_col <- paste(met_design$site, met_design$col, sep = "_")
+met_design$site_block <- paste(met_design$site, met_design$block, sep = "_")
+
 head(met_design)
 ```
 
@@ -320,19 +341,19 @@ head(met_design)
 #| echo: false
 met_design$block <- factor(met_design$block)
 
-ggplot2::ggplot(met_design, aes(col, row, fill = block)) +
-  ggplot2::geom_tile(color = "black") +
-  ggplot2::scale_fill_viridis_d() +
-  ggplot2::facet_wrap(~site) +
-  ggplot2::scale_x_continuous(expand = c(0, 0), breaks = 1:max(met_design$col)) +
-  ggplot2::scale_y_continuous(expand = c(0, 0), breaks = 1:max(met_design$row), trans = scales::reverse_trans()) +
-  ggplot2::theme_bw() +
-  ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank())
+ggplot2::ggplot(met_design, ggplot2::aes(col, row, fill = block)) +
+    ggplot2::geom_tile(color = "black") +
+    ggplot2::scale_fill_viridis_d() +
+    ggplot2::facet_wrap(~site) +
+    ggplot2::scale_x_continuous(expand = c(0, 0), breaks = 1:max(met_design$col)) +
+    ggplot2::scale_y_continuous(expand = c(0, 0), breaks = 1:max(met_design$row), trans = scales::reverse_trans()) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank())
 ```
 
 ### Performing the Optimisation
 
-For MET designs, we use named lists to specify the hierarchical structure. The `swap` parameter defines what to optimise at each level, while `swap_within` defines the constraints for each level.
+For MET designs, we use lists of named arguments to specify the hierarchical structure. The `optimise` parameter defines what to optimise and constraints at each level.
 
 ```{r met-example}
 optimize <- list(
@@ -341,7 +362,7 @@ optimize <- list(
 )
 
 met_result <- speed(
-  data = df_initial,
+  data = met_design,
   swap = "treatment",
   early_stop_iterations = 5000,
   optimise = optimize,
@@ -356,18 +377,28 @@ met_result
 
 The output shows optimisation results for the design. The score and iterations are combined for the entire design, while the treatments, and stopping criteria are reported separately for each level, allowing you to assess the quality of optimisation at each hierarchy level.
 
-```{r split-plot-output}
-str(split_plot_result)
+```{r met-output}
+str(met_result)
 ```
 
 ### Visualise the Output
 
-```{r split-plot-plot2}
-autoplot(split_plot_result, treatments = "wholeplot_treatment")
-autoplot(split_plot_result, treatments = "subplot_treatment", block = "wholeplot")
+```{r met-plot2}
+ggplot2::ggplot(met_result$design_df, ggplot2::aes(col, row, fill = treatment)) +
+  ggplot2::geom_tile(color = "black") +
+  ggplot2::scale_fill_viridis_c() +
+  ggplot2::facet_wrap(~site) +
+  ggplot2::scale_x_continuous(expand = c(0, 0), breaks = 1:max(met_design$col)) +
+  ggplot2::scale_y_continuous(expand = c(0, 0), breaks = 1:max(met_design$row), trans = scales::reverse_trans()) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(
+    legend.position = "none",
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank()
+  )
 ```
 
-This design has now been optimised at both the whole plot level and the sub-plot level.
+This design has now been optimised at both the connectivity between sites and the balance within each site.
 
 # Spatial Design Considerations
 
