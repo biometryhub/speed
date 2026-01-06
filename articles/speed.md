@@ -564,7 +564,7 @@ optimisation.
 Consider including buffer areas or border plots to:
 
 - Reduce edge effects
-- minimise contamination between treatments
+- Minimise contamination between treatments
 - Provide realistic growing conditions
 
 ## Using `speed` Effectively
