@@ -296,110 +296,6 @@ autoplot(split_plot_result, treatments = "subplot_treatment", block = "wholeplot
 
 This design has now been optimised at both the whole plot level and the sub-plot level.
 
-# MET Design
-
-## Overview
-
-Multi-environment trials (MET) are experimental designs used to evaluate the performance of treatments across different environments. An environment typically represents a unique combination of location, year, season, or management practice. MET designs are essential for understanding genotype × environment (G×E) interactions, stability, and adaptability of treatments under different conditions.
-
-## When to Use
-
-- Treatment evaluation across multiple locations and/or years
-- Crop breeding and regional recommendation trials
-- Testing stability and adaptability
-- When results are intended for large geographic areas
-
-## Structure
-
-- **Sites**: Different locations of the trial
-- **Site-blocks**: Blocks within sites
-
-## Setting Up MET Design with speed
-
-Now we can create a data frame representing a MET design. Note that the `initalise_design_df` function does not currently support split plot designs directly, so we will create it manually.
-
-```{r met-df}
-all_treatments <- c(rep(1:50, 7), rep(51:57, 8))
-met_design <- initialise_design_df(
-  items = all_treatments,
-  designs = list(
-    a = list(nrows = 28, ncols = 5, block_nrows = 7, block_ncols = 5),
-    b = list(nrows = 20, ncols = 3, block_nrows = 10, block_ncols = 3),
-    c = list(nrows = 20, ncols = 4, block_nrows = 10, block_ncols = 4),
-    d = list(nrows = 15, ncols = 4, block_nrows = 5, block_ncols = 4),
-    e = list(nrows = 22, ncols = 3, block_nrows = 11, block_ncols = 3)
-  )
-)
-
-met_design$site_col <- paste(met_design$site, met_design$col, sep = "_")
-met_design$site_block <- paste(met_design$site, met_design$block, sep = "_")
-
-head(met_design)
-```
-
-```{r met-plot1}
-#| echo: false
-met_design$block <- factor(met_design$block)
-
-ggplot2::ggplot(met_design, ggplot2::aes(col, row, fill = block)) +
-    ggplot2::geom_tile(color = "black") +
-    ggplot2::scale_fill_viridis_d() +
-    ggplot2::facet_wrap(~site) +
-    ggplot2::scale_x_continuous(expand = c(0, 0), breaks = 1:max(met_design$col)) +
-    ggplot2::scale_y_continuous(expand = c(0, 0), breaks = 1:max(met_design$row), trans = scales::reverse_trans()) +
-    ggplot2::theme_bw() +
-    ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank())
-```
-
-### Performing the Optimisation
-
-For MET designs, we use lists of named arguments to specify the hierarchical structure. The `optimise` parameter defines what to optimise and constraints at each level.
-
-```{r met-example}
-optimize <- list(
-  connectivity = list(spatial_factors = ~site),
-  balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
-)
-
-met_result <- speed(
-  data = met_design,
-  swap = "treatment",
-  early_stop_iterations = 5000,
-  optimise = optimize,
-  optimize_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
-  seed = 112
-)
-
-met_result
-```
-
-### Output of the Optimisation
-
-The output shows optimisation results for the design. The score and iterations are combined for the entire design, while the treatments, and stopping criteria are reported separately for each level, allowing you to assess the quality of optimisation at each hierarchy level.
-
-```{r met-output}
-str(met_result)
-```
-
-### Visualise the Output
-
-```{r met-plot2}
-ggplot2::ggplot(met_result$design_df, ggplot2::aes(col, row, fill = treatment)) +
-  ggplot2::geom_tile(color = "black") +
-  ggplot2::scale_fill_viridis_c() +
-  ggplot2::facet_wrap(~site) +
-  ggplot2::scale_x_continuous(expand = c(0, 0), breaks = 1:max(met_design$col)) +
-  ggplot2::scale_y_continuous(expand = c(0, 0), breaks = 1:max(met_design$row), trans = scales::reverse_trans()) +
-  ggplot2::theme_bw() +
-  ggplot2::theme(
-    legend.position = "none",
-    panel.grid.major = ggplot2::element_blank(),
-    panel.grid.minor = ggplot2::element_blank()
-  )
-```
-
-This design has now been optimised at both the connectivity between sites and the balance within each site.
-
 # Spatial Design Considerations
 
 ## Field Shape and Orientation
@@ -425,7 +321,7 @@ The `speed` package specifically addresses these issues through spatial optimisa
 Consider including buffer areas or border plots to:
 
 - Reduce edge effects
-- minimise contamination between treatments
+- Minimise contamination between treatments
 - Provide realistic growing conditions
 
 # Using `speed` Effectively
