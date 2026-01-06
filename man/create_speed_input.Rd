@@ -13,7 +13,9 @@ create_speed_input(
   early_stop_iterations,
   obj_function,
   swap_all,
-  optimize = NULL
+  optimise_params,
+  optimise = NULL,
+  row_col_inferred = TRUE
 )
 }
 \arguments{
@@ -51,6 +53,12 @@ be a named list with names matching \code{swap}.}
 
 \item{swap_all}{Logical; Whether to swap all matching items or a single item
 at a time (default: FALSE)}
+
+\item{optimise_params}{Parameters used to control the behaviour of
+simulated annealing algorithm. See \code{\link[=optim_params]{optim_params()}} for more details.}
+
+\item{optimise}{A list of named arguments describing optimising parameters;
+see more in example.}
 }
 \description{
 Create Input for Internal speed Function

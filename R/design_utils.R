@@ -60,11 +60,11 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
         # Select two random plots in this block
         swap_pair <- sample(block_indices, 2)
         to_be_swapped <- new_design[[swap]][swap_pair]
-        
+
         # If both plots have the same treatment, try to find a different one
         if (to_be_swapped[1] == to_be_swapped[2]) {
           different_indices <- block_indices[new_design[[swap]][block_indices] != to_be_swapped[1]]
-          
+
           # Only proceed with swap if different treatments are available
           if (length(different_indices) > 0) {
             swap_pair[[2]] <- sample(different_indices, 1)
@@ -122,7 +122,7 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
           # Skip this swap - only one treatment in this group
           next
         }
-        
+
         # Select two different treatments
         # Use sample with replace=FALSE to ensure they're different
         swap_pair <- sample(group_treatments, 2, replace = FALSE)
@@ -347,7 +347,7 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
   return(design)
 }
 
-#' Random Initialize
+#' Random Initialise
 #'
 #' @description
 #' Randomly shuffle items with [shuffle_items] n times and return the best design.
@@ -357,8 +357,8 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
 #' @return A data frame with the items shuffled
 #'
 #' @keywords internal
-random_initialize <- function(design, optimise, seed = NULL, ...) {
-  random_initialisation <- getOption("speed.random_initialisation", 0)
+random_initialise <- function(design, optimise, seed = NULL, ...) {
+  random_initialisation <- optimise[[1]]$optimise_params$random_initialisation
   if (random_initialisation == 0) {
     return(design)
   }
@@ -375,7 +375,16 @@ random_initialize <- function(design, optimise, seed = NULL, ...) {
     current_score <- 0
     for (opt in optimise) {
       spatial_cols <- all.vars(opt$spatial_factors)
-      current_score <- current_score + opt$obj_function(shuffled_design, opt$swap, spatial_cols, ...)$score
+      adj_weight <- opt$optimise_params$adj_weight
+      bal_weight <- opt$optimise_params$bal_weight
+      current_score <- current_score + opt$obj_function(
+        shuffled_design,
+        opt$swap,
+        spatial_cols,
+        adj_weight = adj_weight,
+        bal_weight = bal_weight,
+        ...
+      )$score
     }
 
     if (current_score < best_score) {

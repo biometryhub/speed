@@ -34,6 +34,8 @@
 #'   be a named list with names matching `swap`.
 #' @param swap_all Logical; Whether to swap all matching items or a single item
 #'   at a time (default: FALSE)
+#' @param optimise_params Parameters used to control the behaviour of
+#'   simulated annealing algorithm. See [optim_params()] for more details.
 #' @param optimise A list of named arguments describing optimising parameters;
 #'   see more in example.
 #' @param quiet Logical; if TRUE, suppresses progress messages (default: FALSE)
@@ -123,23 +125,21 @@
 #' df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
 #' df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
 #'
-#' optimize <- list(
+#' optimise <- list(
 #'   connectivity = list(spatial_factors = ~site),
 #'   balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
 #' )
 #'
-#' options(speed.random_initialisation = TRUE, speed.adj_weight = 0)
 #' result <- speed(
 #'   data = df_initial,
 #'   swap = "lines",
-#'   optimise = optimize,
+#'   optimise = optimise,
+#'   optimise_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
 #'   seed = 112,
 #'   quiet = TRUE
 #' )
 #'
 #' head(table(result$design_df$lines, result$design_df$site))
-#'
-#' options(speed.random_initialisation = FALSE, speed.adj_weight = 1)
 #'
 #' # Plot the MET design with facets
 #' autoplot(result, treatments = "lines") +
@@ -158,6 +158,7 @@ speed <- function(data,
                   obj_function = objective_function,
                   swap_all = FALSE,
                   optimise = NULL,
+                  optimise_params = optim_params(),
                   quiet = FALSE,
                   seed = NULL,
                   ...) {
@@ -175,10 +176,6 @@ speed <- function(data,
     }
   }
 
-  # prepare inputs
-  optimize <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
-                                 early_stop_iterations, obj_function, swap_all, optimise)
-
   # Infer row and column columns
   inferred <- infer_row_col(data, grid_factors, quiet)
   row_column <- inferred$row
@@ -188,12 +185,7 @@ speed <- function(data,
   factored <- to_factor(data)
   data <- factored$df
 
-  if (!inferred$inferred) {
-    # If row and column columns are not inferred, set adj_weight to 0
-    old_options <- options()
-    on.exit(options(old_options), add = TRUE)
-    options(speed.adj_weight = 0)
-  } else {
+  if (inferred$inferred) {
     # Sort the data frame to start with to ensure consistency in calculating the adjacency later
     data <- data[do.call(order, data[c(row_column, col_column)]), ]
   }
@@ -202,42 +194,40 @@ speed <- function(data,
   dummy_group <- paste0("dummy_", as.integer(Sys.time()))
   data[[dummy_group]] <- factor(rep(1, nrow(data)))
 
+  # prepare inputs
+  optimise <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
+                                 early_stop_iterations, obj_function, swap_all, optimise_params, optimise,
+                                 inferred$inferred)
+
   # Handle swap_within for each level
-  for (level in names(optimize)) {
-    opt <- optimize[[level]]
+  for (level in names(optimise)) {
+    opt <- optimise[[level]]
     if (opt$swap_within == "1" || opt$swap_within == "none") {
-      optimize[[level]]$swap_within <- dummy_group
+      optimise[[level]]$swap_within <- dummy_group
     }
   }
 
-  design <- speed_hierarchical(data, optimize, quiet, seed, row_column = row_column, col_column = col_column,
-                               ...)
+  design <- speed_hierarchical(data, optimise, quiet, seed, row_column = row_column,
+                               col_column = col_column, ...)
   design$design_df[[dummy_group]] <- NULL
   design$design_df <- to_types(design$design_df, factored$input_types)
 
+  # to print deprecate warning at the end
+  optim_params()
   return(design)
 }
 
 #' Speed function for hierarchical designs
 #' @keywords internal
 # fmt: skip
-speed_hierarchical <- function(data, optimize, quiet, seed, ...) {
-  swap_count <- getOption("speed.swap_count", 1)
-  swap_all_blocks <- getOption("speed.swap_all_blocks", FALSE)
-  adaptive_swaps <- getOption("speed.adaptive_swaps", FALSE)
-  start_temp <- getOption("speed.start_temp", 100)
-  cooling_rate <- getOption("speed.cooling_rate", 0.99)
-  random_initialisation <- as.numeric(getOption("speed.random_initialisation", 0))
-  .verify_speed_options(swap_count, swap_all_blocks, adaptive_swaps, start_temp, cooling_rate,
-                        random_initialisation)
-
+speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   # Set seed for reproducibility
   if (is.null(seed)) {
     seed <- .GlobalEnv$.Random.seed[3]
   }
 
-  hierarchy_levels <- names(optimize)
-  layout_df <- random_initialize(data, optimize, seed, ...)
+  hierarchy_levels <- names(optimise)
+  layout_df <- random_initialise(data, optimise, seed, ...)
 
   # Initialise design
   current_design <- layout_df
@@ -252,11 +242,18 @@ speed_hierarchical <- function(data, optimize, quiet, seed, ...) {
   set.seed(seed)
   for (level in hierarchy_levels) {
     if (!quiet) cat("Optimising level:", level, "\n")
-    opt <- optimize[[level]]
+    opt <- optimise[[level]]
+    optimise_params <- do.call(optim_params, opt$optimise_params)
+    start_temp <- optimise_params$start_temp
+    swap_count <- optimise_params$swap_count
+    swap_all_blocks <- optimise_params$swap_all_blocks
+    adj_weight <- optimise_params$adj_weight
+    bal_weight <- optimise_params$bal_weight
     spatial_cols <- all.vars(opt$spatial_factors)
 
     # Calculate initial score for this level
-    current_score_obj <- opt$obj_function(current_design, opt$swap, spatial_cols, ...)
+    current_score_obj <- opt$obj_function(current_design, opt$swap, spatial_cols, adj_weight = adj_weight,
+                                          bal_weight = bal_weight, ...)
     current_score <- current_score_obj$score
 
     if (!is.numeric(current_score)) {
@@ -275,7 +272,7 @@ speed_hierarchical <- function(data, optimize, quiet, seed, ...) {
       scores[iter] <- current_score
       temperatures[iter] <- temp
 
-      if (adaptive_swaps) {
+      if (optimise_params$adaptive_swaps) {
         current_swap_count <- max(1, round(swap_count * temp / start_temp))
         current_swap_all_blocks <- runif(1) < (temp / start_temp) && swap_all_blocks
       } else {
@@ -284,20 +281,13 @@ speed_hierarchical <- function(data, optimize, quiet, seed, ...) {
       }
 
       # Generate new design by swapping treatments at this level
-      new_design <- generate_neighbour(current_design,
-                                       opt$swap,
-                                       opt$swap_within,
-                                       current_swap_count,
-                                       current_swap_all_blocks,
-                                       opt$swap_all)
+      new_design <- generate_neighbour(current_design,opt$swap, opt$swap_within, current_swap_count,
+                                       current_swap_all_blocks,opt$swap_all)
 
       # Calculate new score
-      new_score_obj <- opt$obj_function(new_design$design,
-                                        opt$swap,
-                                        spatial_cols,
-                                        current_score_obj = current_score_obj,
-                                        swapped_items = new_design$swapped_items,
-                                        ...)
+      new_score_obj <- opt$obj_function(new_design$design,opt$swap, spatial_cols, adj_weight = adj_weight,
+                                        bal_weight = bal_weight, current_score_obj = current_score_obj,
+                                        swapped_items = new_design$swapped_items,...)
       new_score <- new_score_obj$score
 
       # Decide whether to accept the new design
@@ -314,7 +304,7 @@ speed_hierarchical <- function(data, optimize, quiet, seed, ...) {
       }
 
       # Cool temperature
-      temp <- temp * cooling_rate
+      temp <- temp * optimise_params$cooling_rate
 
       # Progress reporting
       if (!quiet && iter %% 1000 == 0) {
@@ -352,16 +342,21 @@ speed_hierarchical <- function(data, optimize, quiet, seed, ...) {
   treatments <- list()
   level_scores <- numeric()
   for (level in hierarchy_levels) {
-    opt <- optimize[[level]]
+    opt <- optimise[[level]]
+    optimise_params <- do.call(optim_params, opt$optimise_params)
+    adj_weight <- optimise_params$adj_weight
+    bal_weight <- optimise_params$bal_weight
+    spatial_cols <- all.vars(opt$spatial_factors)
 
     # treatments and score for each level
     treatments[[level]] <- stringi::stri_sort(unique(as.vector(best_design[[opt$swap]])), numeric = TRUE)
-    level_scores[level] <- opt$obj_function(best_design, opt$swap, all.vars(opt$spatial_factors), ...)$score
+    level_scores[level] <- opt$obj_function(best_design, opt$swap, spatial_cols, adj_weight = adj_weight,
+                                            bal_weight = bal_weight, ...)$score
   }
 
   # Check which levels stopped early
   stopped_early <- sapply(hierarchy_levels, function(level) {
-    length(all_scores[[level]]) < optimize[[level]]$iterations
+    length(all_scores[[level]]) < optimise[[level]]$iterations
   })
   names(stopped_early) <- hierarchy_levels
 

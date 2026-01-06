@@ -129,17 +129,17 @@ test_that("create_buffers throws error for invalid buffer type", {
 })
 
 # Integration tests with speed() function
-test_that("create_buffers works with speed optimized designs", {
+test_that("create_buffers works with speed optimised designs", {
   df <- data.frame(
     row = rep(1:3, each = 3),
     col = rep(1:3, times = 3),
     treatment = rep(LETTERS[1:3], 3)
   )
 
-  # Run speed optimization with few iterations
+  # Run speed optimisation with few iterations
   result <- speed(df, swap = "treatment", iterations = 100, quiet = TRUE, seed = 42)
 
-  # Add edge buffers to optimized design
+  # Add edge buffers to optimised design
   buffered_design <- add_buffers(result, type = "edge")
 
   # Check that buffers were added
@@ -153,14 +153,14 @@ test_that("create_buffers works with speed optimized designs", {
   expect_equal(original_treatments, buffered_treatments)
 })
 
-test_that("add_buffers preserves optimization results", {
+test_that("add_buffers preserves optimisation results", {
   df <- data.frame(
     row = rep(1:4, each = 2),
     col = rep(1:2, times = 4),
     treatment = rep(LETTERS[1:4], 2)
   )
 
-  # Run speed optimization
+  # Run speed optimisation
   result <- speed(df, swap = "treatment", iterations = 50, quiet = TRUE, seed = 123)
 
   # Store original score and seed
@@ -176,14 +176,14 @@ test_that("add_buffers preserves optimization results", {
   expect_equal(buffered_result$iterations_run, result$iterations_run)
 })
 
-test_that("autoplot renders speed optimized design with edge buffers", {
+test_that("autoplot renders speed optimised design with edge buffers", {
   df <- data.frame(
     row = rep(1:3, each = 3),
     col = rep(1:3, times = 3),
     treatment = rep(LETTERS[1:3], 3)
   )
 
-  # Run speed optimization
+  # Run speed optimisation
   result <- speed(df, swap = "treatment", iterations = 100, quiet = TRUE, seed = 42)
 
   # Add edge buffers
@@ -196,10 +196,10 @@ test_that("autoplot renders speed optimized design with edge buffers", {
   expect_contains(class(p), "ggplot")
 
   # Visual regression test
-  vdiffr::expect_doppelganger("speed-optimized-edge-buffers", p)
+  vdiffr::expect_doppelganger("speed-optimised-edge-buffers", p)
 })
 
-test_that("autoplot renders speed optimized design with row buffers", {
+test_that("autoplot renders speed optimised design with row buffers", {
   skip_if_not_installed("vdiffr")
 
   df <- data.frame(
@@ -214,10 +214,10 @@ test_that("autoplot renders speed optimized design with row buffers", {
   p <- autoplot(buffered_result)
   expect_s3_class(p, "ggplot")
 
-  vdiffr::expect_doppelganger("speed-optimized-row-buffers", p)
+  vdiffr::expect_doppelganger("speed-optimised-row-buffers", p)
 })
 
-test_that("autoplot renders speed optimized design with column buffers", {
+test_that("autoplot renders speed optimised design with column buffers", {
   skip_if_not_installed("vdiffr")
 
   df <- data.frame(
@@ -232,7 +232,7 @@ test_that("autoplot renders speed optimized design with column buffers", {
   p <- autoplot(buffered_result)
   expect_s3_class(p, "ggplot")
 
-  vdiffr::expect_doppelganger("speed-optimized-column-buffers", p)
+  vdiffr::expect_doppelganger("speed-optimised-column-buffers", p)
 })
 
 test_that("autoplot renders blocked design with buffers", {
@@ -253,7 +253,7 @@ test_that("autoplot renders blocked design with buffers", {
   p <- autoplot(buffered_result)
   expect_s3_class(p, "ggplot")
 
-  vdiffr::expect_doppelganger("speed-optimized-blocked-buffers", p)
+  vdiffr::expect_doppelganger("speed-optimised-blocked-buffers", p)
 })
 
 test_that("buffers work with different palette options", {

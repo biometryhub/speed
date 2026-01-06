@@ -123,37 +123,37 @@ test_that("objective_function works with single treatment", {
   expect_equal(result$score, 12)
 })
 
-test_that("objective_function uses speed options correctly", {
-  layout_df <- data.frame(
-    row = rep(1:3, each = 3),
-    col = rep(1:3, times = 3),
-    treatment = rep(letters[1:3], 3)
-  )
-
-  # Set options
-  old_adj <- getOption("speed.adj_weight")
-  old_bal <- getOption("speed.bal_weight")
-
-  options(speed.adj_weight = 3, speed.bal_weight = 0.2)
-
-  result_with_options <- objective_function(layout_df, "treatment", c("row", "col"))
-  result_explicit <- objective_function(layout_df, "treatment", c("row", "col"),
-                                        adj_weight = 3, bal_weight = 0.2)
-
-  expect_equal(result_with_options$score, result_explicit$score)
-
-  # Restore options
-  if (is.null(old_adj)) {
-    options(speed.adj_weight = NULL)
-  } else {
-    options(speed.adj_weight = old_adj)
-  }
-  if (is.null(old_bal)) {
-    options(speed.bal_weight = NULL)
-  } else {
-    options(speed.bal_weight = old_bal)
-  }
-})
+# test_that("objective_function uses speed options correctly", {
+#   layout_df <- data.frame(
+#     row = rep(1:3, each = 3),
+#     col = rep(1:3, times = 3),
+#     treatment = rep(letters[1:3], 3)
+#   )
+#
+#   # Set options
+#   old_adj <- getOption("speed.adj_weight")
+#   old_bal <- getOption("speed.bal_weight")
+#
+#   options(speed.adj_weight = 3, speed.bal_weight = 0.2)
+#
+#   result_with_options <- objective_function(layout_df, "treatment", c("row", "col"))
+#   result_explicit <- objective_function(layout_df, "treatment", c("row", "col"),
+#                                         adj_weight = 3, bal_weight = 0.2)
+#
+#   expect_equal(result_with_options$score, result_explicit$score)
+#
+#   # Restore options
+#   if (is.null(old_adj)) {
+#     options(speed.adj_weight = NULL)
+#   } else {
+#     options(speed.adj_weight = old_adj)
+#   }
+#   if (is.null(old_bal)) {
+#     options(speed.bal_weight = NULL)
+#   } else {
+#     options(speed.bal_weight = old_bal)
+#   }
+# })
 
 test_that("objective_function handles different spatial column configurations", {
   layout_df <- data.frame(

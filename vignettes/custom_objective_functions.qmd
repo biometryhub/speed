@@ -205,14 +205,14 @@ autoplot(bibd_df)
 
 ### Performing the Optimisation
 
-Now we can run the optimisation using our custom objective function simply by passing the name to the `speed` function via the `obj_function` argument. We will also specify the `swap` argument to indicate which column contains the treatments, and the `spatial_factors` argument to include the block, row, and column information for spatial balance. This will allow the optimisation to consider both the adjacency of treatments and their spatial distribution across the blocks, while the custom objective function will ensure that the co-occurrence of treatments is balanced according to the BIBD requirements. Note also that we set `options(speed.random_initialisation = FALSE)` to ensure that the initialisation of the design is randomised. 
+Now we can run the optimisation using our custom objective function simply by passing the name to the `speed` function via the `obj_function` argument. We will also specify the `swap` argument to indicate which column contains the treatments, and the `spatial_factors` argument to include the block, row, and column information for spatial balance. This will allow the optimisation to consider both the adjacency of treatments and their spatial distribution across the blocks, while the custom objective function will ensure that the co-occurrence of treatments is balanced according to the BIBD requirements. Note also that we set `optim_params(random_initialisation = TRUE)` to ensure that the initialisation of the design is randomised. 
 
 ```{r bibd-optimisation, eval=TRUE}
-options(speed.random_initialisation = FALSE)
 result <- speed(bibd_df, 
                 swap = "treatment",
                 spatial_factors = ~ block + row + col,
-                obj_function = bibd_objective_function, 
+                obj_function = bibd_objective_function,
+                optimise_params = optim_params(random_initialisation = TRUE),
                 seed = 42)
 
 result

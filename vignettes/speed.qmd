@@ -194,7 +194,7 @@ This is a systematic Latin square layout; each treatment appears once per row an
 
 ### Performing the Optimisation
 
-Because of the spatial optimisation algorithm built into `speed`, with default options and enough iterations, it should arrive at a Latin square design in cases where the number of rows, columns, treatments and replicates are all equal such as this.
+Because of the spatial optimisation algorithm built into `speed`, with default optimization parameters and enough iterations, it should arrive at a Latin square design in cases where the number of rows, columns, treatments and replicates are all equal such as this.
 
 ```{r latin-square-example}
 latin_square_result <- speed(latin_square_design, 
