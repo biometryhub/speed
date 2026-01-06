@@ -318,9 +318,9 @@ per row and column. The design will now be randomised.
 #### Performing the Optimisation
 
 Because of the spatial optimisation algorithm built into `speed`, with
-default options and enough iterations, it should arrive at a Latin
-square design in cases where the number of rows, columns, treatments and
-replicates are all equal such as this.
+default optimization parameters and enough iterations, it should arrive
+at a Latin square design in cases where the number of rows, columns,
+treatments and replicates are all equal such as this.
 
 ``` r
 latin_square_result <- speed(latin_square_design, 

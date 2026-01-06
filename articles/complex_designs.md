@@ -754,7 +754,7 @@ that we also set some optimisation parameters to allow for more swaps,
 as this is a larger design with more treatments.
 
 ``` r
-options(speed.swap_count = 5, speed.swap_all_blocks = TRUE, speed.adaptive_swaps = TRUE)
+optimise_params <- optim_params(swap_count = 5, swap_all_blocks = TRUE, adaptive_swaps = TRUE)
 
 blocking_2d_result <- speed(blocking_2d_design, 
                             swap = "treatment", 
@@ -762,6 +762,7 @@ blocking_2d_result <- speed(blocking_2d_design,
                             spatial_factors = ~ colBlock, 
                             iterations = 150000,
                             early_stop_iterations = 50000, 
+                            optimise_params = optimise_params,
                             seed = 42, quiet = TRUE)
 ```
 

@@ -272,10 +272,13 @@ Utility functions to initialize objects.
 
 ## Advanced options
 
-- [`speed-options`](https://biometryhub.github.io/speed/reference/speed-options.md)
+- [`optim_params()`](https://biometryhub.github.io/speed/reference/optim_params.md)
+  : Create and Verify Optimization Parameters
+
+- [`speed-options-deprecated`](https://biometryhub.github.io/speed/reference/speed-options-deprecated.md)
   :
 
-  Package Options for `speed`
+  Package Options for `speed` (Deprecated)
 
 # Articles
 

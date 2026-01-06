@@ -14,7 +14,9 @@ create_speed_input(
   early_stop_iterations,
   obj_function,
   swap_all,
-  optimize = NULL
+  optimise_params,
+  optimise = NULL,
+  row_col_inferred = TRUE
 )
 ```
 
@@ -71,3 +73,15 @@ create_speed_input(
 
   Logical; Whether to swap all matching items or a single item at a time
   (default: FALSE)
+
+- optimise_params:
+
+  Parameters used to control the behaviour of simulated annealing
+  algorithm. See
+  [`optim_params()`](https://biometryhub.github.io/speed/reference/optim_params.md)
+  for more details.
+
+- optimise:
+
+  A list of named arguments describing optimising parameters; see more
+  in example.

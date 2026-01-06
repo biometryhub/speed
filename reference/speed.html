@@ -11,7 +11,7 @@ across spatial factors. Works with regular or irregular spatial designs."></head
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,6 +61,7 @@ across spatial factors. Works with regular or irregular spatial designs.</p>
 <span>  obj_function <span class="op">=</span> <span class="va">objective_function</span>,</span>
 <span>  swap_all <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  optimise <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  optimise_params <span class="op">=</span> <span class="fu"><a href="optim_params.html">optim_params</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -130,6 +131,11 @@ at a time (default: FALSE)</p></dd>
 <dt id="arg-optimise">optimise<a class="anchor" aria-label="anchor" href="#arg-optimise"></a></dt>
 <dd><p>A list of named arguments describing optimising parameters;
 see more in example.</p></dd>
+
+
+<dt id="arg-optimise-params">optimise_params<a class="anchor" aria-label="anchor" href="#arg-optimise-params"></a></dt>
+<dd><p>Parameters used to control the behaviour of
+simulated annealing algorithm. See <code><a href="optim_params.html">optim_params()</a></code> for more details.</p></dd>
 
 
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
@@ -241,16 +247,16 @@ usage, see the package vignettes.</p>
 <span class="r-in"><span><span class="va">df_initial</span><span class="op">$</span><span class="va">site_col</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">df_initial</span><span class="op">$</span><span class="va">site</span>, <span class="va">df_initial</span><span class="op">$</span><span class="va">col</span>, sep <span class="op">=</span> <span class="st">"_"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">df_initial</span><span class="op">$</span><span class="va">site_block</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">df_initial</span><span class="op">$</span><span class="va">site</span>, <span class="va">df_initial</span><span class="op">$</span><span class="va">block</span>, sep <span class="op">=</span> <span class="st">"_"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">optimize</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span><span class="va">optimise</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  connectivity <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>spatial_factors <span class="op">=</span> <span class="op">~</span><span class="va">site</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  balance <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>swap_within <span class="op">=</span> <span class="st">"site"</span>, spatial_factors <span class="op">=</span> <span class="op">~</span> <span class="va">site_col</span> <span class="op">+</span> <span class="va">site_block</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>speed.random_initialisation <span class="op">=</span> <span class="cn">TRUE</span>, speed.adj_weight <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">speed</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">df_initial</span>,</span></span>
 <span class="r-in"><span>  swap <span class="op">=</span> <span class="st">"lines"</span>,</span></span>
-<span class="r-in"><span>  optimise <span class="op">=</span> <span class="va">optimize</span>,</span></span>
+<span class="r-in"><span>  optimise <span class="op">=</span> <span class="va">optimise</span>,</span></span>
+<span class="r-in"><span>  optimise_params <span class="op">=</span> <span class="fu"><a href="optim_params.html">optim_params</a></span><span class="op">(</span>random_initialisation <span class="op">=</span> <span class="cn">TRUE</span>, adj_weight <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  seed <span class="op">=</span> <span class="fl">112</span>,</span></span>
 <span class="r-in"><span>  quiet <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
@@ -264,8 +270,6 @@ usage, see the package vignettes.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   4 1 1 1 2 2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   5 1 1 1 2 2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   6 2 1 1 1 2</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>speed.random_initialisation <span class="op">=</span> <span class="cn">FALSE</span>, speed.adj_weight <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Plot the MET design with facets</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">result</span>, treatments <span class="op">=</span> <span class="st">"lines"</span><span class="op">)</span> <span class="op">+</span></span></span>

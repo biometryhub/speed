@@ -18,6 +18,7 @@ speed(
   obj_function = objective_function,
   swap_all = FALSE,
   optimise = NULL,
+  optimise_params = optim_params(),
   quiet = FALSE,
   seed = NULL,
   ...
@@ -87,6 +88,13 @@ speed(
 
   A list of named arguments describing optimising parameters; see more
   in example.
+
+- optimise_params:
+
+  Parameters used to control the behaviour of simulated annealing
+  algorithm. See
+  [`optim_params()`](https://biometryhub.github.io/speed/reference/optim_params.md)
+  for more details.
 
 - quiet:
 
@@ -209,16 +217,16 @@ df_initial$site_row <- paste(df_initial$site, df_initial$row, sep = "_")
 df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
 df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
 
-optimize <- list(
+optimise <- list(
   connectivity = list(spatial_factors = ~site),
   balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
 )
 
-options(speed.random_initialisation = TRUE, speed.adj_weight = 0)
 result <- speed(
   data = df_initial,
   swap = "lines",
-  optimise = optimize,
+  optimise = optimise,
+  optimise_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
   seed = 112,
   quiet = TRUE
 )
@@ -232,8 +240,6 @@ head(table(result$design_df$lines, result$design_df$site))
 #>   4 1 1 1 2 2
 #>   5 1 1 1 2 2
 #>   6 2 1 1 1 2
-
-options(speed.random_initialisation = FALSE, speed.adj_weight = 1)
 
 # Plot the MET design with facets
 autoplot(result, treatments = "lines") +

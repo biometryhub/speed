@@ -274,27 +274,28 @@ balance. This will allow the optimisation to consider both the adjacency
 of treatments and their spatial distribution across the blocks, while
 the custom objective function will ensure that the co-occurrence of
 treatments is balanced according to the BIBD requirements. Note also
-that we set `options(speed.random_initialisation = FALSE)` to ensure
-that the initialisation of the design is randomised.
+that we set `optim_params(random_initialisation = TRUE)` to ensure that
+the initialisation of the design is randomised.
 
 ``` r
-options(speed.random_initialisation = FALSE)
 result <- speed(bibd_df, 
                 swap = "treatment",
                 spatial_factors = ~ block + row + col,
-                obj_function = bibd_objective_function, 
+                obj_function = bibd_objective_function,
+                optimise_params = optim_params(random_initialisation = TRUE),
                 seed = 42)
 #> row and col are used as row and column, respectively.
 #> Optimising level: single treatment within whole design 
-#> Level: single treatment within whole design Iteration: 1000 Score: 6 Best: 6 Since Improvement: 360 
-#> Level: single treatment within whole design Iteration: 2000 Score: 6 Best: 6 Since Improvement: 1360 
-#> Early stopping at iteration 2640 for level single treatment within whole design
+#> Level: single treatment within whole design Iteration: 1000 Score: 7 Best: 7 Since Improvement: 425 
+#> Level: single treatment within whole design Iteration: 2000 Score: 6 Best: 6 Since Improvement: 888 
+#> Level: single treatment within whole design Iteration: 3000 Score: 6 Best: 6 Since Improvement: 1888 
+#> Early stopping at iteration 3112 for level single treatment within whole design
 
 result
 #> Optimised Experimental Design
 #> ----------------------------
 #> Score: 6 
-#> Iterations Run: 2641 
+#> Iterations Run: 3113 
 #> Stopped Early: TRUE 
 #> Treatments: T1, T2, T3, T4, T5 
 #> Seed: 42

@@ -28,13 +28,15 @@ Verify inputs for the `speed` function.
   seed
 )
 
-.verify_speed_options(
+.verify_optim_params(
   swap_count,
   swap_all_blocks,
   adaptive_swaps,
   start_temp,
   cooling_rate,
-  random_initialisation
+  random_initialisation,
+  adj_weight,
+  bal_weight
 )
 ```
 
@@ -94,30 +96,3 @@ Verify inputs for the `speed` function.
   [`objective_function()`](https://biometryhub.github.io/speed/reference/objective_functions.md)).
   For hierarchical designs, can be a named list with names matching
   `swap`.
-
-- swap_count:
-
-  Number of item swaps per iteration (default: 1)
-
-- swap_all_blocks:
-
-  Logical; if TRUE, performs swaps in all blocks at each iteration
-  (default: FALSE)
-
-- adaptive_swaps:
-
-  Logical; if TRUE, adjusts swap parameters based on temperature
-  (default: FALSE)
-
-- start_temp:
-
-  Starting temperature for simulated annealing (default: 100)
-
-- cooling_rate:
-
-  Rate at which temperature decreases (default: 0.99)
-
-- random_initialisation:
-
-  Number; randomly shuffle items within `swap_within` n times (default:
-  0)

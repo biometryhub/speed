@@ -5,5 +5,5 @@ Speed function for hierarchical designs
 ## Usage
 
 ``` r
-speed_hierarchical(data, optimize, quiet, seed, ...)
+speed_hierarchical(data, optimise, quiet, seed, ...)
 ```

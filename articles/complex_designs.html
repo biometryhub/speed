@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,7 +58,7 @@
       <h1>Complex Agricultural Experimental Designs with speed</h1>
 
       <p class="author">Sam Rogers</p>
-      <p class="date">2025-11-12</p>
+      <p class="date">2026-01-06</p>
 
       <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/vignettes/complex_designs.qmd" class="external-link"><code>vignettes/complex_designs.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -869,7 +869,7 @@ Figure 9: 2D blocking design showing colBlock layout.
 <p>Now we will use the <code><a href="../reference/speed.html">speed()</a></code> function to optimise this design. We will swap treatments within row blocks, while also considering column blocks as a spatial factor. Note that we also set some optimisation parameters to allow for more swaps, as this is a larger design with more treatments.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb43"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>speed.swap_count <span class="op">=</span> <span class="fl">5</span>, speed.swap_all_blocks <span class="op">=</span> <span class="cn">TRUE</span>, speed.adaptive_swaps <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">optimise_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/optim_params.html">optim_params</a></span><span class="op">(</span>swap_count <span class="op">=</span> <span class="fl">5</span>, swap_all_blocks <span class="op">=</span> <span class="cn">TRUE</span>, adaptive_swaps <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">blocking_2d_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span><span class="va">blocking_2d_design</span>, </span>
 <span>                            swap <span class="op">=</span> <span class="st">"treatment"</span>, </span>
@@ -877,6 +877,7 @@ Figure 9: 2D blocking design showing colBlock layout.
 <span>                            spatial_factors <span class="op">=</span> <span class="op">~</span> <span class="va">colBlock</span>, </span>
 <span>                            iterations <span class="op">=</span> <span class="fl">150000</span>,</span>
 <span>                            early_stop_iterations <span class="op">=</span> <span class="fl">50000</span>, </span>
+<span>                            optimise_params <span class="op">=</span> <span class="va">optimise_params</span>,</span>
 <span>                            seed <span class="op">=</span> <span class="fl">42</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h4 id="output-of-the-optimisation-4">Output of the Optimisation<a class="anchor" aria-label="anchor" href="#output-of-the-optimisation-4"></a>

@@ -22,14 +22,14 @@
 Source:
 [`DESCRIPTION`](https://github.com/biometryhub/speed/blob/main/DESCRIPTION)
 
-Rogers S, Taylor J, Edson R, Pipattungsakul W (2025). *speed: Generate
-Spatially Efficient Experimental Designs*. R package version 0.0.3,
+Rogers S, Taylor J, Edson R, Pipattungsakul W (2026). *speed: Generate
+Spatially Efficient Experimental Designs*. R package version 0.0.4,
 <https://biometryhub.github.io/speed/>.
 
     @Manual{,
       title = {speed: Generate Spatially Efficient Experimental Designs},
       author = {Sam Rogers and Julian Taylor and Russell Edson and Wasin Pipattungsakul},
-      year = {2025},
-      note = {R package version 0.0.3},
+      year = {2026},
+      note = {R package version 0.0.4},
       url = {https://biometryhub.github.io/speed/},
     }

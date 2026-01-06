@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,9 @@
 <span>  <span class="va">early_stop_iterations</span>,</span>
 <span>  <span class="va">obj_function</span>,</span>
 <span>  <span class="va">swap_all</span>,</span>
-<span>  optimize <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  <span class="va">optimise_params</span>,</span>
+<span>  optimise <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  row_col_inferred <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -110,6 +112,16 @@ be a named list with names matching <code>swap</code>.</p></dd>
 <dt id="arg-swap-all">swap_all<a class="anchor" aria-label="anchor" href="#arg-swap-all"></a></dt>
 <dd><p>Logical; Whether to swap all matching items or a single item
 at a time (default: FALSE)</p></dd>
+
+
+<dt id="arg-optimise-params">optimise_params<a class="anchor" aria-label="anchor" href="#arg-optimise-params"></a></dt>
+<dd><p>Parameters used to control the behaviour of
+simulated annealing algorithm. See <code><a href="optim_params.html">optim_params()</a></code> for more details.</p></dd>
+
+
+<dt id="arg-optimise">optimise<a class="anchor" aria-label="anchor" href="#arg-optimise"></a></dt>
+<dd><p>A list of named arguments describing optimising parameters;
+see more in example.</p></dd>
 
 </dl></div>
 

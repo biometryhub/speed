@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,7 +58,7 @@
       <h1>Custom Objective Functions and Advanced Options for Optimisation in speed</h1>
 
       <p class="author">Sam Rogers</p>
-      <p class="date">2025-11-12</p>
+      <p class="date">2026-01-06</p>
 
       <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/vignettes/custom_objective_functions.qmd" class="external-link"><code>vignettes/custom_objective_functions.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -264,26 +264,27 @@ Figure 1: Initial BIBD Layout
 <p><a href="#fig-bibd-layout" class="quarto-xref">Figure 1</a> shows the initial layout of the BIBD design. The treatments are systematically assigned to blocks, but we need to randomise this design, and ensure that the co-occurrence of treatments meets the BIBD requirements.</p>
 </section><section class="level3"><h4 id="performing-the-optimisation">Performing the Optimisation<a class="anchor" aria-label="anchor" href="#performing-the-optimisation"></a>
 </h4>
-<p>Now we can run the optimisation using our custom objective function simply by passing the name to the <code>speed</code> function via the <code>obj_function</code> argument. We will also specify the <code>swap</code> argument to indicate which column contains the treatments, and the <code>spatial_factors</code> argument to include the block, row, and column information for spatial balance. This will allow the optimisation to consider both the adjacency of treatments and their spatial distribution across the blocks, while the custom objective function will ensure that the co-occurrence of treatments is balanced according to the BIBD requirements. Note also that we set <code>options(speed.random_initialisation = FALSE)</code> to ensure that the initialisation of the design is randomised.</p>
+<p>Now we can run the optimisation using our custom objective function simply by passing the name to the <code>speed</code> function via the <code>obj_function</code> argument. We will also specify the <code>swap</code> argument to indicate which column contains the treatments, and the <code>spatial_factors</code> argument to include the block, row, and column information for spatial balance. This will allow the optimisation to consider both the adjacency of treatments and their spatial distribution across the blocks, while the custom objective function will ensure that the co-occurrence of treatments is balanced according to the BIBD requirements. Note also that we set <code>optim_params(random_initialisation = TRUE)</code> to ensure that the initialisation of the design is randomised.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>speed.random_initialisation <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span><span class="va">bibd_df</span>, </span>
+<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span><span class="va">bibd_df</span>, </span>
 <span>                swap <span class="op">=</span> <span class="st">"treatment"</span>,</span>
 <span>                spatial_factors <span class="op">=</span> <span class="op">~</span> <span class="va">block</span> <span class="op">+</span> <span class="va">row</span> <span class="op">+</span> <span class="va">col</span>,</span>
-<span>                obj_function <span class="op">=</span> <span class="va">bibd_objective_function</span>, </span>
+<span>                obj_function <span class="op">=</span> <span class="va">bibd_objective_function</span>,</span>
+<span>                optimise_params <span class="op">=</span> <span class="fu"><a href="../reference/optim_params.html">optim_params</a></span><span class="op">(</span>random_initialisation <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
 <span>                seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
 <span><span class="co">#&gt; row and col are used as row and column, respectively.</span></span>
 <span><span class="co">#&gt; Optimising level: single treatment within whole design </span></span>
-<span><span class="co">#&gt; Level: single treatment within whole design Iteration: 1000 Score: 6 Best: 6 Since Improvement: 360 </span></span>
-<span><span class="co">#&gt; Level: single treatment within whole design Iteration: 2000 Score: 6 Best: 6 Since Improvement: 1360 </span></span>
-<span><span class="co">#&gt; Early stopping at iteration 2640 for level single treatment within whole design</span></span>
+<span><span class="co">#&gt; Level: single treatment within whole design Iteration: 1000 Score: 7 Best: 7 Since Improvement: 425 </span></span>
+<span><span class="co">#&gt; Level: single treatment within whole design Iteration: 2000 Score: 6 Best: 6 Since Improvement: 888 </span></span>
+<span><span class="co">#&gt; Level: single treatment within whole design Iteration: 3000 Score: 6 Best: 6 Since Improvement: 1888 </span></span>
+<span><span class="co">#&gt; Early stopping at iteration 3112 for level single treatment within whole design</span></span>
 <span></span>
 <span><span class="va">result</span></span>
 <span><span class="co">#&gt; Optimised Experimental Design</span></span>
 <span><span class="co">#&gt; ----------------------------</span></span>
 <span><span class="co">#&gt; Score: 6 </span></span>
-<span><span class="co">#&gt; Iterations Run: 2641 </span></span>
+<span><span class="co">#&gt; Iterations Run: 3113 </span></span>
 <span><span class="co">#&gt; Stopped Early: TRUE </span></span>
 <span><span class="co">#&gt; Treatments: T1, T2, T3, T4, T5 </span></span>
 <span><span class="co">#&gt; Seed: 42</span></span></code></pre></div>
