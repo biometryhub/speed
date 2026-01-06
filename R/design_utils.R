@@ -347,7 +347,7 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
   return(design)
 }
 
-#' Random Initialize
+#' Random Initialise
 #'
 #' @description
 #' Randomly shuffle items with [shuffle_items] n times and return the best design.
@@ -357,8 +357,8 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
 #' @return A data frame with the items shuffled
 #'
 #' @keywords internal
-random_initialize <- function(design, optimise, seed = NULL, ...) {
-  random_initialisation <- optimise[[1]]$optimize_params$random_initialisation
+random_initialise <- function(design, optimise, seed = NULL, ...) {
+  random_initialisation <- optimise[[1]]$optimise_params$random_initialisation
   if (random_initialisation == 0) {
     return(design)
   }
@@ -375,8 +375,8 @@ random_initialize <- function(design, optimise, seed = NULL, ...) {
     current_score <- 0
     for (opt in optimise) {
       spatial_cols <- all.vars(opt$spatial_factors)
-      adj_weight <- opt$optimize_params$adj_weight
-      bal_weight <- opt$optimize_params$bal_weight
+      adj_weight <- opt$optimise_params$adj_weight
+      bal_weight <- opt$optimise_params$bal_weight
       current_score <- current_score + opt$obj_function(
         shuffled_design,
         opt$swap,
