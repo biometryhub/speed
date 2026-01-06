@@ -212,7 +212,7 @@ result <- speed(bibd_df,
                 swap = "treatment",
                 spatial_factors = ~ block + row + col,
                 obj_function = bibd_objective_function,
-                optimize_params = optim_params(random_initialisation = TRUE),
+                optimise_params = optim_params(random_initialisation = TRUE),
                 seed = 42)
 
 result

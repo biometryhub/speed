@@ -489,7 +489,7 @@ test_that("speed runs with random initialisation", {
     swap = "treatment",
     spatial_factors = ~ row + col,
     iterations = 1000,
-    optimize_params = optim_params(random_initialisation = TRUE),
+    optimise_params = optim_params(random_initialisation = TRUE),
     seed = 42,
     quiet = TRUE
   )
@@ -1056,7 +1056,7 @@ test_that("speed handles 2D blocking with row and column blocks", {
     spatial_factors = ~colBlock,
     iterations = 1000,
     early_stop_iterations = 500,
-    optimize_params = optim_params(
+    optimise_params = optim_params(
       swap_count = 5,
       swap_all_blocks = TRUE,
       adaptive_swaps = TRUE,
@@ -1096,7 +1096,7 @@ test_that("speed handles RCBD with multiple treatment reps", {
     swap_within = "block",
     iterations = 2000,
     early_stop_iterations = 1000,
-    optimize_params = optim_params(swap_count = 3, adaptive_swaps = TRUE),
+    optimise_params = optim_params(swap_count = 3, adaptive_swaps = TRUE),
     seed = 42,
     quiet = TRUE
   )
@@ -1177,7 +1177,7 @@ test_that("speed handles large RCBD with 500 treatments", {
     spatial_factors = ~ row + col,
     iterations = 1000,
     early_stop_iterations = 400,
-    optimize_params = optim_params(swap_count = 10),
+    optimise_params = optim_params(swap_count = 10),
     seed = 42,
     quiet = TRUE
   )
@@ -1310,7 +1310,7 @@ test_that("speed handles MET", {
   df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
   df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
 
-  optimize <- list(
+  optimise <- list(
     connectivity = list(spatial_factors = ~site),
     balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
   )
@@ -1318,8 +1318,8 @@ test_that("speed handles MET", {
   speed_design <- speed(
     data = df_initial,
     swap = "treatment",
-    optimise = optimize,
-    optimize_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
+    optimise = optimise,
+    optimise_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
     seed = 112,
     quiet = TRUE
   )
@@ -1358,7 +1358,7 @@ test_that("speed handles MET with unequal site dimensions", {
   df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
   df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
 
-  optimize <- list(
+  optimise <- list(
     connectivity = list(swap_within = "swappable_site", spatial_factors = ~site),
     balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
   )
@@ -1367,8 +1367,8 @@ test_that("speed handles MET with unequal site dimensions", {
     data = df_initial,
     swap = "treatment",
     early_stop_iterations = 5000,
-    optimise = optimize,
-    optimize_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
+    optimise = optimise,
+    optimise_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
     seed = 112,
     quiet = TRUE
   )
@@ -1424,7 +1424,7 @@ test_that("speed runs with piepho objective", {
     data = df_initial,
     swap = "treatment",
     spatial_factors = ~ row + col,
-    optimize_params = optim_params(random_initialisation = TRUE),
+    optimise_params = optim_params(random_initialisation = TRUE),
     seed = 112,
     quiet = TRUE,
     obj_function = objective_function_piepho,
@@ -1939,7 +1939,7 @@ test_that("print.design handles different stopped_early formats", {
                               swap_within = list(wp = "block", sp = "wholeplot_treatment"),
                               spatial_factors = ~ row + col,
                               iterations = list(wp = 30, sp = 30),
-                              optimize_params = list(wp = optim_params(adj_weight = 0)),
+                              optimise_params = list(wp = optim_params(adj_weight = 0)),
                               seed = 42,
                               quiet = TRUE)
 
@@ -1967,7 +1967,7 @@ test_that("print.design displays correct treatment counts and names", {
     swap_within = "1",
     spatial_factors = ~ row + col,
     iterations = 50,
-    optimize_params = optim_params(adj_weight = 0),
+    optimise_params = optim_params(adj_weight = 0),
     seed = 42,
     quiet = TRUE
   )
@@ -2031,7 +2031,7 @@ test_that("speed runs with n random initialisation", {
     swap = "treatment",
     iterations = 1000,
     early_stop_iterations = 500,
-    optimize_params = optim_params(random_initialisation = 10),
+    optimise_params = optim_params(random_initialisation = 10),
     seed = 112,
     quiet = TRUE
   )
@@ -2055,7 +2055,7 @@ test_that("speed runs with legacy options(speed.{option})", {
     swap = "treatment",
     spatial_factors = ~ row + col,
     iterations = 1000,
-    optimize_params = optim_params(random_initialisation = TRUE),
+    optimise_params = optim_params(random_initialisation = TRUE),
     seed = 42,
     quiet = TRUE
   )

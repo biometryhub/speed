@@ -34,7 +34,7 @@
 #'   be a named list with names matching `swap`.
 #' @param swap_all Logical; Whether to swap all matching items or a single item
 #'   at a time (default: FALSE)
-#' @param optimize_params Parameters used to control the behaviour of
+#' @param optimise_params Parameters used to control the behaviour of
 #'   simulated annealing algorithm. See [optim_params()] for more details.
 #' @param optimise A list of named arguments describing optimising parameters;
 #'   see more in example.
@@ -125,7 +125,7 @@
 #' df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
 #' df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
 #'
-#' optimize <- list(
+#' optimise <- list(
 #'   connectivity = list(spatial_factors = ~site),
 #'   balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
 #' )
@@ -133,8 +133,8 @@
 #' result <- speed(
 #'   data = df_initial,
 #'   swap = "lines",
-#'   optimise = optimize,
-#'   optimize_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
+#'   optimise = optimise,
+#'   optimise_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
 #'   seed = 112,
 #'   quiet = TRUE
 #' )
@@ -158,7 +158,7 @@ speed <- function(data,
                   obj_function = objective_function,
                   swap_all = FALSE,
                   optimise = NULL,
-                  optimize_params = optim_params(),
+                  optimise_params = optim_params(),
                   quiet = FALSE,
                   seed = NULL,
                   ...) {
@@ -195,19 +195,19 @@ speed <- function(data,
   data[[dummy_group]] <- factor(rep(1, nrow(data)))
 
   # prepare inputs
-  optimize <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
-                                 early_stop_iterations, obj_function, swap_all, optimize_params, optimise,
+  optimise <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
+                                 early_stop_iterations, obj_function, swap_all, optimise_params, optimise,
                                  inferred$inferred)
 
   # Handle swap_within for each level
-  for (level in names(optimize)) {
-    opt <- optimize[[level]]
+  for (level in names(optimise)) {
+    opt <- optimise[[level]]
     if (opt$swap_within == "1" || opt$swap_within == "none") {
-      optimize[[level]]$swap_within <- dummy_group
+      optimise[[level]]$swap_within <- dummy_group
     }
   }
 
-  design <- speed_hierarchical(data, optimize, quiet, seed, row_column = row_column,
+  design <- speed_hierarchical(data, optimise, quiet, seed, row_column = row_column,
                                col_column = col_column, ...)
   design$design_df[[dummy_group]] <- NULL
   design$design_df <- to_types(design$design_df, factored$input_types)
@@ -220,14 +220,14 @@ speed <- function(data,
 #' Speed function for hierarchical designs
 #' @keywords internal
 # fmt: skip
-speed_hierarchical <- function(data, optimize, quiet, seed, ...) {
+speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   # Set seed for reproducibility
   if (is.null(seed)) {
     seed <- .GlobalEnv$.Random.seed[3]
   }
 
-  hierarchy_levels <- names(optimize)
-  layout_df <- random_initialize(data, optimize, seed, ...)
+  hierarchy_levels <- names(optimise)
+  layout_df <- random_initialise(data, optimise, seed, ...)
 
   # Initialise design
   current_design <- layout_df
@@ -242,13 +242,13 @@ speed_hierarchical <- function(data, optimize, quiet, seed, ...) {
   set.seed(seed)
   for (level in hierarchy_levels) {
     if (!quiet) cat("Optimising level:", level, "\n")
-    opt <- optimize[[level]]
-    optimize_params <- do.call(optim_params, opt$optimize_params)
-    start_temp <- optimize_params$start_temp
-    swap_count <- optimize_params$swap_count
-    swap_all_blocks <- optimize_params$swap_all_blocks
-    adj_weight <- optimize_params$adj_weight
-    bal_weight <- optimize_params$bal_weight
+    opt <- optimise[[level]]
+    optimise_params <- do.call(optim_params, opt$optimise_params)
+    start_temp <- optimise_params$start_temp
+    swap_count <- optimise_params$swap_count
+    swap_all_blocks <- optimise_params$swap_all_blocks
+    adj_weight <- optimise_params$adj_weight
+    bal_weight <- optimise_params$bal_weight
     spatial_cols <- all.vars(opt$spatial_factors)
 
     # Calculate initial score for this level
@@ -272,7 +272,7 @@ speed_hierarchical <- function(data, optimize, quiet, seed, ...) {
       scores[iter] <- current_score
       temperatures[iter] <- temp
 
-      if (optimize_params$adaptive_swaps) {
+      if (optimise_params$adaptive_swaps) {
         current_swap_count <- max(1, round(swap_count * temp / start_temp))
         current_swap_all_blocks <- runif(1) < (temp / start_temp) && swap_all_blocks
       } else {
@@ -304,7 +304,7 @@ speed_hierarchical <- function(data, optimize, quiet, seed, ...) {
       }
 
       # Cool temperature
-      temp <- temp * optimize_params$cooling_rate
+      temp <- temp * optimise_params$cooling_rate
 
       # Progress reporting
       if (!quiet && iter %% 1000 == 0) {
@@ -342,10 +342,10 @@ speed_hierarchical <- function(data, optimize, quiet, seed, ...) {
   treatments <- list()
   level_scores <- numeric()
   for (level in hierarchy_levels) {
-    opt <- optimize[[level]]
-    optimize_params <- do.call(optim_params, opt$optimize_params)
-    adj_weight <- optimize_params$adj_weight
-    bal_weight <- optimize_params$bal_weight
+    opt <- optimise[[level]]
+    optimise_params <- do.call(optim_params, opt$optimise_params)
+    adj_weight <- optimise_params$adj_weight
+    bal_weight <- optimise_params$bal_weight
     spatial_cols <- all.vars(opt$spatial_factors)
 
     # treatments and score for each level
@@ -356,7 +356,7 @@ speed_hierarchical <- function(data, optimize, quiet, seed, ...) {
 
   # Check which levels stopped early
   stopped_early <- sapply(hierarchy_levels, function(level) {
-    length(all_scores[[level]]) < optimize[[level]]$iterations
+    length(all_scores[[level]]) < optimise[[level]]$iterations
   })
   names(stopped_early) <- hierarchy_levels
 
