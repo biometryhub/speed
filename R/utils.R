@@ -135,8 +135,8 @@ create_speed_input <- function(swap,
                                early_stop_iterations,
                                obj_function,
                                swap_all,
-                               optimize_params,
-                               optimize = NULL,
+                               optimise_params,
+                               optimise = NULL,
                                row_col_inferred = TRUE) {
   speed_args <- c(
     "swap",
@@ -147,55 +147,55 @@ create_speed_input <- function(swap,
     "early_stop_iterations",
     "obj_function",
     "swap_all",
-    "optimize_params"
+    "optimise_params"
   )
 
-  if (!is.null(optimize)) {
-    for (optimize_name in names(optimize)) {
+  if (!is.null(optimise)) {
+    for (optimise_name in names(optimise)) {
       for (arg in speed_args) {
-        if (is.null(optimize[[optimize_name]][[arg]])) {
-          optimize[[optimize_name]][[arg]] <- get(arg)
+        if (is.null(optimise[[optimise_name]][[arg]])) {
+          optimise[[optimise_name]][[arg]] <- get(arg)
         }
       }
 
       # if (!row_col_inferred) {
-      #   optimize[[optimize_name]]$optimize_params$adj_weight <- 0
+      #   optimise[[optimise_name]]$optimise_params$adj_weight <- 0
       # }
     }
   } else if (is.list(swap)) {
-    optimize <- list()
-    for (optimize_name in names(swap)) {
-      optimize[[optimize_name]] <- list(
-        swap = swap[[optimize_name]],
-        swap_within = swap_within[[optimize_name]] %||% .DEFAULT$swap_within,
+    optimise <- list()
+    for (optimise_name in names(swap)) {
+      optimise[[optimise_name]] <- list(
+        swap = swap[[optimise_name]],
+        swap_within = swap_within[[optimise_name]] %||% .DEFAULT$swap_within,
         grid_factors = if (is.list(grid_factors[[1]])) {
-          grid_factors[[optimize_name]] %||% .DEFAULT$grid_factors
+          grid_factors[[optimise_name]] %||% .DEFAULT$grid_factors
         } else {
           grid_factors
         },
-        optimize_params = if (is.list(optimize_params[[1]])) {
-          optimize_params[[optimize_name]] %||% list()
+        optimise_params = if (is.list(optimise_params[[1]])) {
+          optimise_params[[optimise_name]] %||% list()
         } else {
-          optimize_params
+          optimise_params
         }
       )
 
       for (arg in speed_args) {
-        if (!(arg %in% c("swap", "swap_within", "grid_factors", "optimize_params"))) {
-          if (is.null(optimize[[optimize_name]][[arg]])) {
-            optimize_var <- get(arg)
-            optimize[[optimize_name]][[arg]] <- if (is.list(optimize_var)) {
-              optimize_var[[optimize_name]] %||% .DEFAULT$spatial_factors
+        if (!(arg %in% c("swap", "swap_within", "grid_factors", "optimise_params"))) {
+          if (is.null(optimise[[optimise_name]][[arg]])) {
+            optimise_var <- get(arg)
+            optimise[[optimise_name]][[arg]] <- if (is.list(optimise_var)) {
+              optimise_var[[optimise_name]] %||% .DEFAULT$spatial_factors
             } else {
-              optimize_var
+              optimise_var
             }
           }
         }
       }
     }
   } else {
-    optimize <- list()
-    optimize_name <- paste(
+    optimise <- list()
+    optimise_name <- paste(
       ifelse(swap_all, "all", "single"),
       swap,
       "within",
@@ -203,7 +203,7 @@ create_speed_input <- function(swap,
       sep = " "
     )
 
-    optimize[[optimize_name]] <- list(
+    optimise[[optimise_name]] <- list(
       swap = swap,
       swap_within = swap_within,
       spatial_factors = spatial_factors,
@@ -212,17 +212,17 @@ create_speed_input <- function(swap,
       early_stop_iterations = early_stop_iterations,
       obj_function = obj_function,
       swap_all = swap_all,
-      optimize_params = optimize_params
+      optimise_params = optimise_params
     )
   }
 
   if (!row_col_inferred) {
-    for (optimize_name in names(optimize)) {
-      optimize[[optimize_name]]$optimize_params$adj_weight <- 0
+    for (optimise_name in names(optimise)) {
+      optimise[[optimise_name]]$optimise_params$adj_weight <- 0
     }
   }
 
-  return(optimize)
+  return(optimise)
 }
 
 `%||%` <- function(a, b) if (!is.null(a)) a else b
