@@ -59,7 +59,7 @@
       <h1>Multi-Environment Trials with speed</h1>
 
       <p class="author">Wasin Pipattungsakul</p>
-      <p class="date">2026-01-06</p>
+      <p class="date">2026-01-07</p>
 
       <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/vignettes/met.qmd" class="external-link"><code>vignettes/met.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -95,7 +95,7 @@
 <strong>Site-blocks</strong>: Blocks within sites</li>
 </ul></section><section class="level2"><h3 id="setting-up-met-design-with-speed">Setting Up MET Design with speed<a class="anchor" aria-label="anchor" href="#setting-up-met-design-with-speed"></a>
 </h3>
-<p>Now we can create a data frame representing a MET design. Note that the <code>initalise_design_df</code> function does not currently support split plot designs directly, so we will create it manually.</p>
+<p>Now we can create a data frame representing a MET design. Note that we can specify different dimensions for each site in the <code>designs</code> argument.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">all_treatments</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">50</span>, <span class="fl">7</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">51</span><span class="op">:</span><span class="fl">57</span>, <span class="fl">8</span><span class="op">)</span><span class="op">)</span></span>
