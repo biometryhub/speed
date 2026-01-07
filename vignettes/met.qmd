@@ -39,7 +39,7 @@ library(speed)
 
 ## Setting Up MET Design with speed
 
-Now we can create a data frame representing a MET design. Note that the `initalise_design_df` function does not currently support split plot designs directly, so we will create it manually.
+Now we can create a data frame representing a MET design. Note that we can specify different dimensions for each site in the `designs` argument.
 
 ```{r met-df}
 all_treatments <- c(rep(1:50, 7), rep(51:57, 8))
