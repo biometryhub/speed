@@ -33,3 +33,11 @@ objective_function_factorial(
 \description{
 Objective Function for Factorial Design Optimization
 }
+\examples{
+treatment_a <- paste0("A", 1:8)
+treatment_b <- paste0("B", 1:3)
+treatments <- with(expand.grid(treatment_a, treatment_b), paste(Var1, Var2, sep = "-"))
+df <- initialise_design_df(treatments, 24, 3, 8, 3)
+objective_function_factorial(df, "treatment", c("row", "col", "block"))
+
+}

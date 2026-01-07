@@ -76,6 +76,13 @@ objective_function <- function(layout_df,
 #' @inheritDotParams objective_function
 #' @param factorial_separator A character used to separate treatments in the factorial design (default: "-")
 #'
+#' @examples
+#' treatment_a <- paste0("A", 1:8)
+#' treatment_b <- paste0("B", 1:3)
+#' treatments <- with(expand.grid(treatment_a, treatment_b), paste(Var1, Var2, sep = "-"))
+#' df <- initialise_design_df(treatments, 24, 3, 8, 3)
+#' objective_function_factorial(df, "treatment", c("row", "col", "block"))
+#'
 #' @export
 # fmt: skip
 objective_function_factorial <- function(layout_df,
@@ -83,20 +90,25 @@ objective_function_factorial <- function(layout_df,
                                          spatial_cols,
                                          factorial_separator = "-",
                                          ...) {
+  if (is.null(factorial_separator) || factorial_separator == "") {
+    return(objective_function(layout_df, swap, spatial_cols, ...))
+  }
+
+  # count number of separators
+  matches <- gregexpr(factorial_separator, layout_df[[swap]][1])[[1]]
+  n_treatment_levels <- sum(matches != -1) + 1
   subtreatments <- strsplit(as.character(layout_df[[swap]]), factorial_separator) |>
     unlist() |>
-    matrix(ncol = 2, byrow = TRUE)
+    matrix(ncol = n_treatment_levels, byrow = TRUE)
 
+  # create temp columns
   now <- as.numeric(Sys.time())
-  treatment_a <- paste0("treatment_", now)
-  treatment_b <- paste0("treatment_", now + 1)
-
-  layout_df[[treatment_a]] <- subtreatments[, 1]
-  layout_df[[treatment_b]] <- subtreatments[, 2]
+  treatment_n <- paste0("treatment_", now + 1:n_treatment_levels)
+  layout_df[treatment_n] <- subtreatments
 
   treatment_score <- calculate_balance_score(layout_df, swap, spatial_cols)
-  subtreatment_scores <- vapply(c(treatment_a, treatment_b), function(treatment) {
-    objective_function(layout_df, treatment, spatial_cols, adj_weight = adj_weight, ...)$score
+  subtreatment_scores <- vapply(treatment_n, function(treatment) {
+    objective_function(layout_df, treatment, spatial_cols, ...)$score
   }, numeric(1))
 
   return(list(score = sum(subtreatment_scores) + treatment_score))

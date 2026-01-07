@@ -1,0 +1,125 @@
+---
+title: "Factorial Design with speed"
+author: "Wasin Pipattungsakul"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    theme: flatly
+    highlight: tango
+vignette: >
+  %\VignetteIndexEntry{Factorial Design with speed}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Factorial Design
+
+## Overview
+
+Factorial designs are experimental designs used to study the effects of two or more factors simultaneously. They allow estimation of main effects and interactions between factors, making them efficient and informative.
+
+```{r load-package}
+library(speed)
+library(patchwork)
+```
+
+## When to Use
+
+- Studying multiple factors at the same time
+- Detecting interactions between factors
+- Efficient use of experimental units
+
+## Setting Up Factorial Design with speed
+
+Now we can create a data frame representing a factorial design. Note that we can specify different dimensions for each site in the `designs` argument.
+
+```{r factorial-df}
+treatment_a <- paste0("A", 1:8)
+treatment_b <- paste0("B", 1:3)
+treatments <- with(expand.grid(treatment_a, treatment_b), paste(Var1, Var2, sep = "-"))
+factorial_design <- initialise_design_df(treatments, 24, 3, 8, 3)
+
+head(factorial_design)
+```
+
+```{r factorial-plot1}
+#| echo: false
+subtreatments <- strsplit(as.character(factorial_design$treatment), "-") |>
+  unlist() |>
+  matrix(ncol = 2, byrow = TRUE)
+factorial_design[c("treatment_a", "treatment_b")] <- subtreatments
+class(factorial_design) <- c(class(factorial_design), "design")
+
+pa <- autoplot(factorial_design, treatments = "treatment_a")
+pb <- autoplot(factorial_design, treatments = "treatment_b")
+p <- autoplot(factorial_design)
+p + pa + pb + plot_layout(ncol = 3)
+```
+
+### Performing the Optimisation
+
+For factorial designs, we use a customised objective function `objective_function_factorial`. The `optimise_params` argument is used to adjust the optimisation strategy due to difficulty to optimise such design.
+
+```{r factorial-example}
+factorial_result <- speed(
+  data = factorial_design,
+  swap = "treatment",
+  swap_within = "block",
+  spatial_factors = ~ row + col,
+  obj_function = objective_function_factorial,
+  optimise_params = optim_params(random_initialisation = 50, adaptive_swaps = TRUE),
+  early_stop_iterations = 10000,
+  iterations = 200000,
+  seed = 112
+)
+
+factorial_result
+```
+
+### Output of the Optimisation
+
+The output shows optimisation results for the design. The score and iterations are combined for the entire design, while the treatments, and stopping criteria are reported separately for each level, allowing you to assess the quality of optimisation at each hierarchy level.
+
+```{r factorial-output}
+str(factorial_result)
+```
+
+### Visualise the Output
+
+```{r factorial-plot2}
+treatments <- strsplit(as.character(factorial_result$design_df$treatment), "-") |>
+  unlist() |>
+  matrix(ncol = 2, byrow = TRUE)
+factorial_result$design_df[c("treatment_a", "treatment_b")] <- treatments
+
+pa <- autoplot(factorial_result, treatments = "treatment_a")
+pb <- autoplot(factorial_result, treatments = "treatment_b")
+p <- autoplot(factorial_result)
+p + pa + pb + plot_layout(ncol = 3)
+```
+
+This design has now been optimised for both main and interaction effects.
+
+# Spatial Design Considerations
+
+## Field Shape and Orientation
+
+## Neighbour Effects
+
+# Using `speed` Effectively
+
+1. **Set appropriate parameters**: Balance optimisation time with improvement <!-- Link to vignette on parameters -->
+2. **[Visualise designs](autoplot.html)**: Always plot layouts before implementation  <!-- Link to autoplot -->
+3. **Compare alternatives**: Test multiple blocking strategies
+4. **Validate results**: Check constraint satisfaction and efficiency factorialrics
+
+# Conclusion
+
+## Further Reading
+
+# Related Vignettes
+
+*This vignette demonstrates the versatility of the `speed` package for agricultural experimental design. For more advanced applications and custom designs, consult the package documentation and additional vignettes.*

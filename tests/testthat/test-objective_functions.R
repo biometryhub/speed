@@ -479,10 +479,47 @@ test_that("objective_function_piepho handles extra parameters via ...", {
                                         extra_param = "test", another_param = 123)
   })
 
-  result <- objective_function_piepho(design_df, "treatment", c("row", "col"),
-                                      pair_mapping = pair_mapping,
-                                      extra_param = "test", another_param = 123)
   expect_type(result, "list")
   expect_named(result, c("score", "ed", "bal", "adj", "nb"))
 })
 
+test_that("objective_function_factorial works", {
+  treatment_a <- paste0("A", 1:8)
+  treatment_b <- paste0("B", 1:3)
+  treatments <- with(expand.grid(treatment_a, treatment_b), paste(Var1, Var2, sep = "-"))
+  df <- initialise_design_df(treatments, 24, 3, 8, 3)
+  df <- shuffle_items(df, "treatment", "block", 112)
+
+  subtreatments <- strsplit(as.character(df$treatment), "-") |>
+    unlist() |>
+    matrix(ncol = 2, byrow = TRUE)
+  df[c("treatment_a", "treatment_b")] <- subtreatments
+
+  score_treatment <- calculate_balance_score(df, "treatment", c("row", "col"))
+  score_treatment_a <- objective_function(df, "treatment_a", c("row", "col"))$score
+  score_treatment_b <- objective_function(df, "treatment_b", c("row", "col"))$score
+  expected_score <- score_treatment + score_treatment_a + score_treatment_b
+
+  result <- objective_function_factorial(df, "treatment", c("row", "col"))
+
+  expect_type(result, "list")
+  expect_named(result, "score")
+  expect_type(result$score, "double")
+  expect_equal(result$score, expected_score)
+})
+
+test_that("objective_function_factorial falls back to objective_function with invalid separator", {
+  treatment_a <- paste0("A", 1:8)
+  treatment_b <- paste0("B", 1:3)
+  treatments <- with(expand.grid(treatment_a, treatment_b), paste(Var1, Var2, sep = "-"))
+  df <- initialise_design_df(treatments, 24, 3, 8, 3)
+  df <- shuffle_items(df, "treatment", "block", 112)
+
+  expected_score <- objective_function(df, "treatment", c("row", "col"))$score
+
+  result <- objective_function_factorial(df, "treatment", c("row", "col"), factorial_separator = "")
+  expect_equal(result$score, expected_score)
+
+  result <- objective_function_factorial(df, "treatment", c("row", "col"), factorial_separator = NULL)
+  expect_equal(result$score, expected_score)
+})
