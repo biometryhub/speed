@@ -2090,13 +2090,15 @@ test_that("speed handles factorial designs", {
     swap_within = "block",
     spatial_factors = ~ row + col,
     obj_function = objective_function_factorial,
-    optimise_params = optim_params(adaptive_swaps = TRUE, swap_count = 1),
+    optimise_params = optim_params(adaptive_swaps = TRUE),
     early_stop_iterations = 2000,
     iterations = 100000,
-    seed = 112
+    seed = 112,
+    quiet = TRUE
   )
   df_result <- result$design_df
 
+  expect_equal(nrow(result$design_df), 45)
   expect_setequal(result$treatments, df$treatment)
   expect_lt(result$score, objective_function_factorial(df, "treatment", c("row", "col"))$score)
 })
