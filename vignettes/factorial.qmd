@@ -55,9 +55,9 @@ subtreatments <- strsplit(as.character(factorial_design$treatment), "-") |>
 factorial_design[c("treatment_a", "treatment_b")] <- subtreatments
 class(factorial_design) <- c(class(factorial_design), "design")
 
-pa <- autoplot(factorial_design, treatments = "treatment_a") + labs(title = "Main effect A")
-pb <- autoplot(factorial_design, treatments = "treatment_b") + labs(title = "Main effect B")
-p <- autoplot(factorial_design) + labs(title = "Interaction")
+pa <- autoplot(factorial_design, treatments = "treatment_a")
+pb <- autoplot(factorial_design, treatments = "treatment_b")
+p <- autoplot(factorial_design)
 p + pa + pb + plot_layout(ncol = 3)
 ```
 
