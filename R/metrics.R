@@ -260,7 +260,7 @@ objective_function_piepho <- function(design,
   ed <- calculate_ed(design_matrix, current_score_obj$ed, swapped_items)
   # sum(1/) or 1/sum
   ed_score <- if (!is.null(ed$total_mst) && is.finite(ed$total_mst) && ed$total_mst > 0) {
-    1 / ed$total_mst
+    ed$inv_total_mst
   } else {
     0
   }
@@ -268,14 +268,16 @@ objective_function_piepho <- function(design,
   nb_score <- nb$var
 
   design[[swap]] <- as.factor(design_matrix)
-  bal_score <- calculate_balance_score(design, swap, spatial_cols)
-  adj_score <- calculate_adjacency_score(design, swap, row_column, col_column)
+  # bal_score <- calculate_balance_score(design, swap, spatial_cols)
+  # adj_score <- calculate_adjacency_score(design, swap, row_column, col_column)
 
   return(list(
-    score = round(nb_score + ed_score + bal_score + adj_score, 10),
+    score = round(nb_score + ed_score,
+                  # + bal_score + adj_score,
+                  10),
     ed = ed,
-    bal = bal_score,
-    adj = adj_score,
+    # bal = bal_score,
+    # adj = adj_score,
     nb = nb
   ))
 }

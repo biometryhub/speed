@@ -220,12 +220,14 @@ test_that("objective_function_piepho works with basic design", {
                                       pair_mapping = pair_mapping)
 
   expect_type(result, "list")
-  expect_named(result, c("score", "ed", "bal", "adj", "nb"))
+  expect_named(result, c("score", "ed",
+                         # "bal", "adj",
+                         "nb"))
   expect_type(result$score, "double")
   expect_length(result$score, 1)
   expect_type(result$ed, "list")
-  expect_type(result$bal, "double")
-  expect_type(result$adj, "integer")
+  # expect_type(result$bal, "double")
+  # expect_type(result$adj, "integer")
   expect_type(result$nb, "list")
 })
 
@@ -311,7 +313,9 @@ test_that("objective_function_piepho handles incremental calculation with curren
                                                   pair_mapping = pair_mapping)
 
   expect_type(incremental_result, "list")
-  expect_named(incremental_result, c("score", "ed", "bal", "adj", "nb"))
+  expect_named(incremental_result, c("score", "ed",
+                                     # "bal", "adj",
+                                     "nb"))
 
   # Test that incremental calculation works differently from full calculation
   # The incremental result should have the same overall structure but potentially different values
@@ -341,7 +345,9 @@ test_that("objective_function_piepho works without pair_mapping", {
 
   result <- objective_function_piepho(design_df, "treatment", c("row", "col"))
   expect_type(result, "list")
-  expect_named(result, c("score", "ed", "bal", "adj", "nb"))
+  expect_named(result, c("score", "ed",
+                         # "bal", "adj",
+                         "nb"))
 })
 
 test_that("objective_function_piepho handles different spatial column configurations", {
@@ -370,8 +376,10 @@ test_that("objective_function_piepho handles different spatial column configurat
   expect_type(result_multiple, "list")
 
   # Balance scores should be different for different spatial configurations
-  expect_false(identical(result_row$bal, result_col$bal))
-  expect_false(identical(result_row$bal, result_multiple$bal))
+  # expect_false(identical(result_row$bal, result_col$bal))
+  expect_true(identical(result_row, result_col))
+  # expect_false(identical(result_row$bal, result_multiple$bal))
+  expect_true(identical(result_row, result_multiple))
 })
 
 test_that("objective_function_piepho uses custom row and column names", {
@@ -396,7 +404,9 @@ test_that("objective_function_piepho uses custom row and column names", {
                                       row_column = "Row",
                                       col_column = "Column")
   expect_type(result, "list")
-  expect_named(result, c("score", "ed", "bal", "adj", "nb"))
+  expect_named(result, c("score", "ed",
+                         # "bal", "adj",
+                         "nb"))
 })
 
 test_that("objective_function_piepho score is properly rounded to 10 decimal places", {
@@ -432,7 +442,9 @@ test_that("objective_function_piepho handles designs with missing values", {
   result <- objective_function_piepho(design_df, "treatment", c("row", "col"),
                                       pair_mapping = pair_mapping)
   expect_type(result, "list")
-  expect_named(result, c("score", "ed", "bal", "adj", "nb"))
+  expect_named(result, c("score", "ed",
+                         # "bal", "adj",
+                         "nb"))
 })
 
 test_that("objective_function_piepho errors on single treatment design", {
@@ -458,10 +470,10 @@ test_that("objective_function_piepho individual components are reasonable", {
 
   # Check individual components are sensible
   expect_true(is.finite(result$score))
-  expect_true(is.finite(result$bal))
-  expect_true(is.finite(result$adj))
-  expect_gte(result$adj, 0)  # Adjacency score should be non-negative
-  expect_gte(result$bal, 0)  # Balance score should be non-negative
+  # expect_true(is.finite(result$bal))
+  # expect_true(is.finite(result$adj))
+  # expect_gte(result$adj, 0)  # Adjacency score should be non-negative
+  # expect_gte(result$bal, 0)  # Balance score should be non-negative
 
   # Check nb component structure
   expect_named(result$nb, c("nb", "max_nb", "max_pairs", "var"))
@@ -497,7 +509,9 @@ test_that("objective_function_piepho handles extra parameters via ...", {
   })
 
   expect_type(result, "list")
-  expect_named(result, c("score", "ed", "bal", "adj", "nb"))
+  expect_named(result, c("score", "ed",
+                         # "bal", "adj",
+                         "nb"))
 })
 
 test_that("objective_function_factorial works", {
