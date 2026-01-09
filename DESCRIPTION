@@ -35,6 +35,7 @@ Description: The Speed package optimises spatial experimental designs by rearran
 License: MIT + file LICENSE
 URL: https://biometryhub.github.io/speed/
 BugReports: https://github.com/biometryhub/speed/issues
+Depends: R (>= 4.1)
 Imports: 
     farver,
     ggplot2,
