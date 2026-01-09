@@ -259,7 +259,11 @@ objective_function_piepho <- function(design,
 
   ed <- calculate_ed(design_matrix, current_score_obj$ed, swapped_items)
   # sum(1/) or 1/sum
-  ed_score <- 1 / sum(vapply(ed, function(ed_rep) ed_rep$min_mst, numeric(1)))
+  ed_score <- if (!is.null(ed$total_mst) && is.finite(ed$total_mst) && ed$total_mst > 0) {
+    1 / ed$total_mst
+  } else {
+    0
+  }
   nb <- calculate_nb(design_matrix, pair_mapping)
   nb_score <- nb$var
 
@@ -402,19 +406,19 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #'
 #' @return Named list containing:
 #' \itemize{
-#'   \item <number of replications> - Named list containing:
-#'     \itemize{
-#'       \item msts - Named list of items and their mst
-#'       \item min_mst - The lowest mst
-#'       \item min_items - Pairs of items with the lowest mst
-#'     }
+#'   \item msts - Named numeric vector of each treatment's MST length
+#'   \item total_mst - Sum of MST lengths across treatments
+#'   \item inv_total_mst - Sum of inverse MST lengths across treatments (excluding zeros)
 #' }
 #'
 #' @seealso [objective_function_piepho()]
 #'
 #' @export
-calculate_ed <- function(design_matrix) {
-  # Get plot coordinates
+calculate_ed <- function(
+  design_matrix,
+  current_ed = NULL,
+  swapped_items = NULL
+) {
   rows <- row(design_matrix)
   cols <- col(design_matrix)
 
@@ -425,27 +429,34 @@ calculate_ed <- function(design_matrix) {
     col = as.vector(cols)
   )
 
-  # Split coordinates by treatment
   trt_groups <- split(coords[, c("row", "col")], coords$trt)
 
-  # Storage
-  msts <- numeric(length(trt_groups))
-  names(msts) <- names(trt_groups)
+  # Initialise from previous ED if supplied
+  if (!is.null(current_ed)) {
+    msts <- current_ed$msts
+  } else {
+    msts <- numeric(length(trt_groups))
+    names(msts) <- names(trt_groups)
+  }
 
-  for (trt in names(trt_groups)) {
+  # Determine which treatments need recomputation
+  if (is.null(swapped_items)) {
+    recompute <- names(trt_groups)
+  } else {
+    recompute <- intersect(names(trt_groups), as.character(swapped_items))
+  }
+
+  for (trt in recompute) {
     xy <- as.matrix(trt_groups[[trt]])
     n <- nrow(xy)
 
-    # 0 or 1 replication → MST = 0 by convention
     if (n < 2) {
       msts[trt] <- 0
       next
     }
 
-    # Compute Euclidean distance matrix
     d <- as.matrix(dist(xy, method = "euclidean"))
 
-    # Prefer igraph's MST (faster), but keep a base-R fallback.
     if (requireNamespace("igraph", quietly = TRUE)) {
       g <- igraph::graph_from_adjacency_matrix(
         d,
@@ -453,33 +464,32 @@ calculate_ed <- function(design_matrix) {
         weighted = TRUE,
         diag = FALSE
       )
-      mst <- igraph::mst(g)
-      msts[trt] <- sum(igraph::E(mst)$weight)
-    } else {
-      # Build MST using Prim's algorithm (base R)
-      visited <- rep(FALSE, n)
-      visited[1] <- TRUE
-      mst_len <- 0
+      mst_g <- igraph::mst(g)
+      msts[trt] <- sum(igraph::E(mst_g)$weight)
+      next
+    }
 
-      for (i in 2:n) {
-        min_edge <- Inf
-        for (u in which(visited)) {
-          for (v in which(!visited)) {
-            if (d[u, v] < min_edge) {
-              min_edge <- d[u, v]
-              v_min <- v
-            }
+    visited <- rep(FALSE, n)
+    visited[1] <- TRUE
+    mst_len <- 0
+
+    for (i in 2:n) {
+      min_edge <- Inf
+      for (u in which(visited)) {
+        for (v in which(!visited)) {
+          if (d[u, v] < min_edge) {
+            min_edge <- d[u, v]
+            v_min <- v
           }
         }
-        mst_len <- mst_len + min_edge
-        visited[v_min] <- TRUE
       }
-
-      msts[trt] <- mst_len
+      mst_len <- mst_len + min_edge
+      visited[v_min] <- TRUE
     }
+
+    msts[trt] <- mst_len
   }
 
-  # Return structure aligned with Piepho
   return(list(
     msts = msts,
     total_mst = sum(msts),

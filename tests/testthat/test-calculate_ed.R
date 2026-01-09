@@ -5,33 +5,23 @@ test_that("calculate_ed works for partial replications", {
     2, 3, 3, 4,
     2, 3, 3, 5,
     6, 6, 5, 4
-  ), ncol = 4) |>
-    t()
+  ), ncol = 4, byrow = TRUE)
 
-  expected_ed <- list(
-    "2" = list(
-      msts = list(
-        "2" = 1,
-        "5" = sqrt(2),
-        "6" = 1
-      ),
-      min_mst = 1,
-      min_items = c("2", "6")
-    ),
-    "3" = list(
-      msts = list(
-        "1" = 2,
-        "4" = 3
-      ),
-      min_mst = 2,
-      min_items = c("1")
-    ),
-    "4" = list(
-      msts = list("3" = 3),
-      min_mst = 3,
-      min_items = c("3")
-    )
+  expected_msts <- c(
+    "1" = 2,
+    "2" = 1,
+    "3" = 3,
+    "4" = 3,
+    "5" = sqrt(2),
+    "6" = 1
   )
 
-  expect_mapequal(calculate_ed(design_matrix), expected_ed)
+  result <- calculate_ed(design_matrix)
+  expect_equal(result$msts, expected_msts, tolerance = 1e-10)
+  expect_equal(result$total_mst, sum(expected_msts), tolerance = 1e-10)
+  expect_equal(
+    result$inv_total_mst,
+    sum(1 / expected_msts[expected_msts > 0]),
+    tolerance = 1e-10
+  )
 })
