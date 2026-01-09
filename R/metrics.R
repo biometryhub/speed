@@ -94,16 +94,23 @@ objective_function_factorial <- function(layout_df,
     return(objective_function(layout_df, swap, spatial_cols, ...))
   }
 
-  # count number of separators
-  matches <- gregexpr(factorial_separator, layout_df[[swap]][1])[[1]]
-  n_treatment_levels <- sum(matches != -1) + 1
-  subtreatments <- strsplit(as.character(layout_df[[swap]]), factorial_separator) |>
-    unlist() |>
-    matrix(ncol = n_treatment_levels, byrow = TRUE)
+  # count number of treatments
+  n_treatments <- stringi::stri_count_fixed(
+    as.character(layout_df[[swap]][1]),
+    factorial_separator
+  ) + 1
+
+  # split treatments
+  subtreatments <- stringi::stri_split_fixed(
+    as.character(layout_df[[swap]]),
+    factorial_separator,
+    n = n_treatments,
+    simplify = TRUE
+  )
 
   # create temp columns
-  now <- as.numeric(Sys.time())
-  treatment_n <- paste0("treatment_", now + 1:n_treatment_levels)
+  # now <- as.numeric(Sys.time())
+  treatment_n <- paste0("treatment_", 1:n_treatments)
   layout_df[treatment_n] <- subtreatments
 
   treatment_score <- calculate_balance_score(layout_df, swap, spatial_cols)
