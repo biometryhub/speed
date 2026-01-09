@@ -1,0 +1,131 @@
+---
+title: "Factorial Design with speed"
+author: "Wasin Pipattungsakul"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    theme: flatly
+    highlight: tango
+vignette: >
+  %\VignetteIndexEntry{Factorial Design with speed}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Factorial Design
+
+## Overview
+
+Factorial designs are experimental designs used to study the effects of two or more factors simultaneously. They allow estimation of main effects and interactions between factors, making them efficient and informative.
+
+```{r load-package}
+library(speed)
+library(patchwork)
+```
+
+## When to Use
+
+- Studying multiple factors at the same time
+- Detecting interactions between factors
+- Efficient use of experimental units
+
+## Setting Up Factorial Design with speed
+
+Now we can create a data frame representing a factorial design. Note that the treatment column we are creating is the interaction (or combination) of the individual treatments.
+
+```{r factorial-df}
+treatment_a <- paste0("A", 1:8)
+treatment_b <- paste0("B", 1:3)
+treatments <- with(expand.grid(treatment_a, treatment_b), paste(Var1, Var2, sep = "-"))
+factorial_design <- initialise_design_df(treatments, 24, 3, 8, 3)
+
+head(factorial_design)
+```
+
+Plotting these factors shows the initial layout of the interaction and main effects.
+
+```{r factorial-plot1}
+#| echo: false
+subtreatments <- strsplit(as.character(factorial_design$treatment), "-") |>
+  unlist() |>
+  matrix(ncol = 2, byrow = TRUE)
+factorial_design[c("treatment_a", "treatment_b")] <- subtreatments
+class(factorial_design) <- c(class(factorial_design), "design")
+
+pa <- autoplot(factorial_design, treatments = "treatment_a")
+pb <- autoplot(factorial_design, treatments = "treatment_b")
+p <- autoplot(factorial_design)
+p + pa + pb + plot_layout(ncol = 3)
+```
+
+### Performing the Optimisation
+
+For factorial designs, speed provides a customised objective function `objective_function_factorial`. The `optimise_params` argument is also used in this case to adjust the optimisation strategy due to the difficulty of optimising such designs.
+
+Make sure `factorial_separator` matches how you constructed the interaction treatment (here we used `"-"`). If your treatments use a different separator (e.g. `"A1:B2"`), pass `factorial_separator = ":"`.
+
+```{r factorial-example}
+factorial_result <- speed(
+  data = factorial_design,
+  swap = "treatment",
+  swap_within = "block",
+  spatial_factors = ~ row + col,
+  obj_function = objective_function_factorial,
+  optimise_params = optim_params(random_initialisation = 50, adaptive_swaps = TRUE),
+  early_stop_iterations = 10000,
+  iterations = 200000,
+  seed = 112
+)
+
+factorial_result
+```
+
+### Output of the Optimisation
+
+The output summarises the optimisation of the factorial **interaction** treatment (e.g. `"A1-B2"`) across the spatial layout. The reported score is for the whole design after optimisation, and the returned `design_df` contains the updated treatment allocation.
+
+Because the treatment column encodes multiple factors, it can be helpful to split it back into its component factors (e.g. `treatment_a` and `treatment_b`) when inspecting the result. This lets you check whether the optimisation improved not only the interaction layout, but also the balance/adjacency patterns of the main effects.
+
+```{r factorial-output}
+str(factorial_result)
+```
+
+### Visualise the Output
+
+```{r factorial-plot2}
+treatments <- strsplit(as.character(factorial_result$design_df$treatment), "-") |>
+  unlist() |>
+  matrix(ncol = 2, byrow = TRUE)
+factorial_result$design_df[c("treatment_a", "treatment_b")] <- treatments
+
+pa <- autoplot(factorial_result, treatments = "treatment_a")
+pb <- autoplot(factorial_result, treatments = "treatment_b")
+p <- autoplot(factorial_result)
+p + pa + pb + plot_layout(ncol = 3)
+```
+
+This design has now been optimised for both main and interaction effects.
+
+# Spatial Design Considerations
+
+## Field Shape and Orientation
+
+## Neighbour Effects
+
+# Using `speed` Effectively
+
+1. **Set appropriate parameters**: Balance optimisation time with improvement <!-- Link to vignette on parameters -->
+2. **[Visualise designs](autoplot.html)**: Always plot layouts before implementation  <!-- Link to autoplot -->
+3. **Compare alternatives**: Test multiple blocking strategies
+4. **Validate results**: Check constraint satisfaction and efficiency factors
+
+# Conclusion
+
+## Further Reading
+
+# Related Vignettes
+
+*This vignette demonstrates the versatility of the `speed` package for agricultural experimental design. For more advanced applications and custom designs, consult the package documentation and additional vignettes.*

@@ -70,6 +70,57 @@ objective_function <- function(layout_df,
   ))
 }
 
+#' Objective Function for Factorial Design Optimization
+#'
+#' @inheritParams objective_function
+#' @inheritDotParams objective_function
+#' @param factorial_separator A character used to separate treatments in the factorial design (default: "-")
+#'
+#' @examples
+#' treatment_a <- paste0("A", 1:8)
+#' treatment_b <- paste0("B", 1:3)
+#' treatments <- with(expand.grid(treatment_a, treatment_b), paste(Var1, Var2, sep = "-"))
+#' df <- initialise_design_df(treatments, 24, 3, 8, 3)
+#' objective_function_factorial(df, "treatment", c("row", "col", "block"))
+#'
+#' @export
+# fmt: skip
+objective_function_factorial <- function(layout_df,
+                                         swap,
+                                         spatial_cols,
+                                         factorial_separator = "-",
+                                         ...) {
+  if (is.null(factorial_separator) || factorial_separator == "") {
+    return(objective_function(layout_df, swap, spatial_cols, ...))
+  }
+
+  # count number of treatments
+  n_treatments <- stringi::stri_count_fixed(
+    as.character(layout_df[[swap]][1]),
+    factorial_separator
+  ) + 1
+
+  # split treatments
+  subtreatments <- stringi::stri_split_fixed(
+    as.character(layout_df[[swap]]),
+    factorial_separator,
+    n = n_treatments,
+    simplify = TRUE
+  )
+
+  # create temp columns
+  # now <- as.numeric(Sys.time())
+  treatment_n <- paste0("treatment_", 1:n_treatments)
+  layout_df[treatment_n] <- subtreatments
+
+  treatment_score <- calculate_balance_score(layout_df, swap, spatial_cols)
+  subtreatment_scores <- vapply(treatment_n, function(treatment) {
+    objective_function(layout_df, treatment, spatial_cols, ...)$score
+  }, numeric(1))
+
+  return(list(score = sum(subtreatment_scores) + treatment_score))
+}
+
 #' Calculate Balance Score for Experimental Design
 #'
 #' @description
