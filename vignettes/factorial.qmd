@@ -34,7 +34,7 @@ library(patchwork)
 
 ## Setting Up Factorial Design with speed
 
-Now we can create a data frame representing a factorial design. Note that we can specify different dimensions for each site in the `designs` argument.
+Now we can create a data frame representing a factorial design. Note that the treatment column we are creating is the interaction (or combination) of the individual treatments.
 
 ```{r factorial-df}
 treatment_a <- paste0("A", 1:8)
@@ -45,6 +45,8 @@ factorial_design <- initialise_design_df(treatments, 24, 3, 8, 3)
 head(factorial_design)
 ```
 
+Plotting these factors shows the initial layout of the interaction and main effects.
+
 ```{r factorial-plot1}
 #| echo: false
 subtreatments <- strsplit(as.character(factorial_design$treatment), "-") |>
@@ -53,15 +55,17 @@ subtreatments <- strsplit(as.character(factorial_design$treatment), "-") |>
 factorial_design[c("treatment_a", "treatment_b")] <- subtreatments
 class(factorial_design) <- c(class(factorial_design), "design")
 
-pa <- autoplot(factorial_design, treatments = "treatment_a")
-pb <- autoplot(factorial_design, treatments = "treatment_b")
-p <- autoplot(factorial_design)
+pa <- autoplot(factorial_design, treatments = "treatment_a") + labs(title = "Main effect A")
+pb <- autoplot(factorial_design, treatments = "treatment_b") + labs(title = "Main effect B")
+p <- autoplot(factorial_design) + labs(title = "Interaction")
 p + pa + pb + plot_layout(ncol = 3)
 ```
 
 ### Performing the Optimisation
 
-For factorial designs, we use a customised objective function `objective_function_factorial`. The `optimise_params` argument is used to adjust the optimisation strategy due to difficulty to optimise such design.
+For factorial designs, speed provides a customised objective function `objective_function_factorial`. The `optimise_params` argument is also used in this case to adjust the optimisation strategy due to the difficulty of optimising such designs.
+
+Make sure `factorial_separator` matches how you constructed the interaction treatment (here we used `"-"`). If your treatments use a different separator (e.g. `"A1:B2"`), pass `factorial_separator = ":"`.
 
 ```{r factorial-example}
 factorial_result <- speed(
@@ -81,7 +85,9 @@ factorial_result
 
 ### Output of the Optimisation
 
-The output shows optimisation results for the design. The score and iterations are combined for the entire design, while the treatments, and stopping criteria are reported separately for each level, allowing you to assess the quality of optimisation at each hierarchy level.
+The output summarises the optimisation of the factorial **interaction** treatment (e.g. `"A1-B2"`) across the spatial layout. The reported score is for the whole design after optimisation, and the returned `design_df` contains the updated treatment allocation.
+
+Because the treatment column encodes multiple factors, it can be helpful to split it back into its component factors (e.g. `treatment_a` and `treatment_b`) when inspecting the result. This lets you check whether the optimisation improved not only the interaction layout, but also the balance/adjacency patterns of the main effects.
 
 ```{r factorial-output}
 str(factorial_result)
@@ -114,7 +120,7 @@ This design has now been optimised for both main and interaction effects.
 1. **Set appropriate parameters**: Balance optimisation time with improvement <!-- Link to vignette on parameters -->
 2. **[Visualise designs](autoplot.html)**: Always plot layouts before implementation  <!-- Link to autoplot -->
 3. **Compare alternatives**: Test multiple blocking strategies
-4. **Validate results**: Check constraint satisfaction and efficiency factorialrics
+4. **Validate results**: Check constraint satisfaction and efficiency factors
 
 # Conclusion
 
