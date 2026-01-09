@@ -4,8 +4,8 @@ test_that("get_vertices works", {
     1, 1, 1,
     2, 3, 3,
     2, 3, 3
-  ), ncol = 3) |>
-    t()
+  ), ncol = 3)
+  design_matrix <- t(design_matrix)
 
   # somehow it spits out 1:2 instead of c(1,2)
   expected_vertices <- list(

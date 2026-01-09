@@ -4,8 +4,8 @@ test_that("get_vertices works", {
     1, 1, 4,
     2, 3, 3,
     2, 3, 3
-  ), ncol = 3) |>
-    t()
+  ), ncol = 3)
+  design_matrix <- t(design_matrix)
 
   vertices <- get_vertices(design_matrix)
   edges <- get_edges(vertices)

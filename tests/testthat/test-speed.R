@@ -1383,10 +1383,7 @@ test_that("speed handles MET with unequal site dimensions", {
     c(1, 2)
   )
   expect_setequal(
-    table(design_df$treatment, design_df$site) |>
-      matrixStats::rowVars() |>
-      round(3) |>
-      unique(),
+    unique(round(matrixStats::rowVars(table(design_df$treatment, design_df$site)), 3)),
     c(0.3, 0.8)
   )
   expect_equal(max(table(design_df$site_row, design_df$treatment)), 1)

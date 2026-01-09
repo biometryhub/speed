@@ -267,10 +267,23 @@ test_that("objective_function_piepho handles different treatment replication pat
   expect_type(result_3_reps, "list")
   expect_type(result_4_reps, "list")
 
-  # Check that ed structure reflects different replication patterns
-  expect_true("2" %in% names(result_2_reps$ed))
-  expect_true("3" %in% names(result_3_reps$ed))
-  expect_true("4" %in% names(result_4_reps$ed))
+  # Check ED structure
+  expect_named(result_2_reps$ed, c("msts", "total_mst", "inv_total_mst"))
+  expect_named(result_3_reps$ed, c("msts", "total_mst", "inv_total_mst"))
+  expect_named(result_4_reps$ed, c("msts", "total_mst", "inv_total_mst"))
+
+  expect_type(result_2_reps$ed$msts, "double")
+  expect_type(result_3_reps$ed$msts, "double")
+  expect_type(result_4_reps$ed$msts, "double")
+  expect_named(result_2_reps$ed$msts, letters[1:3])
+  expect_named(result_3_reps$ed$msts, letters[1:3])
+  expect_named(result_4_reps$ed$msts, letters[1:3])
+  expect_true(is.finite(result_2_reps$ed$total_mst))
+  expect_true(is.finite(result_3_reps$ed$total_mst))
+  expect_true(is.finite(result_4_reps$ed$total_mst))
+  expect_gte(result_2_reps$ed$total_mst, 0)
+  expect_gte(result_3_reps$ed$total_mst, 0)
+  expect_gte(result_4_reps$ed$total_mst, 0)
 
   # Scores should be different for different replication patterns
   expect_false(identical(result_2_reps$score, result_3_reps$score))
@@ -309,7 +322,9 @@ test_that("objective_function_piepho handles incremental calculation with curren
   # The specific implementation details of how swapped_items affects the ed calculation
   # are tested implicitly through the function not erroring and returning valid results
   expect_true(is.finite(incremental_result$score))
-  expect_true(length(incremental_result$ed) > 0)
+  expect_named(incremental_result$ed, c("msts", "total_mst", "inv_total_mst"))
+  expect_type(incremental_result$ed$msts, "double")
+  expect_true(setequal(names(incremental_result$ed$msts), names(full_result$ed$msts)))
 })
 
 test_that("objective_function_piepho works without pair_mapping", {
@@ -456,11 +471,13 @@ test_that("objective_function_piepho individual components are reasonable", {
 
   # Check ed component structure
   expect_type(result$ed, "list")
-  for (ed_rep in result$ed) {
-    expect_named(ed_rep, c("msts", "min_mst", "min_items"))
-    expect_true(is.finite(ed_rep$min_mst))
-    expect_gte(ed_rep$min_mst, 0)  # MST should be non-negative
-  }
+  expect_named(result$ed, c("msts", "total_mst", "inv_total_mst"))
+  expect_type(result$ed$msts, "double")
+  expect_true(all(is.finite(result$ed$msts)))
+  expect_true(is.finite(result$ed$total_mst))
+  expect_true(is.finite(result$ed$inv_total_mst))
+  expect_gte(min(result$ed$msts), 0)
+  expect_gte(result$ed$total_mst, 0)
 })
 
 test_that("objective_function_piepho handles extra parameters via ...", {
@@ -490,9 +507,12 @@ test_that("objective_function_factorial works", {
   df <- initialise_design_df(treatments, 24, 3, 8, 3)
   df <- shuffle_items(df, "treatment", "block", 112)
 
-  subtreatments <- strsplit(as.character(df$treatment), "-") |>
-    unlist() |>
-    matrix(ncol = 2, byrow = TRUE)
+  subtreatments <- stringi::stri_split_fixed(
+    as.character(df$treatment),
+    "-",
+    n = 2,
+    simplify = TRUE
+  )
   df[c("treatment_a", "treatment_b")] <- subtreatments
 
   score_treatment <- calculate_balance_score(df, "treatment", c("row", "col"))

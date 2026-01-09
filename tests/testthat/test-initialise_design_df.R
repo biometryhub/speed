@@ -264,4 +264,10 @@ test_that("initialize_design_df throws error for invalid inputs", {
     list(nrows = 4, ncols = 4),
     list(nrows = 4, ncols = 4)
   )), "`items` must be provided for all designs or `items` must be provided to `initialise_design_df`")
+  
+  # Test that error is thrown when neither nrows/ncols nor designs are provided
+  expect_error(
+    initialise_design_df(items = 1:16),
+    "Either `nrows` and `ncols` or `designs` must be provided"
+  )
 })
