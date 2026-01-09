@@ -13,6 +13,8 @@ Functions to optimise designs in different ways.
 
 ### Objective functions
 
+- [`objective_function_factorial()`](https://biometryhub.github.io/speed/reference/objective_function_factorial.md)
+  : Objective Function for Factorial Design Optimization
 - [`objective_function_piepho()`](https://biometryhub.github.io/speed/reference/objective_function_piepho.md)
   : Objective Function with Metric from Piepho
 - [`objective_function_signature()`](https://biometryhub.github.io/speed/reference/objective_functions.md)

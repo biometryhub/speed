@@ -6,6 +6,7 @@
 <url><loc>https://biometryhub.github.io/speed/LICENSE.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/articles/complex_designs.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/articles/custom_objective_functions.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/articles/factorial.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/articles/index.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/articles/met.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/articles/speed.html</loc></url>
@@ -36,6 +37,7 @@
 <url><loc>https://biometryhub.github.io/speed/reference/infer_row_col.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/initialise_design_df.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/initialise_multiple_designs_df.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/objective_function_factorial.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/objective_function_piepho.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/objective_functions.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/optim_params.html</loc></url>
