@@ -413,68 +413,78 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #' @seealso [objective_function_piepho()]
 #'
 #' @export
-calculate_ed <- function(
-    design_matrix,
-    current_ed = NULL,
-    swapped_items = NULL) {
-  if (!is.null(swapped_items)) {
-    design_matrix[!(design_matrix %in% swapped_items)] <- NA
-    msts <- lapply(current_ed, function(ed_by_rep) ed_by_rep$msts)
-  } else {
-    msts <- list()
-  }
+calculate_ed <- function(design_matrix) {
+  # Get plot coordinates
+  rows <- row(design_matrix)
+  cols <- col(design_matrix)
 
-  vertices <- get_vertices(design_matrix)
-  edges <- get_edges(vertices)
+  treatments <- as.character(design_matrix)
+  coords <- data.frame(
+    trt = treatments,
+    row = as.vector(rows),
+    col = as.vector(cols)
+  )
 
-  edges_3_reps <- list()
-  sub_graph <- list()
+  # Split coordinates by treatment
+  trt_groups <- split(coords[, c("row", "col")], coords$trt)
 
-  for (item in names(vertices)) {
-    reps <- length(vertices[[item]])
-    reps_char <- as.character(reps)
-    if (reps == 2) {
-      # distance between 2 nodes for 2 reps
-      msts[[reps_char]][[item]] <- edges[[item]]
-    } else if (reps == 3) {
-      # 3 reps will be calculated with .calculate_ed_3_reps
-      edges_3_reps[[item]] <- edges[[item]]
-    } else if (reps > 3) {
-      # blanket igraph for 4+ reps
-      if (is.null(sub_graph[[reps_char]])) {
-        # initialize a fully-connected graph without weights
-        # 1--2, 1--3, ..., 1--n-1, 1--n, 2--3, 2--4, ..., n-1--n
-        edge_table <- t(combn(1:reps, 2))
-        sub_graph[[reps_char]] <- igraph::graph_from_edgelist(
-          edge_table,
-          directed = FALSE
-        )
+  # Storage
+  msts <- numeric(length(trt_groups))
+  names(msts) <- names(trt_groups)
+
+  for (trt in names(trt_groups)) {
+    xy <- as.matrix(trt_groups[[trt]])
+    n <- nrow(xy)
+
+    # 0 or 1 replication → MST = 0 by convention
+    if (n < 2) {
+      msts[trt] <- 0
+      next
+    }
+
+    # Compute Euclidean distance matrix
+    d <- as.matrix(dist(xy, method = "euclidean"))
+
+    # Prefer igraph's MST (faster), but keep a base-R fallback.
+    if (requireNamespace("igraph", quietly = TRUE)) {
+      g <- igraph::graph_from_adjacency_matrix(
+        d,
+        mode = "undirected",
+        weighted = TRUE,
+        diag = FALSE
+      )
+      mst <- igraph::mst(g)
+      msts[trt] <- sum(igraph::E(mst)$weight)
+    } else {
+      # Build MST using Prim's algorithm (base R)
+      visited <- rep(FALSE, n)
+      visited[1] <- TRUE
+      mst_len <- 0
+
+      for (i in 2:n) {
+        min_edge <- Inf
+        for (u in which(visited)) {
+          for (v in which(!visited)) {
+            if (d[u, v] < min_edge) {
+              min_edge <- d[u, v]
+              v_min <- v
+            }
+          }
+        }
+        mst_len <- mst_len + min_edge
+        visited[v_min] <- TRUE
       }
 
-      igraph::E(sub_graph[[reps_char]])$weight <- edges[[item]]
-      msts[[reps_char]][[item]] <- sum(
-        igraph::E(igraph::mst(sub_graph[[reps_char]]))$weight
-      )
+      msts[trt] <- mst_len
     }
   }
 
-  # summarize mst for each reps
-  ed <- lapply(msts, function(msts_by_reps) {
-    min_mst <- min(unlist(msts_by_reps))
-    min_items <- names(msts_by_reps[msts_by_reps == min_mst])
-
-    return(list(
-      msts = msts_by_reps,
-      min_mst = min_mst,
-      min_items = min_items
-    ))
-  })
-
-  if (length(edges_3_reps) > 0) {
-    ed$`3` <- .calculate_ed_3_reps(edges_3_reps, current_ed)
-  }
-
-  return(ed)
+  # Return structure aligned with Piepho
+  return(list(
+    msts = msts,
+    total_mst = sum(msts),
+    inv_total_mst = sum(1 / msts[msts > 0])
+  ))
 }
 
 #' Get Vertices of Each Item

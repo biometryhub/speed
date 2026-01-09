@@ -4,7 +4,7 @@
 \alias{calculate_ed}
 \title{Even Distribution Calculation}
 \usage{
-calculate_ed(design_matrix, current_ed = NULL, swapped_items = NULL)
+calculate_ed(design_matrix)
 }
 \arguments{
 \item{design_matrix}{A matrix representing the design}
