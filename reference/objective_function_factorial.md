@@ -54,3 +54,16 @@ objective_function_factorial(
 
   :   Name of column representing the column of the design (default:
       "col")
+
+## Examples
+
+``` r
+treatment_a <- paste0("A", 1:8)
+treatment_b <- paste0("B", 1:3)
+treatments <- with(expand.grid(treatment_a, treatment_b), paste(Var1, Var2, sep = "-"))
+df <- initialise_design_df(treatments, 24, 3, 8, 3)
+objective_function_factorial(df, "treatment", c("row", "col", "block"))
+#> $score
+#> [1] 723
+#> 
+```

@@ -20,7 +20,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/biometryhub/speed/blob/v0.0.3/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/biometryhub/speed/blob/main/DESCRIPTION)
 
 Rogers S, Taylor J, Edson R, Pipattungsakul W (2026). *speed: Generate
 Spatially Efficient Experimental Designs*. R package version 0.0.4,
