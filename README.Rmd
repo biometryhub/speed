@@ -138,6 +138,8 @@ For more detailed examples, see the [getting started vignette][getting-started] 
 * [Strip-plot design][strip-plot]
 * [P-rep design][p-rep]
 * [BIBD][bibd]
+* [Multi-Environment trial (MET)][met]
+* [Factorial][factorial]
 
 ## How It Works
 
@@ -173,6 +175,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) f
 [strip-plot]: https://biometryhub.github.io/speed/articles/complex_designs.html#strip-plot-designs
 [p-rep]: https://biometryhub.github.io/speed/articles/complex_designs.html#p-rep-partially-replicated-designs
 [bibd]: https://biometryhub.github.io/speed/articles/complex_designs.html#balanced-incomplete-block-design-bibd
+[met]: https://biometryhub.github.io/speed/articles/met.html
+[factorial]: https://biometryhub.github.io/speed/articles/factorial.html
 
 ## Code of Conduct
 

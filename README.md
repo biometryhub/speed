@@ -164,6 +164,9 @@ including, but not limited to:
 - [P-rep
   design](https://biometryhub.github.io/speed/articles/complex_designs.html#p-rep-partially-replicated-designs)
 - [BIBD](https://biometryhub.github.io/speed/articles/complex_designs.html#balanced-incomplete-block-design-bibd)
+- [Multi-Environment trial
+  (MET)](https://biometryhub.github.io/speed/articles/met.html)
+- [Factorial](https://biometryhub.github.io/speed/articles/factorial.html)
 
 ## How It Works
 
@@ -197,14 +200,14 @@ If you use `speed` in your research, please cite:
 
       Rogers S, Taylor J, Edson R, Pipattungsakul W (????). _speed:
       Generate Spatially Efficient Experimental Designs_. R package version
-      0.0.3, <https://biometryhub.github.io/speed/>.
+      0.0.4, <https://biometryhub.github.io/speed/>.
 
     A BibTeX entry for LaTeX users is
 
       @Manual{,
         title = {speed: Generate Spatially Efficient Experimental Designs},
         author = {Sam Rogers and Julian Taylor and Russell Edson and Wasin Pipattungsakul},
-        note = {R package version 0.0.3},
+        note = {R package version 0.0.4},
         url = {https://biometryhub.github.io/speed/},
       }
 
