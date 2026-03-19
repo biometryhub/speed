@@ -19,7 +19,10 @@ vignette: >
 
 ## Overview
 
-Multi-environment trials (MET) are experimental designs used to evaluate the performance of treatments across different environments. An environment typically represents a unique combination of location, year, season, or management practice. MET designs are essential for understanding genotype × environment (G×E) interactions, stability, and adaptability of treatments under different conditions.
+Multi-environment trials (MET) are experimental designs used to evaluate the performance of treatments across
+different environments. An environment typically represents a unique combination of location, year, season, or
+management practice. MET designs are essential for understanding genotype × environment (G×E) interactions,
+stability, and adaptability of treatments under different conditions.
 
 ```{r load-package}
 library(speed)
@@ -37,9 +40,12 @@ library(speed)
 - **Sites**: Different locations of the trial
 - **Site-blocks**: Blocks within sites
 
-## Setting Up MET Design with speed
+## Optimising Allocation across All Sites
 
-Now we can create a data frame representing a MET design. Note that we can specify different dimensions for each site in the `designs` argument.
+### Setting Up MET Design with speed
+
+Now we can create a data frame representing a MET design. Note that we can specify different dimensions for each
+site in the `designs` argument.
 
 ```{r met-df}
 all_treatments <- c(rep(1:50, 7), rep(51:57, 8))
@@ -76,7 +82,8 @@ ggplot2::ggplot(met_design, ggplot2::aes(col, row, fill = block)) +
 
 ### Performing the Optimisation
 
-For MET designs, we use lists of named arguments to specify the hierarchical structure. The `optimise` parameter defines what to optimise and constraints at each level.
+For MET designs, we use lists of named arguments to specify the hierarchical structure. The `optimise` parameter
+defines what to optimise and constraints at each level.
 
 ```{r met-example}
 optimise <- list(
@@ -98,10 +105,20 @@ met_result
 
 ### Output of the Optimisation
 
-The output shows optimisation results for the design. The score and iterations are combined for the entire design, while the treatments, and stopping criteria are reported separately for each level, allowing you to assess the quality of optimisation at each hierarchy level.
+The output shows optimisation results for the design. The score and iterations are combined for the entire
+design, while the treatments, and stopping criteria are reported separately for each level, allowing you to
+assess the quality of optimisation at each hierarchy level.
 
 ```{r met-output}
 str(met_result)
+```
+
+No duplicated treatments along any row or column.
+
+```{r met-no-dupes}
+df <- met_result$design_df
+max(table(df$treatment, df$site_col))
+max(table(df$treatment, paste0(df$site, df$row)))
 ```
 
 ### Visualise the Output
@@ -123,6 +140,115 @@ ggplot2::ggplot(met_result$design_df, ggplot2::aes(col, row, fill = treatment)) 
 
 This design has now been optimised at both the connectivity between sites and the balance within each site.
 
+## Optimising Allocation across Some Sites
+
+### Setting Up MET Design with speed
+
+Now we can create a data frame representing a MET design. Note that we can specify different dimensions for each
+site in the `designs` argument.
+
+```{r met2-df}
+fixed_treatments <- rep(1:54, 3)
+non_fixed_treatments <- c(rep(1:50, 5), rep(51:54, 4))
+met_design <- initialise_design_df(
+  designs = list(
+    a = list(items = fixed_treatments, nrows = 27, ncols = 6, block_nrows = 9, block_ncols = 6),
+    b = list(items = non_fixed_treatments[1:60], nrows = 20, ncols = 3, block_nrows = 10, block_ncols = 3),
+    c = list(items = non_fixed_treatments[1:80 + 60], nrows = 20, ncols = 4, block_nrows = 10, block_ncols = 4),
+    d = list(items = non_fixed_treatments[1:60 + 140], nrows = 15, ncols = 4, block_nrows = 5, block_ncols = 4),
+    e = list(items = non_fixed_treatments[1:66 + 200], nrows = 22, ncols = 3, block_nrows = 11, block_ncols = 3)
+  )
+)
+
+met_design$site_col <- paste(met_design$site, met_design$col, sep = "_")
+met_design$site_block <- paste(met_design$site, met_design$block, sep = "_")
+met_design$allocation <- "free"
+met_design$allocation[met_design$site == "a"] <- "fixed"
+
+head(met_design)
+```
+
+```{r met2-plot1}
+#| echo: false
+met_design$block <- factor(met_design$block)
+
+ggplot2::ggplot(met_design, ggplot2::aes(col, row, fill = block)) +
+  ggplot2::geom_tile(color = "black") +
+  ggplot2::scale_fill_viridis_d() +
+  ggplot2::facet_wrap(~site, scales = "free") +
+  ggplot2::scale_x_continuous(expand = c(0, 0), breaks = 1:max(met_design$col)) +
+  ggplot2::scale_y_continuous(expand = c(0, 0), breaks = 1:max(met_design$row), trans = scales::reverse_trans()) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank())
+```
+
+### Performing the Optimisation
+
+For MET designs, we use lists of named arguments to specify the hierarchical structure. The `optimise` parameter
+defines what to optimise and constraints at each level.
+
+```{r met2-example}
+optimise <- list(
+  connectivity = list(swap_within = "allocation", spatial_factors = ~site),
+  balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+)
+
+met_result <- speed(
+  data = met_design,
+  swap = "treatment",
+  early_stop_iterations = 5000,
+  optimise = optimise,
+  optimise_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
+  seed = 112
+)
+
+met_result
+```
+
+### Output of the Optimisation
+
+The output shows optimisation results for the design. The score and iterations are combined for the entire
+design, while the treatments, and stopping criteria are reported separately for each level, allowing you to
+assess the quality of optimisation at each hierarchy level.
+
+```{r met2-output}
+str(met_result)
+```
+
+No duplicated treatments along any row or column.
+
+```{r met2-no-dupes}
+df <- met_result$design_df
+max(table(df$treatment, df$site_col))
+max(table(df$treatment, paste0(df$site, df$row)))
+```
+
+Site "a" maintains 3 replicates and no missing treatments in any other sites.
+
+```{r met2-reps}
+treatment_count <- table(df$treatment, df$site)
+c(min(treatment_count[, "a"]), max(treatment_count[, "a"]))
+c(min(treatment_count[, -1]), max(treatment_count[, -1]))
+```
+
+### Visualise the Output
+
+```{r met2-plot2}
+ggplot2::ggplot(met_result$design_df, ggplot2::aes(col, row, fill = treatment)) +
+  ggplot2::geom_tile(color = "black") +
+  ggplot2::scale_fill_viridis_c() +
+  ggplot2::facet_wrap(~site, scales = "free") +
+  ggplot2::scale_x_continuous(expand = c(0, 0), breaks = 1:max(met_design$col)) +
+  ggplot2::scale_y_continuous(expand = c(0, 0), breaks = 1:max(met_design$row), trans = scales::reverse_trans()) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(
+    legend.position = "none",
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank()
+  )
+```
+
+This design has now been optimised at both the connectivity between sites and the balance within each site.
 # Spatial Design Considerations
 
 ## Field Shape and Orientation
