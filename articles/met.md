@@ -27,7 +27,9 @@ library(speed)
 - **Sites**: Different locations of the trial
 - **Site-blocks**: Blocks within sites
 
-### Setting Up MET Design with speed
+### Optimising Allocation across All Sites
+
+#### Setting Up MET Design with speed
 
 Now we can create a data frame representing a MET design. Note that we
 can specify different dimensions for each site in the `designs`
@@ -161,6 +163,21 @@ str(met_result)
      $ seed          : num 112
      - attr(*, "class")= chr [1:2] "design" "list"
 
+No duplicated treatments along any row or column.
+
+``` r
+df <- met_result$design_df
+max(table(df$treatment, df$site_col))
+```
+
+    [1] 1
+
+``` r
+max(table(df$treatment, paste0(df$site, df$row)))
+```
+
+    [1] 1
+
 #### Visualise the Output
 
 ``` r
@@ -183,7 +200,203 @@ ggplot2::ggplot(met_result$design_df, ggplot2::aes(col, row, fill = treatment)) 
 This design has now been optimised at both the connectivity between
 sites and the balance within each site.
 
-## Spatial Design Considerations
+### Optimising Allocation across Some Sites
+
+#### Setting Up MET Design with speed
+
+Now we can create a data frame representing a MET design. Note that we
+can specify different dimensions for each site in the `designs`
+argument.
+
+``` r
+fixed_treatments <- rep(1:54, 3)
+non_fixed_treatments <- c(rep(1:50, 5), rep(51:54, 4))
+met_design <- initialise_design_df(
+  designs = list(
+    a = list(items = fixed_treatments, nrows = 27, ncols = 6, block_nrows = 9, block_ncols = 6),
+    b = list(items = non_fixed_treatments[1:60], nrows = 20, ncols = 3, block_nrows = 10, block_ncols = 3),
+    c = list(items = non_fixed_treatments[1:80 + 60], nrows = 20, ncols = 4, block_nrows = 10, block_ncols = 4),
+    d = list(items = non_fixed_treatments[1:60 + 140], nrows = 15, ncols = 4, block_nrows = 5, block_ncols = 4),
+    e = list(items = non_fixed_treatments[1:66 + 200], nrows = 22, ncols = 3, block_nrows = 11, block_ncols = 3)
+  )
+)
+
+met_design$site_col <- paste(met_design$site, met_design$col, sep = "_")
+met_design$site_block <- paste(met_design$site, met_design$block, sep = "_")
+met_design$allocation <- "free"
+met_design$allocation[met_design$site == "a"] <- "fixed"
+
+head(met_design)
+```
+
+      row col treatment row_block col_block block site site_col site_block
+    1   1   1         1         1         1     1    a      a_1        a_1
+    2   2   1         2         1         1     1    a      a_1        a_1
+    3   3   1         3         1         1     1    a      a_1        a_1
+    4   4   1         4         1         1     1    a      a_1        a_1
+    5   5   1         5         1         1     1    a      a_1        a_1
+    6   6   1         6         1         1     1    a      a_1        a_1
+      allocation
+    1      fixed
+    2      fixed
+    3      fixed
+    4      fixed
+    5      fixed
+    6      fixed
+
+![](met_files/figure-html/met2-plot1-1.png)
+
+#### Performing the Optimisation
+
+For MET designs, we use lists of named arguments to specify the
+hierarchical structure. The `optimise` parameter defines what to
+optimise and constraints at each level.
+
+``` r
+optimise <- list(
+  connectivity = list(swap_within = "allocation", spatial_factors = ~site),
+  balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+)
+
+met_result <- speed(
+  data = met_design,
+  swap = "treatment",
+  early_stop_iterations = 5000,
+  optimise = optimise,
+  optimise_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
+  seed = 112
+)
+```
+
+    row and col are used as row and column, respectively.
+
+    Optimising level: connectivity
+    Level: connectivity Iteration: 1000 Score: 2.518519 Best: 2.518519 Since Improvement: 5
+    Level: connectivity Iteration: 2000 Score: 1.04682 Best: 1.04682 Since Improvement: 40
+    Level: connectivity Iteration: 3000 Score: 0.6694619 Best: 0.6694619 Since Improvement: 313
+    Level: connectivity Iteration: 4000 Score: 0.6317261 Best: 0.6317261 Since Improvement: 292
+    Level: connectivity Iteration: 5000 Score: 0.6317261 Best: 0.6317261 Since Improvement: 1292
+    Level: connectivity Iteration: 6000 Score: 0.6317261 Best: 0.6317261 Since Improvement: 2292
+    Level: connectivity Iteration: 7000 Score: 0.6317261 Best: 0.6317261 Since Improvement: 3292
+    Level: connectivity Iteration: 8000 Score: 0.6317261 Best: 0.6317261 Since Improvement: 4292
+    Early stopping at iteration 8708 for level connectivity
+    Optimising level: balance
+    Level: balance Iteration: 1000 Score: 9.51782 Best: 9.51782 Since Improvement: 12
+    Level: balance Iteration: 2000 Score: 7.97065 Best: 7.97065 Since Improvement: 55
+    Level: balance Iteration: 3000 Score: 7.555556 Best: 7.555556 Since Improvement: 11
+    Level: balance Iteration: 4000 Score: 7.32914 Best: 7.32914 Since Improvement: 129
+    Level: balance Iteration: 5000 Score: 7.253669 Best: 7.253669 Since Improvement: 383
+    Level: balance Iteration: 6000 Score: 7.215933 Best: 7.215933 Since Improvement: 490
+    Level: balance Iteration: 7000 Score: 7.140461 Best: 7.140461 Since Improvement: 327
+    Level: balance Iteration: 8000 Score: 6.989518 Best: 6.989518 Since Improvement: 923
+    Level: balance Iteration: 9000 Score: 6.989518 Best: 6.989518 Since Improvement: 1923
+    Level: balance Iteration: 10000 Score: 6.989518 Best: 6.989518 Since Improvement: 2923 
+
+``` r
+met_result
+```
+
+    Optimised Experimental Design
+    ----------------------------
+    Score: 7.621244
+    Iterations Run: 18709
+    Stopped Early: TRUE FALSE
+    Treatments:
+      connectivity: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54
+      balance: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54
+    Seed: 112 
+
+#### Output of the Optimisation
+
+The output shows optimisation results for the design. The score and
+iterations are combined for the entire design, while the treatments, and
+stopping criteria are reported separately for each level, allowing you
+to assess the quality of optimisation at each hierarchy level.
+
+``` r
+str(met_result)
+```
+
+    List of 8
+     $ design_df     :'data.frame': 428 obs. of  10 variables:
+      ..$ row       : int [1:428] 1 1 1 1 1 1 1 1 1 1 ...
+      ..$ col       : int [1:428] 1 1 1 1 1 2 2 2 2 2 ...
+      ..$ treatment : int [1:428] 4 34 50 45 5 23 17 3 13 18 ...
+      ..$ row_block : num [1:428] 1 1 1 1 1 1 1 1 1 1 ...
+      ..$ col_block : num [1:428] 1 1 1 1 1 1 1 1 1 1 ...
+      ..$ block     : Factor w/ 3 levels "1","2","3": 1 1 1 1 1 1 1 1 1 1 ...
+      ..$ site      : chr [1:428] "a" "b" "c" "d" ...
+      ..$ site_col  : chr [1:428] "a_1" "b_1" "c_1" "d_1" ...
+      ..$ site_block: chr [1:428] "a_1" "b_1" "c_1" "d_1" ...
+      ..$ allocation: chr [1:428] "fixed" "free" "free" "free" ...
+     $ score         : num 7.62
+     $ scores        :List of 2
+      ..$ connectivity: num [1:8709] 3.46 3.58 3.58 3.58 3.58 ...
+      ..$ balance     : num [1:10000] 10.8 10.8 10.8 10.8 10.8 ...
+     $ temperatures  :List of 2
+      ..$ connectivity: num [1:8709] 100 99 98 97 96.1 ...
+      ..$ balance     : num [1:10000] 100 99 98 97 96.1 ...
+     $ iterations_run: num 18709
+     $ stopped_early : Named logi [1:2] TRUE FALSE
+      ..- attr(*, "names")= chr [1:2] "connectivity" "balance"
+     $ treatments    :List of 2
+      ..$ connectivity: chr [1:54] "1" "2" "3" "4" ...
+      ..$ balance     : chr [1:54] "1" "2" "3" "4" ...
+     $ seed          : num 112
+     - attr(*, "class")= chr [1:2] "design" "list"
+
+No duplicated treatments along any row or column.
+
+``` r
+df <- met_result$design_df
+max(table(df$treatment, df$site_col))
+```
+
+    [1] 1
+
+``` r
+max(table(df$treatment, paste0(df$site, df$row)))
+```
+
+    [1] 1
+
+Site “a” maintains 3 replicates and no missing treatments in any other
+sites.
+
+``` r
+treatment_count <- table(df$treatment, df$site)
+c(min(treatment_count[, "a"]), max(treatment_count[, "a"]))
+```
+
+    [1] 3 3
+
+``` r
+c(min(treatment_count[, -1]), max(treatment_count[, -1]))
+```
+
+    [1] 1 2
+
+#### Visualise the Output
+
+``` r
+ggplot2::ggplot(met_result$design_df, ggplot2::aes(col, row, fill = treatment)) +
+  ggplot2::geom_tile(color = "black") +
+  ggplot2::scale_fill_viridis_c() +
+  ggplot2::facet_wrap(~site, scales = "free") +
+  ggplot2::scale_x_continuous(expand = c(0, 0), breaks = 1:max(met_design$col)) +
+  ggplot2::scale_y_continuous(expand = c(0, 0), breaks = 1:max(met_design$row), trans = scales::reverse_trans()) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(
+    legend.position = "none",
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank()
+  )
+```
+
+![](met_files/figure-html/met2-plot2-1.png)
+
+This design has now been optimised at both the connectivity between
+sites and the balance within each site. \# Spatial Design Considerations
 
 ### Field Shape and Orientation
 
