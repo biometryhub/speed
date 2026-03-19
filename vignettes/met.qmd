@@ -40,9 +40,9 @@ library(speed)
 - **Sites**: Different locations of the trial
 - **Site-blocks**: Blocks within sites
 
-## Optimising Allocation across All Sites
+# Optimising Allocation across All Sites
 
-### Setting Up MET Design with speed
+## Setting Up MET Design with speed
 
 Now we can create a data frame representing a MET design. Note that we can specify different dimensions for each
 site in the `designs` argument.
@@ -80,7 +80,7 @@ ggplot2::ggplot(met_design, ggplot2::aes(col, row, fill = block)) +
   ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank())
 ```
 
-### Performing the Optimisation
+## Performing the Optimisation
 
 For MET designs, we use lists of named arguments to specify the hierarchical structure. The `optimise` parameter
 defines what to optimise and constraints at each level.
@@ -103,7 +103,7 @@ met_result <- speed(
 met_result
 ```
 
-### Output of the Optimisation
+## Output of the Optimisation
 
 The output shows optimisation results for the design. The score and iterations are combined for the entire
 design, while the treatments, and stopping criteria are reported separately for each level, allowing you to
@@ -121,7 +121,7 @@ max(table(df$treatment, df$site_col))
 max(table(df$treatment, paste0(df$site, df$row)))
 ```
 
-### Visualise the Output
+## Visualise the Output
 
 ```{r met-plot2}
 ggplot2::ggplot(met_result$design_df, ggplot2::aes(col, row, fill = treatment)) +
@@ -140,9 +140,9 @@ ggplot2::ggplot(met_result$design_df, ggplot2::aes(col, row, fill = treatment)) 
 
 This design has now been optimised at both the connectivity between sites and the balance within each site.
 
-## Optimising Allocation across Some Sites
+# Optimising Allocation across Some Sites
 
-### Setting Up MET Design with speed
+## Setting Up MET Design with speed
 
 Now we can create a data frame representing a MET design. Note that we can specify different dimensions for each
 site in the `designs` argument.
@@ -182,7 +182,7 @@ ggplot2::ggplot(met_design, ggplot2::aes(col, row, fill = block)) +
   ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank())
 ```
 
-### Performing the Optimisation
+## Performing the Optimisation
 
 For MET designs, we use lists of named arguments to specify the hierarchical structure. The `optimise` parameter
 defines what to optimise and constraints at each level.
@@ -205,7 +205,7 @@ met_result <- speed(
 met_result
 ```
 
-### Output of the Optimisation
+## Output of the Optimisation
 
 The output shows optimisation results for the design. The score and iterations are combined for the entire
 design, while the treatments, and stopping criteria are reported separately for each level, allowing you to
@@ -231,7 +231,7 @@ c(min(treatment_count[, "a"]), max(treatment_count[, "a"]))
 c(min(treatment_count[, -1]), max(treatment_count[, -1]))
 ```
 
-### Visualise the Output
+## Visualise the Output
 
 ```{r met2-plot2}
 ggplot2::ggplot(met_result$design_df, ggplot2::aes(col, row, fill = treatment)) +
