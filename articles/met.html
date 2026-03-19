@@ -95,10 +95,10 @@
 <strong>Sites</strong>: Different locations of the trial</li>
 <li>
 <strong>Site-blocks</strong>: Blocks within sites</li>
-</ul></section><section class="level2"><h3 id="optimising-allocation-across-all-sites">Optimising Allocation across All Sites<a class="anchor" aria-label="anchor" href="#optimising-allocation-across-all-sites"></a>
+</ul></section></section><section class="section level2"><h2 id="optimising-allocation-across-all-sites">Optimising Allocation across All Sites<a class="anchor" aria-label="anchor" href="#optimising-allocation-across-all-sites"></a>
+</h2>
+<section class="level2"><h3 id="setting-up-met-design-with-speed">Setting Up MET Design with speed<a class="anchor" aria-label="anchor" href="#setting-up-met-design-with-speed"></a>
 </h3>
-<section class="level3"><h4 id="setting-up-met-design-with-speed">Setting Up MET Design with speed<a class="anchor" aria-label="anchor" href="#setting-up-met-design-with-speed"></a>
-</h4>
 <p>Now we can create a data frame representing a MET design. Note that we can specify different dimensions for each site in the <code>designs</code> argument.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
@@ -136,8 +136,8 @@
 </div>
 </div>
 </div>
-</section><section class="level3"><h4 id="performing-the-optimisation">Performing the Optimisation<a class="anchor" aria-label="anchor" href="#performing-the-optimisation"></a>
-</h4>
+</section><section class="level2"><h3 id="performing-the-optimisation">Performing the Optimisation<a class="anchor" aria-label="anchor" href="#performing-the-optimisation"></a>
+</h3>
 <p>For MET designs, we use lists of named arguments to specify the hierarchical structure. The <code>optimise</code> parameter defines what to optimise and constraints at each level.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
@@ -195,8 +195,8 @@ Treatments:
 Seed: 112 </code></pre>
 </div>
 </div>
-</section><section class="level3"><h4 id="output-of-the-optimisation">Output of the Optimisation<a class="anchor" aria-label="anchor" href="#output-of-the-optimisation"></a>
-</h4>
+</section><section class="level2"><h3 id="output-of-the-optimisation">Output of the Optimisation<a class="anchor" aria-label="anchor" href="#output-of-the-optimisation"></a>
+</h3>
 <p>The output shows optimisation results for the design. The score and iterations are combined for the entire design, while the treatments, and stopping criteria are reported separately for each level, allowing you to assess the quality of optimisation at each hierarchy level.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
@@ -244,8 +244,8 @@ Seed: 112 </code></pre>
 <pre><code>[1] 1</code></pre>
 </div>
 </div>
-</section><section class="level3"><h4 id="visualise-the-output">Visualise the Output<a class="anchor" aria-label="anchor" href="#visualise-the-output"></a>
-</h4>
+</section><section class="level2"><h3 id="visualise-the-output">Visualise the Output<a class="anchor" aria-label="anchor" href="#visualise-the-output"></a>
+</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">met_result</span><span class="op">$</span><span class="va">design_df</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">col</span>, <span class="va">row</span>, fill <span class="op">=</span> <span class="va">treatment</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -268,10 +268,10 @@ Seed: 112 </code></pre>
 </div>
 </div>
 <p>This design has now been optimised at both the connectivity between sites and the balance within each site.</p>
-</section></section><section class="level2"><h3 id="optimising-allocation-across-some-sites">Optimising Allocation across Some Sites<a class="anchor" aria-label="anchor" href="#optimising-allocation-across-some-sites"></a>
+</section></section><section class="section level2"><h2 id="optimising-allocation-across-some-sites">Optimising Allocation across Some Sites<a class="anchor" aria-label="anchor" href="#optimising-allocation-across-some-sites"></a>
+</h2>
+<section class="level2"><h3 id="setting-up-met-design-with-speed-1">Setting Up MET Design with speed<a class="anchor" aria-label="anchor" href="#setting-up-met-design-with-speed-1"></a>
 </h3>
-<section class="level3"><h4 id="setting-up-met-design-with-speed-1">Setting Up MET Design with speed<a class="anchor" aria-label="anchor" href="#setting-up-met-design-with-speed-1"></a>
-</h4>
 <p>Now we can create a data frame representing a MET design. Note that we can specify different dimensions for each site in the <code>designs</code> argument.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
@@ -318,8 +318,8 @@ Seed: 112 </code></pre>
 </div>
 </div>
 </div>
-</section><section class="level3"><h4 id="performing-the-optimisation-1">Performing the Optimisation<a class="anchor" aria-label="anchor" href="#performing-the-optimisation-1"></a>
-</h4>
+</section><section class="level2"><h3 id="performing-the-optimisation-1">Performing the Optimisation<a class="anchor" aria-label="anchor" href="#performing-the-optimisation-1"></a>
+</h3>
 <p>For MET designs, we use lists of named arguments to specify the hierarchical structure. The <code>optimise</code> parameter defines what to optimise and constraints at each level.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
@@ -376,8 +376,8 @@ Treatments:
 Seed: 112 </code></pre>
 </div>
 </div>
-</section><section class="level3"><h4 id="output-of-the-optimisation-1">Output of the Optimisation<a class="anchor" aria-label="anchor" href="#output-of-the-optimisation-1"></a>
-</h4>
+</section><section class="level2"><h3 id="output-of-the-optimisation-1">Output of the Optimisation<a class="anchor" aria-label="anchor" href="#output-of-the-optimisation-1"></a>
+</h3>
 <p>The output shows optimisation results for the design. The score and iterations are combined for the entire design, while the treatments, and stopping criteria are reported separately for each level, allowing you to assess the quality of optimisation at each hierarchy level.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
@@ -440,8 +440,8 @@ Seed: 112 </code></pre>
 <pre><code>[1] 1 2</code></pre>
 </div>
 </div>
-</section><section class="level3"><h4 id="visualise-the-output-1">Visualise the Output<a class="anchor" aria-label="anchor" href="#visualise-the-output-1"></a>
-</h4>
+</section><section class="level2"><h3 id="visualise-the-output-1">Visualise the Output<a class="anchor" aria-label="anchor" href="#visualise-the-output-1"></a>
+</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">met_result</span><span class="op">$</span><span class="va">design_df</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">col</span>, <span class="va">row</span>, fill <span class="op">=</span> <span class="va">treatment</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -464,7 +464,7 @@ Seed: 112 </code></pre>
 </div>
 </div>
 <p>This design has now been optimised at both the connectivity between sites and the balance within each site. # Spatial Design Considerations</p>
-</section></section><section class="level2"><h3 id="field-shape-and-orientation">Field Shape and Orientation<a class="anchor" aria-label="anchor" href="#field-shape-and-orientation"></a>
+</section><section class="level2"><h3 id="field-shape-and-orientation">Field Shape and Orientation<a class="anchor" aria-label="anchor" href="#field-shape-and-orientation"></a>
 </h3>
 </section><section class="level2"><h3 id="neighbour-effects">Neighbour Effects<a class="anchor" aria-label="anchor" href="#neighbour-effects"></a>
 </h3>

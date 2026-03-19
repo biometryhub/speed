@@ -27,9 +27,9 @@ library(speed)
 - **Sites**: Different locations of the trial
 - **Site-blocks**: Blocks within sites
 
-### Optimising Allocation across All Sites
+## Optimising Allocation across All Sites
 
-#### Setting Up MET Design with speed
+### Setting Up MET Design with speed
 
 Now we can create a data frame representing a MET design. Note that we
 can specify different dimensions for each site in the `designs`
@@ -64,7 +64,7 @@ head(met_design)
 
 ![](met_files/figure-html/met-plot1-1.png)
 
-#### Performing the Optimisation
+### Performing the Optimisation
 
 For MET designs, we use lists of named arguments to specify the
 hierarchical structure. The `optimise` parameter defines what to
@@ -125,7 +125,7 @@ met_result
       balance: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57
     Seed: 112 
 
-#### Output of the Optimisation
+### Output of the Optimisation
 
 The output shows optimisation results for the design. The score and
 iterations are combined for the entire design, while the treatments, and
@@ -178,7 +178,7 @@ max(table(df$treatment, paste0(df$site, df$row)))
 
     [1] 1
 
-#### Visualise the Output
+### Visualise the Output
 
 ``` r
 ggplot2::ggplot(met_result$design_df, ggplot2::aes(col, row, fill = treatment)) +
@@ -200,9 +200,9 @@ ggplot2::ggplot(met_result$design_df, ggplot2::aes(col, row, fill = treatment)) 
 This design has now been optimised at both the connectivity between
 sites and the balance within each site.
 
-### Optimising Allocation across Some Sites
+## Optimising Allocation across Some Sites
 
-#### Setting Up MET Design with speed
+### Setting Up MET Design with speed
 
 Now we can create a data frame representing a MET design. Note that we
 can specify different dimensions for each site in the `designs`
@@ -246,7 +246,7 @@ head(met_design)
 
 ![](met_files/figure-html/met2-plot1-1.png)
 
-#### Performing the Optimisation
+### Performing the Optimisation
 
 For MET designs, we use lists of named arguments to specify the
 hierarchical structure. The `optimise` parameter defines what to
@@ -306,7 +306,7 @@ met_result
       balance: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54
     Seed: 112 
 
-#### Output of the Optimisation
+### Output of the Optimisation
 
 The output shows optimisation results for the design. The score and
 iterations are combined for the entire design, while the treatments, and
@@ -376,7 +376,7 @@ c(min(treatment_count[, -1]), max(treatment_count[, -1]))
 
     [1] 1 2
 
-#### Visualise the Output
+### Visualise the Output
 
 ``` r
 ggplot2::ggplot(met_result$design_df, ggplot2::aes(col, row, fill = treatment)) +
