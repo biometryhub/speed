@@ -52,7 +52,12 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
   # Perform swaps in selected blocks
   for (block in blocks_to_swap) {
     # Get indices of plots in this block
-    block_indices <- which(all_blocks == block & !is.na(design[[swap]]))
+    block_indices <- which(all_blocks == block & !is.na(all_blocks) & !is.na(design[[swap]]))
+    # if (block == 'a') {
+    #
+    # print(block)
+    # print(block_indices)
+    # }
 
     if (length(block_indices) >= 2) {
       # Need at least 2 plots to swap
@@ -74,6 +79,10 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
             to_be_swapped <- NULL
           }
         }
+
+        # if (block == 'a' && '9' %in% to_be_swapped) {
+        #   print(paste(block, paste(swap_pair, collapse = ','), paste(to_be_swapped, collapse = ',')))
+        # }
 
         # Perform the swap only if we have valid treatments to swap
         if (!is.null(to_be_swapped)) {
@@ -111,7 +120,7 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
   # Perform swaps in selected groups
   for (group in groups_to_swap) {
     # Get unique treatments within this group
-    group_filter <- new_design[[swap_within]] == group
+    group_filter <- new_design[[swap_within]] == group & !is.na(new_design[[swap_within]])
     group_data <- new_design[group_filter & !is.na(new_design[[swap]]), ]
     group_treatments <- unique(group_data[[swap]])
 
@@ -339,9 +348,10 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
     set.seed(seed)
   }
 
-  for (i in unique(design[[swap_within]])) {
-    items <- design[design[[swap_within]] == i, ][[swap]]
-    design[design[[swap_within]] == i, ][[swap]] <- sample(items)
+  for (i in levels(design[[swap_within]])) {
+    swap_within_filter <- design[[swap_within]] == i & !is.na(design[[swap_within]])
+    items <- design[swap_within_filter, ][[swap]]
+    design[swap_within_filter, ][[swap]] <- sample(items)
   }
 
   return(design)
