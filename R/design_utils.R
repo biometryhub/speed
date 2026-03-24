@@ -53,11 +53,6 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
   for (block in blocks_to_swap) {
     # Get indices of plots in this block
     block_indices <- which(all_blocks == block & !is.na(all_blocks) & !is.na(design[[swap]]))
-    # if (block == 'a') {
-    #
-    # print(block)
-    # print(block_indices)
-    # }
 
     if (length(block_indices) >= 2) {
       # Need at least 2 plots to swap
@@ -79,10 +74,6 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
             to_be_swapped <- NULL
           }
         }
-
-        # if (block == 'a' && '9' %in% to_be_swapped) {
-        #   print(paste(block, paste(swap_pair, collapse = ','), paste(to_be_swapped, collapse = ',')))
-        # }
 
         # Perform the swap only if we have valid treatments to swap
         if (!is.null(to_be_swapped)) {
@@ -373,6 +364,22 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
     return(design)
   }
 
+  if (length(optimise) > 1) {
+    groups <- c()
+    for (i in seq_along(optimise)) {
+      groups <- c(groups, optimise[[i]]$swap_within)
+      if (i == 1) {
+        next
+      }
+
+      now <- as.numeric(Sys.time())
+      dummy_col <- paste0(paste(groups, collapse = "_"), "_", now)
+      optimise[[i]]$swap_within <- dummy_col
+      design[[dummy_col]] <- apply(design[, groups], 1, paste, collapse = "-") |>
+        factor()
+    }
+  }
+
   best_score <- Inf
   best_design <- design
   for (i in seq_len(random_initialisation)) {
@@ -405,6 +412,10 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
       best_score <- current_score
       best_design <- shuffled_design
     }
+  }
+
+  for (opt in optimise[-1]) {
+    design[[opt$swap_within]] <- NULL
   }
 
   return(best_design)

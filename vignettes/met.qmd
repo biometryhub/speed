@@ -116,10 +116,14 @@ str(met_result)
 No duplicated treatments along any row, column, or block.
 
 ```{r met-no-dupes}
+check_no_dupes <- function(df) {
+  cat(max(table(df$treatment, df$site_col)), sep = "", ", ")
+  cat(max(table(df$treatment, paste0(df$site, df$row))), sep = "", ", ")
+  cat(max(table(df$treatment, df$site_block)))
+}
+
 df <- met_result$design_df
-max(table(df$treatment, df$site_col))
-max(table(df$treatment, paste0(df$site, df$row)))
-max(table(df$treatment, df$site_block))
+check_no_dupes(df)
 ```
 
 ## Visualise the Output
@@ -197,9 +201,10 @@ optimise <- list(
 met_result <- speed(
   data = met_design,
   swap = "treatment",
-  early_stop_iterations = 5000,
+  early_stop_iterations = 10000,
+  iterations = 50000,
   optimise = optimise,
-  optimise_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
+  optimise_params = optim_params(random_initialisation = 10, adj_weight = 0),
   seed = 112
 )
 
@@ -220,9 +225,7 @@ No duplicated treatments along any row, column, or block.
 
 ```{r met2-no-dupes}
 df <- met_result$design_df
-max(table(df$treatment, df$site_col))
-max(table(df$treatment, paste0(df$site, df$row)))
-max(table(df$treatment, df$site_block))
+check_no_dupes(df)
 ```
 
 Site "a" maintains 3 replicates and no missing treatments in any other sites.
@@ -326,16 +329,16 @@ defines what to optimise and constraints at each level.
 ```{r met3-example}
 optimise <- list(
   connectivity = list(swap_within = "allocation", spatial_factors = ~site),
-  balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block, iterations = 50)
+  balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
 )
 
 met_result <- speed(
   data = met_design,
   swap = "treatment",
-  early_stop_iterations = 10000,
-  iterations = 30000,
+  early_stop_iterations = 5000,
+  iterations = 20000,
   optimise = optimise,
-  optimise_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
+  optimise_params = optim_params(random_initialisation = 30, adj_weight = 0),
   seed = 112
 )
 
@@ -356,23 +359,22 @@ No duplicated treatments along any row, column, or block.
 
 ```{r met3-no-dupes}
 df <- met_result$design_df
-max(table(df$treatment, df$site_col))
-max(table(df$treatment, paste0(df$site, df$row)))
-max(table(df$treatment, df$site_block))
+check_no_dupes(df)
 ```
 
-<!-- Site "a" maintains 3 replicates and no missing treatments in any other sites. -->
-<!---->
-<!-- ```{r met3-reps} -->
-<!-- treatment_count <- table(df$treatment, df$site) -->
-<!-- c(min(treatment_count[, "a"]), max(treatment_count[, "a"])) -->
-<!-- c(min(treatment_count[, -1]), max(treatment_count[, -1])) -->
-<!-- ``` -->
+All sites maintain pre-allocated treatments.
+
+```{r met3-reps}
+treatment_count <- table(df$site, df$treatment)
+for (site in names(fixed_treatments)) {
+  print(treatment_count[site, as.character(fixed_treatments[[site]]), drop = FALSE])
+}
+```
 
 ## Visualise the Output
 
 ```{r met3-plot2}
-met_result$design_df$treatment = as.numeric(met_result$design_df$treatment)
+met_result$design_df$treatment <- as.numeric(met_result$design_df$treatment)
 ggplot2::ggplot(met_result$design_df, ggplot2::aes(col, row, fill = treatment)) +
   ggplot2::geom_tile(color = "black") +
   ggplot2::scale_fill_viridis_c() +
