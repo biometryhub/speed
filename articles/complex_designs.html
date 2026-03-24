@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,7 @@
       <h1>Complex Agricultural Experimental Designs with speed</h1>
 
       <p class="author">Sam Rogers</p>
-      <p class="date">2026-03-19</p>
+      <p class="date">2026-03-24</p>
 
       <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/vignettes/complex_designs.qmd" class="external-link"><code>vignettes/complex_designs.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -444,7 +444,7 @@ Seed: -745752008 </code></pre>
 <li>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>λ</mi><annotation encoding="application/x-tex">λ</annotation></semantics></math> = number of blocks containing each pair of treatments</li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi><mi>k</mi><mo>=</mo><mi>v</mi><mi>r</mi></mrow><annotation encoding="application/x-tex">bk = vr</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>v</mi><mo>−</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>r</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>k</mi><mo>−</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">λ(v-1) = r(k-1)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi><mi>k</mi><mo>=</mo><mi>v</mi><mi>r</mi></mrow><annotation encoding="application/x-tex">bk = vr</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mo stretchy="false" form="prefix">(</mo><mi>v</mi><mo>−</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>r</mi><mo stretchy="false" form="prefix">(</mo><mi>k</mi><mo>−</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">λ(v-1) = r(k-1)</annotation></semantics></math>
 </li>
 </ul>
 <p>What may become apparent from the characteristics and parameters listed above is that these designs are not trivial, and <a href="https://en.wikipedia.org/wiki/Block_design#Pairwise_balanced_uniform_designs_(2-designs_or_BIBDs)" class="external-link">there are specific and limited combinations that will work</a>. In the case of speed, a custom objective function is required to ensure that each pair of treatments appear the same number of times. For an example and further discussion, see the <a href="custom_objective_functions.html">vignette on custom objective functions</a>.</p>
