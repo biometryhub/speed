@@ -368,9 +368,7 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
     groups <- c()
     for (i in seq_along(optimise)) {
       groups <- c(groups, optimise[[i]]$swap_within)
-      if (i == 1) {
-        next
-      }
+      if (i == 1) next
 
       now <- as.numeric(Sys.time())
       dummy_col <- paste0(paste(groups, collapse = "_"), "_", now)
@@ -415,7 +413,7 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
   }
 
   for (opt in optimise[-1]) {
-    design[[opt$swap_within]] <- NULL
+    best_design[[opt$swap_within]] <- NULL
   }
 
   return(best_design)
