@@ -52,7 +52,7 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
   # Perform swaps in selected blocks
   for (block in blocks_to_swap) {
     # Get indices of plots in this block
-    block_indices <- which(all_blocks == block & !is.na(design[[swap]]))
+    block_indices <- which(all_blocks == block & !is.na(all_blocks) & !is.na(design[[swap]]))
 
     if (length(block_indices) >= 2) {
       # Need at least 2 plots to swap
@@ -111,7 +111,7 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
   # Perform swaps in selected groups
   for (group in groups_to_swap) {
     # Get unique treatments within this group
-    group_filter <- new_design[[swap_within]] == group
+    group_filter <- new_design[[swap_within]] == group & !is.na(new_design[[swap_within]])
     group_data <- new_design[group_filter & !is.na(new_design[[swap]]), ]
     group_treatments <- unique(group_data[[swap]])
 
@@ -339,9 +339,10 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
     set.seed(seed)
   }
 
-  for (i in unique(design[[swap_within]])) {
-    items <- design[design[[swap_within]] == i, ][[swap]]
-    design[design[[swap_within]] == i, ][[swap]] <- sample(items)
+  for (i in levels(design[[swap_within]])) {
+    swap_within_filter <- design[[swap_within]] == i & !is.na(design[[swap_within]])
+    items <- design[swap_within_filter, ][[swap]]
+    design[swap_within_filter, ][[swap]] <- sample(items)
   }
 
   return(design)
@@ -361,6 +362,20 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
   random_initialisation <- optimise[[1]]$optimise_params$random_initialisation
   if (random_initialisation == 0) {
     return(design)
+  }
+
+  if (length(optimise) > 1) {
+    groups <- c()
+    for (i in seq_along(optimise)) {
+      groups <- c(groups, optimise[[i]]$swap_within)
+      if (i == 1) next
+
+      now <- as.numeric(Sys.time())
+      dummy_col <- paste0(paste(groups, collapse = "_"), "_", now)
+      optimise[[i]]$swap_within <- dummy_col
+      design[[dummy_col]] <- apply(design[, groups], 1, paste, collapse = "-") |>
+        factor()
+    }
   }
 
   best_score <- Inf
@@ -395,6 +410,10 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
       best_score <- current_score
       best_design <- shuffled_design
     }
+  }
+
+  for (opt in optimise[-1]) {
+    best_design[[opt$swap_within]] <- NULL
   }
 
   return(best_design)

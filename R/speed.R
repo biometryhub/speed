@@ -188,6 +188,7 @@ speed <- function(data,
   if (inferred$inferred) {
     # Sort the data frame to start with to ensure consistency in calculating the adjacency later
     data <- data[do.call(order, data[c(row_column, col_column)]), ]
+    rownames(data) <- seq_len(nrow(data))
   }
 
   # dummy group for swapping within whole design
@@ -281,8 +282,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       }
 
       # Generate new design by swapping treatments at this level
-      new_design <- generate_neighbour(current_design,opt$swap, opt$swap_within, current_swap_count,
-                                       current_swap_all_blocks,opt$swap_all)
+      new_design <- generate_neighbour(current_design, opt$swap, opt$swap_within, current_swap_count,
+                                       current_swap_all_blocks, opt$swap_all)
 
       # Calculate new score
       new_score_obj <- opt$obj_function(new_design$design,opt$swap, spatial_cols, adj_weight = adj_weight,
