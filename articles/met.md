@@ -62,6 +62,34 @@ head(met_design)
     5   5   1         5         1         1     1    a      a_1        a_1
     6   6   1         6         1         1     1    a      a_1        a_1
 
+Code
+
+``` r
+met_design$block <- factor(met_design$block)
+
+plot_layout <- function(df, fill) {
+  scale_fill <- if (is.numeric(df[[fill]])) {
+    ggplot2::scale_fill_viridis_c
+  } else {
+    ggplot2::scale_fill_viridis_d
+  }
+
+  return(
+    ggplot2::ggplot(df, ggplot2::aes(col, row, fill = get(fill))) +
+      ggplot2::geom_tile(color = "black") +
+      scale_fill(na.value = "grey") +
+      ggplot2::facet_wrap(~site, scales = "free") +
+      ggplot2::scale_x_continuous(expand = c(0, 0), breaks = 1:max(df$col)) +
+      ggplot2::scale_y_continuous(expand = c(0, 0), breaks = 1:max(df$row), trans = scales::reverse_trans()) +
+      ggplot2::theme_bw() +
+      ggplot2::labs(fill = fill) +
+      ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank())
+  )
+}
+
+plot_layout(met_design, "block")
+```
+
 ![](met_files/figure-html/met-plot1-1.png)
 
 ### Performing the Optimisation
@@ -180,19 +208,11 @@ check_no_dupes(df)
 
 ### Visualise the Output
 
+Code
+
 ``` r
-ggplot2::ggplot(met_result$design_df, ggplot2::aes(col, row, fill = treatment)) +
-  ggplot2::geom_tile(color = "black") +
-  ggplot2::scale_fill_viridis_c() +
-  ggplot2::facet_wrap(~site, scales = "free") +
-  ggplot2::scale_x_continuous(expand = c(0, 0), breaks = 1:max(met_design$col)) +
-  ggplot2::scale_y_continuous(expand = c(0, 0), breaks = 1:max(met_design$row), trans = scales::reverse_trans()) +
-  ggplot2::theme_bw() +
-  ggplot2::theme(
-    legend.position = "none",
-    panel.grid.major = ggplot2::element_blank(),
-    panel.grid.minor = ggplot2::element_blank()
-  )
+plot_layout(met_result$design_df, "treatment") + 
+  ggplot2::theme(legend.position = "none")
 ```
 
 ![](met_files/figure-html/met-plot2-1.png)
@@ -243,6 +263,13 @@ head(met_design)
     4       <NA>
     5       <NA>
     6       <NA>
+
+Code
+
+``` r
+met_design$block <- factor(met_design$block)
+plot_layout(met_design, "block")
+```
 
 ![](met_files/figure-html/met2-plot1-1.png)
 
@@ -405,19 +432,11 @@ c(min(treatment_count[, -1]), max(treatment_count[, -1]))
 
 ### Visualise the Output
 
+Code
+
 ``` r
-ggplot2::ggplot(met_result$design_df, ggplot2::aes(col, row, fill = treatment)) +
-  ggplot2::geom_tile(color = "black") +
-  ggplot2::scale_fill_viridis_c() +
-  ggplot2::facet_wrap(~site, scales = "free") +
-  ggplot2::scale_x_continuous(expand = c(0, 0), breaks = 1:max(met_design$col)) +
-  ggplot2::scale_y_continuous(expand = c(0, 0), breaks = 1:max(met_design$row), trans = scales::reverse_trans()) +
-  ggplot2::theme_bw() +
-  ggplot2::theme(
-    legend.position = "none",
-    panel.grid.major = ggplot2::element_blank(),
-    panel.grid.minor = ggplot2::element_blank()
-  )
+plot_layout(met_result$design_df, "treatment") + 
+  ggplot2::theme(legend.position = "none")
 ```
 
 ![](met_files/figure-html/met2-plot2-1.png)
@@ -439,8 +458,10 @@ argument. Also, some treatments are pre-allocated to each site:
 - Site ‘d’: Treatments 1-3, 8-9
 - Site ‘e’: Treatments 1-5
 
-Note that version 0.0.5 is required. Otherwise, there would be a bug
-caused by random initialisation later on.
+> **Note**
+>
+> Note that `speed >= 0.0.5` is required. Otherwise, there would be a
+> bug caused by random initialisation later on.
 
 ``` r
 fixed_treatments <- list(
@@ -495,6 +516,13 @@ head(met_design)
     4        a_1
     5        a_1
     6        a_1
+
+Code
+
+``` r
+met_design$block <- factor(met_design$block)
+plot_layout(met_design, "block")
+```
 
 ![](met_files/figure-html/met3-plot1-1.png)
 
@@ -618,49 +646,36 @@ check_no_dupes(df)
 
     1, 1, 1
 
-All sites maintain pre-allocated treatments.
-
-``` r
-treatment_count <- table(df$site, df$treatment)
-for (site in names(fixed_treatments)) {
-  print(treatment_count[site, as.character(fixed_treatments[[site]]), drop = FALSE])
-}
-```
-
-        1 2 3 4 5
-      a 3 3 3 3 3
-
-        1 2 3 4
-      b 2 2 2 2
-
-        1 2 3 4 5 6 7
-      c 2 2 2 2 2 2 2
-
-        1 2 3 8 9
-      d 3 3 3 3 3
-
-        1 2 3 4 5
-      e 2 2 2 2 2
-
 ### Visualise the Output
 
+Code
+
 ``` r
-met_result$design_df$treatment <- as.numeric(met_result$design_df$treatment)
-ggplot2::ggplot(met_result$design_df, ggplot2::aes(col, row, fill = treatment)) +
-  ggplot2::geom_tile(color = "black") +
-  ggplot2::scale_fill_viridis_c() +
-  ggplot2::facet_wrap(~site, scales = "free") +
-  ggplot2::scale_x_continuous(expand = c(0, 0), breaks = 1:max(met_design$col)) +
-  ggplot2::scale_y_continuous(expand = c(0, 0), breaks = 1:max(met_design$row), trans = scales::reverse_trans()) +
-  ggplot2::theme_bw() +
-  ggplot2::theme(
-    legend.position = "none",
-    panel.grid.major = ggplot2::element_blank(),
-    panel.grid.minor = ggplot2::element_blank()
-  )
+df$treatment <- as.numeric(df$treatment)
+plot_layout(df, "treatment") + 
+  ggplot2::theme(legend.position = "none")
 ```
 
 ![](met_files/figure-html/met3-plot2-1.png)
+
+All sites maintain pre-allocated treatments.
+
+Code
+
+``` r
+df$treatment <- ifelse(df$treatment < 4, df$treatment, NA)
+plot_layout(df, "treatment") +
+  ggplot2::geom_text(
+    ggplot2::aes(label = treatment),
+    size = 3,
+    color = "red",
+    na.rm = TRUE,
+    fontface = "bold"
+  ) +
+  ggplot2::theme(legend.position = "none")
+```
+
+![](met_files/figure-html/met3-plot3-1.png)
 
 This design has now been optimised at both the connectivity between
 sites and the balance within each site.
