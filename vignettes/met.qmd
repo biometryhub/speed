@@ -351,6 +351,15 @@ df <- met_result$design_df
 check_no_dupes(df)
 ```
 
+All sites maintain pre-allocated treatments.
+
+```{r met3-reps}
+treatment_count <- table(df$site, df$treatment)
+for (site in names(fixed_treatments)) {
+  print(treatment_count[site, as.character(fixed_treatments[[site]]), drop = FALSE])
+}
+```
+
 ## Visualise the Output
 
 ```{r met3-plot2}
@@ -361,7 +370,7 @@ plot_layout(df, "treatment") +
   ggplot2::theme(legend.position = "none")
 ```
 
-All sites maintain pre-allocated treatments.
+The placements of common pre-allocated treatments.
 
 ```{r met3-plot3}
 #| code-fold: true
