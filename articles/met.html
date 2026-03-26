@@ -61,7 +61,7 @@
       <h1>Multi-Environment Trials with speed</h1>
 
       <p class="author">Wasin Pipattungsakul</p>
-      <p class="date">2026-03-25</p>
+      <p class="date">2026-03-26</p>
 
       <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/vignettes/met.qmd" class="external-link"><code>vignettes/met.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -699,10 +699,35 @@ Seed: 112 </code></pre>
 <pre><code>1, 1, 1</code></pre>
 </div>
 </div>
+<p>All sites maintain pre-allocated treatments.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">treatment_count</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">site</span>, <span class="va">df</span><span class="op">$</span><span class="va">treatment</span><span class="op">)</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">site</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">fixed_treatments</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">treatment_count</span><span class="op">[</span><span class="va">site</span>, <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">fixed_treatments</span><span class="op">[[</span><span class="va">site</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>, drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    1 2 3 4 5
+  a 3 3 3 3 3
+
+    1 2 3 4
+  b 2 2 2 2
+
+    1 2 3 4 5 6 7
+  c 2 2 2 2 2 2 2
+
+    1 2 3 8 9
+  d 3 3 3 3 3
+
+    1 2 3 4 5
+  e 2 2 2 2 2</code></pre>
+</div>
+</div>
 </section><section class="level2"><h3 id="visualise-the-output-2">Visualise the Output<a class="anchor" aria-label="anchor" href="#visualise-the-output-2"></a>
 </h3>
 <div class="cell">
-<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb44"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span><span class="op">$</span><span class="va">treatment</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">treatment</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html" class="external-link">plot_layout</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"treatment"</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
@@ -713,9 +738,9 @@ Seed: 112 </code></pre>
 </div>
 </div>
 </div>
-<p>All sites maintain pre-allocated treatments.</p>
+<p>The placements of common pre-allocated treatments.</p>
 <div class="cell">
-<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb45"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb47"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span><span class="op">$</span><span class="va">treatment</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">treatment</span> <span class="op">&lt;</span> <span class="fl">4</span>, <span class="va">df</span><span class="op">$</span><span class="va">treatment</span>, <span class="cn">NA</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html" class="external-link">plot_layout</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"treatment"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_text.html" class="external-link">geom_text</a></span><span class="op">(</span></span>

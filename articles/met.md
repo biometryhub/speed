@@ -646,6 +646,30 @@ check_no_dupes(df)
 
     1, 1, 1
 
+All sites maintain pre-allocated treatments.
+
+``` r
+treatment_count <- table(df$site, df$treatment)
+for (site in names(fixed_treatments)) {
+  print(treatment_count[site, as.character(fixed_treatments[[site]]), drop = FALSE])
+}
+```
+
+        1 2 3 4 5
+      a 3 3 3 3 3
+
+        1 2 3 4
+      b 2 2 2 2
+
+        1 2 3 4 5 6 7
+      c 2 2 2 2 2 2 2
+
+        1 2 3 8 9
+      d 3 3 3 3 3
+
+        1 2 3 4 5
+      e 2 2 2 2 2
+
 ### Visualise the Output
 
 Code
@@ -658,7 +682,7 @@ plot_layout(df, "treatment") +
 
 ![](met_files/figure-html/met3-plot2-1.png)
 
-All sites maintain pre-allocated treatments.
+The placements of common pre-allocated treatments.
 
 Code
 
