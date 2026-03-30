@@ -464,14 +464,16 @@ argument. Also, some treatments are pre-allocated to each site:
 > bug caused by random initialisation later on.
 
 ``` r
+# prepare treatments
 fixed_treatments <- list(
-  a = 1:5,
-  b = 1:4,
-  c = 1:7,
-  d = c(1:3, 8:9),
-  e = 1:5
+  a = rep(1:5, 3),
+  b = rep(1:4, 2),
+  c = rep(1:7, 2),
+  d = c(rep(1:3, 3), rep(8:10, 2)),
+  e = rep(1:5, 2)
 )
-non_fixed_treatments <- c(rep(10:18, 8), rep(19:60, 7))
+non_fixed_treatments <- c(rep(11:19, 8), rep(20:61, 7))
+
 met_design <- initialise_design_df(
   items = 1,
   designs = list(
@@ -483,13 +485,14 @@ met_design <- initialise_design_df(
   )
 )
 met_design$allocation <- "free"
-for (site in unique(met_design$site)) {
-  df_site <- met_design[met_design$site == site, ]
-  n_blocks <- max(unique(df_site$block))
-  n_fixed <- length(fixed_treatments[[site]]) * n_blocks
-  non_fixed_indices <- 1:(nrow(df_site) - n_fixed)
 
-  treatments <- c(rep(fixed_treatments[[site]], n_blocks), non_fixed_treatments[non_fixed_indices])
+# add treatments to design
+for (site in unique(met_design$site)) {
+  n_plots_site <- nrow(met_design[met_design$site == site, ])
+  n_fixed <- length(fixed_treatments[[site]])
+  non_fixed_indices <- 1:(n_plots_site - n_fixed)
+
+  treatments <- c(fixed_treatments[[site]], non_fixed_treatments[non_fixed_indices])
   met_design[met_design$site == site, ]$treatment <- treatments
   met_design[met_design$site == site & met_design$treatment %in% fixed_treatments[[site]], ]$allocation <- NA
 
@@ -541,8 +544,8 @@ optimise <- list(
 met_result <- speed(
   data = met_design,
   swap = "treatment",
-  early_stop_iterations = 5000,
-  iterations = 20000,
+  early_stop_iterations = 8000,
+  iterations = 50000,
   optimise = optimise,
   optimise_params = optim_params(random_initialisation = 30, adj_weight = 0),
   seed = 112
@@ -552,37 +555,61 @@ met_result <- speed(
     row and col are used as row and column, respectively.
 
     Optimising level: connectivity
-    Level: connectivity Iteration: 1000 Score: 3.175141 Best: 3.175141 Since Improvement: 19
-    Level: connectivity Iteration: 2000 Score: 2.158192 Best: 2.158192 Since Improvement: 40
-    Level: connectivity Iteration: 3000 Score: 2.056497 Best: 2.056497 Since Improvement: 94
-    Level: connectivity Iteration: 4000 Score: 1.954802 Best: 1.954802 Since Improvement: 125
-    Level: connectivity Iteration: 5000 Score: 1.887006 Best: 1.887006 Since Improvement: 224
-    Level: connectivity Iteration: 6000 Score: 1.819209 Best: 1.819209 Since Improvement: 136
-    Level: connectivity Iteration: 7000 Score: 1.819209 Best: 1.819209 Since Improvement: 1136
-    Level: connectivity Iteration: 8000 Score: 1.819209 Best: 1.819209 Since Improvement: 2136
-    Level: connectivity Iteration: 9000 Score: 1.819209 Best: 1.819209 Since Improvement: 3136
-    Level: connectivity Iteration: 10000 Score: 1.819209 Best: 1.819209 Since Improvement: 4136
-    Early stopping at iteration 10864 for level connectivity
+    Level: connectivity Iteration: 1000 Score: 3.290164 Best: 3.290164 Since Improvement: 19
+    Level: connectivity Iteration: 2000 Score: 2.290164 Best: 2.290164 Since Improvement: 249
+    Level: connectivity Iteration: 3000 Score: 2.023497 Best: 2.023497 Since Improvement: 145
+    Level: connectivity Iteration: 4000 Score: 1.956831 Best: 1.956831 Since Improvement: 454
+    Level: connectivity Iteration: 5000 Score: 1.923497 Best: 1.923497 Since Improvement: 141
+    Level: connectivity Iteration: 6000 Score: 1.923497 Best: 1.923497 Since Improvement: 1141
+    Level: connectivity Iteration: 7000 Score: 1.923497 Best: 1.923497 Since Improvement: 2141
+    Level: connectivity Iteration: 8000 Score: 1.923497 Best: 1.923497 Since Improvement: 3141
+    Level: connectivity Iteration: 9000 Score: 1.923497 Best: 1.923497 Since Improvement: 4141
+    Level: connectivity Iteration: 10000 Score: 1.923497 Best: 1.923497 Since Improvement: 5141
+    Level: connectivity Iteration: 11000 Score: 1.923497 Best: 1.923497 Since Improvement: 6141
+    Level: connectivity Iteration: 12000 Score: 1.890164 Best: 1.890164 Since Improvement: 50
+    Level: connectivity Iteration: 13000 Score: 1.890164 Best: 1.890164 Since Improvement: 1050
+    Level: connectivity Iteration: 14000 Score: 1.890164 Best: 1.890164 Since Improvement: 2050
+    Level: connectivity Iteration: 15000 Score: 1.890164 Best: 1.890164 Since Improvement: 3050
+    Level: connectivity Iteration: 16000 Score: 1.890164 Best: 1.890164 Since Improvement: 4050
+    Level: connectivity Iteration: 17000 Score: 1.890164 Best: 1.890164 Since Improvement: 5050
+    Level: connectivity Iteration: 18000 Score: 1.890164 Best: 1.890164 Since Improvement: 6050
+    Level: connectivity Iteration: 19000 Score: 1.890164 Best: 1.890164 Since Improvement: 7050
+    Early stopping at iteration 19950 for level connectivity
     Optimising level: balance
-    Level: balance Iteration: 1000 Score: 9.386441 Best: 9.386441 Since Improvement: 46
-    Level: balance Iteration: 2000 Score: 7.928814 Best: 7.928814 Since Improvement: 78
-    Level: balance Iteration: 3000 Score: 7.589831 Best: 7.589831 Since Improvement: 54
-    Level: balance Iteration: 4000 Score: 7.488136 Best: 7.488136 Since Improvement: 545
-    Level: balance Iteration: 5000 Score: 7.386441 Best: 7.386441 Since Improvement: 187
-    Level: balance Iteration: 6000 Score: 7.318644 Best: 7.318644 Since Improvement: 407
-    Level: balance Iteration: 7000 Score: 7.216949 Best: 7.216949 Since Improvement: 361
-    Level: balance Iteration: 8000 Score: 7.216949 Best: 7.216949 Since Improvement: 1361
-    Level: balance Iteration: 9000 Score: 7.183051 Best: 7.183051 Since Improvement: 381
-    Level: balance Iteration: 10000 Score: 7.183051 Best: 7.183051 Since Improvement: 1381
-    Level: balance Iteration: 11000 Score: 7.149153 Best: 7.149153 Since Improvement: 690
-    Level: balance Iteration: 12000 Score: 7.149153 Best: 7.149153 Since Improvement: 1690
-    Level: balance Iteration: 13000 Score: 7.047458 Best: 7.047458 Since Improvement: 63
-    Level: balance Iteration: 14000 Score: 6.979661 Best: 6.979661 Since Improvement: 123
-    Level: balance Iteration: 15000 Score: 6.979661 Best: 6.979661 Since Improvement: 1123
-    Level: balance Iteration: 16000 Score: 6.979661 Best: 6.979661 Since Improvement: 2123
-    Level: balance Iteration: 17000 Score: 6.979661 Best: 6.979661 Since Improvement: 3123
-    Level: balance Iteration: 18000 Score: 6.979661 Best: 6.979661 Since Improvement: 4123
-    Early stopping at iteration 18877 for level balance 
+    Level: balance Iteration: 1000 Score: 9.451366 Best: 9.451366 Since Improvement: 5
+    Level: balance Iteration: 2000 Score: 7.784699 Best: 7.784699 Since Improvement: 1
+    Level: balance Iteration: 3000 Score: 7.584699 Best: 7.584699 Since Improvement: 84
+    Level: balance Iteration: 4000 Score: 7.318033 Best: 7.318033 Since Improvement: 13
+    Level: balance Iteration: 5000 Score: 7.151366 Best: 7.151366 Since Improvement: 410
+    Level: balance Iteration: 6000 Score: 7.151366 Best: 7.151366 Since Improvement: 1410
+    Level: balance Iteration: 7000 Score: 7.151366 Best: 7.151366 Since Improvement: 2410
+    Level: balance Iteration: 8000 Score: 7.151366 Best: 7.151366 Since Improvement: 3410
+    Level: balance Iteration: 9000 Score: 7.151366 Best: 7.151366 Since Improvement: 4410
+    Level: balance Iteration: 10000 Score: 7.151366 Best: 7.151366 Since Improvement: 5410
+    Level: balance Iteration: 11000 Score: 7.084699 Best: 7.084699 Since Improvement: 130
+    Level: balance Iteration: 12000 Score: 7.084699 Best: 7.084699 Since Improvement: 1130
+    Level: balance Iteration: 13000 Score: 7.084699 Best: 7.084699 Since Improvement: 2130
+    Level: balance Iteration: 14000 Score: 7.051366 Best: 7.051366 Since Improvement: 775
+    Level: balance Iteration: 15000 Score: 7.051366 Best: 7.051366 Since Improvement: 1775
+    Level: balance Iteration: 16000 Score: 7.051366 Best: 7.051366 Since Improvement: 2775
+    Level: balance Iteration: 17000 Score: 7.051366 Best: 7.051366 Since Improvement: 3775
+    Level: balance Iteration: 18000 Score: 7.018033 Best: 7.018033 Since Improvement: 110
+    Level: balance Iteration: 19000 Score: 7.018033 Best: 7.018033 Since Improvement: 1110
+    Level: balance Iteration: 20000 Score: 7.018033 Best: 7.018033 Since Improvement: 2110
+    Level: balance Iteration: 21000 Score: 7.018033 Best: 7.018033 Since Improvement: 3110
+    Level: balance Iteration: 22000 Score: 7.018033 Best: 7.018033 Since Improvement: 4110
+    Level: balance Iteration: 23000 Score: 7.018033 Best: 7.018033 Since Improvement: 5110
+    Level: balance Iteration: 24000 Score: 7.018033 Best: 7.018033 Since Improvement: 6110
+    Level: balance Iteration: 25000 Score: 7.018033 Best: 7.018033 Since Improvement: 7110
+    Level: balance Iteration: 26000 Score: 6.984699 Best: 6.984699 Since Improvement: 363
+    Level: balance Iteration: 27000 Score: 6.984699 Best: 6.984699 Since Improvement: 1363
+    Level: balance Iteration: 28000 Score: 6.984699 Best: 6.984699 Since Improvement: 2363
+    Level: balance Iteration: 29000 Score: 6.984699 Best: 6.984699 Since Improvement: 3363
+    Level: balance Iteration: 30000 Score: 6.984699 Best: 6.984699 Since Improvement: 4363
+    Level: balance Iteration: 31000 Score: 6.984699 Best: 6.984699 Since Improvement: 5363
+    Level: balance Iteration: 32000 Score: 6.984699 Best: 6.984699 Since Improvement: 6363
+    Level: balance Iteration: 33000 Score: 6.984699 Best: 6.984699 Since Improvement: 7363
+    Early stopping at iteration 33637 for level balance 
 
 ``` r
 met_result
@@ -590,12 +617,12 @@ met_result
 
     Optimised Experimental Design
     ----------------------------
-    Score: 8.79887
-    Iterations Run: 29743
+    Score: 8.874863
+    Iterations Run: 53589
     Stopped Early: TRUE TRUE
     Treatments:
-      connectivity: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60
-      balance: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60
+      connectivity: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61
+      balance: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61
     Seed: 112 
 
 ### Output of the Optimisation
@@ -613,7 +640,7 @@ str(met_result)
      $ design_df     :'data.frame': 428 obs. of  10 variables:
       ..$ row       : int [1:428] 1 1 1 1 1 1 1 1 1 1 ...
       ..$ col       : int [1:428] 1 1 1 1 1 2 2 2 2 2 ...
-      ..$ treatment : chr [1:428] "2" "31" "56" "3" ...
+      ..$ treatment : chr [1:428] "57" "16" "48" "54" ...
       ..$ row_block : num [1:428] 1 1 1 1 1 1 1 1 1 1 ...
       ..$ col_block : num [1:428] 1 1 1 1 1 1 1 1 1 1 ...
       ..$ block     : Factor w/ 3 levels "1","2","3": 1 1 1 1 1 1 1 1 1 1 ...
@@ -621,19 +648,19 @@ str(met_result)
       ..$ allocation: chr [1:428] NA NA NA NA ...
       ..$ site_col  : chr [1:428] "a_1" "b_1" "c_1" "d_1" ...
       ..$ site_block: chr [1:428] "a_1" "b_1" "c_1" "d_1" ...
-     $ score         : num 8.8
+     $ score         : num 8.87
      $ scores        :List of 2
-      ..$ connectivity: num [1:10865] 5.14 5.11 5.11 5.11 5.11 ...
-      ..$ balance     : num [1:18878] 12.7 12.8 12.6 12.6 12.6 ...
+      ..$ connectivity: num [1:19951] 5.16 5.12 5.12 5.12 5.12 ...
+      ..$ balance     : num [1:33638] 12.1 12.1 12.1 12 12 ...
      $ temperatures  :List of 2
-      ..$ connectivity: num [1:10865] 100 99 98 97 96.1 ...
-      ..$ balance     : num [1:18878] 100 99 98 97 96.1 ...
-     $ iterations_run: num 29743
+      ..$ connectivity: num [1:19951] 100 99 98 97 96.1 ...
+      ..$ balance     : num [1:33638] 100 99 98 97 96.1 ...
+     $ iterations_run: num 53589
      $ stopped_early : Named logi [1:2] TRUE TRUE
       ..- attr(*, "names")= chr [1:2] "connectivity" "balance"
      $ treatments    :List of 2
-      ..$ connectivity: chr [1:60] "1" "2" "3" "4" ...
-      ..$ balance     : chr [1:60] "1" "2" "3" "4" ...
+      ..$ connectivity: chr [1:61] "1" "2" "3" "4" ...
+      ..$ balance     : chr [1:61] "1" "2" "3" "4" ...
      $ seed          : num 112
      - attr(*, "class")= chr [1:2] "design" "list"
 
@@ -651,7 +678,7 @@ All sites maintain pre-allocated treatments.
 ``` r
 treatment_count <- table(df$site, df$treatment)
 for (site in names(fixed_treatments)) {
-  print(treatment_count[site, as.character(fixed_treatments[[site]]), drop = FALSE])
+  print(treatment_count[site, unique(as.character(fixed_treatments[[site]])), drop = FALSE])
 }
 ```
 
@@ -664,8 +691,8 @@ for (site in names(fixed_treatments)) {
         1 2 3 4 5 6 7
       c 2 2 2 2 2 2 2
 
-        1 2 3 8 9
-      d 3 3 3 3 3
+        1 2 3 8 9 10
+      d 3 3 3 2 2  2
 
         1 2 3 4 5
       e 2 2 2 2 2
