@@ -265,14 +265,16 @@ on.
 :::
 
 ```{r met3-df}
+# prepare treatments
 fixed_treatments <- list(
-  a = 1:5,
-  b = 1:4,
-  c = 1:7,
-  d = c(1:3, 8:9),
-  e = 1:5
+  a = rep(1:5, 3),
+  b = rep(1:4, 2),
+  c = rep(1:7, 2),
+  d = c(rep(1:3, 3), rep(8:10, 2)),
+  e = rep(1:5, 2)
 )
-non_fixed_treatments <- c(rep(10:18, 8), rep(19:60, 7))
+non_fixed_treatments <- c(rep(11:19, 8), rep(20:61, 7))
+
 met_design <- initialise_design_df(
   items = 1,
   designs = list(
@@ -284,13 +286,14 @@ met_design <- initialise_design_df(
   )
 )
 met_design$allocation <- "free"
-for (site in unique(met_design$site)) {
-  df_site <- met_design[met_design$site == site, ]
-  n_blocks <- max(unique(df_site$block))
-  n_fixed <- length(fixed_treatments[[site]]) * n_blocks
-  non_fixed_indices <- 1:(nrow(df_site) - n_fixed)
 
-  treatments <- c(rep(fixed_treatments[[site]], n_blocks), non_fixed_treatments[non_fixed_indices])
+# add treatments to design
+for (site in unique(met_design$site)) {
+  n_plots_site <- nrow(met_design[met_design$site == site, ])
+  n_fixed <- length(fixed_treatments[[site]])
+  non_fixed_indices <- 1:(n_plots_site - n_fixed)
+
+  treatments <- c(fixed_treatments[[site]], non_fixed_treatments[non_fixed_indices])
   met_design[met_design$site == site, ]$treatment <- treatments
   met_design[met_design$site == site & met_design$treatment %in% fixed_treatments[[site]], ]$allocation <- NA
 
@@ -324,8 +327,8 @@ optimise <- list(
 met_result <- speed(
   data = met_design,
   swap = "treatment",
-  early_stop_iterations = 5000,
-  iterations = 20000,
+  early_stop_iterations = 8000,
+  iterations = 50000,
   optimise = optimise,
   optimise_params = optim_params(random_initialisation = 30, adj_weight = 0),
   seed = 112
@@ -356,7 +359,7 @@ All sites maintain pre-allocated treatments.
 ```{r met3-reps}
 treatment_count <- table(df$site, df$treatment)
 for (site in names(fixed_treatments)) {
-  print(treatment_count[site, as.character(fixed_treatments[[site]]), drop = FALSE])
+  print(treatment_count[site, unique(as.character(fixed_treatments[[site]])), drop = FALSE])
 }
 ```
 
