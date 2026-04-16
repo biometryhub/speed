@@ -111,7 +111,8 @@ autoplot.design <- function(object,
   verify_column_exists(trt_expr, object, suffix = "Please specify the appropriate column using the 'treatments' argument.")
 
   # Only verify block column if it's being used (i.e., if blocks exist in data)
-  if(any(grepl("block", tolower(names(object))))) {
+  # if(any(grepl("block", tolower(names(object))))) {
+  if(!is.null(block) && !any(grepl(block_expr, names(object)))) {
     verify_column_exists(block_expr, object, suffix = "Please specify the appropriate column using the 'block' argument.")
   }
 
@@ -149,10 +150,10 @@ autoplot.design <- function(object,
 
 
   # Create plot based on whether blocks exist
-  if(!any(grepl("block", tolower(names(object))))) {
-    plt <- create_basic_plot(object, row_expr, column_expr, trt_expr, rotation, size, ...)
-  } else {
+  if(any(grepl(block_expr, names(object)))) {
     plt <- create_blocked_plot(object, row_expr, column_expr, block_expr, trt_expr, rotation, size, ...)
+  } else {
+    plt <- create_basic_plot(object, row_expr, column_expr, trt_expr, rotation, size, ...)
   }
 
   # Apply styling
