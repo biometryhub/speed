@@ -61,7 +61,7 @@
       <h1>Common Agricultural Experimental Designs with speed</h1>
 
       <p class="author">Sam Rogers</p>
-      <p class="date">2026-03-30</p>
+      <p class="date">2026-04-16</p>
 
       <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/vignettes/speed.qmd" class="external-link"><code>vignettes/speed.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -482,6 +482,12 @@ Seed: 42 </code></pre>
 <section class="level3"><h4 id="performing-the-optimisation-3">Performing the Optimisation<a class="anchor" aria-label="anchor" href="#performing-the-optimisation-3"></a>
 </h4>
 <p>For split-plot designs, we use named lists to specify the hierarchical structure. The <code>swap</code> parameter defines what to optimise at each level, while <code>swap_within</code> defines the constraints for each level.</p>
+<div>
+<blockquote>
+<p><strong>Note</strong></p>
+<p>Note that <code>swap_all = TRUE</code> argument is required to swap the same whole plot treatments together.</p>
+</blockquote>
+</div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">split_plot_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span><span class="va">split_plot_design</span>,</span>

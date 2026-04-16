@@ -451,6 +451,11 @@ For split-plot designs, we use named lists to specify the hierarchical
 structure. The `swap` parameter defines what to optimise at each level,
 while `swap_within` defines the constraints for each level.
 
+> **Note**
+>
+> Note that `swap_all = TRUE` argument is required to swap the same
+> whole plot treatments together.
+
 ``` r
 split_plot_result <- speed(split_plot_design,
                            swap = list(wp = "wholeplot_treatment",
