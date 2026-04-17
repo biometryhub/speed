@@ -8,6 +8,8 @@ objective_function_factorial(
   layout_df,
   swap,
   spatial_cols,
+  interaction_weight = 1,
+  main_weight = 1,
   factorial_separator = "-",
   ...
 )
@@ -18,6 +20,10 @@ objective_function_factorial(
 \item{swap}{A column name of the items to be swapped}
 
 \item{spatial_cols}{Column name(s) of the spatial factors}
+
+\item{interaction_weight}{Weight for the balance of interactions (default: 1)}
+
+\item{main_weight}{Weight for the score of main treatments (default: 1)}
 
 \item{factorial_separator}{A character used to separate treatments in the factorial design (default: "-")}
 

@@ -19,7 +19,8 @@ vignette: >
 
 ## Overview
 
-Factorial designs are experimental designs used to study the effects of two or more factors simultaneously. They allow estimation of main effects and interactions between factors, making them efficient and informative.
+Factorial designs are experimental designs used to study the effects of two or more factors simultaneously. They
+allow estimation of main effects and interactions between factors, making them efficient and informative.
 
 ```{r load-package}
 library(speed)
@@ -34,7 +35,8 @@ library(patchwork)
 
 ## Setting Up Factorial Design with speed
 
-Now we can create a data frame representing a factorial design. Note that the treatment column we are creating is the interaction (or combination) of the individual treatments.
+Now we can create a data frame representing a factorial design. Note that the treatment column we are creating
+is the interaction (or combination) of the individual treatments.
 
 ```{r factorial-df}
 treatment_a <- paste0("A", 1:8)
@@ -63,20 +65,33 @@ p + pa + pb + plot_layout(ncol = 3)
 
 ### Performing the Optimisation
 
-For factorial designs, speed provides a customised objective function `objective_function_factorial`. The `optimise_params` argument is also used in this case to adjust the optimisation strategy due to the difficulty of optimising such designs.
+For factorial designs, speed provides a customised objective function `objective_function_factorial` which
+allows us to pass `interaction_weight` and `main_weight` arguments to control the spatial balance of those
+effects. The `optimise_params` argument is also used in this case to adjust the optimisation strategy due to the
+difficulty of optimising such designs.
 
-Make sure `factorial_separator` matches how you constructed the interaction treatment (here we used `"-"`). If your treatments use a different separator (e.g. `"A1:B2"`), pass `factorial_separator = ":"`.
+Make sure `factorial_separator` matches how you constructed the interaction treatment (here we used `"-"`). If
+your treatments use a different separator (e.g. `"A1:B2"`), pass `factorial_separator = ":"`.
 
 ```{r factorial-example}
+optimise_params <- optim_params(
+  swap_count = 3,
+  random_initialisation = 10,
+  adaptive_swaps = TRUE,
+  swap_all_blocks = TRUE,
+  cooling_rate = 0.999
+)
+
 factorial_result <- speed(
   data = factorial_design,
   swap = "treatment",
   swap_within = "block",
   spatial_factors = ~ row + col,
   obj_function = objective_function_factorial,
-  optimise_params = optim_params(random_initialisation = 50, adaptive_swaps = TRUE),
+  optimise_params = optimise_params,
   early_stop_iterations = 10000,
   iterations = 200000,
+  interaction_weight = 10,
   seed = 112
 )
 
@@ -85,9 +100,14 @@ factorial_result
 
 ### Output of the Optimisation
 
-The output summarises the optimisation of the factorial **interaction** treatment (e.g. `"A1-B2"`) across the spatial layout. The reported score is for the whole design after optimisation, and the returned `design_df` contains the updated treatment allocation.
+The output summarises the optimisation of the factorial **interaction** treatment (e.g. `"A1-B2"`) across the
+spatial layout. The reported score is for the whole design after optimisation, and the returned `design_df`
+contains the updated treatment allocation.
 
-Because the treatment column encodes multiple factors, it can be helpful to split it back into its component factors (e.g. `treatment_a` and `treatment_b`) when inspecting the result. This lets you check whether the optimisation improved not only the interaction layout, but also the balance/adjacency patterns of the main effects.
+Because the treatment column encodes multiple factors, it can be helpful to split it back into its component
+factors (e.g. `treatment_a` and `treatment_b`) when inspecting the result. This lets you check whether the
+optimisation improved not only the interaction layout, but also the balance/adjacency patterns of the main
+effects.
 
 ```{r factorial-output}
 str(factorial_result)

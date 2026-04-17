@@ -75,6 +75,8 @@ objective_function <- function(layout_df,
 #' @inheritParams objective_function
 #' @inheritDotParams objective_function
 #' @param factorial_separator A character used to separate treatments in the factorial design (default: "-")
+#' @param interaction_weight Weight for the balance of interactions (default: 1)
+#' @param main_weight Weight for the score of main treatments (default: 1)
 #'
 #' @examples
 #' treatment_a <- paste0("A", 1:8)
@@ -88,6 +90,8 @@ objective_function <- function(layout_df,
 objective_function_factorial <- function(layout_df,
                                          swap,
                                          spatial_cols,
+                                         interaction_weight = 1,
+                                         main_weight = 1,
                                          factorial_separator = "-",
                                          ...) {
   if (is.null(factorial_separator) || factorial_separator == "") {
@@ -109,16 +113,24 @@ objective_function_factorial <- function(layout_df,
   )
 
   # create temp columns
-  # now <- as.numeric(Sys.time())
   treatment_n <- paste0("treatment_", 1:n_treatments)
   layout_df[treatment_n] <- subtreatments
 
-  treatment_score <- calculate_balance_score(layout_df, swap, spatial_cols)
-  subtreatment_scores <- vapply(treatment_n, function(treatment) {
-    objective_function(layout_df, treatment, spatial_cols, ...)$score
-  }, numeric(1))
+  if (interaction_weight > 0) {
+    treatment_score <- calculate_balance_score(layout_df, swap, spatial_cols)
+  } else {
+    treatment_score <- 0
+  }
 
-  return(list(score = sum(subtreatment_scores) + treatment_score))
+  if (main_weight > 0) {
+    subtreatment_scores <- vapply(treatment_n, function(treatment) {
+      objective_function(layout_df, treatment, spatial_cols, ...)$score
+    }, numeric(1))
+  } else {
+    subtreatment_scores <- 0
+  }
+
+  return(list(score = main_weight * sum(subtreatment_scores) + interaction_weight * treatment_score))
 }
 
 #' Calculate Balance Score for Experimental Design
