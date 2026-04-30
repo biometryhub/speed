@@ -23,12 +23,14 @@ Authors:
   \item Julian Taylor \email{julian.taylor@adelaide.edu.au}
   \item Russell Edson \email{russell.edson@adelaide.edu.au}
   \item Wasin Pipattungsakul \email{wasin.pipattungsakul@adelaide.edu.au}
+  \item Kai Bagley \email{kai.bagley@curtin.edu.au} (\href{https://orcid.org/0009-0004-6579-6959}{ORCID})
 }
 
 Other contributors:
 \itemize{
   \item University of Adelaide (https://adelaide.edu.au/) [copyright holder, funder]
   \item Grains Research and Development Corporation (https://grdc.com.au/) [copyright holder, funder]
+  \item Curtin University (\href{https://ror.org/02n415q13}{ROR}) (http://www.curtin.edu.au/) [copyright holder]
 }
 
 }

@@ -8,10 +8,8 @@ objective_function_info(
   design,
   swap,
   spatial_cols,
-  current_score_obj = NULL,
-  swapped_items = NULL,
   row_col = "row",
-  col_col = "col",
+  range_col = "range",
   criterion = c("A", "D"),
   L_matrix = NULL,
   block_col = "block",
@@ -23,17 +21,32 @@ objective_function_info(
 
 \item{swap}{Column name to swap, usually the treatment.}
 
-\item{spatial_cols}{Column name of the spatial factors.
+\item{spatial_cols}{Column name of the spatial factors.}
 
-Information matrix based objectives
-\itemize{
-\item A-optimality: \eqn{\mathrm{tr} \left( A^- \right)}{Sigma^(-1)}
-\item D-optimality: \eqn{-\log \left| I \right|}
-}}
+\item{row_col}{Column name of the design's rows}
+
+\item{range_col}{Column name of the design's range}
+
+\item{criterion}{Either \code{"A"} or \code{"D"}, representing A or D
+optimality.
+- A-optimality: Minimises \eqn{\mathrm{tr} \left( A^- \right)}{tr(A^-)}.
+- D-optimality: Minimises \eqn{-\log \left| I \right|}{-log(det(I))}}
+
+\item{L_matrix}{Precomputed projection matrix. Use
+\code{precompute_projection} to generate it. If \code{NULL}, then the
+identity covariance structure will be assumed, and the projection will be
+computed using the structure of the design's blocks.}
+
+\item{block_col}{Column name of the design's block factor. Used when
+\code{L_matrix} isn't supplied.}
 }
 \description{
 Creates an objective function that optimises experimental designs using the
 Fisher information for treatment contrasts after adjusting for nuisance
 effects, and takes an optional spatial covariance structure for spatial
 optimisation.
+}
+\details{
+This function computes the treatment information matrix:
+\deqn{I = X_1^\intercal L X_1}{I = X₁ᵀ L X₁}
 }

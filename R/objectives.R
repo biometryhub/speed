@@ -8,12 +8,10 @@
 #' @param design Data frame representing the spatial layout of the experiment.
 #' @param swap Column name to swap, usually the treatment.
 #' @param spatial_cols Column name of the spatial factors.
-#' @param row_col Column name of the design's rows
-#' @param range_col Column name of the design's range
 #' @param criterion Either \code{"A"} or \code{"D"}, representing A or D
 #'   optimality.
-#'     - A-optimality: Minimises \eqn{\mathrm{tr} \left( A^- \right)}{Sigma^(-1)}.
-#'     - D-optimality: Minimises \eqn{-\log \left| I \right|}
+#'     - A-optimality: Minimises \eqn{\mathrm{tr} \left( \mathcal{I}^- \right)}{tr(I⁻)}.
+#'     - D-optimality: Minimises \eqn{-\log \left| \mathcal{I} \right|}{-log(|I|)}
 #' @param L_matrix Precomputed projection matrix. Use
 #'   \code{precompute_projection} to generate it. If \code{NULL}, then the
 #'   identity covariance structure will be assumed, and the projection will be
@@ -23,7 +21,14 @@
 #'
 #' @details
 #' This function computes the treatment information matrix:
-#'
+#' \deqn{I = X_1^\intercal L X_1}{I = X₁ᵀ L X₁}
+#' Where \eqn{X_1}{X₁} is the treatment design matrix, and \eqn{L} is the
+#' projection that removes nuisance fixed effects from the GLS's inverse
+#' covariance:
+#' \deqn{L = \Sigma^{-1} - \Sigma^{-1} X_2 \left( X_2^\intercal \Sigma^{-1} X_2 \right)^{-1}}{L = Σ⁻¹ - Σ⁻¹ X₂ (X₂ᵀ Σ⁻¹ X₂)⁻¹}
+#' The user specifies the spatial covariance \eqn{\Sigma}{Σ} they intend to use
+#' at the time of analysis, e.g. autoregressive-lag-1 \eqn{\text{AR}_1 \otimes \text{AR}_1}{AR₁ ⊗ AR₁},
+#' and this objective will optimise under that structure.
 #'
 #' @export
 objective_function_info <- function(
@@ -121,6 +126,15 @@ objective_function_info <- function(
 # Helper functions
 
 #' Compute L projection
+#'
+#' This is the projection matrix that removes nuisance effects from the GLS's
+#' covariance
+#'
+#' @param design Data frame representing the spatial layout of the experiment.
+#' @param Sigma Covariance structure to use.
+#' @param block_col Column name of the design's block factor in \code{design}.
+#'
+#' @export
 compute_L_projection <- function(design, Sigma, block_col = "block") {
     n <- nrow(design)
 
@@ -147,6 +161,17 @@ compute_L_projection <- function(design, Sigma, block_col = "block") {
 }
 
 #' Calculate info matrix
+#'
+#' Calculate the Fisher information in the experimental design
+#'
+#' @param design Data frame representing the spatial layout of the experiment.
+#' @param treatment_col Column name containing the design's treatments in
+#'   \code{design}.
+#' @param L_matrix Precomputed projection matrix from
+#'   \code{compute_L_projection}.
+#' @param block_col Column name containing the designs block in \code{design}.
+#'
+#' @export
 calc_info_matrix <- function(
     design,
     treatment_col = "treatment",
@@ -199,6 +224,13 @@ calc_info_matrix <- function(
 }
 
 #' Calculate incidence matrix
+#'
+#' @param design Data frame representing the spatial layout of the experiment.
+#' @param treatment_col Column name containing the design's treatments in
+#'   \code{design}.
+#' @param block_col Column name containing the designs block in \code{design}.
+#'
+#' @export
 calc_incidence_matrix <- function(
     design,
     treatment_col = "treatment",
@@ -216,6 +248,13 @@ calc_incidence_matrix <- function(
 }
 
 #' Calculate concurrence matrix
+#'
+#' @param design Data frame representing the spatial layout of the experiment.
+#' @param treatment_col Column name containing the design's treatments in
+#'   \code{design}.
+#' @param block_col Column name containing the designs block in \code{design}.
+#'
+#' @export
 calc_concurrence_matrix <- function(
     design,
     treatment_col = "treatment",
@@ -228,6 +267,15 @@ calc_concurrence_matrix <- function(
 }
 
 #' Calculate canonical efficiency factors
+#'
+#' @param design Data frame representing the spatial layout of the experiment.
+#' @param treatment_col Column name containing the design's treatments in
+#'   \code{design}.
+#' @param L_matrix Precomputed projection matrix from
+#'   \code{compute_L_projection}.
+#' @param block_col Column name containing the designs block in \code{design}.
+#'
+#' @export
 calculate_efficiency_factors <- function(
     design,
     treatment_col = "treatment",
@@ -262,11 +310,27 @@ calculate_efficiency_factors <- function(
 }
 
 
-## Convenience correlation structure constructors
+# Convenience correlation structure constructors
+
+#' Construct a 1 dimensional lag-1 autoregressive covariance
+#'
+#' @param n Size of the covariance vector to generate
+#' @param rho Correlation parameter
+#'
+#' @export
 cor_ar1 <- function(n, rho) {
     rho^abs(outer(seq_len(n), seq_len(n), "-"))
 }
 
+
+#' Construct a 2 dimensional lag-1 autoregressive covariance
+#'
+#' @param n_rows Number of rows in the design.
+#' @param n_cols Number of columns in the design.
+#' @param rho_row Correlation parameter along the row direction.
+#' @param rho_col Correlation parameter along the column direction.
+#'
+#' @export
 cor_ar1_ar1 <- function(n_rows, n_cols, rho_row, rho_col) {
     kronecker(
         cor_ar1(n_rows, rho_row),

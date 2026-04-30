@@ -29,7 +29,7 @@ Authors@R:
              comment = "https://adelaide.edu.au/"),
       person(given = "Grains Research and Development Corporation",
              role = c("cph", "fnd"),
-             comment = "https://grdc.com.au/")
+             comment = "https://grdc.com.au/"),
       person(given = "Curtin University",
              role = c("cph"),
              comment = c("http://www.curtin.edu.au/", ROR = "02n415q13")))
