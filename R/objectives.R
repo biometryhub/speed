@@ -403,7 +403,7 @@ calculate_efficiency_factors <- function(
 #'
 #' @export
 cor_ar1 <- function(n, rho) {
-    rho^abs(outer(seq_len(n), seq_len(n), "-"))
+  rho^abs(outer(seq_len(n), seq_len(n), "-"))
 }
 
 
