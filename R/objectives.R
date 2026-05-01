@@ -5,13 +5,16 @@
 #' effects, and takes an optional spatial covariance structure for spatial
 #' optimisation.
 #'
-#' @param layout_df Data frame representing the spatial layout of the experiment.
+#' @param layout_df Data frame representing the spatial layout of the
+#'   experiment.
 #' @param swap Column name to swap, usually the treatment.
 #' @param spatial_cols Column name of the spatial factors.
 #' @param criterion Either \code{"A"} or \code{"D"}, representing A or D
 #'   optimality.
-#'     - A-optimality: Minimises \eqn{\mathrm{tr} \left( \mathcal{I}^- \right)}{tr(I⁻)}.
-#'     - D-optimality: Minimises \eqn{-\log \left| \mathcal{I} \right|}{-log(|I|)}
+#'     - A-optimality: Minimises \eqn{\mathrm{tr} \left( \mathcal{I}^-
+#'       \right)}{tr(I⁻)}.
+#'     - D-optimality: Minimises \eqn{-\log \left| \mathcal{I} \right|}{-
+#'       log(|I|)}
 #' @param L_matrix Precomputed projection matrix. Use
 #'   \code{precompute_projection} to generate it. If \code{NULL}, then the
 #'   identity covariance structure will be assumed, and the projection will be
@@ -194,9 +197,11 @@ objective_function_info <- function(
 #' This is the projection matrix that removes nuisance effects from the GLS's
 #' covariance
 #'
-#' @param layout_df Data frame representing the spatial layout of the experiment.
+#' @param layout_df Data frame representing the spatial layout of the
+#'   experiment.
 #' @param Sigma Covariance structure to use.
-#' @param block_column Column name of the design's block factor in \code{layout_df}.
+#' @param block_column Column name of the design's block factor in
+#'   \code{layout_df}.
 #'
 #' @return \eqn{(n \times n)} numeric matrix.
 #'
@@ -245,7 +250,8 @@ compute_L_projection <- function(
 #'
 #' Calculate the Fisher information in the experimental design
 #'
-#' @param layout_df Data frame representing the spatial layout of the experiment.
+#' @param layout_df Data frame representing the spatial layout of the
+#'   experiment.
 #' @param treatment_column Column name containing the design's treatments in
 #'   \code{layout_df}.
 #' @param L_matrix Precomputed projection matrix from
@@ -296,7 +302,8 @@ calc_info_matrix <- function(
 
 #' Calculate incidence matrix
 #'
-#' @param layout_df Data frame representing the spatial layout of the experiment.
+#' @param layout_df Data frame representing the spatial layout of the
+#'   experiment.
 #' @param treatment_column Column name containing the design's treatments in
 #'   \code{layout_df}.
 #' @param block_column Column name containing the designs block in
@@ -347,7 +354,8 @@ calc_concurrence_matrix <- function(
 
 #' Calculate canonical efficiency factors
 #'
-#' @param layout_df Data frame representing the spatial layout of the experiment.
+#' @param layout_df Data frame representing the spatial layout of the
+#'   experiment.
 #' @param treatment_column Column name containing the design's treatments in
 #'   \code{layout_df}.
 #' @param L_matrix Precomputed projection matrix from
