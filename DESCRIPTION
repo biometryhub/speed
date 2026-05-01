@@ -2,7 +2,7 @@ Type: Package
 Package: speed
 Title: Generate Spatially Efficient Experimental Designs
 Version: 0.0.6
-Authors@R: 
+Authors@R:
     c(person(given = "Sam",
              family = "Rogers",
              role = c("aut", "cre"),
@@ -19,31 +19,39 @@ Authors@R:
              family = "Pipattungsakul",
              role = "aut",
              email = "wasin.pipattungsakul@adelaide.edu.au"),
+      person(given = "Kai",
+             family = "Bagley",
+             email = "kai.bagley@curtin.edu.au",
+             role = "aut",
+             comment = c(ORCID = "0009-0004-6579-6959")),
       person(given = "University of Adelaide",
              role = c("cph", "fnd"),
              comment = "https://adelaide.edu.au/"),
       person(given = "Grains Research and Development Corporation",
              role = c("cph", "fnd"),
-             comment = "https://grdc.com.au/"))
-Description: The Speed package optimises spatial experimental designs by rearranging 
-    treatments to improve statistical efficiency while maintaining statistical validity. 
-    It employs customisable optimisation metrics, with a default approach that balances 
-    minimising treatment adjacency and maintaining spatial balance. Users can supply their 
-    own optimisation metrics to tailor designs to specific experimental requirements. 
-    The package also includes visualisation tools that allow users to inspect 
+             comment = "https://grdc.com.au/"),
+      person(given = "Curtin University",
+             role = c("cph"),
+             comment = c("http://www.curtin.edu.au/", ROR = "02n415q13")))
+Description: The Speed package optimises spatial experimental designs by rearranging
+    treatments to improve statistical efficiency while maintaining statistical validity.
+    It employs customisable optimisation metrics, with a default approach that balances
+    minimising treatment adjacency and maintaining spatial balance. Users can supply their
+    own optimisation metrics to tailor designs to specific experimental requirements.
+    The package also includes visualisation tools that allow users to inspect
     optimised designs.
 License: MIT + file LICENSE
 URL: https://biometryhub.github.io/speed/
 BugReports: https://github.com/biometryhub/speed/issues
 Depends: R (>= 4.1)
-Imports: 
+Imports:
     farver,
     ggplot2,
     matrixStats,
     rlang,
     scales,
     stringi
-Suggests: 
+Suggests:
     igraph,
     patchwork,
     quarto,

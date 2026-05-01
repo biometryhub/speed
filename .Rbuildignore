@@ -21,3 +21,4 @@ codemeta.json
 ^Meta$
 ^CODE_OF_CONDUCT\.md$
 ^doc$
+^\.dir-locals\.el$
