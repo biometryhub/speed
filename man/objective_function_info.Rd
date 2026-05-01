@@ -5,40 +5,40 @@
 \title{Objective function using the treatment information matrix}
 \usage{
 objective_function_info(
-  design,
+  layout_df,
   swap,
   spatial_cols,
-  row_col = "row",
-  range_col = "range",
   criterion = c("A", "D"),
   L_matrix = NULL,
-  block_col = "block",
+  block_column = "block",
   ...
 )
 }
 \arguments{
-\item{design}{Data frame representing the spatial layout of the experiment.}
+\item{layout_df}{Data frame representing the spatial layout of the experiment.}
 
 \item{swap}{Column name to swap, usually the treatment.}
 
 \item{spatial_cols}{Column name of the spatial factors.}
 
-\item{row_col}{Column name of the design's rows}
-
-\item{range_col}{Column name of the design's range}
-
 \item{criterion}{Either \code{"A"} or \code{"D"}, representing A or D
 optimality.
-- A-optimality: Minimises \eqn{\mathrm{tr} \left( A^- \right)}{tr(A^-)}.
-- D-optimality: Minimises \eqn{-\log \left| I \right|}{-log(det(I))}}
+- A-optimality: Minimises \eqn{\mathrm{tr} \left( \mathcal{I}^- \right)}{tr(I⁻)}.
+    - D-optimality: Minimises \eqn{-\log \left| \mathcal{I} \right|}{-log(|I|)}}
 
 \item{L_matrix}{Precomputed projection matrix. Use
 \code{precompute_projection} to generate it. If \code{NULL}, then the
 identity covariance structure will be assumed, and the projection will be
 computed using the structure of the design's blocks.}
 
-\item{block_col}{Column name of the design's block factor. Used when
+\item{block_column}{Column name of the design's block factor. Used when
 \code{L_matrix} isn't supplied.}
+
+\item{...}{Extra parameters passed from \code{speed}.}
+}
+\value{
+A named list with \code{score}, \code{info_matrix},
+\code{eigenvalues}, \code{criterion}.
 }
 \description{
 Creates an objective function that optimises experimental designs using the
@@ -49,4 +49,53 @@ optimisation.
 \details{
 This function computes the treatment information matrix:
 \deqn{I = X_1^\intercal L X_1}{I = X₁ᵀ L X₁}
+Where \eqn{X_1}{X₁} is the treatment design matrix, and \eqn{L} is the
+projection that removes nuisance fixed effects from the GLS's inverse
+covariance:
+\deqn{L = \Sigma^{-1} - \Sigma^{-1} X_2 \left( X_2^\intercal \Sigma^{-1} X_2
+\right)^{-1}}{L = Σ⁻¹ - Σ⁻¹ X₂ (X₂ᵀ Σ⁻¹ X₂)⁻¹}
+The user specifies the spatial covariance \eqn{\Sigma}{Σ} they intend to use
+at the time of analysis, e.g. lag-1 autoregressive \eqn{\text{AR}_1 \otimes
+\text{AR}_1}{AR₁ ⊗ AR₁}, and this objective will optimise under that
+structure.
+}
+\examples{
+# Small RCBD layout: 6 treatments in 4 blocks of 6 plots
+df <- initialise_design_df(
+  items = 6, nrows = 4, ncols = 6,
+  block_nrows = 1, block_ncols = 6
+)
+
+# Non-spatial: identity covariance
+result <- speed(
+  df,
+  swap = "treatment",
+  swap_within = "block",
+  obj_function = objective_function_info,
+  criterion = "A",
+  seed = 42,
+  quiet = TRUE
+)
+
+# Spatial: AR(1) x AR(1)
+Sigma <- cor_ar1_ar1(
+  n_rows = 4, n_cols = 6,
+  rho_row = 0.6, rho_col = 0.3
+)
+L <- compute_L_projection(df, Sigma, block_column = "block")
+result_spatial <- speed(
+  df,
+  swap = "treatment",
+  swap_within = "block",
+  obj_function = objective_function_info,
+  L_matrix = L,
+  criterion = "A",
+  optimise_params = optim_params(random_initialisation = TRUE),
+  seed = 42,
+  quiet = TRUE
+)
+
+# Inspect the optimised design
+calc_info_matrix(result_spatial$design_df, L_matrix = L)
+
 }

@@ -4,7 +4,24 @@
 \alias{calc_incidence_matrix}
 \title{Calculate incidence matrix}
 \usage{
-calc_incidence_matrix(design, treatment_col = "treatment", block_col = "block")
+calc_incidence_matrix(
+  layout_df,
+  treatment_column = "treatment",
+  block_column = "block"
+)
+}
+\arguments{
+\item{layout_df}{Data frame representing the spatial layout of the experiment.}
+
+\item{treatment_column}{Column name containing the design's treatments in
+\code{layout_df}.}
+
+\item{block_column}{Column name containing the designs block in
+\code{layout_df}.}
+}
+\value{
+\eqn{v \times b} matrix of integers, with treatment levels as row
+names, and block levels as column names.
 }
 \description{
 Calculate incidence matrix

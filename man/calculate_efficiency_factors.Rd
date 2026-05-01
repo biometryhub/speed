@@ -5,11 +5,26 @@
 \title{Calculate canonical efficiency factors}
 \usage{
 calculate_efficiency_factors(
-  design,
-  treatment_col = "treatment",
+  layout_df,
+  treatment_column = "treatment",
   L_matrix = NULL,
-  block_col = "block"
+  block_column = "block"
 )
+}
+\arguments{
+\item{layout_df}{Data frame representing the spatial layout of the experiment.}
+
+\item{treatment_column}{Column name containing the design's treatments in
+\code{layout_df}.}
+
+\item{L_matrix}{Precomputed projection matrix from
+\code{compute_L_projection}.}
+
+\item{block_column}{Column name containing the designs block in
+\code{layout_df}.}
+}
+\value{
+A list with \code{efficiency_factors}, \code{E}, \code{replication}.
 }
 \description{
 Calculate canonical efficiency factors
