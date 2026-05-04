@@ -12,6 +12,7 @@ understanding genotype × environment (G×E) interactions, stability, and
 adaptability of treatments under different conditions.
 
 ``` r
+
 library(speed)
 ```
 
@@ -36,6 +37,7 @@ can specify different dimensions for each site in the `designs`
 argument.
 
 ``` r
+
 all_treatments <- c(rep(1:50, 7), rep(51:57, 8))
 met_design <- initialise_design_df(
   items = all_treatments,
@@ -65,6 +67,7 @@ head(met_design)
 Code
 
 ``` r
+
 met_design$block <- factor(met_design$block)
 
 plot_layout <- function(df, fill) {
@@ -99,6 +102,7 @@ hierarchical structure. The `optimise` parameter defines what to
 optimise and constraints at each level.
 
 ``` r
+
 optimise <- list(
   connectivity = list(spatial_factors = ~site),
   balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
@@ -140,6 +144,7 @@ met_result <- speed(
     Early stopping at iteration 9464 for level balance 
 
 ``` r
+
 met_result
 ```
 
@@ -161,6 +166,7 @@ stopping criteria are reported separately for each level, allowing you
 to assess the quality of optimisation at each hierarchy level.
 
 ``` r
+
 str(met_result)
 ```
 
@@ -194,6 +200,7 @@ str(met_result)
 No duplicated treatments along any row, column, or block.
 
 ``` r
+
 check_no_dupes <- function(df) {
   cat(max(table(df$treatment, df$site_col)), sep = "", ", ")
   cat(max(table(df$treatment, paste0(df$site, df$row))), sep = "", ", ")
@@ -211,6 +218,7 @@ check_no_dupes(df)
 Code
 
 ``` r
+
 plot_layout(met_result$design_df, "treatment") + 
   ggplot2::theme(legend.position = "none")
 ```
@@ -229,6 +237,7 @@ can specify different dimensions for each site in the `designs`
 argument.
 
 ``` r
+
 fixed_treatments <- rep(1:54, 3)
 non_fixed_treatments <- c(rep(1:50, 5), rep(51:54, 4))
 met_design <- initialise_design_df(
@@ -267,6 +276,7 @@ head(met_design)
 Code
 
 ``` r
+
 met_design$block <- factor(met_design$block)
 plot_layout(met_design, "block")
 ```
@@ -280,6 +290,7 @@ hierarchical structure. The `optimise` parameter defines what to
 optimise and constraints at each level.
 
 ``` r
+
 optimise <- list(
   connectivity = list(swap_within = "allocation", spatial_factors = ~site),
   balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
@@ -353,6 +364,7 @@ met_result <- speed(
     Early stopping at iteration 37726 for level balance 
 
 ``` r
+
 met_result
 ```
 
@@ -374,6 +386,7 @@ stopping criteria are reported separately for each level, allowing you
 to assess the quality of optimisation at each hierarchy level.
 
 ``` r
+
 str(met_result)
 ```
 
@@ -408,6 +421,7 @@ str(met_result)
 No duplicated treatments along any row, column, or block.
 
 ``` r
+
 df <- met_result$design_df
 check_no_dupes(df)
 ```
@@ -418,6 +432,7 @@ Site “a” maintains 3 replicates and no missing treatments in any other
 sites.
 
 ``` r
+
 treatment_count <- table(df$treatment, df$site)
 c(min(treatment_count[, "a"]), max(treatment_count[, "a"]))
 ```
@@ -425,6 +440,7 @@ c(min(treatment_count[, "a"]), max(treatment_count[, "a"]))
     [1] 3 3
 
 ``` r
+
 c(min(treatment_count[, -1]), max(treatment_count[, -1]))
 ```
 
@@ -435,6 +451,7 @@ c(min(treatment_count[, -1]), max(treatment_count[, -1]))
 Code
 
 ``` r
+
 plot_layout(met_result$design_df, "treatment") + 
   ggplot2::theme(legend.position = "none")
 ```
@@ -464,6 +481,7 @@ argument. Also, some treatments are pre-allocated to each site:
 > bug caused by random initialisation later on.
 
 ``` r
+
 # prepare treatments
 fixed_treatments <- list(
   a = rep(1:5, 3),
@@ -523,6 +541,7 @@ head(met_design)
 Code
 
 ``` r
+
 met_design$block <- factor(met_design$block)
 plot_layout(met_design, "block")
 ```
@@ -536,6 +555,7 @@ hierarchical structure. The `optimise` parameter defines what to
 optimise and constraints at each level.
 
 ``` r
+
 optimise <- list(
   connectivity = list(swap_within = "allocation", spatial_factors = ~site),
   balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
@@ -612,6 +632,7 @@ met_result <- speed(
     Early stopping at iteration 33637 for level balance 
 
 ``` r
+
 met_result
 ```
 
@@ -633,6 +654,7 @@ stopping criteria are reported separately for each level, allowing you
 to assess the quality of optimisation at each hierarchy level.
 
 ``` r
+
 str(met_result)
 ```
 
@@ -667,6 +689,7 @@ str(met_result)
 No duplicated treatments along any row, column, or block.
 
 ``` r
+
 df <- met_result$design_df
 check_no_dupes(df)
 ```
@@ -676,11 +699,13 @@ check_no_dupes(df)
 All sites maintain pre-allocated treatments.
 
 ``` r
+
 treatment_count <- table(df$site, df$treatment)
 for (site in names(fixed_treatments)) {
   print(treatment_count[site, unique(as.character(fixed_treatments[[site]])), drop = FALSE])
 }
 ```
+
 
         1 2 3 4 5
       a 3 3 3 3 3
@@ -702,6 +727,7 @@ for (site in names(fixed_treatments)) {
 Code
 
 ``` r
+
 df$treatment <- as.numeric(df$treatment)
 plot_layout(df, "treatment") + 
   ggplot2::theme(legend.position = "none")
@@ -714,6 +740,7 @@ The placements of common pre-allocated treatments.
 Code
 
 ``` r
+
 df$treatment <- ifelse(df$treatment < 4, df$treatment, NA)
 plot_layout(df, "treatment") +
   ggplot2::geom_text(

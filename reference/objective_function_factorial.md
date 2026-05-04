@@ -9,6 +9,8 @@ objective_function_factorial(
   layout_df,
   swap,
   spatial_cols,
+  interaction_weight = 1,
+  main_weight = 1,
   factorial_separator = "-",
   ...
 )
@@ -27,6 +29,14 @@ objective_function_factorial(
 - spatial_cols:
 
   Column name(s) of the spatial factors
+
+- interaction_weight:
+
+  Weight for the balance of interactions (default: 1)
+
+- main_weight:
+
+  Weight for the score of main treatments (default: 1)
 
 - factorial_separator:
 

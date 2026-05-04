@@ -10,6 +10,7 @@ effects and interactions between factors, making them efficient and
 informative.
 
 ``` r
+
 library(speed)
 library(patchwork)
 ```
@@ -27,6 +28,7 @@ that the treatment column we are creating is the interaction (or
 combination) of the individual treatments.
 
 ``` r
+
 treatment_a <- paste0("A", 1:8)
 treatment_b <- paste0("B", 1:3)
 treatments <- with(expand.grid(treatment_a, treatment_b), paste(Var1, Var2, sep = "-"))
@@ -51,24 +53,36 @@ main effects.
 #### Performing the Optimisation
 
 For factorial designs, speed provides a customised objective function
-`objective_function_factorial`. The `optimise_params` argument is also
-used in this case to adjust the optimisation strategy due to the
-difficulty of optimising such designs.
+`objective_function_factorial` which allows us to pass
+`interaction_weight` and `main_weight` arguments to control the spatial
+balance of those effects. The `optimise_params` argument is also used in
+this case to adjust the optimisation strategy due to the difficulty of
+optimising such designs.
 
 Make sure `factorial_separator` matches how you constructed the
 interaction treatment (here we used `"-"`). If your treatments use a
 different separator (e.g. `"A1:B2"`), pass `factorial_separator = ":"`.
 
 ``` r
+
+optimise_params <- optim_params(
+  swap_count = 3,
+  random_initialisation = 10,
+  adaptive_swaps = TRUE,
+  swap_all_blocks = TRUE,
+  cooling_rate = 0.999
+)
+
 factorial_result <- speed(
   data = factorial_design,
   swap = "treatment",
   swap_within = "block",
   spatial_factors = ~ row + col,
   obj_function = objective_function_factorial,
-  optimise_params = optim_params(random_initialisation = 50, adaptive_swaps = TRUE),
+  optimise_params = optimise_params,
   early_stop_iterations = 10000,
   iterations = 200000,
+  interaction_weight = 10,
   seed = 112
 )
 ```
@@ -76,31 +90,36 @@ factorial_result <- speed(
     row and col are used as row and column, respectively.
 
     Optimising level: single treatment within block
-    Level: single treatment within block Iteration: 1000 Score: 29.75155 Best: 29.75155 Since Improvement: 19
-    Level: single treatment within block Iteration: 2000 Score: 20.26708 Best: 20.26708 Since Improvement: 150
-    Level: single treatment within block Iteration: 3000 Score: 16.98137 Best: 16.98137 Since Improvement: 198
-    Level: single treatment within block Iteration: 4000 Score: 16.78261 Best: 16.78261 Since Improvement: 718
-    Level: single treatment within block Iteration: 5000 Score: 14.86957 Best: 14.86957 Since Improvement: 191
-    Level: single treatment within block Iteration: 6000 Score: 14.12422 Best: 14.12422 Since Improvement: 578
-    Level: single treatment within block Iteration: 7000 Score: 14.12422 Best: 14.12422 Since Improvement: 1578
-    Level: single treatment within block Iteration: 8000 Score: 14.12422 Best: 14.12422 Since Improvement: 2578
-    Level: single treatment within block Iteration: 9000 Score: 14.12422 Best: 14.12422 Since Improvement: 3578
-    Level: single treatment within block Iteration: 10000 Score: 14.12422 Best: 14.12422 Since Improvement: 4578
-    Level: single treatment within block Iteration: 11000 Score: 14.12422 Best: 14.12422 Since Improvement: 5578
-    Level: single treatment within block Iteration: 12000 Score: 14.12422 Best: 14.12422 Since Improvement: 6578
-    Level: single treatment within block Iteration: 13000 Score: 14.12422 Best: 14.12422 Since Improvement: 7578
-    Level: single treatment within block Iteration: 14000 Score: 14.12422 Best: 14.12422 Since Improvement: 8578
-    Level: single treatment within block Iteration: 15000 Score: 14.12422 Best: 14.12422 Since Improvement: 9578
-    Early stopping at iteration 15422 for level single treatment within block 
+    Level: single treatment within block Iteration: 1000 Score: 158.118 Best: 105.3975 Since Improvement: 174
+    Level: single treatment within block Iteration: 2000 Score: 123.3043 Best: 105.3975 Since Improvement: 1174
+    Level: single treatment within block Iteration: 3000 Score: 121.795 Best: 100.6957 Since Improvement: 261
+    Level: single treatment within block Iteration: 4000 Score: 104.8199 Best: 93.92547 Since Improvement: 202
+    Level: single treatment within block Iteration: 5000 Score: 65.14907 Best: 58.38509 Since Improvement: 140
+    Level: single treatment within block Iteration: 6000 Score: 51.15528 Best: 51.15528 Since Improvement: 89
+    Level: single treatment within block Iteration: 7000 Score: 42.10559 Best: 42.10559 Since Improvement: 381
+    Level: single treatment within block Iteration: 8000 Score: 40.81988 Best: 40.81988 Since Improvement: 501
+    Level: single treatment within block Iteration: 9000 Score: 39.81988 Best: 39.81988 Since Improvement: 742
+    Level: single treatment within block Iteration: 10000 Score: 36.81988 Best: 36.81988 Since Improvement: 537
+    Level: single treatment within block Iteration: 11000 Score: 36.81988 Best: 36.81988 Since Improvement: 1537
+    Level: single treatment within block Iteration: 12000 Score: 36.81988 Best: 36.81988 Since Improvement: 2537
+    Level: single treatment within block Iteration: 13000 Score: 36.81988 Best: 36.81988 Since Improvement: 3537
+    Level: single treatment within block Iteration: 14000 Score: 36.81988 Best: 36.81988 Since Improvement: 4537
+    Level: single treatment within block Iteration: 15000 Score: 36.81988 Best: 36.81988 Since Improvement: 5537
+    Level: single treatment within block Iteration: 16000 Score: 36.81988 Best: 36.81988 Since Improvement: 6537
+    Level: single treatment within block Iteration: 17000 Score: 36.81988 Best: 36.81988 Since Improvement: 7537
+    Level: single treatment within block Iteration: 18000 Score: 36.81988 Best: 36.81988 Since Improvement: 8537
+    Level: single treatment within block Iteration: 19000 Score: 36.81988 Best: 36.81988 Since Improvement: 9537
+    Early stopping at iteration 19463 for level single treatment within block 
 
 ``` r
+
 factorial_result
 ```
 
     Optimised Experimental Design
     ----------------------------
-    Score: 14.12422
-    Iterations Run: 15423
+    Score: 36.81988
+    Iterations Run: 19464
     Stopped Early: TRUE
     Treatments: A1-B1, A1-B2, A1-B3, A2-B1, A2-B2, A2-B3, A3-B1, A3-B2, A3-B3, A4-B1, A4-B2, A4-B3, A5-B1, A5-B2, A5-B3, A6-B1, A6-B2, A6-B3, A7-B1, A7-B2, A7-B3, A8-B1, A8-B2, A8-B3
     Seed: 112 
@@ -119,6 +138,7 @@ the optimisation improved not only the interaction layout, but also the
 balance/adjacency patterns of the main effects.
 
 ``` r
+
 str(factorial_result)
 ```
 
@@ -126,7 +146,7 @@ str(factorial_result)
      $ design_df     :Classes 'design' and 'data.frame':    72 obs. of  8 variables:
       ..$ row        : int [1:72] 1 1 1 2 2 2 3 3 3 4 ...
       ..$ col        : int [1:72] 1 2 3 1 2 3 1 2 3 1 ...
-      ..$ treatment  : chr [1:72] "A1-B2" "A7-B3" "A3-B1" "A5-B1" ...
+      ..$ treatment  : chr [1:72] "A6-B1" "A8-B2" "A5-B3" "A1-B2" ...
       ..$ row_block  : num [1:72] 1 1 1 1 1 1 1 1 1 1 ...
       ..$ col_block  : num [1:72] 1 1 1 1 1 1 1 1 1 1 ...
       ..$ block      : num [1:72] 1 1 1 1 1 1 1 1 1 1 ...
@@ -138,10 +158,10 @@ str(factorial_result)
       .. ..$ dimnames:List of 2
       .. .. ..$ row: chr [1:24] "row= 1" "row= 2" "row= 3" "row= 4" ...
       .. .. ..$ col: chr [1:3] "col=1" "col=2" "col=3"
-     $ score         : num 14.1
-     $ scores        : num [1:15423] 79.7 87.2 84.6 88.4 87.1 ...
-     $ temperatures  : num [1:15423] 100 99 98 97 96.1 ...
-     $ iterations_run: num 15423
+     $ score         : num 36.8
+     $ scores        : num [1:19464] 131 141 139 141 153 ...
+     $ temperatures  : num [1:19464] 100 99.9 99.8 99.7 99.6 ...
+     $ iterations_run: num 19464
      $ stopped_early : logi TRUE
      $ treatments    : chr [1:24] "A1-B1" "A1-B2" "A1-B3" "A2-B1" ...
      $ seed          : num 112
@@ -150,6 +170,7 @@ str(factorial_result)
 #### Visualise the Output
 
 ``` r
+
 treatments <- strsplit(as.character(factorial_result$design_df$treatment), "-") |>
   unlist() |>
   matrix(ncol = 2, byrow = TRUE)

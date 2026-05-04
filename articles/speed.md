@@ -20,6 +20,7 @@ vignette: [Complex Agricultural Experimental Designs with
 speed](https://biometryhub.github.io/speed/articles/complex_designs.md).
 
 ``` r
+
 library(speed)
 ```
 
@@ -55,6 +56,7 @@ and visualise it. This design has 4 replicates of 8 treatments or
 `items`, with 8 rows and 4 columns.
 
 ``` r
+
 # Initialise data frame
 crd_design <- initialise_design_df(items = 8, nrows = 8, ncols = 4)
 head(crd_design)
@@ -85,6 +87,7 @@ on, the column name of the data frame to use for the treatments, and a
 seed for reproducibility.
 
 ``` r
+
 crd_result <- speed(crd_design, 
                     swap = "treatment",
                     seed = 42)
@@ -98,6 +101,7 @@ crd_result <- speed(crd_design,
     Early stopping at iteration 2729 for level single treatment within whole design 
 
 ``` r
+
 crd_result
 ```
 
@@ -119,6 +123,7 @@ output object contains some additional components, which can be seen
 below:
 
 ``` r
+
 str(crd_result)
 ```
 
@@ -153,12 +158,13 @@ across the field, helping to minimise neighbour effects and maximise the
 reliability of your results.
 
 ``` r
+
 autoplot(crd_result)
 ```
 
 ![](speed_files/figure-html/crd-plot2-1.png)
 
-A nicely randomised[¹](#fn1) and spatially optimal design!
+A nicely randomised[^1] and spatially optimal design!
 
 ## Randomised Complete Block Design (RCBD)
 
@@ -188,6 +194,7 @@ treatments, arranged in 4 rows and 6 columns. Note that we can specify
 treatments in the `items` argument.
 
 ``` r
+
 rcbd_design <- initialise_design_df(items = paste0("V", 1:6), nrows = 4, ncols = 6, block_nrows = 1, block_ncols = 6)
 head(rcbd_design)
 ```
@@ -208,6 +215,7 @@ a repeating pattern. This will now be randomised within blocks.
 #### Performing the Optimisation
 
 ``` r
+
 rcbd_result <- speed(rcbd_design, 
                      swap = "treatment",
                      swap_within = "block",
@@ -222,6 +230,7 @@ rcbd_result <- speed(rcbd_design,
     Early stopping at iteration 2328 for level single treatment within block 
 
 ``` r
+
 rcbd_result
 ```
 
@@ -236,6 +245,7 @@ rcbd_result
 #### Output of the Optimisation
 
 ``` r
+
 str(rcbd_result)
 ```
 
@@ -265,6 +275,7 @@ str(rcbd_result)
 #### Visualise the Output
 
 ``` r
+
 autoplot(rcbd_result)
 ```
 
@@ -298,6 +309,7 @@ exactly once in each row and column.
 Here we initialise a 5 × 5 Latin square with 5 treatments.
 
 ``` r
+
 latin_square_design <- initialise_design_df(items = 5, nrows = 5, ncols = 5)
 head(latin_square_design)
 ```
@@ -323,6 +335,7 @@ at a Latin square design in cases where the number of rows, columns,
 treatments and replicates are all equal such as this.
 
 ``` r
+
 latin_square_result <- speed(latin_square_design, 
                              swap = "treatment",
                              seed = 42)
@@ -335,6 +348,7 @@ latin_square_result <- speed(latin_square_design,
     Early stopping at iteration 1040 for level single treatment within whole design 
 
 ``` r
+
 latin_square_result
 ```
 
@@ -352,6 +366,7 @@ Note that the final score of zero shows that the algorithm has found a
 perfect Latin Square solution.
 
 ``` r
+
 str(latin_square_result)
 ```
 
@@ -378,6 +393,7 @@ str(latin_square_result)
 #### Visualise the Output
 
 ``` r
+
 autoplot(latin_square_result)
 ```
 
@@ -418,6 +434,7 @@ that the `initalise_design_df` function does not currently support split
 plot designs directly, so we will create it manually.
 
 ``` r
+
 split_plot_design <- data.frame(
     row = rep(1:12, each = 4),
     col = rep(1:4, times = 12),
@@ -457,6 +474,7 @@ while `swap_within` defines the constraints for each level.
 > whole plot treatments together.
 
 ``` r
+
 split_plot_result <- speed(split_plot_design,
                            swap = list(wp = "wholeplot_treatment",
                                        sp = "subplot_treatment"),
@@ -475,6 +493,7 @@ split_plot_result <- speed(split_plot_design,
     Early stopping at iteration 570 for level sp 
 
 ``` r
+
 split_plot_result
 ```
 
@@ -496,6 +515,7 @@ stopping criteria are reported separately for each level, allowing you
 to assess the quality of optimisation at each hierarchy level.
 
 ``` r
+
 str(split_plot_result)
 ```
 
@@ -526,12 +546,14 @@ str(split_plot_result)
 #### Visualise the Output
 
 ``` r
+
 autoplot(split_plot_result, treatments = "wholeplot_treatment")
 ```
 
 ![](speed_files/figure-html/split-plot-plot2-1.png)
 
 ``` r
+
 autoplot(split_plot_result, treatments = "subplot_treatment", block = "wholeplot")
 ```
 
@@ -618,9 +640,7 @@ vignettes.*
   Advanced and specialised designs, including split-split plot,
   strip-plot, incomplete block, p-rep, and more.
 
-------------------------------------------------------------------------
-
-1.  Note that this design is not a true randomised design, as `speed`
+[^1]: Note that this design is not a true randomised design, as `speed`
     performs restricted randomisation and this design has been optimised
     to reduce neighbour effects. However, it can still be considered a
     Completely Randomised Design as it does not account for any blocking

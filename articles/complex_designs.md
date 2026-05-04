@@ -16,6 +16,7 @@ while maintaining statistical rigour through spatial optimisation with
 the `speed` package.
 
 ``` r
+
 library(speed)
 library(patchwork) # For combining plots
 ```
@@ -90,6 +91,7 @@ Nitrogen Rate × Variety interactions with three hierarchical levels.
 ### Setting Up Split-Split Plot Designs with speed
 
 ``` r
+
 split_split_df <- data.frame(
   row = rep(1:16, each = 9),
   col = rep(1:9, times = 16),
@@ -114,6 +116,7 @@ hierarchical structure.
 #### Performing the Optimisation
 
 ``` r
+
 result_ss <- speed(split_split_df,
                    swap = list(wp = "wholeplot_treatment",
                                sp = "subplot_treatment",
@@ -154,6 +157,7 @@ result_ss <- speed(split_split_df,
 #### Output of the Optimisation
 
 ``` r
+
 result_ss
 ```
 
@@ -171,6 +175,7 @@ result_ss
 #### Visualise the Output
 
 ``` r
+
 res1 <- autoplot(result_ss, treatments = "wholeplot_treatment") + ggplot2::labs(title = "Whole plot Treatments")
 res2 <- autoplot(result_ss, treatments = "subplot_treatment") + ggplot2::labs(title = "Sub-plot Treatments")
 res3 <- autoplot(result_ss, treatments = "subsubplot_treatment") + ggplot2::labs(title = "Sub-sub-plot Treatments")
@@ -239,6 +244,7 @@ where both factors require large application areas.
 ### Setting Up Strip-Plot Designs with speed
 
 ``` r
+
 df_strip <- data.frame(
   row = rep(1:12, each = 6),  # 12 rows total (4 rows per block x 6 blocks)
   col = rep(1:6, times = 12),  # 6 columns
@@ -266,6 +272,7 @@ strips before optimisation.
 #### Performing the Optimisation
 
 ``` r
+
 strip_result <- speed(df_strip,
                       swap = list(ht = "horizontal_treatment", vt = "vertical_treatment"),
                       swap_within = list(ht = "block", vt = "block"),
@@ -286,6 +293,7 @@ strip_result <- speed(df_strip,
 #### Output of the Optimisation
 
 ``` r
+
 strip_result
 ```
 
@@ -302,12 +310,14 @@ strip_result
 #### Visualise the Output
 
 ``` r
+
 autoplot(strip_result, treatments = "horizontal_treatment") + ggplot2::labs(title = "Tillage Treatments")
 ```
 
 ![](complex_designs_files/figure-html/strip-plot-plot2-1.png)
 
 ``` r
+
 autoplot(strip_result, treatments = "vertical_treatment") + ggplot2::labs(title = "Planting Date Treatments")
 ```
 
@@ -333,19 +343,19 @@ The most restrictive but statistically optimal incomplete block design.
 
 ##### Characteristics:
 
-- Each treatment appears in exactly $r$ blocks
-- Each block contains exactly $k$ treatments
-- Each pair of treatments appears together in exactly $\lambda$ blocks
+- Each treatment appears in exactly $`r`$ blocks
+- Each block contains exactly $`k`$ treatments
+- Each pair of treatments appears together in exactly $`λ`$ blocks
 - Perfect balance but limited parameter combinations
 
 ##### Parameters:
 
-- $v$ = number of treatments
-- $b$ = number of blocks  
-- $r$ = number of blocks containing each treatment
-- $k$ = number of treatments per block
-- $\lambda$ = number of blocks containing each pair of treatments
-- $bk = vr$ and $\lambda(v - 1) = r(k - 1)$
+- $`v`$ = number of treatments
+- $`b`$ = number of blocks  
+- $`r`$ = number of blocks containing each treatment
+- $`k`$ = number of treatments per block
+- $`λ`$ = number of blocks containing each pair of treatments
+- $`bk = vr`$ and $`λ(v-1) = r(k-1)`$
 
 What may become apparent from the characteristics and parameters listed
 above is that these designs are not trivial, and [there are specific and
@@ -395,6 +405,7 @@ design. Here we will use a systematic approach to generate the blocks
 and treatment combinations.
 
 ``` r
+
 # Create the data frame
 ribd_df <- data.frame(
   row = rep(1:3, 6),                             # Row within each block
@@ -430,6 +441,7 @@ blocks, but need to remain within their replicate.
 #### Performing the Optimisation
 
 ``` r
+
 ribd_result <- speed(ribd_df, 
                      swap = "treatment", 
                      swap_within = "replicate", 
@@ -446,6 +458,7 @@ ribd_result <- speed(ribd_df,
 #### Output of the Optimisation
 
 ``` r
+
 ribd_result
 ```
 
@@ -458,6 +471,7 @@ ribd_result
     Seed: 42 
 
 ``` r
+
 str(ribd_result)
 ```
 
@@ -480,6 +494,7 @@ str(ribd_result)
 #### Visualise the Output
 
 ``` r
+
 autoplot(ribd_result)
 ```
 
@@ -539,6 +554,7 @@ is a single site design with two blocks.
 ### Setting Up P-Rep Designs with speed
 
 ``` r
+
 prep_design <- data.frame(
   row = rep(1:14, each = 10), 
   col = rep(1:10, times = 14), 
@@ -583,6 +599,7 @@ this case it is not necessary due to the low replication.
 #### Performing the Optimisation
 
 ``` r
+
 prep_result <- speed(prep_design,
                      swap = "entry",
                      spatial_factors = ~ block + row + col, 
@@ -600,6 +617,7 @@ prep_result <- speed(prep_design,
 #### Output of the Optimisation
 
 ``` r
+
 prep_result
 ```
 
@@ -612,6 +630,7 @@ prep_result
     Seed: 42 
 
 ``` r
+
 str(prep_result)
 ```
 
@@ -635,6 +654,7 @@ Ideally here we would also like to see an even distribution of the
 duplicated entries between each block.
 
 ``` r
+
 prep_result$design_df$duplicated <- duplicated(prep_result$design_df$entry) | duplicated(prep_result$design_df$entry, fromLast = TRUE)
 
 sum(prep_result$design_df$duplicated[prep_result$design_df$block==1])
@@ -643,6 +663,7 @@ sum(prep_result$design_df$duplicated[prep_result$design_df$block==1])
     [1] 40
 
 ``` r
+
 any(duplicated(prep_result$design_df$entry[prep_result$design_df$block==1]))
 ```
 
@@ -654,6 +675,7 @@ the other block.
 #### Visualise the Output
 
 ``` r
+
 autoplot(prep_result, treatments = "entry")
 ```
 
@@ -712,6 +734,7 @@ requiring both row blocks and column blocks.
 ### Setting Up Row-Column Designs with Blocking
 
 ``` r
+
 blocking_2d_design <- data.frame(row = rep(1:20, each = 20), 
                                  col = rep(1:20, 20), 
                                  treatment = rep(paste("V", 1:40, sep = ""), 10), 
@@ -754,6 +777,7 @@ that we also set some optimisation parameters to allow for more swaps,
 as this is a larger design with more treatments.
 
 ``` r
+
 optimise_params <- optim_params(swap_count = 5, swap_all_blocks = TRUE, adaptive_swaps = TRUE)
 
 blocking_2d_result <- speed(blocking_2d_design, 
@@ -769,6 +793,7 @@ blocking_2d_result <- speed(blocking_2d_design,
 #### Output of the Optimisation
 
 ``` r
+
 blocking_2d_result
 ```
 

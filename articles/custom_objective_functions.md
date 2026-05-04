@@ -18,6 +18,7 @@ leverage the `speed` package for complex or non-standard experimental
 design challenges.
 
 ``` r
+
 library(speed)
 ```
 
@@ -120,19 +121,19 @@ A BIBD has the following properties:
 
 ##### Characteristics:
 
-- Each treatment appears in exactly $r$ blocks
-- Each block contains exactly $k$ treatments
-- Each pair of treatments appears together in exactly $\lambda$ blocks
+- Each treatment appears in exactly $`r`$ blocks
+- Each block contains exactly $`k`$ treatments
+- Each pair of treatments appears together in exactly $`λ`$ blocks
 - Perfect balance but limited parameter combinations
 
 ##### Parameters:
 
-- $v$ = number of treatments
-- $b$ = number of blocks  
-- $r$ = number of blocks containing each treatment
-- $k$ = number of treatments per block
-- $\lambda$ = number of blocks containing each pair of treatments
-- $bk = vr$ and $\lambda(v - 1) = r(k - 1)$
+- $`v`$ = number of treatments
+- $`b`$ = number of blocks  
+- $`r`$ = number of blocks containing each treatment
+- $`k`$ = number of treatments per block
+- $`λ`$ = number of blocks containing each pair of treatments
+- $`bk = vr`$ and $`λ(v-1) = r(k-1)`$
 
 Most of constraints can be handled by careful design of the layout and
 the default objectives in `speed` package, such as minimising neighbour
@@ -148,6 +149,7 @@ the counts. This will also help us to check if the design meets the BIBD
 requirements later.
 
 ``` r
+
 get_cooccurrence <- function(design_df, swap) {
   pairs <- unlist(lapply(unique(design_df$block), function(block) {
     combn(
@@ -175,6 +177,7 @@ values mean more optimal layouts in the context of a custom objective
 function.
 
 ``` r
+
 bibd_objective_function <- function(
     layout_df,
     swap,
@@ -235,6 +238,7 @@ We will create a data frame representing the BIBD layout, and then run
 the `speed` optimisation with our custom objective function.
 
 ``` r
+
 # Create the data frame
 bibd_df <- initialise_design_df(items = 5, nrows = 3, ncols = 10, 
                                 block_nrows = 3, block_ncols = 1)
@@ -278,6 +282,7 @@ that we set `optim_params(random_initialisation = TRUE)` to ensure that
 the initialisation of the design is randomised.
 
 ``` r
+
 result <- speed(bibd_df, 
                 swap = "treatment",
                 spatial_factors = ~ block + row + col,
@@ -302,12 +307,14 @@ result
 ```
 
 ``` r
+
 autoplot(result)
 ```
 
 ![](custom_objective_functions_files/figure-html/bibd_result-plot-1.png)
 
 ``` r
+
 get_cooccurrence(result$design_df, "treatment")
 #> $`T1,T2`
 #> [1] 3

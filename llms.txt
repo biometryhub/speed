@@ -37,6 +37,7 @@ You can install the development version of speed from
 [GitHub](https://github.com/biometryhub/speed) with:
 
 ``` r
+
 # pak
 if (!require("pak", quietly = TRUE)) install.packages("pak")
 pak::pak("biometryhub/speed")
@@ -71,6 +72,7 @@ A simple example optimising a 4×3 completely randomised design with 4
 treatments:
 
 ``` r
+
 library(speed)
 
 # Create a simple design with 3 replicates of 4 treatments
@@ -96,6 +98,7 @@ autoplot(result)
 
 ``` r
 
+
 # View optimisation progress
 plot_progress(result)
 ```
@@ -107,6 +110,7 @@ plot_progress(result)
 You can also optimise designs within blocks:
 
 ``` r
+
 # Create a design with blocks
 df <- data.frame(
   row = rep(1:6, each = 4),
