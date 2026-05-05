@@ -356,6 +356,16 @@ test_that("initialise_design_df supports split-split-plot via nested splits", {
   )
 })
 
+test_that("initialise_design_df expands a numeric scalar `items` in splits to T1..TN", {
+  df <- initialise_design_df(
+    nrows = 4, ncols = 2,
+    splits = list(plot = list(nrows = 2, ncols = 1, items = 4))
+  )
+
+  expect_setequal(unique(df$plot_treatment), paste0("T", 1:4))
+  expect_equal(length(unique(df$plot)), 4)
+})
+
 test_that("initialise_design_df applies splits without an outer block", {
   df <- initialise_design_df(
     nrows = 6, ncols = 4,
@@ -395,5 +405,14 @@ test_that("initialise_design_df splits validate parent dimensions", {
       splits = list(wp = list(nrows = 2, ncols = 1, items = LETTERS[1:5]))
     ),
     "`items` for split `wp` must have length 6 \\(or divide it\\); got 5"
+  )
+
+  # Each split entry must provide both `nrows` and `ncols`.
+  expect_error(
+    initialise_design_df(
+      nrows = 6, ncols = 2,
+      splits = list(wp = list(nrows = 2))
+    ),
+    "`nrows` and `ncols` must be provided for split `wp`"
   )
 })
