@@ -270,20 +270,20 @@ test_that("initialise_design_df builds a split-plot via splits", {
   skip_if_not_installed("vdiffr")
 
   df <- initialise_design_df(
-    nrows = 12, ncols = 4,
-    block_nrows = 12, block_ncols = 1,
+    nrows = 12,
+    ncols = 4,
+    block_nrows = 12,
+    block_ncols = 1,
     splits = list(
       wholeplot = list(nrows = 4, ncols = 1, items = LETTERS[1:3]),
       subplot = list(nrows = 1, ncols = 1, items = letters[1:4])
     )
   )
 
-  expect_setequal(
-    names(df),
-    c("row", "col", "row_block", "col_block", "block",
-      "wholeplot", "wholeplot_treatment",
-      "subplot", "subplot_treatment")
-  )
+  expect_setequal(names(df), c(
+    "row", "col", "row_block", "col_block", "block", "wholeplot",
+    "wholeplot_treatment", "subplot", "subplot_treatment"
+  ))
   expect_equal(nrow(df), 48)
 
   # 4 blocks (replicates), each holding 3 wholeplots, each holding 4 subplots.
@@ -318,8 +318,10 @@ test_that("initialise_design_df supports split-split-plot via nested splits", {
   skip_if_not_installed("vdiffr")
 
   df <- initialise_design_df(
-    nrows = 8, ncols = 4,
-    block_nrows = 8, block_ncols = 2,
+    nrows = 8,
+    ncols = 4,
+    block_nrows = 8,
+    block_ncols = 2,
     splits = list(
       wp = list(nrows = 4, ncols = 2, items = LETTERS[1:2]),
       sp = list(nrows = 2, ncols = 2, items = letters[1:2]),
@@ -343,10 +345,7 @@ test_that("initialise_design_df supports split-split-plot via nested splits", {
   }
 
   class(df) <- c("design", class(df))
-  vdiffr::expect_doppelganger(
-    "initialise-splitsplit-wp",
-    autoplot(df, treatments = "wp_treatment")
-  )
+  vdiffr::expect_doppelganger("initialise-splitsplit-wp", autoplot(df, treatments = "wp_treatment"))
   vdiffr::expect_doppelganger(
     "initialise-splitsplit-sp",
     autoplot(df, treatments = "sp_treatment", block = "wp")
@@ -358,22 +357,17 @@ test_that("initialise_design_df supports split-split-plot via nested splits", {
 })
 
 test_that("initialise_design_df splits validate parent dimensions", {
-  expect_error(
-    initialise_design_df(
-      nrows = 6, ncols = 2,
-      block_nrows = 6, block_ncols = 2,
-      splits = list(wp = list(nrows = 4, ncols = 2))
-    )
-  )
-  expect_error(
-    initialise_design_df(
-      nrows = 6, ncols = 2,
-      splits = list(wp = list(nrows = 3, ncols = 2, foo = 1))
-    ),
-    "`foo` is an invalid argument"
-  )
-  expect_error(
-    initialise_design_df(nrows = 4, ncols = 4),
-    "`items` must be provided when `splits` is `NULL`"
-  )
+  expect_error(initialise_design_df(
+    nrows = 6,
+    ncols = 2,
+    block_nrows = 6,
+    block_ncols = 2,
+    splits = list(wp = list(nrows = 4, ncols = 2))
+  ))
+  expect_error(initialise_design_df(
+    nrows = 6,
+    ncols = 2,
+    splits = list(wp = list(nrows = 3, ncols = 2, foo = 1))
+  ), "`foo` is an invalid argument")
+  expect_error(initialise_design_df(nrows = 4, ncols = 4), "`items` must be provided when `splits` is `NULL`")
 })
