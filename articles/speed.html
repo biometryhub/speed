@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -442,26 +442,33 @@ Seed: 42 </code></pre>
 <li>Different error terms for different treatment levels</li>
 </ul></section><section class="level2"><h3 id="setting-up-split-plot-design-with-speed">Setting Up Split Plot Design with speed<a class="anchor" aria-label="anchor" href="#setting-up-split-plot-design-with-speed"></a>
 </h3>
-<p>Now we can create a data frame representing a split plot design. Note that the <code>initalise_design_df</code> function does not currently support split plot designs directly, so we will create it manually.</p>
+<p>Now we can create a data frame representing a split plot design. We can build it with <code><a href="../reference/initialise_design_df.html">initialise_design_df()</a></code> by passing a <code>splits</code> list — one entry per nested level, each describing the size of one unit and the treatments to allocate to it.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">split_plot_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>    row <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">12</span>, each <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
-<span>    col <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, times <span class="op">=</span> <span class="fl">12</span><span class="op">)</span>,</span>
-<span>    block <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, each <span class="op">=</span> <span class="fl">12</span><span class="op">)</span>,</span>
-<span>    wholeplot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">12</span>, each <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
-<span>    wholeplot_treatment <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">LETTERS</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>, each <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>, times <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
-<span>    subplot_treatment <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span>, <span class="fl">12</span><span class="op">)</span></span>
-<span> <span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">split_plot_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/initialise_design_df.html">initialise_design_df</a></span><span class="op">(</span></span>
+<span>  nrows <span class="op">=</span> <span class="fl">12</span>, ncols <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  block_nrows <span class="op">=</span> <span class="fl">3</span>, block_ncols <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  splits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    wholeplot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrows <span class="op">=</span> <span class="fl">1</span>, ncols <span class="op">=</span> <span class="fl">4</span>, items <span class="op">=</span> <span class="va">LETTERS</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>    subplot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrows <span class="op">=</span> <span class="fl">1</span>, ncols <span class="op">=</span> <span class="fl">1</span>, items <span class="op">=</span> <span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">split_plot_design</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  row col block wholeplot wholeplot_treatment subplot_treatment
-1   1   1     1         1                   A                 a
-2   1   2     1         1                   A                 b
-3   1   3     1         1                   A                 c
-4   1   4     1         1                   A                 d
-5   2   1     1         2                   B                 a
-6   2   2     1         2                   B                 b</code></pre>
+<pre><code>  row col row_block col_block block wholeplot wholeplot_treatment subplot
+1   1   1         1         1     1         1                   A       1
+2   2   1         1         1     1         2                   B       5
+3   3   1         1         1     1         3                   C       9
+4   4   1         2         1     2         4                   A      13
+5   5   1         2         1     2         5                   B      17
+6   6   1         2         1     2         6                   C      21
+  subplot_treatment
+1                 a
+2                 a
+3                 a
+4                 a
+5                 a
+6                 a</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -481,21 +488,21 @@ Seed: 42 </code></pre>
 <p>This is a systematic split plot layout; each treatment appears once per block for whole plot treatments, and once per whole plot for sub-plot treatments. The design will now be randomised.</p>
 <section class="level3"><h4 id="performing-the-optimisation-3">Performing the Optimisation<a class="anchor" aria-label="anchor" href="#performing-the-optimisation-3"></a>
 </h4>
-<p>For split-plot designs, we use named lists to specify the hierarchical structure. The <code>swap</code> parameter defines what to optimise at each level, while <code>swap_within</code> defines the constraints for each level.</p>
+<p>For split-plot designs, we describe the hierarchy through the <code>optimise</code> argument: a named list where each entry holds the per-level overrides (<code>swap</code>, <code>swap_within</code>, and any other arguments such as <code>swap_all</code>, <code>iterations</code>, or <code>optimise_params</code>). Levels are optimised in the order they appear.</p>
 <div>
 <blockquote>
 <p><strong>Note</strong></p>
-<p>Note that <code>swap_all = TRUE</code> argument is required to swap the same whole plot treatments together.</p>
+<p><code>swap_all = TRUE</code> is set on the whole-plot level so that all subplots sharing a whole plot move together; the subplot level keeps the default single-cell swap.</p>
 </blockquote>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb34"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">split_plot_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span><span class="va">split_plot_design</span>,</span>
-<span>                           swap <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>wp <span class="op">=</span> <span class="st">"wholeplot_treatment"</span>,</span>
-<span>                                       sp <span class="op">=</span> <span class="st">"subplot_treatment"</span><span class="op">)</span>,</span>
-<span>                           swap_within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>wp <span class="op">=</span> <span class="st">"block"</span>, sp <span class="op">=</span> <span class="st">"wholeplot"</span><span class="op">)</span>,</span>
-<span>                           swap_all <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>                           seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">optimise</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  wp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>swap <span class="op">=</span> <span class="st">"wholeplot_treatment"</span>, swap_within <span class="op">=</span> <span class="st">"block"</span>, swap_all <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>  sp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>swap <span class="op">=</span> <span class="st">"subplot_treatment"</span>, swap_within <span class="op">=</span> <span class="st">"wholeplot"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">split_plot_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span><span class="va">split_plot_design</span>, optimise <span class="op">=</span> <span class="va">optimise</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>row and col are used as row and column, respectively.</code></pre>
 </div>
@@ -529,13 +536,22 @@ Seed: 42 </code></pre>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">split_plot_result</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>List of 8
- $ design_df     :Classes 'design' and 'data.frame':    48 obs. of  6 variables:
+ $ design_df     :Classes 'design' and 'data.frame':    48 obs. of  9 variables:
   ..$ row                : int [1:48] 1 1 1 1 2 2 2 2 3 3 ...
   ..$ col                : int [1:48] 1 2 3 4 1 2 3 4 1 2 ...
-  ..$ block              : int [1:48] 1 1 1 1 1 1 1 1 1 1 ...
-  ..$ wholeplot          : int [1:48] 1 1 1 1 2 2 2 2 3 3 ...
+  ..$ row_block          : num [1:48] 1 1 1 1 1 1 1 1 1 1 ...
+  ..$ col_block          : num [1:48] 1 1 1 1 1 1 1 1 1 1 ...
+  ..$ block              : num [1:48] 1 1 1 1 1 1 1 1 1 1 ...
+  ..$ wholeplot          : num [1:48] 1 1 1 1 2 2 2 2 3 3 ...
   ..$ wholeplot_treatment: chr [1:48] "C" "C" "C" "C" ...
+  ..$ subplot            : num [1:48] 1 2 3 4 5 6 7 8 9 10 ...
   ..$ subplot_treatment  : chr [1:48] "a" "b" "c" "d" ...
+  ..- attr(*, "out.attrs")=List of 2
+  .. ..$ dim     : Named int [1:2] 12 4
+  .. .. ..- attr(*, "names")= chr [1:2] "row" "col"
+  .. ..$ dimnames:List of 2
+  .. .. ..$ row: chr [1:12] "row= 1" "row= 2" "row= 3" "row= 4" ...
+  .. .. ..$ col: chr [1:4] "col=1" "col=2" "col=3" "col=4"
  $ score         : num 100
  $ scores        :List of 2
   ..$ wp: num [1:2001] 100 104 104 104 104 104 104 104 100 100 ...

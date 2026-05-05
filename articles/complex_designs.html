@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -161,16 +161,14 @@
 </h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">split_split_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>  row <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">16</span>, each <span class="op">=</span> <span class="fl">9</span><span class="op">)</span>,</span>
-<span>  col <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">9</span>, times <span class="op">=</span> <span class="fl">16</span><span class="op">)</span>,</span>
-<span>  block <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, each <span class="op">=</span> <span class="fl">36</span><span class="op">)</span>,</span>
-<span>  <span class="co"># Fixed wholeplot assignment: 3 wholeplots per block, each 4×3</span></span>
-<span>  wholeplot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>, times <span class="op">=</span> <span class="fl">16</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">3</span> <span class="op">*</span> <span class="fl">3</span>, each <span class="op">=</span> <span class="fl">36</span><span class="op">)</span>,</span>
-<span>  wholeplot_treatment <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">LETTERS</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>, times <span class="op">=</span> <span class="fl">16</span><span class="op">)</span>,</span>
-<span>  subplot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">48</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
-<span>  subplot_treatment <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span>, each <span class="op">=</span> <span class="fl">9</span><span class="op">)</span>, times <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
-<span>  subsubplot_treatment <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span><span class="op">)</span>, <span class="fl">48</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">split_split_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/initialise_design_df.html">initialise_design_df</a></span><span class="op">(</span></span>
+<span>  nrows <span class="op">=</span> <span class="fl">16</span>, ncols <span class="op">=</span> <span class="fl">9</span>,</span>
+<span>  block_nrows <span class="op">=</span> <span class="fl">4</span>, block_ncols <span class="op">=</span> <span class="fl">9</span>,</span>
+<span>  splits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    wholeplot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrows <span class="op">=</span> <span class="fl">4</span>, ncols <span class="op">=</span> <span class="fl">3</span>, items <span class="op">=</span> <span class="va">LETTERS</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>    subplot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrows <span class="op">=</span> <span class="fl">1</span>, ncols <span class="op">=</span> <span class="fl">3</span>, items <span class="op">=</span> <span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>    subsubplot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrows <span class="op">=</span> <span class="fl">1</span>, ncols <span class="op">=</span> <span class="fl">1</span>, items <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="cell">
@@ -190,21 +188,30 @@ Figure 1: Initial layout of the split-split-plot design showing systematic trea
 </h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">result_ss</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span><span class="va">split_split_df</span>,</span>
-<span>                   swap <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>wp <span class="op">=</span> <span class="st">"wholeplot_treatment"</span>,</span>
-<span>                               sp <span class="op">=</span> <span class="st">"subplot_treatment"</span>,</span>
-<span>                               ssp <span class="op">=</span> <span class="st">"subsubplot_treatment"</span><span class="op">)</span>,</span>
-<span>                   swap_within <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>wp <span class="op">=</span> <span class="st">"block"</span>,</span>
-<span>                                      sp <span class="op">=</span> <span class="st">"wholeplot"</span>,</span>
-<span>                                      ssp <span class="op">=</span> <span class="st">"subplot"</span><span class="op">)</span>,</span>
-<span>                   iterations <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>wp <span class="op">=</span> <span class="fl">2000</span>, </span>
-<span>                                     sp <span class="op">=</span> <span class="fl">5000</span>, </span>
-<span>                                     ssp <span class="op">=</span> <span class="fl">20000</span><span class="op">)</span>,</span>
-<span>                   early_stop_iterations <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>wp <span class="op">=</span> <span class="fl">1000</span>, </span>
-<span>                                                sp <span class="op">=</span> <span class="fl">3000</span>, </span>
-<span>                                                ssp <span class="op">=</span> <span class="fl">5000</span><span class="op">)</span>,</span>
-<span>                   swap_all <span class="op">=</span> <span class="cn">TRUE</span>, </span>
-<span>                   seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">optimise</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  wp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    swap <span class="op">=</span> <span class="st">"wholeplot_treatment"</span>,</span>
+<span>    swap_within <span class="op">=</span> <span class="st">"block"</span>,</span>
+<span>    iterations <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>    early_stop_iterations <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>    swap_all <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  sp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    swap <span class="op">=</span> <span class="st">"subplot_treatment"</span>,</span>
+<span>    swap_within <span class="op">=</span> <span class="st">"wholeplot"</span>,</span>
+<span>    iterations <span class="op">=</span> <span class="fl">5000</span>,</span>
+<span>    early_stop_iterations <span class="op">=</span> <span class="fl">3000</span>,</span>
+<span>    swap_all <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  ssp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    swap <span class="op">=</span> <span class="st">"subsubplot_treatment"</span>,</span>
+<span>    swap_within <span class="op">=</span> <span class="st">"subplot"</span>,</span>
+<span>    iterations <span class="op">=</span> <span class="fl">20000</span>,</span>
+<span>    early_stop_iterations <span class="op">=</span> <span class="fl">5000</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">result_ss</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span><span class="va">split_split_df</span>, optimise <span class="op">=</span> <span class="va">optimise</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>row and col are used as row and column, respectively.</code></pre>
 </div>
@@ -218,14 +225,21 @@ Level: sp Iteration: 2000 Score: 132 Best: 132 Since Improvement: 1594
 Level: sp Iteration: 3000 Score: 132 Best: 132 Since Improvement: 2594
 Early stopping at iteration 3406 for level sp
 Optimising level: ssp
-Level: ssp Iteration: 1000 Score: 12 Best: 12 Since Improvement: 46
-Level: ssp Iteration: 2000 Score: 10 Best: 10 Since Improvement: 617
-Level: ssp Iteration: 3000 Score: 9 Best: 9 Since Improvement: 346
-Level: ssp Iteration: 4000 Score: 9 Best: 9 Since Improvement: 1346
-Level: ssp Iteration: 5000 Score: 9 Best: 9 Since Improvement: 2346
-Level: ssp Iteration: 6000 Score: 9 Best: 9 Since Improvement: 3346
-Level: ssp Iteration: 7000 Score: 9 Best: 9 Since Improvement: 4346
-Early stopping at iteration 7654 for level ssp </code></pre>
+Level: ssp Iteration: 1000 Score: 16 Best: 16 Since Improvement: 120
+Level: ssp Iteration: 2000 Score: 12 Best: 12 Since Improvement: 349
+Level: ssp Iteration: 3000 Score: 11 Best: 11 Since Improvement: 553
+Level: ssp Iteration: 4000 Score: 11 Best: 11 Since Improvement: 1553
+Level: ssp Iteration: 5000 Score: 10 Best: 10 Since Improvement: 925
+Level: ssp Iteration: 6000 Score: 10 Best: 10 Since Improvement: 1925
+Level: ssp Iteration: 7000 Score: 9 Best: 9 Since Improvement: 19
+Level: ssp Iteration: 8000 Score: 9 Best: 9 Since Improvement: 1019
+Level: ssp Iteration: 9000 Score: 9 Best: 9 Since Improvement: 2019
+Level: ssp Iteration: 10000 Score: 7 Best: 7 Since Improvement: 985
+Level: ssp Iteration: 11000 Score: 7 Best: 7 Since Improvement: 1985
+Level: ssp Iteration: 12000 Score: 7 Best: 7 Since Improvement: 2985
+Level: ssp Iteration: 13000 Score: 7 Best: 7 Since Improvement: 3985
+Level: ssp Iteration: 14000 Score: 7 Best: 7 Since Improvement: 4985
+Early stopping at iteration 14015 for level ssp </code></pre>
 </div>
 </div>
 </section><section class="level3"><h4 id="output-of-the-optimisation">Output of the Optimisation<a class="anchor" aria-label="anchor" href="#output-of-the-optimisation"></a>
@@ -236,8 +250,8 @@ Early stopping at iteration 7654 for level ssp </code></pre>
 <div class="cell-output cell-output-stdout">
 <pre><code>Optimised Experimental Design
 ----------------------------
-Score: 393
-Iterations Run: 12091
+Score: 391
+Iterations Run: 18452
 Stopped Early: TRUE TRUE TRUE
 Treatments:
   wp: A, B, C
@@ -365,13 +379,13 @@ Figure 3: Initial layout of the strip plot design showing systematic treatment 
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Optimising level: ht
-Level: ht Iteration: 1000 Score: 84 Best: 84 Since Improvement: 875
-Level: ht Iteration: 2000 Score: 84 Best: 84 Since Improvement: 1875
-Early stopping at iteration 2125 for level ht
+Level: ht Iteration: 1000 Score: 84 Best: 84 Since Improvement: 961
+Level: ht Iteration: 2000 Score: 84 Best: 84 Since Improvement: 1961
+Early stopping at iteration 2039 for level ht
 Optimising level: vt
-Level: vt Iteration: 1000 Score: 54 Best: 54 Since Improvement: 840
-Level: vt Iteration: 2000 Score: 54 Best: 54 Since Improvement: 1840
-Early stopping at iteration 2160 for level vt </code></pre>
+Level: vt Iteration: 1000 Score: 54 Best: 54 Since Improvement: 878
+Level: vt Iteration: 2000 Score: 54 Best: 54 Since Improvement: 1878
+Early stopping at iteration 2122 for level vt </code></pre>
 </div>
 </div>
 </section><section class="level3"><h4 id="output-of-the-optimisation-1">Output of the Optimisation<a class="anchor" aria-label="anchor" href="#output-of-the-optimisation-1"></a>
@@ -383,12 +397,12 @@ Early stopping at iteration 2160 for level vt </code></pre>
 <pre><code>Optimised Experimental Design
 ----------------------------
 Score: 138
-Iterations Run: 4287
+Iterations Run: 4163
 Stopped Early: TRUE TRUE
 Treatments:
   ht: a, b, c, d
   vt: A, B, C
-Seed: -745752008 </code></pre>
+Seed: -2124829786 </code></pre>
 </div>
 </div>
 </section><section class="level3"><h4 id="visualise-the-output-1">Visualise the Output<a class="anchor" aria-label="anchor" href="#visualise-the-output-1"></a>

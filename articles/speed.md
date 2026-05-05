@@ -429,30 +429,39 @@ sub-plots in a single step.
 
 ### Setting Up Split Plot Design with speed
 
-Now we can create a data frame representing a split plot design. Note
-that the `initalise_design_df` function does not currently support split
-plot designs directly, so we will create it manually.
+Now we can create a data frame representing a split plot design. We can
+build it with
+[`initialise_design_df()`](https://biometryhub.github.io/speed/reference/initialise_design_df.md)
+by passing a `splits` list — one entry per nested level, each describing
+the size of one unit and the treatments to allocate to it.
 
 ``` r
 
-split_plot_design <- data.frame(
-    row = rep(1:12, each = 4),
-    col = rep(1:4, times = 12),
-    block = rep(1:4, each = 12),
-    wholeplot = rep(1:12, each = 4),
-    wholeplot_treatment = rep(rep(LETTERS[1:3], each = 4), times = 4),
-    subplot_treatment = rep(letters[1:4], 12)
- )
+split_plot_design <- initialise_design_df(
+  nrows = 12, ncols = 4,
+  block_nrows = 3, block_ncols = 4,
+  splits = list(
+    wholeplot = list(nrows = 1, ncols = 4, items = LETTERS[1:3]),
+    subplot = list(nrows = 1, ncols = 1, items = letters[1:4])
+  )
+)
 head(split_plot_design)
 ```
 
-      row col block wholeplot wholeplot_treatment subplot_treatment
-    1   1   1     1         1                   A                 a
-    2   1   2     1         1                   A                 b
-    3   1   3     1         1                   A                 c
-    4   1   4     1         1                   A                 d
-    5   2   1     1         2                   B                 a
-    6   2   2     1         2                   B                 b
+      row col row_block col_block block wholeplot wholeplot_treatment subplot
+    1   1   1         1         1     1         1                   A       1
+    2   2   1         1         1     1         2                   B       5
+    3   3   1         1         1     1         3                   C       9
+    4   4   1         2         1     2         4                   A      13
+    5   5   1         2         1     2         5                   B      17
+    6   6   1         2         1     2         6                   C      21
+      subplot_treatment
+    1                 a
+    2                 a
+    3                 a
+    4                 a
+    5                 a
+    6                 a
 
 ![](speed_files/figure-html/split-plot-plot1-1.png)
 
@@ -464,23 +473,26 @@ treatments. The design will now be randomised.
 
 #### Performing the Optimisation
 
-For split-plot designs, we use named lists to specify the hierarchical
-structure. The `swap` parameter defines what to optimise at each level,
-while `swap_within` defines the constraints for each level.
+For split-plot designs, we describe the hierarchy through the `optimise`
+argument: a named list where each entry holds the per-level overrides
+(`swap`, `swap_within`, and any other arguments such as `swap_all`,
+`iterations`, or `optimise_params`). Levels are optimised in the order
+they appear.
 
 > **Note**
 >
-> Note that `swap_all = TRUE` argument is required to swap the same
-> whole plot treatments together.
+> `swap_all = TRUE` is set on the whole-plot level so that all subplots
+> sharing a whole plot move together; the subplot level keeps the
+> default single-cell swap.
 
 ``` r
 
-split_plot_result <- speed(split_plot_design,
-                           swap = list(wp = "wholeplot_treatment",
-                                       sp = "subplot_treatment"),
-                           swap_within = list(wp = "block", sp = "wholeplot"),
-                           swap_all = TRUE,
-                           seed = 42)
+optimise <- list(
+  wp = list(swap = "wholeplot_treatment", swap_within = "block", swap_all = TRUE),
+  sp = list(swap = "subplot_treatment", swap_within = "wholeplot")
+)
+
+split_plot_result <- speed(split_plot_design, optimise = optimise, seed = 42)
 ```
 
     row and col are used as row and column, respectively.
@@ -520,13 +532,22 @@ str(split_plot_result)
 ```
 
     List of 8
-     $ design_df     :Classes 'design' and 'data.frame':    48 obs. of  6 variables:
+     $ design_df     :Classes 'design' and 'data.frame':    48 obs. of  9 variables:
       ..$ row                : int [1:48] 1 1 1 1 2 2 2 2 3 3 ...
       ..$ col                : int [1:48] 1 2 3 4 1 2 3 4 1 2 ...
-      ..$ block              : int [1:48] 1 1 1 1 1 1 1 1 1 1 ...
-      ..$ wholeplot          : int [1:48] 1 1 1 1 2 2 2 2 3 3 ...
+      ..$ row_block          : num [1:48] 1 1 1 1 1 1 1 1 1 1 ...
+      ..$ col_block          : num [1:48] 1 1 1 1 1 1 1 1 1 1 ...
+      ..$ block              : num [1:48] 1 1 1 1 1 1 1 1 1 1 ...
+      ..$ wholeplot          : num [1:48] 1 1 1 1 2 2 2 2 3 3 ...
       ..$ wholeplot_treatment: chr [1:48] "C" "C" "C" "C" ...
+      ..$ subplot            : num [1:48] 1 2 3 4 5 6 7 8 9 10 ...
       ..$ subplot_treatment  : chr [1:48] "a" "b" "c" "d" ...
+      ..- attr(*, "out.attrs")=List of 2
+      .. ..$ dim     : Named int [1:2] 12 4
+      .. .. ..- attr(*, "names")= chr [1:2] "row" "col"
+      .. ..$ dimnames:List of 2
+      .. .. ..$ row: chr [1:12] "row= 1" "row= 2" "row= 3" "row= 4" ...
+      .. .. ..$ col: chr [1:4] "col=1" "col=2" "col=3" "col=4"
      $ score         : num 100
      $ scores        :List of 2
       ..$ wp: num [1:2001] 100 104 104 104 104 104 104 104 100 100 ...

@@ -92,16 +92,14 @@ Nitrogen Rate × Variety interactions with three hierarchical levels.
 
 ``` r
 
-split_split_df <- data.frame(
-  row = rep(1:16, each = 9),
-  col = rep(1:9, times = 16),
-  block = rep(1:4, each = 36),
-  # Fixed wholeplot assignment: 3 wholeplots per block, each 4×3
-  wholeplot = rep(rep(1:3, each = 3), times = 16) + rep(0:3 * 3, each = 36),
-  wholeplot_treatment = rep(rep(LETTERS[1:3], each = 3), times = 16),
-  subplot = rep(1:48, each = 3),
-  subplot_treatment = rep(rep(letters[1:4], each = 9), times = 4),
-  subsubplot_treatment = rep(c("x", "y", "z"), 48)
+split_split_df <- initialise_design_df(
+  nrows = 16, ncols = 9,
+  block_nrows = 4, block_ncols = 9,
+  splits = list(
+    wholeplot = list(nrows = 4, ncols = 3, items = LETTERS[1:3]),
+    subplot = list(nrows = 1, ncols = 3, items = letters[1:4]),
+    subsubplot = list(nrows = 1, ncols = 1, items = c("x", "y", "z"))
+  )
 )
 ```
 
@@ -117,21 +115,30 @@ hierarchical structure.
 
 ``` r
 
-result_ss <- speed(split_split_df,
-                   swap = list(wp = "wholeplot_treatment",
-                               sp = "subplot_treatment",
-                               ssp = "subsubplot_treatment"),
-                   swap_within = list(wp = "block",
-                                      sp = "wholeplot",
-                                      ssp = "subplot"),
-                   iterations = list(wp = 2000, 
-                                     sp = 5000, 
-                                     ssp = 20000),
-                   early_stop_iterations = list(wp = 1000, 
-                                                sp = 3000, 
-                                                ssp = 5000),
-                   swap_all = TRUE, 
-                   seed = 42)
+optimise <- list(
+  wp = list(
+    swap = "wholeplot_treatment",
+    swap_within = "block",
+    iterations = 2000,
+    early_stop_iterations = 1000,
+    swap_all = TRUE
+  ),
+  sp = list(
+    swap = "subplot_treatment",
+    swap_within = "wholeplot",
+    iterations = 5000,
+    early_stop_iterations = 3000,
+    swap_all = TRUE
+  ),
+  ssp = list(
+    swap = "subsubplot_treatment",
+    swap_within = "subplot",
+    iterations = 20000,
+    early_stop_iterations = 5000
+  )
+)
+
+result_ss <- speed(split_split_df, optimise = optimise, seed = 42)
 ```
 
     row and col are used as row and column, respectively.
@@ -145,14 +152,21 @@ result_ss <- speed(split_split_df,
     Level: sp Iteration: 3000 Score: 132 Best: 132 Since Improvement: 2594
     Early stopping at iteration 3406 for level sp
     Optimising level: ssp
-    Level: ssp Iteration: 1000 Score: 12 Best: 12 Since Improvement: 46
-    Level: ssp Iteration: 2000 Score: 10 Best: 10 Since Improvement: 617
-    Level: ssp Iteration: 3000 Score: 9 Best: 9 Since Improvement: 346
-    Level: ssp Iteration: 4000 Score: 9 Best: 9 Since Improvement: 1346
-    Level: ssp Iteration: 5000 Score: 9 Best: 9 Since Improvement: 2346
-    Level: ssp Iteration: 6000 Score: 9 Best: 9 Since Improvement: 3346
-    Level: ssp Iteration: 7000 Score: 9 Best: 9 Since Improvement: 4346
-    Early stopping at iteration 7654 for level ssp 
+    Level: ssp Iteration: 1000 Score: 16 Best: 16 Since Improvement: 120
+    Level: ssp Iteration: 2000 Score: 12 Best: 12 Since Improvement: 349
+    Level: ssp Iteration: 3000 Score: 11 Best: 11 Since Improvement: 553
+    Level: ssp Iteration: 4000 Score: 11 Best: 11 Since Improvement: 1553
+    Level: ssp Iteration: 5000 Score: 10 Best: 10 Since Improvement: 925
+    Level: ssp Iteration: 6000 Score: 10 Best: 10 Since Improvement: 1925
+    Level: ssp Iteration: 7000 Score: 9 Best: 9 Since Improvement: 19
+    Level: ssp Iteration: 8000 Score: 9 Best: 9 Since Improvement: 1019
+    Level: ssp Iteration: 9000 Score: 9 Best: 9 Since Improvement: 2019
+    Level: ssp Iteration: 10000 Score: 7 Best: 7 Since Improvement: 985
+    Level: ssp Iteration: 11000 Score: 7 Best: 7 Since Improvement: 1985
+    Level: ssp Iteration: 12000 Score: 7 Best: 7 Since Improvement: 2985
+    Level: ssp Iteration: 13000 Score: 7 Best: 7 Since Improvement: 3985
+    Level: ssp Iteration: 14000 Score: 7 Best: 7 Since Improvement: 4985
+    Early stopping at iteration 14015 for level ssp 
 
 #### Output of the Optimisation
 
@@ -163,8 +177,8 @@ result_ss
 
     Optimised Experimental Design
     ----------------------------
-    Score: 393
-    Iterations Run: 12091
+    Score: 391
+    Iterations Run: 18452
     Stopped Early: TRUE TRUE TRUE
     Treatments:
       wp: A, B, C
@@ -282,13 +296,13 @@ strip_result <- speed(df_strip,
     row and col are used as row and column, respectively.
 
     Optimising level: ht
-    Level: ht Iteration: 1000 Score: 84 Best: 84 Since Improvement: 875
-    Level: ht Iteration: 2000 Score: 84 Best: 84 Since Improvement: 1875
-    Early stopping at iteration 2125 for level ht
+    Level: ht Iteration: 1000 Score: 84 Best: 84 Since Improvement: 961
+    Level: ht Iteration: 2000 Score: 84 Best: 84 Since Improvement: 1961
+    Early stopping at iteration 2039 for level ht
     Optimising level: vt
-    Level: vt Iteration: 1000 Score: 54 Best: 54 Since Improvement: 840
-    Level: vt Iteration: 2000 Score: 54 Best: 54 Since Improvement: 1840
-    Early stopping at iteration 2160 for level vt 
+    Level: vt Iteration: 1000 Score: 54 Best: 54 Since Improvement: 878
+    Level: vt Iteration: 2000 Score: 54 Best: 54 Since Improvement: 1878
+    Early stopping at iteration 2122 for level vt 
 
 #### Output of the Optimisation
 
@@ -300,12 +314,12 @@ strip_result
     Optimised Experimental Design
     ----------------------------
     Score: 138
-    Iterations Run: 4287
+    Iterations Run: 4163
     Stopped Early: TRUE TRUE
     Treatments:
       ht: a, b, c, d
       vt: A, B, C
-    Seed: -745752008 
+    Seed: -2124829786 
 
 #### Visualise the Output
 
