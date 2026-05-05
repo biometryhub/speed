@@ -356,6 +356,23 @@ test_that("initialise_design_df supports split-split-plot via nested splits", {
   )
 })
 
+test_that("initialise_design_df applies splits without an outer block", {
+  df <- initialise_design_df(
+    nrows = 6, ncols = 4,
+    splits = list(plot = list(nrows = 2, ncols = 2, items = LETTERS[1:6]))
+  )
+
+  expect_setequal(names(df), c("row", "col", "plot", "plot_treatment"))
+  # No block columns when block_nrows/block_ncols is NULL.
+  expect_false(any(c("block", "row_block", "col_block") %in% names(df)))
+  # 6 cells per child (2x2), 24 cells total -> 6 children, each treatment used once.
+  expect_equal(length(unique(df$plot)), 6)
+  expect_setequal(unique(df$plot_treatment), LETTERS[1:6])
+  # Every plot has a single treatment (one-to-one mapping).
+  per_plot <- tapply(df$plot_treatment, df$plot, function(x) length(unique(x)))
+  expect_true(all(per_plot == 1))
+})
+
 test_that("initialise_design_df splits validate parent dimensions", {
   expect_error(initialise_design_df(
     nrows = 6,
@@ -370,4 +387,13 @@ test_that("initialise_design_df splits validate parent dimensions", {
     splits = list(wp = list(nrows = 3, ncols = 2, foo = 1))
   ), "`foo` is an invalid argument")
   expect_error(initialise_design_df(nrows = 4, ncols = 4), "`items` must be provided when `splits` is `NULL`")
+
+  # `items` length must equal n_children or divide it; 5 items into 6 children -> error.
+  expect_error(
+    initialise_design_df(
+      nrows = 6, ncols = 2,
+      splits = list(wp = list(nrows = 2, ncols = 1, items = LETTERS[1:5]))
+    ),
+    "`items` for split `wp` must have length 6 \\(or divide it\\); got 5"
+  )
 })
