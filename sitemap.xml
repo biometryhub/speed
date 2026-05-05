@@ -1,5 +1,6 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://biometryhub.github.io/speed/404.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/CLAUDE.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/CODE_OF_CONDUCT.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/CONTRIBUTING.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/LICENSE-text.html</loc></url>
@@ -15,6 +16,7 @@
 <url><loc>https://biometryhub.github.io/speed/news/index.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/add_buffers.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/add_names.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/apply_splits.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/as_numeric_factor.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/autoplot.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/calculate_adjacency_score.html</loc></url>

@@ -11,6 +11,7 @@ initialise_design_df(
   ncols = NULL,
   block_nrows = NULL,
   block_ncols = NULL,
+  splits = NULL,
   designs = NULL,
   design_col = "site"
 )
@@ -21,6 +22,7 @@ initialize_design_df(
   ncols = NULL,
   block_nrows = NULL,
   block_ncols = NULL,
+  splits = NULL,
   designs = NULL,
   design_col = "site"
 )
@@ -49,6 +51,18 @@ initialize_design_df(
 - block_ncols:
 
   Number of columns in each block (default: `NULL`)
+
+- splits:
+
+  A named list of nested-unit specifications, ordered from the outermost
+  level to the innermost. Each entry is itself a list with `nrows` and
+  `ncols` (the dimensions of one unit at that level, in cells) and an
+  optional `items` (treatments to allocate across the units at that
+  level, one item per unit, ordered by parent then within-parent ID).
+  For each level, `<name>` and `<name>_treatment` columns are added (the
+  latter only if `items` is provided). Used to build hierarchical
+  layouts such as split-plot, split-split-plot, and strip-plot designs.
+  (default: `NULL`)
 
 - designs:
 
@@ -452,4 +466,113 @@ initialise_design_df(
 #> 138   8   3        28    c
 #> 139   9   3        29    c
 #> 140  10   3        30    c
+
+# split-plot: 4 replicate blocks of 12x1, each block holds 3 wholeplots of 4x1,
+# each wholeplot holds 4 subplots
+initialise_design_df(
+  nrows = 12, ncols = 4,
+  block_nrows = 12, block_ncols = 1,
+  splits = list(
+    wholeplot = list(nrows = 4, ncols = 1, items = LETTERS[1:3]),
+    subplot = list(nrows = 1, ncols = 1, items = letters[1:4])
+  )
+)
+#>    row col row_block col_block block wholeplot wholeplot_treatment subplot
+#> 1    1   1         1         1     1         1                   A       1
+#> 2    2   1         1         1     1         1                   A       2
+#> 3    3   1         1         1     1         1                   A       3
+#> 4    4   1         1         1     1         1                   A       4
+#> 5    5   1         1         1     1         2                   B       5
+#> 6    6   1         1         1     1         2                   B       6
+#> 7    7   1         1         1     1         2                   B       7
+#> 8    8   1         1         1     1         2                   B       8
+#> 9    9   1         1         1     1         3                   C       9
+#> 10  10   1         1         1     1         3                   C      10
+#> 11  11   1         1         1     1         3                   C      11
+#> 12  12   1         1         1     1         3                   C      12
+#> 13   1   2         1         2     2         4                   A      13
+#> 14   2   2         1         2     2         4                   A      14
+#> 15   3   2         1         2     2         4                   A      15
+#> 16   4   2         1         2     2         4                   A      16
+#> 17   5   2         1         2     2         5                   B      17
+#> 18   6   2         1         2     2         5                   B      18
+#> 19   7   2         1         2     2         5                   B      19
+#> 20   8   2         1         2     2         5                   B      20
+#> 21   9   2         1         2     2         6                   C      21
+#> 22  10   2         1         2     2         6                   C      22
+#> 23  11   2         1         2     2         6                   C      23
+#> 24  12   2         1         2     2         6                   C      24
+#> 25   1   3         1         3     3         7                   A      25
+#> 26   2   3         1         3     3         7                   A      26
+#> 27   3   3         1         3     3         7                   A      27
+#> 28   4   3         1         3     3         7                   A      28
+#> 29   5   3         1         3     3         8                   B      29
+#> 30   6   3         1         3     3         8                   B      30
+#> 31   7   3         1         3     3         8                   B      31
+#> 32   8   3         1         3     3         8                   B      32
+#> 33   9   3         1         3     3         9                   C      33
+#> 34  10   3         1         3     3         9                   C      34
+#> 35  11   3         1         3     3         9                   C      35
+#> 36  12   3         1         3     3         9                   C      36
+#> 37   1   4         1         4     4        10                   A      37
+#> 38   2   4         1         4     4        10                   A      38
+#> 39   3   4         1         4     4        10                   A      39
+#> 40   4   4         1         4     4        10                   A      40
+#> 41   5   4         1         4     4        11                   B      41
+#> 42   6   4         1         4     4        11                   B      42
+#> 43   7   4         1         4     4        11                   B      43
+#> 44   8   4         1         4     4        11                   B      44
+#> 45   9   4         1         4     4        12                   C      45
+#> 46  10   4         1         4     4        12                   C      46
+#> 47  11   4         1         4     4        12                   C      47
+#> 48  12   4         1         4     4        12                   C      48
+#>    subplot_treatment
+#> 1                  a
+#> 2                  b
+#> 3                  c
+#> 4                  d
+#> 5                  a
+#> 6                  b
+#> 7                  c
+#> 8                  d
+#> 9                  a
+#> 10                 b
+#> 11                 c
+#> 12                 d
+#> 13                 a
+#> 14                 b
+#> 15                 c
+#> 16                 d
+#> 17                 a
+#> 18                 b
+#> 19                 c
+#> 20                 d
+#> 21                 a
+#> 22                 b
+#> 23                 c
+#> 24                 d
+#> 25                 a
+#> 26                 b
+#> 27                 c
+#> 28                 d
+#> 29                 a
+#> 30                 b
+#> 31                 c
+#> 32                 d
+#> 33                 a
+#> 34                 b
+#> 35                 c
+#> 36                 d
+#> 37                 a
+#> 38                 b
+#> 39                 c
+#> 40                 d
+#> 41                 a
+#> 42                 b
+#> 43                 c
+#> 44                 d
+#> 45                 a
+#> 46                 b
+#> 47                 c
+#> 48                 d
 ```
