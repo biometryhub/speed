@@ -39,7 +39,7 @@ devcontainer-exec-here Rscript -e '
 Inside an R session (e.g. `devcontainer-exec-here R`):
 
 ```r
-devtools::install_dev_deps()        # one-time: install Suggests + Imports
+devtools::install_dev_deps()         # one-time: install Suggests + Imports
 devtools::load_all()                 # load package for interactive iteration
 devtools::document()                 # regenerate man/*.Rd and NAMESPACE from roxygen
 devtools::test()                     # run all testthat tests
