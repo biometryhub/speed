@@ -59,7 +59,7 @@ shift_pad <- function(m, dx, dy, fill = NA) {
 #' reducing across the stack — avoids a per-offset loop when scoring many
 #' rings.
 #'
-#' @param design_matrix Matrix of treatment codes (numeric or integer).
+#' @param design_matrix Design matrix
 #' @param dists Positive integer ring radii to score over.
 #' @param weights Per-ring weights; must align with `dists`.
 #' @param ring_type Ring shape: `"manhattan"` (diamond) or `"chebyshev"`
