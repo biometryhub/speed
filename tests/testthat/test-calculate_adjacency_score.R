@@ -70,7 +70,6 @@ test_that("adjacency_score_vec scores per-cell matches", {
   m <- matrix(c(1, 2, 1, 2), nrow = 2, ncol = 2)
   score <- adjacency_score_vec(m, dists = 1, weights = 1, ring_type = "manhattan")
   expect_equal(score, matrix(1L, 2, 2))
-  expect_type(score, "integer")
 
   # full match: every neighbour counts (4 interior, fewer at edges/corners)
   uniform <- matrix(1L, 3, 3)

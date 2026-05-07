@@ -22,7 +22,7 @@ ring_offsets <- function(d, ring_type = c("manhattan", "chebyshev")) {
   } else {
     abs(dx) + abs(dy) == d
   }
-  cbind(dx[on_ring], dy[on_ring])
+  return(cbind(dx[on_ring], dy[on_ring]))
 }
 
 #' Shift a Matrix With NA Padding
@@ -47,7 +47,7 @@ shift_pad <- function(m, dx, dy, fill = NA) {
   r_src <- if (dx >= 0) seq.int(1, nr - dx) else seq.int(1 - dx, nr)
   c_src <- if (dy >= 0) seq.int(1, nc - dy) else seq.int(1 - dy, nc)
   out[r_src + dx, c_src + dy] <- m[r_src, c_src]
-  out
+  return(out)
 }
 
 #' Per-Cell Weighted Adjacency Score
@@ -60,7 +60,7 @@ shift_pad <- function(m, dx, dy, fill = NA) {
 #' rings.
 #'
 #' @param design_matrix Design matrix
-#' @param dists Positive integer ring radii to score over.
+#' @param dists A vector of positive integers, ring radii to score over.
 #' @param weights Per-ring weights; must align with `dists`.
 #' @param ring_type Ring shape: `"manhattan"` (diamond) or `"chebyshev"`
 #'   (square). See [ring_offsets()].
@@ -98,8 +98,7 @@ adjacency_score_vec <- function(design_matrix,
 
   weighted <- sweep(matches, 3, offset_weights, FUN = "*")
   score <- rowSums(weighted, dims = 2)
-  mode(score) <- "integer"
-  score
+  return(score)
 }
 
 #' Calculate Adjacency Score for Design
@@ -173,5 +172,5 @@ calculate_adjacency_score <- function(layout_df,
     weights = ring_weights,
     ring_type = ring_type
   )
-  sum(per_cell) / 2
+  return(sum(per_cell) / 2)
 }
