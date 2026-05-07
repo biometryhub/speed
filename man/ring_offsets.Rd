@@ -9,8 +9,8 @@ ring_offsets(d, ring_type = c("manhattan", "chebyshev"))
 \arguments{
 \item{d}{Positive integer ring radius.}
 
-\item{ring_type}{Ring shape: \code{"manhattan"} (rook moves, diamond ring) or
-\code{"chebyshev"} (king moves, square ring).}
+\item{ring_type}{Ring shape: \code{"manhattan"} (default; diamond ring)
+or \code{"chebyshev"} (square ring). See \code{\link[=ring_offsets]{ring_offsets()}}.}
 }
 \value{
 Integer matrix with two columns — column 1 holds \code{dx}, column 2

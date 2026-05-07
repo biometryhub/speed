@@ -18,8 +18,8 @@ adjacency_score_vec(
 
 \item{weights}{Per-ring weights; must align with \code{dists}.}
 
-\item{ring_type}{Ring shape: \code{"manhattan"} (diamond) or \code{"chebyshev"}
-(square). See \code{\link[=ring_offsets]{ring_offsets()}}.}
+\item{ring_type}{Ring shape: \code{"manhattan"} (default; diamond ring)
+or \code{"chebyshev"} (square ring). See \code{\link[=ring_offsets]{ring_offsets()}}.}
 }
 \value{
 Matrix of the same dimensions as \code{design_matrix}, where

@@ -24,15 +24,14 @@ calculate_adjacency_score(
 \item{col_column}{Name of the column representing columns
 (default \code{"col"}).}
 
-\item{ring_dists}{Positive integer ring radii to score over (default
-\code{1}, i.e. only the immediate neighbourhood).}
+\item{ring_dists}{A vector of positive integers, ring radii to score over.
+(default \code{1}, i.e. only the immediate neighbourhood).}
 
 \item{ring_weights}{Per-ring weights aligned with \code{ring_dists} (default
 \code{1}).}
 
-\item{ring_type}{Ring shape: \code{"manhattan"} (default; rook neighbours,
-diamond ring) or \code{"chebyshev"} (king neighbours, square ring). See
-\code{\link[=ring_offsets]{ring_offsets()}}.}
+\item{ring_type}{Ring shape: \code{"manhattan"} (default; diamond ring)
+or \code{"chebyshev"} (square ring). See \code{\link[=ring_offsets]{ring_offsets()}}.}
 }
 \value{
 A non-negative numeric value: the number of like-treatment edges

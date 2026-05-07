@@ -4,9 +4,8 @@
 #' Returns the `(dx, dy)` offsets of cells at exact distance `d` from the
 #' origin under the chosen ring shape. The origin itself is excluded.
 #'
+#' @inheritParams calculate_adjacency_score
 #' @param d Positive integer ring radius.
-#' @param ring_type Ring shape: `"manhattan"` (rook moves, diamond ring) or
-#'   `"chebyshev"` (king moves, square ring).
 #'
 #' @return Integer matrix with two columns — column 1 holds `dx`, column 2
 #'   holds `dy` — one row per cell on the ring.
@@ -59,11 +58,10 @@ shift_pad <- function(m, dx, dy, fill = NA) {
 #' reducing across the stack — avoids a per-offset loop when scoring many
 #' rings.
 #'
+#' @inheritParams calculate_adjacency_score
 #' @param design_matrix Design matrix
 #' @param dists A vector of positive integers, ring radii to score over.
 #' @param weights Per-ring weights; must align with `dists`.
-#' @param ring_type Ring shape: `"manhattan"` (diamond) or `"chebyshev"`
-#'   (square). See [ring_offsets()].
 #'
 #' @return Matrix of the same dimensions as `design_matrix`, where
 #'   each cell holds its weighted matching-neighbour count.
@@ -120,13 +118,12 @@ adjacency_score_vec <- function(design_matrix,
 #' @param row_column Name of the column representing rows (default `"row"`).
 #' @param col_column Name of the column representing columns
 #'   (default `"col"`).
-#' @param ring_dists Positive integer ring radii to score over (default
-#'   `1`, i.e. only the immediate neighbourhood).
+#' @param ring_dists A vector of positive integers, ring radii to score over.
+#'   (default `1`, i.e. only the immediate neighbourhood).
 #' @param ring_weights Per-ring weights aligned with `ring_dists` (default
 #'   `1`).
-#' @param ring_type Ring shape: `"manhattan"` (default; rook neighbours,
-#'   diamond ring) or `"chebyshev"` (king neighbours, square ring). See
-#'   [ring_offsets()].
+#' @param ring_type Ring shape: `"manhattan"` (default; diamond ring)
+#'   or `"chebyshev"` (square ring). See [ring_offsets()].
 #'
 #' @return A non-negative numeric value: the number of like-treatment edges
 #'   in the row/column adjacency graph.
