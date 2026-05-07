@@ -65,7 +65,7 @@ shift_pad <- function(m, dx, dy, fill = NA) {
 #' @param ring_type Ring shape: `"manhattan"` (diamond) or `"chebyshev"`
 #'   (square). See [ring_offsets()].
 #'
-#' @return Integer matrix of the same dimensions as `design_matrix`, where
+#' @return Matrix of the same dimensions as `design_matrix`, where
 #'   each cell holds its weighted matching-neighbour count.
 #'
 #' @keywords internal
