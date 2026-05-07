@@ -22,3 +22,5 @@ codemeta.json
 ^CODE_OF_CONDUCT\.md$
 ^doc$
 CLAUDE.md
+.claude
+Rplots.pdf
