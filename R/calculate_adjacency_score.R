@@ -15,8 +15,8 @@
 ring_offsets <- function(d, ring_type = c("manhattan", "chebyshev")) {
   ring_type <- match.arg(ring_type)
   side <- 2 * d + 1
-  dx <- rep(-d:d, each = side)
-  dy <- rep(-d:d, times = side)
+  dx <- rep(-d:d, times = side)
+  dy <- rep(-d:d, each = side)
   on_ring <- if (ring_type == "chebyshev") {
     pmax(abs(dx), abs(dy)) == d
   } else {
@@ -28,12 +28,12 @@ ring_offsets <- function(d, ring_type = c("manhattan", "chebyshev")) {
 #' Shift a Matrix With NA Padding
 #'
 #' @description
-#' Translates `m` by (`dx` rows, `dy` columns), padding cells that fall off
-#' the source with `fill`. Positive `dx` shifts rows down; positive `dy`
-#' shifts columns right.
+#' Translates `m` by (`dx` columns, `dy` rows), padding cells that fall off
+#' the source with `fill`. Positive `dx` shifts columns right; positive
+#' `dy` shifts rows down.
 #'
 #' @param m A matrix.
-#' @param dx,dy Integer row and column offsets.
+#' @param dx,dy Integer column (x-axis) and row (y-axis) offsets.
 #' @param fill Value used to pad cells with no source (default `NA`).
 #'
 #' @return A matrix of the same dimensions as `m`.
@@ -44,9 +44,9 @@ shift_pad <- function(m, dx, dy, fill = NA) {
   nc <- ncol(m)
   out <- matrix(fill, nr, nc)
 
-  r_src <- if (dx >= 0) seq.int(1, nr - dx) else seq.int(1 - dx, nr)
-  c_src <- if (dy >= 0) seq.int(1, nc - dy) else seq.int(1 - dy, nc)
-  out[r_src + dx, c_src + dy] <- m[r_src, c_src]
+  r_src <- if (dy >= 0) seq.int(1, nr - dy) else seq.int(1 - dy, nr)
+  c_src <- if (dx >= 0) seq.int(1, nc - dx) else seq.int(1 - dx, nc)
+  out[r_src + dy, c_src + dx] <- m[r_src, c_src]
   return(out)
 }
 

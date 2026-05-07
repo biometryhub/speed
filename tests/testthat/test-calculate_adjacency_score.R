@@ -45,22 +45,22 @@ test_that("shift_pad shifts and NA-pads correctly", {
   m <- matrix(1:9, nrow = 3, ncol = 3)
 
   # shift rows down by 1
-  down <- shift_pad(m, dx = 1, dy = 0)
+  down <- shift_pad(m, dx = 0, dy = 1)
   expect_true(all(is.na(down[1, ])))
   expect_equal(down[2:3, ], m[1:2, ])
 
   # shift columns right by 1
-  right <- shift_pad(m, dx = 0, dy = 1)
+  right <- shift_pad(m, dx = 1, dy = 0)
   expect_true(all(is.na(right[, 1])))
   expect_equal(right[, 2:3], m[, 1:2])
 
   # negative shift moves rows up
-  up <- shift_pad(m, dx = -1, dy = 0)
+  up <- shift_pad(m, dx = 0, dy = -1)
   expect_true(all(is.na(up[3, ])))
   expect_equal(up[1:2, ], m[2:3, ])
 
   # custom fill value
-  filled <- shift_pad(m, dx = 1, dy = 0, fill = 0L)
+  filled <- shift_pad(m, dx = 0, dy = 1, fill = 0L)
   expect_equal(filled[1, ], rep(0L, 3))
 })
 

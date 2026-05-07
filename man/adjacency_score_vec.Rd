@@ -12,9 +12,9 @@ adjacency_score_vec(
 )
 }
 \arguments{
-\item{design_matrix}{Matrix of treatment codes (numeric or integer).}
+\item{design_matrix}{Design matrix}
 
-\item{dists}{Positive integer ring radii to score over.}
+\item{dists}{A vector of positive integers, ring radii to score over.}
 
 \item{weights}{Per-ring weights; must align with \code{dists}.}
 
@@ -22,7 +22,7 @@ adjacency_score_vec(
 (square). See \code{\link[=ring_offsets]{ring_offsets()}}.}
 }
 \value{
-Integer matrix of the same dimensions as \code{design_matrix}, where
+Matrix of the same dimensions as \code{design_matrix}, where
 each cell holds its weighted matching-neighbour count.
 }
 \description{

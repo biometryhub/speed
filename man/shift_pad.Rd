@@ -9,7 +9,7 @@ shift_pad(m, dx, dy, fill = NA)
 \arguments{
 \item{m}{A matrix.}
 
-\item{dx, dy}{Integer row and column offsets.}
+\item{dx, dy}{Integer column (x-axis) and row (y-axis) offsets.}
 
 \item{fill}{Value used to pad cells with no source (default \code{NA}).}
 }
@@ -17,8 +17,8 @@ shift_pad(m, dx, dy, fill = NA)
 A matrix of the same dimensions as \code{m}.
 }
 \description{
-Translates \code{m} by (\code{dx} rows, \code{dy} columns), padding cells that fall off
-the source with \code{fill}. Positive \code{dx} shifts rows down; positive \code{dy}
-shifts columns right.
+Translates \code{m} by (\code{dx} columns, \code{dy} rows), padding cells that fall off
+the source with \code{fill}. Positive \code{dx} shifts columns right; positive
+\code{dy} shifts rows down.
 }
 \keyword{internal}
