@@ -58,7 +58,7 @@ objective_function <- function(layout_df,
   ring_args <- list(...)
   ring_args <- ring_args[intersect(
     names(ring_args),
-    c("ring_dists", "ring_weights", "ring_type")
+    c("ring_dists", "ring_weights", "ring_type", "relationship")
   )]
   adj_score <- ifelse(adj_weight != 0,
     do.call(

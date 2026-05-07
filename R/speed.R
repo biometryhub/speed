@@ -208,8 +208,18 @@ speed <- function(data,
     }
   }
 
-  design <- speed_hierarchical(data, optimise, quiet, seed, row_column = row_column,
-                               col_column = col_column, ...)
+  dots <- list(...)
+  if (!is.null(dots$relationship)) {
+    swap_cols <- unique(vapply(optimise, function(o) o$swap, character(1)))
+    treatments <- unlist(lapply(swap_cols, function(s) as.character(data[[s]])))
+    dots$relationship <- prep_relationship(dots$relationship, treatments)
+  }
+
+  design <- do.call(speed_hierarchical, c(
+    list(data = data, optimise = optimise, quiet = quiet, seed = seed,
+         row_column = row_column, col_column = col_column),
+    dots
+  ))
   design$design_df[[dummy_group]] <- NULL
   design$design_df <- to_types(design$design_df, factored$input_types)
 
@@ -288,7 +298,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       # Calculate new score
       new_score_obj <- opt$obj_function(new_design$design,opt$swap, spatial_cols, adj_weight = adj_weight,
                                         bal_weight = bal_weight, current_score_obj = current_score_obj,
-                                        swapped_items = new_design$swapped_items,...)
+                                        swapped_items = new_design$swapped_items, ...)
       new_score <- new_score_obj$score
 
       # Decide whether to accept the new design

@@ -11,7 +11,8 @@ calculate_adjacency_score(
   col_column = "col",
   ring_dists = 1,
   ring_weights = 1,
-  ring_type = c("manhattan", "chebyshev")
+  ring_type = c("manhattan", "chebyshev"),
+  relationship = NULL
 )
 }
 \arguments{
@@ -32,6 +33,14 @@ calculate_adjacency_score(
 
 \item{ring_type}{Ring shape: \code{"manhattan"} (default; diamond ring)
 or \code{"chebyshev"} (square ring). See \code{\link[=ring_offsets]{ring_offsets()}}.}
+
+\item{relationship}{Optional pairwise-relationship lookup produced by
+\code{\link[=prep_relationship]{prep_relationship()}}. When supplied, each neighbour pair contributes
+\code{relationship[cell, neighbour]} rather than \code{1} for matches and \code{0}
+otherwise. NA-padded cells off the design edge contribute \code{0}. Defaults
+to \code{NULL}, which keeps the strict identity match. Pass the raw matrix
+through \code{prep_relationship()} first; the score functions consume only
+the prepped form.}
 }
 \value{
 A non-negative numeric value: the number of like-treatment edges
@@ -48,6 +57,9 @@ neighbourhood the simulated-annealing loop in \code{\link[=speed]{speed()}} mini
 Pass longer \code{ring_dists} / \code{ring_weights} to also penalise like-treatment
 matches at larger ring radii. The per-cell score is summed and halved
 because each adjacency is counted once from each endpoint.
+
+Pass a \code{relationship} matrix to score neighbour pairs by a graded
+similarity (e.g. genetic relatedness) instead of a strict identity match.
 }
 \examples{
 # Example 1: design with no like-treatment adjacencies
@@ -65,6 +77,15 @@ design_with_adj <- data.frame(
   treatment = c("A", "A", "A", "B", "B", "B", "A", "A", "A")
 )
 calculate_adjacency_score(design_with_adj, "treatment") # 6
+
+# Example 3: graded relationship between A and B
+rel <- prep_relationship(matrix(
+  c(1, 0.3, 0.3, 1),
+  nrow = 2,
+  dimnames = list(c("A", "B"), c("A", "B"))
+))
+calculate_adjacency_score(design_no_adj, "treatment", relationship = rel)
+# 3.6: each of the 12 A-B edges contributes 0.3
 
 }
 \seealso{

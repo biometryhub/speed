@@ -8,7 +8,8 @@ adjacency_score_vec(
   design_matrix,
   dists = c(1, 2),
   weights = c(1, 2),
-  ring_type = c("manhattan", "chebyshev")
+  ring_type = c("manhattan", "chebyshev"),
+  relationship = NULL
 )
 }
 \arguments{
@@ -20,6 +21,14 @@ adjacency_score_vec(
 
 \item{ring_type}{Ring shape: \code{"manhattan"} (default; diamond ring)
 or \code{"chebyshev"} (square ring). See \code{\link[=ring_offsets]{ring_offsets()}}.}
+
+\item{relationship}{Optional pairwise-relationship lookup produced by
+\code{\link[=prep_relationship]{prep_relationship()}}. When supplied, each neighbour pair contributes
+\code{relationship[cell, neighbour]} rather than \code{1} for matches and \code{0}
+otherwise. NA-padded cells off the design edge contribute \code{0}. Defaults
+to \code{NULL}, which keeps the strict identity match. Pass the raw matrix
+through \code{prep_relationship()} first; the score functions consume only
+the prepped form.}
 }
 \value{
 Matrix of the same dimensions as \code{design_matrix}, where
