@@ -2184,6 +2184,29 @@ test_that("speed honours ring_dists and ring_weights via ...", {
   expect_false(isTRUE(all.equal(base$score, with_rings$score)))
 })
 
+test_that("speed errors when adj_weight/bal_weight go through ...", {
+  test_data <- data.frame(
+    row = rep(1:3, times = 3),
+    col = rep(1:3, each = 3),
+    treatment = rep(LETTERS[1:3], 3)
+  )
+
+  expect_error(
+    speed(
+      data = test_data, swap = "treatment", iterations = 5,
+      seed = 1, quiet = TRUE, bal_weight = 2
+    ),
+    "must be passed via `optim_params\\(\\)`"
+  )
+  expect_error(
+    speed(
+      data = test_data, swap = "treatment", iterations = 5,
+      seed = 1, quiet = TRUE, adj_weight = 0.5
+    ),
+    "must be passed via `optim_params\\(\\)`"
+  )
+})
+
 # TODO: Test cases to add/update
 # - Add more detailed checking of current designs
 # - NSE

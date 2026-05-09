@@ -209,11 +209,8 @@ speed <- function(data,
   }
 
   dots <- list(...)
-  if (!is.null(dots$relationship)) {
-    swap_cols <- unique(vapply(optimise, function(o) o$swap, character(1)))
-    treatments <- unlist(lapply(swap_cols, function(s) as.character(data[[s]])))
-    dots$relationship <- prep_relationship(dots$relationship, treatments)
-  }
+  .reject_optim_params_in_dots(dots)
+  dots <- .prep_dots(dots, optimise, data)
 
   design <- do.call(speed_hierarchical, c(
     list(data = data, optimise = optimise, quiet = quiet, seed = seed,
@@ -433,4 +430,40 @@ print.design <- function(x, ...) {
   cat("Seed:", x$seed, "\n\n")
 
   return(invisible(x))
+}
+
+#' Reject `...` arguments that must travel through [optim_params()].
+#'
+#' Stops with a message pointing the user at `optimise_params = optim_params(...)`
+#' when any of the listed names is found in `dots`.
+#'
+#' @param dots A named list captured from `...`.
+#' @return `NULL`, invisibly. Called for its side effect.
+#' @keywords internal
+.reject_optim_params_in_dots <- function(dots) {
+  forbidden <- intersect(names(dots), c("adj_weight", "bal_weight"))
+  if (length(forbidden) == 0) return(invisible(NULL))
+  stop(
+    "Argument(s) ", paste(sprintf("`%s`", forbidden), collapse = ", "),
+    " must be passed via `optim_params()`, not directly to `speed()`. ",
+    "For example: `optimise_params = optim_params(",
+    paste0(forbidden[1], " = ..."), ")`.",
+    call. = FALSE
+  )
+}
+
+#' Prep `dots$relationship` once with the union of treatments seen at
+#' every swap level.
+#'
+#' @param dots A named list captured from `...`.
+#' @param optimise Per-level `optimise` list as built by [create_speed_input()].
+#' @param data The (factor-converted) design data frame.
+#' @return `dots`, with `relationship` replaced by the prepped form when present.
+#' @keywords internal
+.prep_dots <- function(dots, optimise, data) {
+  if (is.null(dots$relationship)) return(dots)
+  swap_cols <- unique(vapply(optimise, function(o) o$swap, character(1)))
+  treatments <- unlist(lapply(swap_cols, function(s) as.character(data[[s]])))
+  dots$relationship <- prep_relationship(dots$relationship, treatments)
+  dots
 }

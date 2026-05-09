@@ -47,7 +47,7 @@ A non-negative numeric value: the number of like-treatment edges
 in the row/column adjacency graph.
 }
 \description{
-Counts adjacent plots — immediate horizontal and vertical neighbours —
+Counts adjacent plots - immediate horizontal and vertical neighbours -
 that share the same treatment. Lower scores indicate better separation.
 
 Internally this is a thin wrapper around \code{\link[=adjacency_score_vec]{adjacency_score_vec()}}. With

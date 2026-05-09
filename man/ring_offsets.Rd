@@ -13,8 +13,8 @@ ring_offsets(d, ring_type = c("manhattan", "chebyshev"))
 or \code{"chebyshev"} (square ring). See \code{\link[=ring_offsets]{ring_offsets()}}.}
 }
 \value{
-Integer matrix with two columns — column 1 holds \code{dx}, column 2
-holds \code{dy} — one row per cell on the ring.
+Integer matrix with two columns - column 1 holds \code{dx}, column 2
+holds \code{dy} - one row per cell on the ring.
 }
 \description{
 Returns the \verb{(dx, dy)} offsets of cells at exact distance \code{d} from the

@@ -7,8 +7,8 @@
 #' @inheritParams calculate_adjacency_score
 #' @param d Positive integer ring radius.
 #'
-#' @return Integer matrix with two columns — column 1 holds `dx`, column 2
-#'   holds `dy` — one row per cell on the ring.
+#' @return Integer matrix with two columns - column 1 holds `dx`, column 2
+#'   holds `dy` - one row per cell on the ring.
 #'
 #' @keywords internal
 ring_offsets <- function(d, ring_type = c("manhattan", "chebyshev")) {
@@ -45,7 +45,9 @@ shift_pad <- function(m, dx, dy, fill = NA) {
   # entire source falls off the grid when the shift meets or exceeds the
   # corresponding dimension; `seq.int(1, nr - dy)` would otherwise produce
   # a descending sequence and out-of-bounds indices
-  if (abs(dx) >= nc || abs(dy) >= nr) return(out)
+  if (abs(dx) >= nc || abs(dy) >= nr) {
+    return(out)
+  }
 
   r_src <- if (dy >= 0) seq.int(1, nr - dy) else seq.int(1 - dy, nr)
   c_src <- if (dx >= 0) seq.int(1, nc - dx) else seq.int(1 - dx, nc)
@@ -61,7 +63,7 @@ shift_pad <- function(m, dx, dy, fill = NA) {
 #' constant time per cell. [speed()] calls this once before the SA loop so
 #' the per-iteration cost stays in the lookup itself. Direct callers of
 #' [calculate_adjacency_score()] must wrap their matrix with this function
-#' before passing — the score functions consume the prepped form only.
+#' before passing - the score functions consume the prepped form only.
 #'
 #' @param relationship A numeric matrix with rownames and colnames covering
 #'   every treatment value to be scored.
@@ -117,7 +119,7 @@ prep_relationship <- function(relationship, treatments = NULL) {
 #' For each cell of `design_matrix`, counts neighbours on rings of radius
 #' `dists` whose value equals the cell's own, weighted by `weights`.
 #' Implemented by stacking shifted copies of the matrix once per offset and
-#' reducing across the stack — avoids a per-offset loop when scoring many
+#' reducing across the stack - avoids a per-offset loop when scoring many
 #' rings.
 #'
 #' @inheritParams calculate_adjacency_score
@@ -174,7 +176,7 @@ adjacency_score_vec <- function(design_matrix,
 #' Calculate Adjacency Score for Design
 #'
 #' @description
-#' Counts adjacent plots — immediate horizontal and vertical neighbours —
+#' Counts adjacent plots - immediate horizontal and vertical neighbours -
 #' that share the same treatment. Lower scores indicate better separation.
 #'
 #' Internally this is a thin wrapper around [adjacency_score_vec()]. With

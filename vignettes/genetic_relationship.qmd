@@ -38,14 +38,14 @@ library(patchwork)
 
 ## When to Use
 
-- Trials where treatments fall into clusters of close relatives — for
+- Trials where treatments fall into clusters of close relatives - for
   example plant-breeding lines that share parents (encoded via a pedigree
   A-matrix or marker-based G-matrix), variety entries from the same
   maturity group, or scaled mixtures of a base formulation
 - Anywhere "minimise neighbours of the same kind" is too coarse and you
   would rather "minimise neighbours of related kind"
 
-# Example
+# Grouped Treatments
 
 ## Setting Up the Design
 
@@ -142,7 +142,8 @@ ggplot2::ggplot(rel_long, ggplot2::aes(x = col, y = row, fill = value)) +
 ## Running the Optimisation
 
 We run `speed()` twice with the same seed: first using the default
-identity-only adjacency, then with the relationship matrix (`relationship = rel`).
+identity-only adjacency, then with the relationship matrix
+(`relationship = rel`).
 
 ```{r both-runs}
 default_result <- speed(
@@ -203,6 +204,185 @@ The relationship-aware optimisation pushes whole groups apart, with the
 strongest pressure on group `A` (within-similarity `0.8`) and no
 pressure at all on group `D` (`0.0`).
 
+# Per-Pair Similarities
+
+## Setting Up the Design
+
+Eight varieties `V01`–`V08` are evaluated on a `4 × 8` grid divided
+into two `4 × 4` blocks, with two replicates of every variety per
+block. Unlike the previous example, there is no group structure -
+every pair of varieties carries its own similarity coefficient.
+
+```{r design-df-cor}
+items2 <- paste0("V", 1:8)
+design_df2 <- initialise_design_df(
+  items = rep(items2, 4),
+  nrows = 4,
+  ncols = 8,
+  block_nrows = 4,
+  block_ncols = 4
+)
+
+head(design_df2)
+```
+
+## Building the Relationship Matrix
+
+We populate the upper triangle with random similarities in `[0, 0.9]`,
+mirror it for symmetry, and pin the diagonal to `1`. The result is a
+relationship matrix in which every off-diagonal entry is distinct -
+there is no plateau for the optimiser to exploit, so each pair
+contributes its own adjacency cost.
+
+```{r relationship-cor}
+n_v <- length(items2)
+
+rel2 <- matrix(0, n_v, n_v, dimnames = list(items2, items2))
+set.seed(112)
+rel2[upper.tri(rel2)] <- runif(n_v * (n_v - 1) / 2, min = 0, max = 0.9)
+rel2 <- rel2 + t(rel2)
+diag(rel2) <- 1
+```
+
+```{r}
+#| code-fold: true
+#| code-summary: "Code"
+#| label: fig-relationship-cor
+#| fig-cap: "Per-pair relationship matrix as a heatmap. Every off-diagonal cell is unique; the diagonal is fixed at `1`."
+#| fig-width: 6
+#| fig-height: 5
+rel2_long <- as.data.frame.table(rel2, responseName = "value")
+names(rel2_long)[1:2] <- c("row", "col")
+
+ggplot2::ggplot(rel2_long, ggplot2::aes(x = col, y = row, fill = value)) +
+  ggplot2::geom_tile(colour = "white") +
+  ggplot2::geom_text(
+    ggplot2::aes(label = sprintf("%.2f", value)),
+    size = 2.5
+  ) +
+  ggplot2::scale_x_discrete(position = "top") +
+  ggplot2::scale_y_discrete(limits = rev(rownames(rel2))) +
+  ggplot2::scale_fill_gradient(
+    low = "white", high = "steelblue4", limits = c(0, 1),
+    name = "similarity"
+  ) +
+  ggplot2::coord_equal() +
+  ggplot2::labs(x = NULL, y = NULL) +
+  ggplot2::theme_minimal(base_size = 10) +
+  ggplot2::theme(panel.grid = ggplot2::element_blank())
+```
+
+## Running the Optimisation
+
+We run `speed()` twice with the same seed: first using the default
+identity-only adjacency, then with the per-pair relationship matrix
+(`relationship = rel2`) and a stronger balance weight set through
+`optim_params()`.
+
+```{r both-runs-cor}
+default_result2 <- speed(
+  design_df2,
+  swap = "treatment",
+  swap_within = "block",
+  seed = 112,
+  quiet = TRUE
+)
+
+related_result2 <- speed(
+  design_df2,
+  swap = "treatment",
+  swap_within = "block",
+  relationship = rel2,
+  optimise_params = optim_params(bal_weight = 2),
+  seed = 112,
+  quiet = TRUE
+)
+
+default_result2
+related_result2
+```
+
+## Visualising the Output
+
+```{r}
+#| code-fold: true
+#| code-summary: "Code"
+#| label: fig-final-treat-cor
+#| fig-cap: "Treatment view: default identity-only adjacency vs. relationship-aware adjacency under per-pair similarities."
+#| fig-width: 10
+p_def_t2 <- autoplot(default_result2, treatments = "treatment") +
+  ggplot2::labs(title = "Default speed: treatments")
+p_rel_t2 <- autoplot(related_result2, treatments = "treatment") +
+  ggplot2::labs(title = "speed + relationship: treatments")
+p_def_t2 + p_rel_t2 + plot_layout(ncol = 2)
+```
+
+The default optimisation treats every non-self adjacency as equally costly. With a relationship matrix, the
+algorithm can separate the similar varieties - neighbours of any given variety tend to be the varieties with the
+smallest entries in its row of `rel2`.
+
+The placements of the closely related pairs of treatments:
+
+```{r}
+#| code-fold: true
+#| code-summary: "Code"
+#| label: fig-close-treatments-cor
+#| fig-cap: "Optimised layout. Only varieties involved in the high-similarity pairs are shown."
+# Plot a layout where cells with NA treatments are greyed and the rest
+# are labelled in red.
+plot_highlighted_layout <- function(layout_df) {
+  x_breaks <- 1:max(layout_df$col)
+  y_breaks <- 1:max(layout_df$row)
+  ggplot2::ggplot(layout_df, ggplot2::aes(col, row, fill = treatment)) +
+    ggplot2::geom_tile(color = "black") +
+    ggplot2::scale_fill_viridis_d(na.value = "grey") +
+    ggplot2::scale_x_continuous(expand = c(0, 0), breaks = x_breaks) +
+    ggplot2::scale_y_continuous(expand = c(0, 0), breaks = y_breaks, trans = scales::reverse_trans()) +
+    ggplot2::geom_text(
+      ggplot2::aes(label = treatment),
+      size = 3,
+      color = "red",
+      na.rm = TRUE,
+      fontface = "bold"
+    ) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(
+      panel.grid.major = ggplot2::element_blank(),
+      panel.grid.minor = ggplot2::element_blank(),
+      legend.position = "none"
+    )
+}
+
+ut <- which(upper.tri(rel2), arr.ind = TRUE)
+top_orders <- order(rel2[upper.tri(rel2)], decreasing = TRUE)
+plots <- NULL
+for (i in 1:3) {
+  top <- ut[top_orders[i], , drop = FALSE]
+  close_treatments <- unique(c(
+    rownames(rel2)[top[, "row"]],
+    colnames(rel2)[top[, "col"]]
+  ))
+
+  df_def <- default_result2$design_df
+  df_def$treatment <- ifelse(df_def$treatment %in% close_treatments, as.character(df_def$treatment), NA)
+
+  df <- related_result2$design_df
+  df$treatment <- ifelse(df$treatment %in% close_treatments, as.character(df$treatment), NA)
+
+  hl_def <- plot_highlighted_layout(df_def)
+  hl_rel <- plot_highlighted_layout(df)
+  if (is.null(plots)) {
+    plots <- hl_def + hl_rel
+  } else {
+    plots <- plots + hl_def + hl_rel
+  }
+}
+plots + plot_layout(ncol = 2)
+```
+
+Without a relationship matrix, these related treatments can be placed next to each other. This can be optimised
+by providing such matrix.
+
 <!--
 ## Comparing the Two Designs
 
@@ -227,7 +407,7 @@ calculate_adjacency_score(related_result$design_df, swap = "treatment",
 ```
 
 Both designs avoid same-treatment neighbours equally well, but under the
-relationship-aware metric the second design is materially better —
+relationship-aware metric the second design is materially better -
 exactly the trade-off the relationship matrix was added to control.
 
 # Tips for Real Data
@@ -241,7 +421,7 @@ exactly the trade-off the relationship matrix was added to control.
    same matrix outside `speed()` (e.g. with `calculate_adjacency_score()`
    or in custom objective functions), wrap it once with
    `prep_relationship()` and reuse the result. Passing the raw matrix to
-   `calculate_adjacency_score()` is no longer supported — the score
+   `calculate_adjacency_score()` is no longer supported - the score
    functions consume only the prepped form.
 
 3. **Off-diagonal values.** Values in `[0, 1]` are the typical range.
@@ -260,12 +440,12 @@ exactly the trade-off the relationship matrix was added to control.
 
 # Related Vignettes
 
-- [Common Agricultural Experimental Designs with speed](speed.html) —
+- [Common Agricultural Experimental Designs with speed](speed.html) -
   foundational designs and the default optimisation flow.
-- [Custom Objective Functions and Advanced Options for Optimisation in speed](custom_objective_functions.html) —
+- [Custom Objective Functions and Advanced Options for Optimisation in speed](custom_objective_functions.html) -
   for cases where weighted-relationship adjacency is one of several
   competing objectives.
-- [Multi-Environment Trials with speed](met.html) — how the same workflow
+- [Multi-Environment Trials with speed](met.html) - how the same workflow
   extends to hierarchical layouts.
 
 ---

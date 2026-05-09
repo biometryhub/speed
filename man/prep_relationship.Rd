@@ -23,5 +23,5 @@ row/column level vectors that \code{\link[=adjacency_score_vec]{adjacency_score_
 constant time per cell. \code{\link[=speed]{speed()}} calls this once before the SA loop so
 the per-iteration cost stays in the lookup itself. Direct callers of
 \code{\link[=calculate_adjacency_score]{calculate_adjacency_score()}} must wrap their matrix with this function
-before passing — the score functions consume the prepped form only.
+before passing - the score functions consume the prepped form only.
 }
