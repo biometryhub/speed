@@ -17,8 +17,8 @@ shift_pad(m, dx, dy, fill = NA)
 A matrix of the same dimensions as \code{m}.
 }
 \description{
-Translates \code{m} by (\code{dx} columns, \code{dy} rows), padding cells that fall off
-the source with \code{fill}. Positive \code{dx} shifts columns right; positive
-\code{dy} shifts rows down.
+Translates a matrix \code{m} by (\code{dx} columns, \code{dy} rows), padding cells that
+fall off the source with \code{fill}. Positive \code{dx} shifts right; positive \code{dy}
+shifts down.
 }
 \keyword{internal}

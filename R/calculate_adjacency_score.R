@@ -7,8 +7,8 @@
 #' @inheritParams calculate_adjacency_score
 #' @param d Positive integer ring radius.
 #'
-#' @return Integer matrix with two columns — column 1 holds `dx`, column 2
-#'   holds `dy` — one row per cell on the ring.
+#' @return Integer matrix with two columns - column 1 holds `dx`, column 2
+#'   holds `dy` - one row per cell on the ring.
 #'
 #' @keywords internal
 ring_offsets <- function(d, ring_type = c("manhattan", "chebyshev")) {
@@ -27,9 +27,9 @@ ring_offsets <- function(d, ring_type = c("manhattan", "chebyshev")) {
 #' Shift a Matrix With NA Padding
 #'
 #' @description
-#' Translates `m` by (`dx` columns, `dy` rows), padding cells that fall off
-#' the source with `fill`. Positive `dx` shifts columns right; positive
-#' `dy` shifts rows down.
+#' Translates a matrix `m` by (`dx` columns, `dy` rows), padding cells that
+#' fall off the source with `fill`. Positive `dx` shifts right; positive `dy`
+#' shifts down.
 #'
 #' @param m A matrix.
 #' @param dx,dy Integer column (x-axis) and row (y-axis) offsets.
@@ -54,9 +54,7 @@ shift_pad <- function(m, dx, dy, fill = NA) {
 #' @description
 #' For each cell of `design_matrix`, counts neighbours on rings of radius
 #' `dists` whose value equals the cell's own, weighted by `weights`.
-#' Implemented by stacking shifted copies of the matrix once per offset and
-#' reducing across the stack — avoids a per-offset loop when scoring many
-#' rings.
+#' Implemented by stacking shifted copies of the matrix once per offset.
 #'
 #' @inheritParams calculate_adjacency_score
 #' @param design_matrix Design matrix
@@ -76,12 +74,14 @@ adjacency_score_vec <- function(design_matrix,
   nr <- nrow(design_matrix)
   nc <- ncol(design_matrix)
 
+  # create offsets
   ring_list <- lapply(dists, ring_offsets, ring_type = ring_type)
   ring_sizes <- vapply(ring_list, nrow, integer(1))
   offsets <- do.call(rbind, ring_list)
   offset_weights <- inverse.rle(list(values = weights, lengths = ring_sizes))
   n_offsets <- nrow(offsets)
 
+  # get shifted matrices
   shifted_stack <- simplify2array(
     lapply(seq_len(n_offsets), function(k) {
       shift_pad(design_matrix, offsets[k, 1], offsets[k, 2], fill = NA)
@@ -102,16 +102,12 @@ adjacency_score_vec <- function(design_matrix,
 #' Calculate Adjacency Score for Design
 #'
 #' @description
-#' Counts adjacent plots — immediate horizontal and vertical neighbours —
-#' that share the same treatment. Lower scores indicate better separation.
+#' Counts adjacent plots, immediate horizontal and vertical neighbours by default,
+#' that share the same treatment. Lower scores indicate better separation. The
+#' distance of plots to be considered adjacent can be adjusted with arguments
+#' provided.
 #'
-#' Internally this is a thin wrapper around [adjacency_score_vec()]. With
-#' the defaults (`ring_dists = 1`, `ring_weights = 1`,
-#' `ring_type = "manhattan"`) it scores the immediate row/column
-#' neighbourhood the simulated-annealing loop in [speed()] minimises.
-#' Pass longer `ring_dists` / `ring_weights` to also penalise like-treatment
-#' matches at larger ring radii. The per-cell score is summed and halved
-#' because each adjacency is counted once from each endpoint.
+#' Internally this is a thin wrapper around [adjacency_score_vec()].
 #'
 #' @param layout_df A data frame containing the design.
 #' @param swap Column name of the treatments to be scored.

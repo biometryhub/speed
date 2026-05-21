@@ -204,7 +204,7 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #'
 #' @references Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of distribution
 #'   of treatment replications in row-column designs. Biometrical journal. Biometrische Zeitschrift, 60(6),
-#'   1172–1189. <https://doi.org/10.1002/bimj.201800013>
+#'   1172-1189. <https://doi.org/10.1002/bimj.201800013>
 #'
 #' @seealso [objective_function()], [create_pair_mapping()]
 #'
