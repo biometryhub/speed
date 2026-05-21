@@ -9,7 +9,7 @@ treatments via simulated annealing. The score being minimised is a weighted sum 
 (penalises like-treatment neighbours) and a **balance score** (rewards even spread across spatial factors such
 as row/col/block).
 
-Designs can be **simple** (one swap variable) or **hierarchical** (e.g. split-plot, strip-plot, MET) — in the
+Designs can be **simple** (one swap variable) or **hierarchical** (e.g. split-plot, strip-plot, MET) - in the
 hierarchical case the optimiser runs sequentially, one level at a time, with potentially different parameters
 per level.
 
@@ -18,14 +18,14 @@ per level.
 This is a standard R package; development uses `devtools` from an R session.
 
 R, `devtools`, and the test deps are installed inside the devcontainer, **not** on the host. Run any R command
-through the `devcontainer-exec-here` wrapper (alias for `devcontainer exec --workspace-folder .`) — it executes
+through the `devcontainer-exec-here` wrapper (alias for `devcontainer exec --workspace-folder .`) - it executes
 inside the container with the workspace mounted at `/workspaces/speed`:
 
 ```sh
 devcontainer-exec-here R -e "devtools::test()"
 devcontainer-exec-here R -e "devtools::check()"
 # Quiet, scriptable test summary (surfaces failing tests; use devtools::test, NOT
-# pkgload::load_all + testthat::test_dir — that combo makes vdiffr mark _snaps/*.svg
+# pkgload::load_all + testthat::test_dir - that combo makes vdiffr mark _snaps/*.svg
 # as orphaned and delete them):
 devcontainer-exec-here Rscript -e '
   res <- devtools::test("/workspaces/speed", reporter = "silent")
@@ -53,7 +53,7 @@ quarto::quarto_render("vignettes/speed.qmd")  # render a vignette (Quarto, not k
 `R CMD check` is also enforced in CI on macOS / Windows / Ubuntu against R devel, release, and oldrel-1
 (`.github/workflows/R-CMD-check.yaml`).
 
-Code formatting is handled by [Air](https://posit-dev.github.io/air/) — see `air.toml` (80-col, 2-space indent).
+Code formatting is handled by [Air](https://posit-dev.github.io/air/) - see `air.toml` (80-col, 2-space indent).
 Per `CONTRIBUTING.md`, do **not** restyle code that is unrelated to your PR.
 
 User-facing changes should add a bullet to the top of `NEWS.md`.
@@ -84,11 +84,11 @@ For each level in order:
 
 1. `random_initialise()` (R/design_utils.R) optionally shuffles the starting design
    `optim_params(random_initialisation = N)` times and keeps the best.
-2. Each iteration calls `generate_neighbour()` (R/design_utils.R) to swap treatments — single-swap or
+2. Each iteration calls `generate_neighbour()` (R/design_utils.R) to swap treatments - single-swap or
    multi-swap depending on `swap_all`.
 3. The objective function (default `objective_function`, R/metrics.R) returns a `list(score = ..., ...)`. The
    returned list is fed back as `current_score_obj` on the next call so objective functions can incrementally
-   update internal state from `swapped_items` instead of recomputing from scratch — **any custom objective
+   update internal state from `swapped_items` instead of recomputing from scratch - **any custom objective
    function must honour this contract** (see `objective_function_signature` and the custom-objective vignette).
 4. Acceptance is the standard Metropolis criterion; temperature decays by `cooling_rate` each iteration.
 5. Early stop fires when `iter - last_improvement_iter >= early_stop_iterations` or when the score reaches
@@ -96,40 +96,40 @@ For each level in order:
 
 The result is an S3 object of class `"design"` with `print.design` and `autoplot.design` methods. For
 single-level designs the `scores` / `temperatures` / `stopped_early` fields are flat; for multi-level they are
-lists keyed by level name — `print.design` and downstream code branch on `is.list(x$treatments)`.
+lists keyed by level name - `print.design` and downstream code branch on `is.list(x$treatments)`.
 
 ### Source layout (R/)
 
-- **speed.R** — `speed()`, `speed_hierarchical()`, `print.design`.
-- **metrics.R** — exported objective functions (`objective_function`, `objective_function_factorial`,
+- **speed.R** - `speed()`, `speed_hierarchical()`, `print.design`.
+- **metrics.R** - exported objective functions (`objective_function`, `objective_function_factorial`,
   `objective_function_piepho`) plus their building blocks (`calculate_adjacency_score`,
   `calculate_balance_score`, `calculate_ed`, `calculate_nb`, `calculate_efficiency_factor`, `get_vertices`,
   `get_edges`, `create_pair_mapping`).
-- **design_utils.R** — neighbour generation, `infer_row_col` (auto-detects row/col columns from
+- **design_utils.R** - neighbour generation, `infer_row_col` (auto-detects row/col columns from
   `grid_factors`), `initialise_design_df` (and `initialize_design_df` US-spelling alias), `random_initialise`,
   `create_speed_input`.
-- **optim_params.R** — `optim_params()` constructor for SA hyperparameters; reads legacy `options(speed.*)`
+- **optim_params.R** - `optim_params()` constructor for SA hyperparameters; reads legacy `options(speed.*)`
   for backwards compatibility and emits a deprecation warning if any are set.
-- **options.R** — roxygen-only file documenting the deprecated `speed.*` options.
-- **constants.R** — `.DEFAULT` list of fallback values for each level when fields are missing from `optimise`.
-- **buffers.R** — `add_buffers()` adds edge/row/column/block buffer plots to a design.
-- **plotting.R** — `autoplot.design` and `plot_progress` (ggplot2-based).
-- **verify_utils.R** — internal `.verify_*` input-validation helpers; called from `speed()` before any work
+- **options.R** - roxygen-only file documenting the deprecated `speed.*` options.
+- **constants.R** - `.DEFAULT` list of fallback values for each level when fields are missing from `optimise`.
+- **buffers.R** - `add_buffers()` adds edge/row/column/block buffer plots to a design.
+- **plotting.R** - `autoplot.design` and `plot_progress` (ggplot2-based).
+- **verify_utils.R** - internal `.verify_*` input-validation helpers; called from `speed()` before any work
   begins.
-- **utils.R** — small helpers: `to_factor` / `to_types` (round-trip column types because the SA loop requires
+- **utils.R** - small helpers: `to_factor` / `to_types` (round-trip column types because the SA loop requires
   factors), `pseudo_inverse`, `env_add_one`, etc.
-- **zzz.R** — `.onAttach` checks GitHub for a newer version; wrapped in `tryCatch` and silently ignores
+- **zzz.R** - `.onAttach` checks GitHub for a newer version; wrapped in `tryCatch` and silently ignores
   network failures.
-- **speed-package.R** — package doc and `utils::globalVariables` declarations for NSE columns.
+- **speed-package.R** - package doc and `utils::globalVariables` declarations for NSE columns.
 
 ### Conventions to preserve
 
 - **British spelling in user-facing names** (`initialise_design_df`, `random_initialisation`, `optimise`). The
-  few US-spelt aliases (`initialize_design_df`) exist only for back-compat — do not remove without a
+  few US-spelt aliases (`initialize_design_df`) exist only for back-compat - do not remove without a
   deprecation cycle.
-- **roxygen2 with markdown** is the documentation source of truth — never edit `man/*.Rd` directly; run
+- **roxygen2 with markdown** is the documentation source of truth - never edit `man/*.Rd` directly; run
   `devtools::document()` instead.
-- **Vignettes are Quarto (`.qmd`)**, not Rmd — `DESCRIPTION` declares `VignetteBuilder: quarto`.
+- **Vignettes are Quarto (`.qmd`)**, not Rmd - `DESCRIPTION` declares `VignetteBuilder: quarto`.
 - **`# fmt: skip`** comments are intentional Air-formatter overrides; leave them in place when editing nearby
   code.
 - The `dummy_<timestamp>` column inside `speed()` is a temporary level used to represent "no `swap_within`

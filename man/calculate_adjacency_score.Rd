@@ -47,16 +47,12 @@ A non-negative numeric value: the number of like-treatment edges
 in the row/column adjacency graph.
 }
 \description{
-Counts adjacent plots - immediate horizontal and vertical neighbours -
-that share the same treatment. Lower scores indicate better separation.
+Counts adjacent plots, immediate horizontal and vertical neighbours by default,
+that share the same treatment. Lower scores indicate better separation. The
+distance of plots to be considered adjacent can be adjusted with arguments
+provided.
 
-Internally this is a thin wrapper around \code{\link[=adjacency_score_vec]{adjacency_score_vec()}}. With
-the defaults (\code{ring_dists = 1}, \code{ring_weights = 1},
-\code{ring_type = "manhattan"}) it scores the immediate row/column
-neighbourhood the simulated-annealing loop in \code{\link[=speed]{speed()}} minimises.
-Pass longer \code{ring_dists} / \code{ring_weights} to also penalise like-treatment
-matches at larger ring radii. The per-cell score is summed and halved
-because each adjacency is counted once from each endpoint.
+Internally this is a thin wrapper around \code{\link[=adjacency_score_vec]{adjacency_score_vec()}}.
 
 Pass a \code{relationship} matrix to score neighbour pairs by a graded
 similarity (e.g. genetic relatedness) instead of a strict identity match.

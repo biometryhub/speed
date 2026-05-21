@@ -37,8 +37,6 @@ each cell holds its weighted matching-neighbour count.
 \description{
 For each cell of \code{design_matrix}, counts neighbours on rings of radius
 \code{dists} whose value equals the cell's own, weighted by \code{weights}.
-Implemented by stacking shifted copies of the matrix once per offset and
-reducing across the stack - avoids a per-offset loop when scoring many
-rings.
+Implemented by stacking shifted copies of the matrix once per offset.
 }
 \keyword{internal}
