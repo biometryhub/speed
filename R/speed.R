@@ -254,7 +254,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
     # Calculate initial score for this level
     current_score_obj <- opt$obj_function(current_design, opt$swap, spatial_cols, adj_weight = adj_weight,
-                                          bal_weight = bal_weight, ...)
+                                          bal_weight = bal_weight, block_col = opt$swap_within, ...)
     current_score <- current_score_obj$score
 
     if (!is.numeric(current_score)) {
@@ -286,9 +286,10 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
                                        current_swap_all_blocks, opt$swap_all)
 
       # Calculate new score
-      new_score_obj <- opt$obj_function(new_design$design,opt$swap, spatial_cols, adj_weight = adj_weight,
-                                        bal_weight = bal_weight, current_score_obj = current_score_obj,
-                                        swapped_items = new_design$swapped_items,...)
+      new_score_obj <- opt$obj_function(new_design$design, opt$swap, spatial_cols, adj_weight = adj_weight,
+                                        bal_weight = bal_weight, block_col = opt$swap_within,
+                                        current_score_obj = current_score_obj,
+                                        swapped_items = new_design$swapped_items, ...)
       new_score <- new_score_obj$score
 
       # Decide whether to accept the new design
@@ -352,7 +353,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     # treatments and score for each level
     treatments[[level]] <- stringi::stri_sort(unique(as.vector(best_design[[opt$swap]])), numeric = TRUE)
     level_scores[level] <- opt$obj_function(best_design, opt$swap, spatial_cols, adj_weight = adj_weight,
-                                            bal_weight = bal_weight, ...)$score
+                                            bal_weight = bal_weight, block_col = opt$swap_within, ...)$score
   }
 
   # Check which levels stopped early

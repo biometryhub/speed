@@ -756,3 +756,404 @@ calculate_efficiency_factor <- function(design_df, item) {
   f_A <- (2 / r_h) / apv
   return(f_A)
 }
+
+#' A-Optimality Objective Function for Design Optimization
+#'
+#' @description
+#' An objective function that minimises the A-optimality criterion: the trace of the
+#' Moore-Penrose inverse of the treatment information matrix \eqn{C}, adjusted for
+#' blocking effects and an optional error covariance structure. The general (GLS) form
+#' is \eqn{\text{trace}(C^+)} where
+#' \deqn{C = X^\top V^{-1} X - (Z^\top V^{-1} X)^\top (Z^\top V^{-1} Z)^+ (Z^\top V^{-1} X)}
+#' and \eqn{V^{-1}} is the inverse error covariance matrix (identity by default, giving
+#' the OLS form). Lower scores indicate better designs. An optional spatial adjacency
+#' penalty can be added via \code{adj_weight}.
+#'
+#' @inheritParams objective_function_signature
+#' @param adj_weight Weight for the spatial adjacency penalty (default: 1). Set to
+#'   \code{0} via \code{\link{optim_params}} for pure A-optimality without spatial
+#'   considerations.
+#' @param bal_weight Ignored; accepted only for interface compatibility with
+#'   \code{\link{speed}}.
+#' @param row_column Name of column representing the row of the design (default:
+#'   \code{"row"}).
+#' @param col_column Name of column representing the column of the design (default:
+#'   \code{"col"}).
+#' @param block_col Column name whose levels define blocking groups to include in
+#'   \eqn{Z} (default: \code{NULL}). When called via \code{\link{speed}}, this is
+#'   automatically set to \code{swap_within} at each hierarchy level, so that the
+#'   information matrix accounts for whatever grouping constraint is active. May be
+#'   combined with \code{spatial_cols}: both contribute dummy columns to \eqn{Z}.
+#'   Single-level factors (including the all-ones dummy inserted by \code{speed} when
+#'   there is no block boundary) are silently ignored.
+#' @param Vinv A pre-computed \eqn{n \times n} inverse error covariance matrix where
+#'   \eqn{n} is the total number of rows in \code{layout_df} (including any NA/buffer
+#'   rows). When supplied, the GLS information matrix is used. The subblock
+#'   \code{Vinv[valid, valid]} is extracted internally, where \code{valid} identifies
+#'   non-NA treatment rows. Rows and columns of \code{Vinv} must be in the same order
+#'   as \code{layout_df} (i.e. the order produced by \code{\link{speed}}'s internal
+#'   row/col sort). See \code{\link{ar1_ar1_vinv}} for a helper that constructs this
+#'   matrix for AR1 \eqn{\times} AR1 spatial correlation. Ignored if
+#'   \code{error_structure} is also supplied.
+#' @param error_structure A named list specifying the error covariance structure to
+#'   build internally. Supported types:
+#'   \itemize{
+#'     \item \code{list(type = "ar1_ar1", rho_r = <value>, rho_c = <value>)} —
+#'       AR1 \eqn{\times} AR1 separable spatial correlation. Calls
+#'       \code{\link{ar1_ar1_vinv}} with the supplied \code{rho_r}, \code{rho_c}
+#'       and inferred row/column dimensions from \code{layout_df}.
+#'     \item \code{list(type = "ar1", rho = <value>)} — simple AR1 along plots
+#'       in their layout order. Calls \code{\link{ar1_vinv}}.
+#'   }
+#'   When both \code{Vinv} and \code{error_structure} are supplied,
+#'   \code{error_structure} takes precedence.
+#' @param current_score_obj Named list returned by a previous call to this function.
+#'   When provided, the blocking matrix \eqn{Z}, its (GLS-weighted) inverse, and the
+#'   \eqn{V^{-1}} subblock are reused across simulated annealing iterations, avoiding
+#'   redundant computation.
+#'
+#' @details
+#' \eqn{Z} is built from one-hot dummy columns (last level dropped as reference) for
+#' every factor in \code{c(block_col, spatial_cols)} that has more than one unique
+#' level among valid (non-NA) rows. When called through \code{\link{speed}},
+#' \code{block_col} is automatically set to the active \code{swap_within} column,
+#' ensuring that the blocking structure at each hierarchy level is reflected in
+#' the information matrix.
+#'
+#' When a structured variance model (\code{Vinv} or \code{error_structure}) is
+#' supplied, the GLS information matrix is used throughout and all expensive
+#' matrix products involving \eqn{V^{-1}} are computed once and cached. The
+#' per-iteration cost is then \eqn{O(n^2)} for forming \eqn{X^\top V^{-1} X} and
+#' \eqn{O(nk)} for \eqn{Z^\top V^{-1} X}, followed by an \eqn{O(t^3)} SVD of
+#' the \eqn{t \times t} information matrix. This is practical for designs up to
+#' roughly 500 plots; for larger designs, pass \code{Vinv = NULL} and rely on
+#' the OLS approximation.
+#'
+#' @return A named list containing:
+#' \itemize{
+#'   \item \code{score} - Numeric A-optimality score (lower is better).
+#'   \item \code{blocking_data} - Cached list of pre-computed quantities.
+#'     Pass the returned list back as \code{current_score_obj} on subsequent
+#'     calls to reuse the cached blocking structure and \eqn{V^{-1}} subblock.
+#' }
+#'
+#' @examples
+#' # Basic OLS usage
+#' layout_df <- data.frame(
+#'   row = rep(1:3, each = 3),
+#'   col = rep(1:3, times = 3),
+#'   treatment = rep(letters[1:3], 3)
+#' )
+#' objective_function_a_optimality(layout_df, "treatment", c("row", "col"))
+#'
+#' # With a block column (e.g. incomplete blocks)
+#' layout_df$block <- rep(1:3, times = 3)
+#' objective_function_a_optimality(
+#'   layout_df, "treatment", c("row", "col"),
+#'   block_col = "block"
+#' )
+#'
+#' # With AR1 x AR1 spatial correlation via error_structure
+#' objective_function_a_optimality(
+#'   layout_df, "treatment", c("row", "col"),
+#'   error_structure = list(type = "ar1_ar1", rho_r = 0.5, rho_c = 0.3),
+#'   adj_weight = 0
+#' )
+#'
+#' # Inside speed() — block_col is injected automatically from swap_within
+#' \dontrun{
+#' result <- speed(
+#'   layout_df,
+#'   swap = "treatment",
+#'   swap_within = "block",
+#'   obj_function = objective_function_a_optimality,
+#'   optimise_params = optim_params(adj_weight = 0),
+#'   seed = 42
+#' )
+#' # With spatial correlation passed through ...
+#' result_gls <- speed(
+#'   layout_df,
+#'   swap = "treatment",
+#'   obj_function = objective_function_a_optimality,
+#'   optimise_params = optim_params(adj_weight = 0),
+#'   error_structure = list(type = "ar1_ar1", rho_r = 0.5, rho_c = 0.3),
+#'   seed = 42
+#' )
+#' }
+#'
+#' @seealso \code{\link{objective_function}}, \code{\link{calculate_efficiency_factor}},
+#'   \code{\link{ar1_vinv}}, \code{\link{ar1_ar1_vinv}}
+#'
+#' @references
+#' Piepho, H. P., Williams, E., & Michel, V. (2015). Nonresolvable Row-Column Designs
+#' with an Even Distribution of Treatment Replications. Journal of Agricultural,
+#' Biological, and Environmental Statistics, 21, 227-242.
+#' \doi{10.1007/s13253-015-0241-2}
+#'
+#' @export
+# fmt: skip
+objective_function_a_optimality <- function(layout_df,
+                                             swap,
+                                             spatial_cols,
+                                             adj_weight = 1,
+                                             bal_weight = 1,
+                                             row_column = "row",
+                                             col_column = "col",
+                                             block_col = NULL,
+                                             Vinv = NULL,
+                                             error_structure = NULL,
+                                             current_score_obj = NULL,
+                                             ...) {
+  # --- blocking data (cached across SA iterations) ---
+  if (!is.null(current_score_obj$blocking_data)) {
+    blocking_data <- current_score_obj$blocking_data
+    valid <- blocking_data$valid
+  } else {
+    valid <- !is.na(layout_df[[swap]])
+
+    # Combine block_col and spatial_cols into Z columns (dedup, drop NULLs)
+    z_cols <- unique(c(block_col, spatial_cols))
+
+    # Build dummy matrix Z (drop last level per factor as reference)
+    Z_parts <- lapply(z_cols, function(col) {
+      lvls <- unique(layout_df[[col]][valid])
+      if (length(lvls) <= 1L) return(NULL)
+      lvls_sorted <- sort(lvls)
+      keep <- lvls_sorted[-length(lvls_sorted)]
+      mat <- outer(layout_df[[col]][valid], keep, `==`) * 1L
+      colnames(mat) <- paste0(col, "_", keep)
+      mat
+    })
+    Z_parts <- Filter(Negate(is.null), Z_parts)
+    Z <- if (length(Z_parts) > 0L) do.call(cbind, Z_parts) else NULL
+
+    # --- resolve Vinv ---
+    # error_structure takes precedence over pre-computed Vinv
+    if (!is.null(error_structure)) {
+      Vinv <- .build_vinv(layout_df, error_structure, row_column, col_column)
+    }
+
+    # Extract subblock for valid (non-NA) rows — this is Vinv[valid,valid],
+    # the subblock of the full inverse (NOT the inverse of the subblock)
+    Vinv_vv <- if (!is.null(Vinv)) Vinv[valid, valid] else NULL
+
+    # --- precompute weighted blocking quantities ---
+    if (is.null(Z)) {
+      ZtZ_inv     <- NULL
+      ZtVinv      <- NULL
+      ZtVinvZ_inv <- NULL
+    } else if (is.null(Vinv_vv)) {
+      # OLS path
+      ZtZ_inv     <- pseudo_inverse(crossprod(Z))
+      ZtVinv      <- NULL
+      ZtVinvZ_inv <- NULL
+    } else {
+      # GLS path
+      ZtVinv      <- t(Z) %*% Vinv_vv          # k x n_v — cached
+      ZtVinvZ_inv <- pseudo_inverse(ZtVinv %*% Z)
+      ZtZ_inv     <- NULL
+    }
+
+    blocking_data <- list(
+      Z           = Z,
+      ZtZ_inv     = ZtZ_inv,
+      ZtVinv      = ZtVinv,
+      ZtVinvZ_inv = ZtVinvZ_inv,
+      Vinv_vv     = Vinv_vv,
+      valid       = valid
+    )
+  }
+
+  # --- treatment encoding (changes every iteration) ---
+  enc <- as.integer(as.factor(layout_df[[swap]][valid]))
+  n_t <- max(enc)
+
+  # --- information matrix C ---
+  if (is.null(blocking_data$Vinv_vv)) {
+    # OLS path
+    r_i <- tabulate(enc, nbins = n_t)
+    XtX <- diag(r_i, nrow = n_t)
+
+    if (is.null(blocking_data$Z)) {
+      C <- XtX
+    } else {
+      ZtX <- t(rowsum(blocking_data$Z, group = enc, reorder = TRUE))  # k x t
+      C <- XtX - t(ZtX) %*% blocking_data$ZtZ_inv %*% ZtX
+    }
+  } else {
+    # GLS path: C = XtVinvX - (ZtVinvX)' ZtVinvZ_inv (ZtVinvX)
+    Vinv_vv <- blocking_data$Vinv_vv
+
+    # XtVinvX (t x t): group rows of Vinv_vv by treatment then group cols
+    temp     <- rowsum(Vinv_vv, group = enc, reorder = TRUE)  # t x n_v
+    XtVinvX  <- rowsum(t(temp), group = enc, reorder = TRUE)  # t x t
+
+    if (is.null(blocking_data$Z)) {
+      C <- XtVinvX
+    } else {
+      # ZtVinvX (k x t): group cols of cached ZtVinv by treatment
+      ZtVinvX <- t(rowsum(t(blocking_data$ZtVinv), group = enc, reorder = TRUE))
+      C <- XtVinvX - t(ZtVinvX) %*% blocking_data$ZtVinvZ_inv %*% ZtVinvX
+    }
+  }
+
+  # --- A-optimality score: trace(C+) = sum(1/lambda_i) ---
+  svd_C <- svd(C)
+  pos <- svd_C$d > 1e-10
+  a_opt_score <- if (any(pos)) sum(1 / svd_C$d[pos]) else Inf
+
+  # --- adjacency penalty ---
+  adj_score <- if (adj_weight != 0) {
+    calculate_adjacency_score(layout_df, swap, row_column, col_column)
+  } else {
+    0
+  }
+
+  list(
+    score = round(a_opt_score + adj_weight * adj_score, 10),
+    blocking_data = blocking_data
+  )
+}
+
+# Internal helper: build Vinv from an error_structure specification
+.build_vinv <- function(layout_df, error_structure, row_column, col_column) {
+  type <- error_structure$type
+  if (is.null(type)) {
+    stop("`error_structure` must have a `type` element.", call. = FALSE)
+  }
+  if (type == "ar1_ar1") {
+    rho_r <- error_structure$rho_r
+    rho_c <- error_structure$rho_c
+    if (is.null(rho_r) || is.null(rho_c)) {
+      stop('`error_structure` of type "ar1_ar1" requires `rho_r` and `rho_c`.', call. = FALSE)
+    }
+    return(ar1_ar1_vinv(layout_df, rho_r, rho_c, row_column, col_column))
+  }
+  if (type == "ar1") {
+    rho <- error_structure$rho
+    if (is.null(rho)) {
+      stop('`error_structure` of type "ar1" requires `rho`.', call. = FALSE)
+    }
+    return(ar1_vinv(nrow(layout_df), rho))
+  }
+  stop(paste0('Unknown `error_structure` type: "', type, '".'), call. = FALSE)
+}
+
+#' AR(1) Inverse Correlation Matrix
+#'
+#' @description
+#' Returns the exact inverse of an \eqn{n \times n} AR(1) correlation matrix
+#' \eqn{\Sigma} where \eqn{\Sigma_{ij} = \rho^{|i-j|}}. The inverse is
+#' tridiagonal and is computed analytically without matrix inversion.
+#'
+#' @param n Integer. Number of observations (rows/columns of the matrix).
+#' @param rho Numeric in \eqn{(-1, 1)}. Autocorrelation parameter.
+#'
+#' @return An \eqn{n \times n} numeric matrix: the inverse of the AR(1)
+#'   correlation matrix with parameter \code{rho}.
+#'
+#' @details
+#' The inverse has the following closed form:
+#' \itemize{
+#'   \item Corner elements \eqn{(1,1)} and \eqn{(n,n)}: \eqn{1 / (1 - \rho^2)}
+#'   \item Interior diagonal elements \eqn{(i,i)}, \eqn{2 \le i \le n-1}:
+#'     \eqn{(1 + \rho^2) / (1 - \rho^2)}
+#'   \item Adjacent off-diagonal elements \eqn{(i, i \pm 1)}:
+#'     \eqn{-\rho / (1 - \rho^2)}
+#'   \item All other elements: 0
+#' }
+#'
+#' @examples
+#' ar1_vinv(3, 0.5)
+#'
+#' @seealso \code{\link{ar1_ar1_vinv}}, \code{\link{objective_function_a_optimality}}
+#'
+#' @export
+ar1_vinv <- function(n, rho) {
+  if (!is.numeric(rho) || length(rho) != 1 || abs(rho) >= 1) {
+    stop("`rho` must be a single numeric value in (-1, 1).", call. = FALSE)
+  }
+  if (!is.numeric(n) || length(n) != 1 || n < 1 || n != round(n)) {
+    stop("`n` must be a positive integer.", call. = FALSE)
+  }
+  n <- as.integer(n)
+  if (n == 1L) return(matrix(1, 1, 1))
+
+  denom  <- 1 - rho^2
+  d_mid  <- (1 + rho^2) / denom   # interior diagonal
+  d_cor  <- 1 / denom              # corner diagonal
+  off    <- -rho / denom           # off-diagonal
+
+  mat <- matrix(0, n, n)
+  diag(mat) <- d_mid
+  mat[1, 1] <- d_cor
+  mat[n, n] <- d_cor
+  for (i in seq_len(n - 1)) {
+    mat[i, i + 1] <- off
+    mat[i + 1, i] <- off
+  }
+  mat
+}
+
+#' AR(1) x AR(1) Inverse Covariance Matrix
+#'
+#' @description
+#' Constructs the \eqn{n \times n} inverse error covariance matrix for an
+#' AR(1) \eqn{\times} AR(1) separable spatial correlation model, suitable for
+#' passing as the \code{Vinv} argument of
+#' \code{\link{objective_function_a_optimality}}.
+#'
+#' The full covariance is \eqn{V = \Sigma_r \otimes \Sigma_c} where
+#' \eqn{\Sigma_r} and \eqn{\Sigma_c} are AR(1) correlation matrices for rows
+#' and columns respectively. Its inverse is
+#' \eqn{V^{-1} = \Sigma_r^{-1} \otimes \Sigma_c^{-1}}, computed via
+#' \code{\link{ar1_vinv}}.
+#'
+#' @param layout_df A data frame containing the design, with columns for rows
+#'   and columns (identified by \code{row_column} and \code{col_column}).
+#'   Dimensions are inferred from the maximum values of those columns.
+#' @param rho_r Numeric in \eqn{(-1, 1)}. Row-direction autocorrelation.
+#' @param rho_c Numeric in \eqn{(-1, 1)}. Column-direction autocorrelation.
+#' @param row_column Name of the row column in \code{layout_df} (default:
+#'   \code{"row"}).
+#' @param col_column Name of the column column in \code{layout_df} (default:
+#'   \code{"col"}).
+#'
+#' @details
+#' The rows and columns of the returned matrix correspond to plots in
+#' row-major order (sorted by \code{row_column} then \code{col_column}),
+#' which matches the internal ordering used by \code{\link{speed}}. If
+#' passing \code{Vinv} directly to
+#' \code{\link{objective_function_a_optimality}} outside of \code{speed()},
+#' ensure \code{layout_df} is sorted in the same way.
+#'
+#' @return An \eqn{n \times n} numeric matrix (\eqn{V^{-1}}) where
+#'   \eqn{n = n_\text{rows} \times n_\text{cols}}.
+#'
+#' @examples
+#' layout_df <- data.frame(
+#'   row = rep(1:3, each = 3),
+#'   col = rep(1:3, times = 3),
+#'   treatment = rep(letters[1:3], 3)
+#' )
+#' Vinv <- ar1_ar1_vinv(layout_df, rho_r = 0.5, rho_c = 0.3)
+#' dim(Vinv)  # 9 x 9
+#'
+#' # Use directly in objective_function_a_optimality
+#' objective_function_a_optimality(layout_df, "treatment", c("row", "col"),
+#'                                  Vinv = Vinv, adj_weight = 0)
+#'
+#' @seealso \code{\link{ar1_vinv}}, \code{\link{objective_function_a_optimality}}
+#'
+#' @export
+ar1_ar1_vinv <- function(layout_df, rho_r, rho_c,
+                          row_column = "row", col_column = "col") {
+  n_rows <- max(as.integer(layout_df[[row_column]]), na.rm = TRUE)
+  n_cols <- max(as.integer(layout_df[[col_column]]), na.rm = TRUE)
+
+  P <- ar1_vinv(n_rows, rho_r)  # n_rows x n_rows
+  Q <- ar1_vinv(n_cols, rho_c)  # n_cols x n_cols
+
+  # Kronecker product: V^-1 = P ⊗ Q, row-major order (row varies slowest)
+  kronecker(P, Q)
+}
