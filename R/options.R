@@ -1,5 +1,10 @@
 #' Package Options for `speed` (Deprecated)
 #'
+#' @description
+#' **Deprecated.** These `options()`-based parameters are no longer recommended.
+#' Please use [optim_params()] instead for a reproducible way to specify optimisation
+#' parameters.
+#'
 #' This page describes the options you can set to control the behaviour of the `speed`
 #' package, especially technical options in the `speed()` function controlling the
 #' behaviour of the optimisation algorithm.
@@ -34,6 +39,8 @@
 #' ```r
 #' options(speed.swap_count = 5, speed.swap_all_blocks = TRUE)
 #' ```
+#'
+#' @seealso [optim_params()] for the current, non-deprecated way to set optimisation parameters.
 #'
 #' @name speed-options-deprecated
 NULL
