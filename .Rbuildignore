@@ -21,3 +21,7 @@ codemeta.json
 ^Meta$
 ^CODE_OF_CONDUCT\.md$
 ^doc$
+\.[Rr][Dd]ata$
+\.[Rr]ds$
+\.[Xx]lsx$
+\.[Tt]xt$
