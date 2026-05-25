@@ -432,7 +432,7 @@ sub-plots in a single step.
 Now we can create a data frame representing a split plot design. We can
 build it with
 [`initialise_design_df()`](https://biometryhub.github.io/speed/reference/initialise_design_df.md)
-by passing a `splits` list — one entry per nested level, each describing
+by passing a `splits` list - one entry per nested level, each describing
 the size of one unit and the treatments to allocate to it.
 
 ``` r

@@ -12,7 +12,7 @@ score** (penalises like-treatment neighbours) and a **balance score**
 (rewards even spread across spatial factors such as row/col/block).
 
 Designs can be **simple** (one swap variable) or **hierarchical**
-(e.g. split-plot, strip-plot, MET) — in the hierarchical case the
+(e.g. split-plot, strip-plot, MET) - in the hierarchical case the
 optimiser runs sequentially, one level at a time, with potentially
 different parameters per level.
 
@@ -24,14 +24,14 @@ session.
 R, `devtools`, and the test deps are installed inside the devcontainer,
 **not** on the host. Run any R command through the
 `devcontainer-exec-here` wrapper (alias for
-`devcontainer exec --workspace-folder .`) — it executes inside the
+`devcontainer exec --workspace-folder .`) - it executes inside the
 container with the workspace mounted at `/workspaces/speed`:
 
 ``` sh
 devcontainer-exec-here R -e "devtools::test()"
 devcontainer-exec-here R -e "devtools::check()"
 # Quiet, scriptable test summary (surfaces failing tests; use devtools::test, NOT
-# pkgload::load_all + testthat::test_dir — that combo makes vdiffr mark _snaps/*.svg
+# pkgload::load_all + testthat::test_dir - that combo makes vdiffr mark _snaps/*.svg
 # as orphaned and delete them):
 devcontainer-exec-here Rscript -e '
   res <- devtools::test("/workspaces/speed", reporter = "silent")
@@ -60,7 +60,7 @@ quarto::quarto_render("vignettes/speed.qmd")  # render a vignette (Quarto, not k
 `R CMD check` is also enforced in CI on macOS / Windows / Ubuntu against
 R devel, release, and oldrel-1 (`.github/workflows/R-CMD-check.yaml`).
 
-Code formatting is handled by [Air](https://posit-dev.github.io/air/) —
+Code formatting is handled by [Air](https://posit-dev.github.io/air/) -
 see `air.toml` (80-col, 2-space indent). Per `CONTRIBUTING.md`, do
 **not** restyle code that is unrelated to your PR.
 
@@ -105,13 +105,13 @@ For each level in order:
     `optim_params(random_initialisation = N)` times and keeps the best.
 2.  Each iteration calls
     [`generate_neighbour()`](https://biometryhub.github.io/speed/reference/generate_neighbour.md)
-    (R/design_utils.R) to swap treatments — single-swap or multi-swap
+    (R/design_utils.R) to swap treatments - single-swap or multi-swap
     depending on `swap_all`.
 3.  The objective function (default `objective_function`, R/metrics.R)
     returns a `list(score = ..., ...)`. The returned list is fed back as
     `current_score_obj` on the next call so objective functions can
     incrementally update internal state from `swapped_items` instead of
-    recomputing from scratch — **any custom objective function must
+    recomputing from scratch - **any custom objective function must
     honour this contract** (see `objective_function_signature` and the
     custom-objective vignette).
 4.  Acceptance is the standard Metropolis criterion; temperature decays
@@ -123,49 +123,49 @@ For each level in order:
 The result is an S3 object of class `"design"` with `print.design` and
 `autoplot.design` methods. For single-level designs the `scores` /
 `temperatures` / `stopped_early` fields are flat; for multi-level they
-are lists keyed by level name — `print.design` and downstream code
+are lists keyed by level name - `print.design` and downstream code
 branch on `is.list(x$treatments)`.
 
 ### Source layout (R/)
 
-- **speed.R** —
+- **speed.R** -
   [`speed()`](https://biometryhub.github.io/speed/reference/speed.md),
   [`speed_hierarchical()`](https://biometryhub.github.io/speed/reference/speed_hierarchical.md),
   `print.design`.
-- **metrics.R** — exported objective functions (`objective_function`,
+- **metrics.R** - exported objective functions (`objective_function`,
   `objective_function_factorial`, `objective_function_piepho`) plus
   their building blocks (`calculate_adjacency_score`,
   `calculate_balance_score`, `calculate_ed`, `calculate_nb`,
   `calculate_efficiency_factor`, `get_vertices`, `get_edges`,
   `create_pair_mapping`).
-- **design_utils.R** — neighbour generation, `infer_row_col`
+- **design_utils.R** - neighbour generation, `infer_row_col`
   (auto-detects row/col columns from `grid_factors`),
   `initialise_design_df` (and `initialize_design_df` US-spelling alias),
   `random_initialise`, `create_speed_input`.
-- **optim_params.R** —
+- **optim_params.R** -
   [`optim_params()`](https://biometryhub.github.io/speed/reference/optim_params.md)
   constructor for SA hyperparameters; reads legacy `options(speed.*)`
   for backwards compatibility and emits a deprecation warning if any are
   set.
-- **options.R** — roxygen-only file documenting the deprecated `speed.*`
+- **options.R** - roxygen-only file documenting the deprecated `speed.*`
   options.
-- **constants.R** — `.DEFAULT` list of fallback values for each level
+- **constants.R** - `.DEFAULT` list of fallback values for each level
   when fields are missing from `optimise`.
-- **buffers.R** —
+- **buffers.R** -
   [`add_buffers()`](https://biometryhub.github.io/speed/reference/add_buffers.md)
   adds edge/row/column/block buffer plots to a design.
-- **plotting.R** — `autoplot.design` and `plot_progress`
+- **plotting.R** - `autoplot.design` and `plot_progress`
   (ggplot2-based).
-- **verify_utils.R** — internal `.verify_*` input-validation helpers;
+- **verify_utils.R** - internal `.verify_*` input-validation helpers;
   called from
   [`speed()`](https://biometryhub.github.io/speed/reference/speed.md)
   before any work begins.
-- **utils.R** — small helpers: `to_factor` / `to_types` (round-trip
+- **utils.R** - small helpers: `to_factor` / `to_types` (round-trip
   column types because the SA loop requires factors), `pseudo_inverse`,
   `env_add_one`, etc.
-- **zzz.R** — `.onAttach` checks GitHub for a newer version; wrapped in
+- **zzz.R** - `.onAttach` checks GitHub for a newer version; wrapped in
   `tryCatch` and silently ignores network failures.
-- **speed-package.R** — package doc and
+- **speed-package.R** - package doc and
   [`utils::globalVariables`](https://rdrr.io/r/utils/globalVariables.html)
   declarations for NSE columns.
 
@@ -173,11 +173,11 @@ branch on `is.list(x$treatments)`.
 
 - **British spelling in user-facing names** (`initialise_design_df`,
   `random_initialisation`, `optimise`). The few US-spelt aliases
-  (`initialize_design_df`) exist only for back-compat — do not remove
+  (`initialize_design_df`) exist only for back-compat - do not remove
   without a deprecation cycle.
-- **roxygen2 with markdown** is the documentation source of truth —
+- **roxygen2 with markdown** is the documentation source of truth -
   never edit `man/*.Rd` directly; run `devtools::document()` instead.
-- **Vignettes are Quarto (`.qmd`)**, not Rmd — `DESCRIPTION` declares
+- **Vignettes are Quarto (`.qmd`)**, not Rmd - `DESCRIPTION` declares
   `VignetteBuilder: quarto`.
 - **`# fmt: skip`** comments are intentional Air-formatter overrides;
   leave them in place when editing nearby code.

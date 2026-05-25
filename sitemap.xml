@@ -16,6 +16,7 @@
 <url><loc>https://biometryhub.github.io/speed/news/index.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/add_buffers.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/add_names.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/adjacency_score_vec.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/apply_splits.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/as_numeric_factor.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/autoplot.html</loc></url>
@@ -49,6 +50,8 @@
 <url><loc>https://biometryhub.github.io/speed/reference/pseudo_inverse.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/random_initialise.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/rbind_fill.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/ring_offsets.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/shift_pad.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/shuffle_items.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/speed-options-deprecated.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/speed-package.html</loc></url>

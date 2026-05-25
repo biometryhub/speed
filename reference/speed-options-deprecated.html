@@ -11,7 +11,7 @@ behaviour of the optimisation algorithm."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,16 +69,16 @@ behaviour of the optimisation algorithm.</p>
 the algorithm to accept worse solutions early on, encouraging exploration of the solution space and helping to avoid local
 optima. Lower values make the algorithm greedier from the start, which can speed up convergence but increases the risk of
 getting stuck in a poor solution.
-A good starting temperature allows moderately worse solutions to be accepted with a probability of 70–90% at the beginning of the optimisation.</p></dd>
+A good starting temperature allows moderately worse solutions to be accepted with a probability of 70-90% at the beginning of the optimisation.</p></dd>
 
 <dt><code>speed.cooling_rate</code></dt>
 <dd><p>Rate at which temperature decreases for simulated annealing (default: 0.99).
 This controls how quickly the algorithm shifts from exploration to exploitation.
 The temperature is updated at each iteration by multiplying it by this rate:
 <code>T_i = start_temp * cooling_rate^i</code>.
-A higher cooling rate (e.g. 0.995–0.999) results in slower cooling and a longer
+A higher cooling rate (e.g. 0.995-0.999) results in slower cooling and a longer
 exploration phase, which is generally better for complex or noisy optimisation
-landscapes. Lower values (e.g. 0.95–0.98) cool quickly, leading to faster
+landscapes. Lower values (e.g. 0.95-0.98) cool quickly, leading to faster
 convergence but greater risk of premature convergence to a suboptimal design.</p></dd>
 
 <dt><code>speed.random_initialisation</code></dt>

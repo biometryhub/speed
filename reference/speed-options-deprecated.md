@@ -29,7 +29,7 @@ function controlling the behaviour of the optimisation algorithm.
   local optima. Lower values make the algorithm greedier from the start,
   which can speed up convergence but increases the risk of getting stuck
   in a poor solution. A good starting temperature allows moderately
-  worse solutions to be accepted with a probability of 70–90% at the
+  worse solutions to be accepted with a probability of 70-90% at the
   beginning of the optimisation.
 
 - `speed.cooling_rate`:
@@ -38,9 +38,9 @@ function controlling the behaviour of the optimisation algorithm.
   0.99). This controls how quickly the algorithm shifts from exploration
   to exploitation. The temperature is updated at each iteration by
   multiplying it by this rate: `T_i = start_temp * cooling_rate^i`. A
-  higher cooling rate (e.g. 0.995–0.999) results in slower cooling and a
+  higher cooling rate (e.g. 0.995-0.999) results in slower cooling and a
   longer exploration phase, which is generally better for complex or
-  noisy optimisation landscapes. Lower values (e.g. 0.95–0.98) cool
+  noisy optimisation landscapes. Lower values (e.g. 0.95-0.98) cool
   quickly, leading to faster convergence but greater risk of premature
   convergence to a suboptimal design.
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## speed 0.0.8
+
+### Major Changes
+
+- Added `ring_dists`, `ring_weights`, and `ring_type` arguments to
+  `calculate_adjacency_score` for weighting matches at larger adjacent
+  ring radii; can be passed via
+  [`speed()`](https://biometryhub.github.io/speed/reference/speed.md).
+
 ## speed 0.0.7
 
 ### Major Changes

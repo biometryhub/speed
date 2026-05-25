@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,16 +46,16 @@
 <div class="section level2">
 <h2 id="project-overview">Project overview<a class="anchor" aria-label="anchor" href="#project-overview"></a></h2>
 <p><code>speed</code> is an R package (CRAN-style, MIT) that produces spatially efficient experimental designs by rearranging treatments via simulated annealing. The score being minimised is a weighted sum of an <strong>adjacency score</strong> (penalises like-treatment neighbours) and a <strong>balance score</strong> (rewards even spread across spatial factors such as row/col/block).</p>
-<p>Designs can be <strong>simple</strong> (one swap variable) or <strong>hierarchical</strong> (e.g. split-plot, strip-plot, MET) — in the hierarchical case the optimiser runs sequentially, one level at a time, with potentially different parameters per level.</p>
+<p>Designs can be <strong>simple</strong> (one swap variable) or <strong>hierarchical</strong> (e.g. split-plot, strip-plot, MET) - in the hierarchical case the optimiser runs sequentially, one level at a time, with potentially different parameters per level.</p>
 </div>
 <div class="section level2">
 <h2 id="common-commands">Common commands<a class="anchor" aria-label="anchor" href="#common-commands"></a></h2>
 <p>This is a standard R package; development uses <code>devtools</code> from an R session.</p>
-<p>R, <code>devtools</code>, and the test deps are installed inside the devcontainer, <strong>not</strong> on the host. Run any R command through the <code>devcontainer-exec-here</code> wrapper (alias for <code>devcontainer exec --workspace-folder .</code>) — it executes inside the container with the workspace mounted at <code>/workspaces/speed</code>:</p>
+<p>R, <code>devtools</code>, and the test deps are installed inside the devcontainer, <strong>not</strong> on the host. Run any R command through the <code>devcontainer-exec-here</code> wrapper (alias for <code>devcontainer exec --workspace-folder .</code>) - it executes inside the container with the workspace mounted at <code>/workspaces/speed</code>:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">devcontainer-exec-here</span> R <span class="at">-e</span> <span class="st">"devtools::test()"</span></span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="ex">devcontainer-exec-here</span> R <span class="at">-e</span> <span class="st">"devtools::check()"</span></span>
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="co"># Quiet, scriptable test summary (surfaces failing tests; use devtools::test, NOT</span></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co"># pkgload::load_all + testthat::test_dir — that combo makes vdiffr mark _snaps/*.svg</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co"># pkgload::load_all + testthat::test_dir - that combo makes vdiffr mark _snaps/*.svg</span></span>
 <span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co"># as orphaned and delete them):</span></span>
 <span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="ex">devcontainer-exec-here</span> Rscript <span class="at">-e</span> <span class="st">'</span></span>
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="st">  res &lt;- devtools::test("/workspaces/speed", reporter = "silent")</span></span>
@@ -76,7 +76,7 @@
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">build_readme</span><span class="op">(</span><span class="op">)</span>             <span class="co"># regenerate README.md from README.Rmd</span></span>
 <span><span class="fu">quarto</span><span class="fu">::</span><span class="fu"><a href="https://quarto-dev.github.io/quarto-r/reference/quarto_render.html" class="external-link">quarto_render</a></span><span class="op">(</span><span class="st">"vignettes/speed.qmd"</span><span class="op">)</span>  <span class="co"># render a vignette (Quarto, not knitr)</span></span></code></pre></div>
 <p><code>R CMD check</code> is also enforced in CI on macOS / Windows / Ubuntu against R devel, release, and oldrel-1 (<code>.github/workflows/R-CMD-check.yaml</code>).</p>
-<p>Code formatting is handled by <a href="https://posit-dev.github.io/air/" class="external-link">Air</a> — see <code>air.toml</code> (80-col, 2-space indent). Per <code>CONTRIBUTING.md</code>, do <strong>not</strong> restyle code that is unrelated to your PR.</p>
+<p>Code formatting is handled by <a href="https://posit-dev.github.io/air/" class="external-link">Air</a> - see <code>air.toml</code> (80-col, 2-space indent). Per <code>CONTRIBUTING.md</code>, do <strong>not</strong> restyle code that is unrelated to your PR.</p>
 <p>User-facing changes should add a bullet to the top of <code>NEWS.md</code>.</p>
 </div>
 <div class="section level2">
@@ -98,47 +98,47 @@
 <p>For each level in order:</p>
 <ol style="list-style-type: decimal"><li>
 <code><a href="reference/random_initialise.html">random_initialise()</a></code> (R/design_utils.R) optionally shuffles the starting design <code>optim_params(random_initialisation = N)</code> times and keeps the best.</li>
-<li>Each iteration calls <code><a href="reference/generate_neighbour.html">generate_neighbour()</a></code> (R/design_utils.R) to swap treatments — single-swap or multi-swap depending on <code>swap_all</code>.</li>
-<li>The objective function (default <code>objective_function</code>, R/metrics.R) returns a <code>list(score = ..., ...)</code>. The returned list is fed back as <code>current_score_obj</code> on the next call so objective functions can incrementally update internal state from <code>swapped_items</code> instead of recomputing from scratch — <strong>any custom objective function must honour this contract</strong> (see <code>objective_function_signature</code> and the custom-objective vignette).</li>
+<li>Each iteration calls <code><a href="reference/generate_neighbour.html">generate_neighbour()</a></code> (R/design_utils.R) to swap treatments - single-swap or multi-swap depending on <code>swap_all</code>.</li>
+<li>The objective function (default <code>objective_function</code>, R/metrics.R) returns a <code>list(score = ..., ...)</code>. The returned list is fed back as <code>current_score_obj</code> on the next call so objective functions can incrementally update internal state from <code>swapped_items</code> instead of recomputing from scratch - <strong>any custom objective function must honour this contract</strong> (see <code>objective_function_signature</code> and the custom-objective vignette).</li>
 <li>Acceptance is the standard Metropolis criterion; temperature decays by <code>cooling_rate</code> each iteration.</li>
 <li>Early stop fires when <code>iter - last_improvement_iter &gt;= early_stop_iterations</code> or when the score reaches <code>.Machine$double.eps</code>.</li>
-</ol><p>The result is an S3 object of class <code>"design"</code> with <code>print.design</code> and <code>autoplot.design</code> methods. For single-level designs the <code>scores</code> / <code>temperatures</code> / <code>stopped_early</code> fields are flat; for multi-level they are lists keyed by level name — <code>print.design</code> and downstream code branch on <code>is.list(x$treatments)</code>.</p>
+</ol><p>The result is an S3 object of class <code>"design"</code> with <code>print.design</code> and <code>autoplot.design</code> methods. For single-level designs the <code>scores</code> / <code>temperatures</code> / <code>stopped_early</code> fields are flat; for multi-level they are lists keyed by level name - <code>print.design</code> and downstream code branch on <code>is.list(x$treatments)</code>.</p>
 </div>
 <div class="section level3">
 <h3 id="source-layout-r">Source layout (R/)<a class="anchor" aria-label="anchor" href="#source-layout-r"></a></h3>
 <ul><li>
-<strong>speed.R</strong> — <code><a href="reference/speed.html">speed()</a></code>, <code><a href="reference/speed_hierarchical.html">speed_hierarchical()</a></code>, <code>print.design</code>.</li>
+<strong>speed.R</strong> - <code><a href="reference/speed.html">speed()</a></code>, <code><a href="reference/speed_hierarchical.html">speed_hierarchical()</a></code>, <code>print.design</code>.</li>
 <li>
-<strong>metrics.R</strong> — exported objective functions (<code>objective_function</code>, <code>objective_function_factorial</code>, <code>objective_function_piepho</code>) plus their building blocks (<code>calculate_adjacency_score</code>, <code>calculate_balance_score</code>, <code>calculate_ed</code>, <code>calculate_nb</code>, <code>calculate_efficiency_factor</code>, <code>get_vertices</code>, <code>get_edges</code>, <code>create_pair_mapping</code>).</li>
+<strong>metrics.R</strong> - exported objective functions (<code>objective_function</code>, <code>objective_function_factorial</code>, <code>objective_function_piepho</code>) plus their building blocks (<code>calculate_adjacency_score</code>, <code>calculate_balance_score</code>, <code>calculate_ed</code>, <code>calculate_nb</code>, <code>calculate_efficiency_factor</code>, <code>get_vertices</code>, <code>get_edges</code>, <code>create_pair_mapping</code>).</li>
 <li>
-<strong>design_utils.R</strong> — neighbour generation, <code>infer_row_col</code> (auto-detects row/col columns from <code>grid_factors</code>), <code>initialise_design_df</code> (and <code>initialize_design_df</code> US-spelling alias), <code>random_initialise</code>, <code>create_speed_input</code>.</li>
+<strong>design_utils.R</strong> - neighbour generation, <code>infer_row_col</code> (auto-detects row/col columns from <code>grid_factors</code>), <code>initialise_design_df</code> (and <code>initialize_design_df</code> US-spelling alias), <code>random_initialise</code>, <code>create_speed_input</code>.</li>
 <li>
-<strong>optim_params.R</strong> — <code><a href="reference/optim_params.html">optim_params()</a></code> constructor for SA hyperparameters; reads legacy <code>options(speed.*)</code> for backwards compatibility and emits a deprecation warning if any are set.</li>
+<strong>optim_params.R</strong> - <code><a href="reference/optim_params.html">optim_params()</a></code> constructor for SA hyperparameters; reads legacy <code>options(speed.*)</code> for backwards compatibility and emits a deprecation warning if any are set.</li>
 <li>
-<strong>options.R</strong> — roxygen-only file documenting the deprecated <code>speed.*</code> options.</li>
+<strong>options.R</strong> - roxygen-only file documenting the deprecated <code>speed.*</code> options.</li>
 <li>
-<strong>constants.R</strong> — <code>.DEFAULT</code> list of fallback values for each level when fields are missing from <code>optimise</code>.</li>
+<strong>constants.R</strong> - <code>.DEFAULT</code> list of fallback values for each level when fields are missing from <code>optimise</code>.</li>
 <li>
-<strong>buffers.R</strong> — <code><a href="reference/add_buffers.html">add_buffers()</a></code> adds edge/row/column/block buffer plots to a design.</li>
+<strong>buffers.R</strong> - <code><a href="reference/add_buffers.html">add_buffers()</a></code> adds edge/row/column/block buffer plots to a design.</li>
 <li>
-<strong>plotting.R</strong> — <code>autoplot.design</code> and <code>plot_progress</code> (ggplot2-based).</li>
+<strong>plotting.R</strong> - <code>autoplot.design</code> and <code>plot_progress</code> (ggplot2-based).</li>
 <li>
-<strong>verify_utils.R</strong> — internal <code>.verify_*</code> input-validation helpers; called from <code><a href="reference/speed.html">speed()</a></code> before any work begins.</li>
+<strong>verify_utils.R</strong> - internal <code>.verify_*</code> input-validation helpers; called from <code><a href="reference/speed.html">speed()</a></code> before any work begins.</li>
 <li>
-<strong>utils.R</strong> — small helpers: <code>to_factor</code> / <code>to_types</code> (round-trip column types because the SA loop requires factors), <code>pseudo_inverse</code>, <code>env_add_one</code>, etc.</li>
+<strong>utils.R</strong> - small helpers: <code>to_factor</code> / <code>to_types</code> (round-trip column types because the SA loop requires factors), <code>pseudo_inverse</code>, <code>env_add_one</code>, etc.</li>
 <li>
-<strong>zzz.R</strong> — <code>.onAttach</code> checks GitHub for a newer version; wrapped in <code>tryCatch</code> and silently ignores network failures.</li>
+<strong>zzz.R</strong> - <code>.onAttach</code> checks GitHub for a newer version; wrapped in <code>tryCatch</code> and silently ignores network failures.</li>
 <li>
-<strong>speed-package.R</strong> — package doc and <code><a href="https://rdrr.io/r/utils/globalVariables.html" class="external-link">utils::globalVariables</a></code> declarations for NSE columns.</li>
+<strong>speed-package.R</strong> - package doc and <code><a href="https://rdrr.io/r/utils/globalVariables.html" class="external-link">utils::globalVariables</a></code> declarations for NSE columns.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="conventions-to-preserve">Conventions to preserve<a class="anchor" aria-label="anchor" href="#conventions-to-preserve"></a></h3>
 <ul><li>
-<strong>British spelling in user-facing names</strong> (<code>initialise_design_df</code>, <code>random_initialisation</code>, <code>optimise</code>). The few US-spelt aliases (<code>initialize_design_df</code>) exist only for back-compat — do not remove without a deprecation cycle.</li>
+<strong>British spelling in user-facing names</strong> (<code>initialise_design_df</code>, <code>random_initialisation</code>, <code>optimise</code>). The few US-spelt aliases (<code>initialize_design_df</code>) exist only for back-compat - do not remove without a deprecation cycle.</li>
 <li>
-<strong>roxygen2 with markdown</strong> is the documentation source of truth — never edit <code>man/*.Rd</code> directly; run <code>devtools::document()</code> instead.</li>
+<strong>roxygen2 with markdown</strong> is the documentation source of truth - never edit <code>man/*.Rd</code> directly; run <code>devtools::document()</code> instead.</li>
 <li>
-<strong>Vignettes are Quarto (<code>.qmd</code>)</strong>, not Rmd — <code>DESCRIPTION</code> declares <code>VignetteBuilder: quarto</code>.</li>
+<strong>Vignettes are Quarto (<code>.qmd</code>)</strong>, not Rmd - <code>DESCRIPTION</code> declares <code>VignetteBuilder: quarto</code>.</li>
 <li>
 <strong><code># fmt: skip</code></strong> comments are intentional Air-formatter overrides; leave them in place when editing nearby code.</li>
 <li>The <code>dummy_&lt;timestamp&gt;</code> column inside <code><a href="reference/speed.html">speed()</a></code> is a temporary level used to represent “no <code>swap_within</code> boundary” (<code>"1"</code> / <code>"none"</code>); it is added before the SA loop and removed before returning.</li>
