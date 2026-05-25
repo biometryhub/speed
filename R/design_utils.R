@@ -213,6 +213,15 @@ infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "c
 #' @param ncols Number of columns in the design (default: `NULL`)
 #' @param block_nrows Number of rows in each block (default: `NULL`)
 #' @param block_ncols Number of columns in each block (default: `NULL`)
+#' @param splits A named list of nested-unit specifications, ordered from the
+#'   outermost level to the innermost. Each entry is itself a list with
+#'   `nrows` and `ncols` (the dimensions of one unit at that level, in cells)
+#'   and an optional `items` (treatments to allocate across the units at that
+#'   level, one item per unit, ordered by parent then within-parent ID).
+#'   For each level, `<name>` and `<name>_treatment` columns are added (the
+#'   latter only if `items` is provided). Used to build hierarchical layouts
+#'   such as split-plot, split-split-plot, and strip-plot designs.
+#'   (default: `NULL`)
 #' @param designs A list of named arguments describing design specifications,
 #'   required if `nrows` and `ncols` are absent. (default: `NULL`)
 #' @param design_col A column name to distinguish different designs (default:
@@ -258,6 +267,17 @@ infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "c
 #'   )
 #' )
 #'
+#' # split-plot: 4 replicate blocks of 12x1, each block holds 3 wholeplots of 4x1,
+#' # each wholeplot holds 4 subplots
+#' initialise_design_df(
+#'   nrows = 12, ncols = 4,
+#'   block_nrows = 12, block_ncols = 1,
+#'   splits = list(
+#'     wholeplot = list(nrows = 4, ncols = 1, items = LETTERS[1:3]),
+#'     subplot = list(nrows = 1, ncols = 1, items = letters[1:4])
+#'   )
+#' )
+#'
 #' @export
 # fmt: skip
 initialise_design_df <- function(items = NULL,
@@ -265,9 +285,10 @@ initialise_design_df <- function(items = NULL,
                                  ncols = NULL,
                                  block_nrows = NULL,
                                  block_ncols = NULL,
+                                 splits = NULL,
                                  designs = NULL,
                                  design_col = "site") {
-  .verify_initialise_design_df(items, nrows, ncols, block_nrows, block_ncols, designs, design_col)
+  .verify_initialise_design_df(items, nrows, ncols, block_nrows, block_ncols, splits, designs, design_col)
 
   # If items is a single numeric value, take it as the number of equally replicated treatments
   if (length(items) == 1 && is.numeric(items)) {
@@ -281,7 +302,9 @@ initialise_design_df <- function(items = NULL,
 
   # Create grid
   df <- expand.grid(row = 1:nrows, col = 1:ncols)
-  df$treatment <- items
+  if (!is.null(items)) {
+    df$treatment <- items
+  }
 
   # If blocked design
   if (!is.null(block_nrows)) {
@@ -292,7 +315,92 @@ initialise_design_df <- function(items = NULL,
     df$block <- df$row_block + nblocks_row * (df$col_block - 1)
 
     # For each block, assign treatments
-    df$treatment[order(df$block)] <- items
+    if (!is.null(items)) {
+      df$treatment[order(df$block)] <- items
+    }
+  }
+
+  if (!is.null(splits)) {
+    df <- apply_splits(df, splits, nrows, ncols, block_nrows, block_ncols)
+  }
+
+  return(df)
+}
+
+#' Apply Nested Splits to a Design Data Frame
+#'
+#' @description
+#' Adds nested-unit ID columns (and optional treatment columns) to a design data
+#' frame produced by [initialise_design_df()]. Each split level subdivides the
+#' parent unit (block, or the whole grid if there are no blocks) into smaller
+#' rectangular units of size `nrows` by `ncols`. Subsequent levels subdivide
+#' the units of the previous level, with the same column-major numbering that
+#' [initialise_design_df()] uses for blocks.
+#'
+#' @inheritParams initialise_design_df
+#' @param df A data frame with `row` and `col` columns (and `block` if blocking
+#'   is in use), as built by [initialise_design_df()].
+#'
+#' @return The data frame with one ID column per split (named after the split)
+#'   and one `<name>_treatment` column per split that supplies `items`.
+#'
+#' @keywords internal
+apply_splits <- function(df, splits, nrows, ncols, block_nrows, block_ncols) {
+  splits <- add_names(splits)
+
+  if (!is.null(block_nrows)) {
+    parent_id <- df$block
+    parent_nrows <- block_nrows
+    parent_ncols <- block_ncols
+  } else {
+    parent_id <- rep(1L, nrow(df))
+    parent_nrows <- nrows
+    parent_ncols <- ncols
+  }
+
+  for (split_name in names(splits)) {
+    split <- splits[[split_name]]
+
+    # Local row/col within the parent unit (parents are contiguous rectangles)
+    local_row <- ((df$row - 1) %% parent_nrows) + 1
+    local_col <- ((df$col - 1) %% parent_ncols) + 1
+
+    child_row_idx <- ceiling(local_row / split$nrows)
+    child_col_idx <- ceiling(local_col / split$ncols)
+    n_child_rows <- parent_nrows / split$nrows
+    n_children_per_parent <- n_child_rows * (parent_ncols / split$ncols)
+
+    df[[split_name]] <- (parent_id - 1) * n_children_per_parent +
+      child_row_idx +
+      n_child_rows * (child_col_idx - 1)
+
+    if (!is.null(split$items)) {
+      treatment_col <- paste0(split_name, "_treatment")
+      n_children <- max(df[[split_name]])
+      items_vec <- split$items
+
+      if (length(items_vec) == 1 && is.numeric(items_vec)) {
+        items_vec <- paste0("T", seq_len(items_vec))
+      }
+
+      if (length(items_vec) != n_children) {
+        if (n_children %% length(items_vec) == 0) {
+          # Recycle once per parent unit so each parent receives a full set
+          items_vec <- rep(items_vec, length.out = n_children)
+        } else {
+          stop(sprintf(
+            "`items` for split `%s` must have length %d (or divide it); got %d",
+            split_name, n_children, length(items_vec)
+          ), call. = FALSE)
+        }
+      }
+
+      df[[treatment_col]] <- items_vec[df[[split_name]]]
+    }
+
+    parent_id <- df[[split_name]]
+    parent_nrows <- split$nrows
+    parent_ncols <- split$ncols
   }
 
   return(df)
@@ -425,6 +533,7 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
                                          ncols,
                                          block_nrows,
                                          block_ncols,
+                                         splits,
                                          designs,
                                          design_col) {
   if (is.null(designs) && is.null(nrows) && is.null(ncols)) {
@@ -432,7 +541,12 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
   }
 
   if (is.null(designs)) {
-    verify_positive_whole_number(length(items), nrows, ncols)
+    verify_positive_whole_number(nrows, ncols)
+    if (!is.null(items)) {
+      verify_positive_whole_number(length(items))
+    } else if (is.null(splits)) {
+      stop("`items` must be provided when `splits` is `NULL`", call. = FALSE)
+    }
   } else {
     verify_list(designs)
     valid_args <- c("items", "nrows", "ncols", "block_nrows", "block_ncols")
@@ -472,7 +586,36 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
 
     verify_multiple_of(nrows, block_nrows)
     verify_multiple_of(ncols, block_ncols)
-    verify_multiple_of(nrows * ncols, length(items))
+    if (!is.null(items)) {
+      verify_multiple_of(nrows * ncols, length(items))
+    }
+  }
+
+  if (!is.null(splits)) {
+    verify_list(splits)
+    valid_split_args <- c("nrows", "ncols", "items")
+    parent_nrows <- if (!is.null(block_nrows)) block_nrows else nrows
+    parent_ncols <- if (!is.null(block_ncols)) block_ncols else ncols
+
+    splits_named <- add_names(splits)
+    for (split_name in names(splits_named)) {
+      split <- splits_named[[split_name]]
+      verify_list(split)
+      for (arg in names(split)) {
+        if (!(arg %in% valid_split_args)) {
+          stop(paste0("`", arg, "` is an invalid argument in `splits$", split_name, "`"), call. = FALSE)
+        }
+      }
+      if (length(setdiff(c("nrows", "ncols"), names(split))) > 0) {
+        stop(paste0("`nrows` and `ncols` must be provided for split `", split_name, "`"), call. = FALSE)
+      }
+      verify_positive_whole_number(split$nrows, split$ncols)
+      verify_multiple_of(parent_nrows, split$nrows)
+      verify_multiple_of(parent_ncols, split$ncols)
+
+      parent_nrows <- split$nrows
+      parent_ncols <- split$ncols
+    }
   }
 }
 
