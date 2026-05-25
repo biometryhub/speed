@@ -2155,6 +2155,35 @@ test_that("speed handles 3-way factorial designs", {
   expect_lt(result$score, objective_function_factorial(df, "treatment", c("row", "col"))$score)
 })
 
+test_that("speed honours ring_dists and ring_weights via ...", {
+  test_data <- data.frame(
+    row = rep(1:5, times = 4),
+    col = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  base <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+  with_rings <- speed(
+    data = test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 42,
+    ring_dists = c(1, 2),
+    ring_weights = c(1, 5),
+    quiet = TRUE
+  )
+
+  expect_false(isTRUE(all.equal(base$score, with_rings$score)))
+})
+
 # TODO: Test cases to add/update
 # - Add more detailed checking of current designs
 # - NSE

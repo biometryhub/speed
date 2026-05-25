@@ -55,8 +55,16 @@ objective_function <- function(layout_df,
     adj_weight <- 0
   }
 
+  ring_args <- list(...)
+  ring_args <- ring_args[intersect(
+    names(ring_args),
+    c("ring_dists", "ring_weights", "ring_type")
+  )]
   adj_score <- ifelse(adj_weight != 0,
-    calculate_adjacency_score(layout_df, swap, row_column, col_column),
+    do.call(
+      calculate_adjacency_score,
+      c(list(layout_df, swap, row_column, col_column), ring_args)
+    ),
     0
   )
 
@@ -166,58 +174,6 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
   return(sum(score))
 }
 
-#' Calculate Adjacency Score for Design
-#'
-#' @description
-#' Calculates the adjacency score for a given experimental design. The adjacency score
-#' represents the number of adjacent plots with the same treatment. Lower scores indicate
-#' better separation of treatments.
-#'
-#' @inheritParams objective_function_signature
-#'
-#' @return Numeric score for treatment adjacencies (lower is better)
-#'
-#' @examples
-#' # Example 1: Design with no adjacencies
-#' design_no_adj <- data.frame(
-#'   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
-#'   col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
-#'   treatment = c("A", "B", "A", "B", "A", "B", "A", "B", "A")
-#' )
-#'
-#' # Gives 0
-#' calculate_adjacency_score(design_no_adj, "treatment")
-#'
-#' # Example 2: Design with adjacencies
-#' design_with_adj <- data.frame(
-#'   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
-#'   col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
-#'   treatment = c("A", "A", "A", "B", "B", "B", "A", "A", "A")
-#' )
-#'
-#' # Gives value 6
-#' calculate_adjacency_score(design_with_adj, "treatment")
-#'
-#' @export
-calculate_adjacency_score <- function(layout_df, swap, row_column = "row", col_column = "col") {
-  layout_df <- matrix(
-    layout_df[[swap]],
-    nrow = max(as_numeric_factor(layout_df[[row_column]]), na.rm = TRUE),
-    ncol = max(as_numeric_factor(layout_df[[col_column]]), na.rm = TRUE),
-    byrow = TRUE
-  )
-
-  row_adjacencies <- sum(
-    layout_df[, -ncol(layout_df)] == layout_df[, -1],
-    na.rm = TRUE
-  )
-  col_adjacencies <- sum(
-    layout_df[-nrow(layout_df), ] == layout_df[-1, ],
-    na.rm = TRUE
-  )
-  return(row_adjacencies + col_adjacencies)
-}
-
 #' Objective Function with Metric from Piepho
 #'
 #' @description
@@ -248,7 +204,7 @@ calculate_adjacency_score <- function(layout_df, swap, row_column = "row", col_c
 #'
 #' @references Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of distribution
 #'   of treatment replications in row-column designs. Biometrical journal. Biometrische Zeitschrift, 60(6),
-#'   1172–1189. <https://doi.org/10.1002/bimj.201800013>
+#'   1172-1189. <https://doi.org/10.1002/bimj.201800013>
 #'
 #' @seealso [objective_function()], [create_pair_mapping()]
 #'

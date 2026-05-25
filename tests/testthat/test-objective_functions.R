@@ -225,7 +225,7 @@ test_that("objective_function_piepho works with basic design", {
   expect_length(result$score, 1)
   expect_type(result$ed, "list")
   expect_type(result$bal, "double")
-  expect_type(result$adj, "integer")
+  expect_type(result$adj, "double")
   expect_type(result$nb, "list")
 })
 

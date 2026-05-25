@@ -17,14 +17,14 @@
 #' the algorithm to accept worse solutions early on, encouraging exploration of the solution space and helping to avoid local
 #' optima. Lower values make the algorithm greedier from the start, which can speed up convergence but increases the risk of
 #' getting stuck in a poor solution.
-#' A good starting temperature allows moderately worse solutions to be accepted with a probability of 70–90% at the beginning of the optimisation.}
+#' A good starting temperature allows moderately worse solutions to be accepted with a probability of 70-90% at the beginning of the optimisation.}
 #'   \item{`speed.cooling_rate`}{Rate at which temperature decreases for simulated annealing (default: 0.99).
 #'   This controls how quickly the algorithm shifts from exploration to exploitation.
 #'        The temperature is updated at each iteration by multiplying it by this rate:
 #'        `T_i = start_temp * cooling_rate^i`.
-#'        A higher cooling rate (e.g. 0.995–0.999) results in slower cooling and a longer
+#'        A higher cooling rate (e.g. 0.995-0.999) results in slower cooling and a longer
 #'        exploration phase, which is generally better for complex or noisy optimisation
-#'        landscapes. Lower values (e.g. 0.95–0.98) cool quickly, leading to faster
+#'        landscapes. Lower values (e.g. 0.95-0.98) cool quickly, leading to faster
 #'        convergence but greater risk of premature convergence to a suboptimal design.}
 #'   \item{`speed.random_initialisation`}{Number of times to randomly shuffle items within `swap_within`; the
 #' design with the best score is used as an initial design. (default: 0)}
