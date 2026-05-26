@@ -23,6 +23,8 @@ Useful links:
 
 Authors:
 
+- Sam Rogers <sam.rogers@adelaide.edu.au>
+
 - Julian Taylor <julian.taylor@adelaide.edu.au>
 
 - Russell Edson <russell.edson@adelaide.edu.au>

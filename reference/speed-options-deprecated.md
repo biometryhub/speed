@@ -1,11 +1,15 @@
 # Package Options for `speed` (Deprecated)
 
+**Deprecated.** These
+[`options()`](https://rdrr.io/r/base/options.html)-based parameters are
+no longer recommended. Please use
+[`optim_params()`](https://biometryhub.github.io/speed/reference/optim_params.md)
+instead for a reproducible way to specify optimisation parameters.
+
 This page describes the options you can set to control the behaviour of
 the `speed` package, especially technical options in the
 [`speed()`](https://biometryhub.github.io/speed/reference/speed.md)
 function controlling the behaviour of the optimisation algorithm.
-
-## Details
 
 - `speed.swap_count`:
 
@@ -64,3 +68,8 @@ You can set these options using
 start of a session or within your code:
 
     options(speed.swap_count = 5, speed.swap_all_blocks = TRUE)
+
+## See also
+
+[`optim_params()`](https://biometryhub.github.io/speed/reference/optim_params.md)
+for the current, non-deprecated way to set optimisation parameters.
