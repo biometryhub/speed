@@ -4,11 +4,14 @@
 \alias{speed-options-deprecated}
 \title{Package Options for \code{speed} (Deprecated)}
 \description{
+\strong{Deprecated.} These \code{options()}-based parameters are no longer recommended.
+Please use \code{\link[=optim_params]{optim_params()}} instead for a reproducible way to specify optimisation
+parameters.
+
 This page describes the options you can set to control the behaviour of the \code{speed}
 package, especially technical options in the \code{speed()} function controlling the
 behaviour of the optimisation algorithm.
-}
-\details{
+
 \describe{
 \item{\code{speed.swap_count}}{Number of treatment swaps per iteration (default: 1).}
 \item{\code{speed.swap_all_blocks}}{Logical; if \code{TRUE}, performs swaps in all blocks at each iteration (default: \code{FALSE}).}
@@ -41,3 +44,6 @@ or within your code:
 }\if{html}{\out{</div>}}
 }
 
+\seealso{
+\code{\link[=optim_params]{optim_params()}} for the current, non-deprecated way to set optimisation parameters.
+}
