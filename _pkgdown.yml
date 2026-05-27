@@ -30,6 +30,7 @@ reference:
       - create_pair_mapping
       - initialise_design_df
       - add_buffers
+      - prep_relationship
   - title: Advanced options
   - contents:
       - optim_params
