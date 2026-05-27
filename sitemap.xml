@@ -8,6 +8,7 @@
 <url><loc>https://biometryhub.github.io/speed/articles/complex_designs.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/articles/custom_objective_functions.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/articles/factorial.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/articles/genetic_relationship.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/articles/index.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/articles/met.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/articles/speed.html</loc></url>
@@ -31,6 +32,8 @@
 <url><loc>https://biometryhub.github.io/speed/reference/dot-calculate_ed_3_reps.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-calculate_nb.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-is_light_colour.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/dot-prep_dots.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/dot-reject_optim_params_in_dots.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/env_add_one.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/generate_multi_swap_neighbour.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/generate_neighbour.html</loc></url>
@@ -46,6 +49,7 @@
 <url><loc>https://biometryhub.github.io/speed/reference/objective_functions.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/optim_params.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/plot_progress.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/prep_relationship.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/print.design.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/pseudo_inverse.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/random_initialise.html</loc></url>

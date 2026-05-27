@@ -8,6 +8,8 @@
   speed](https://biometryhub.github.io/speed/articles/custom_objective_functions.md):
 - [Factorial Design with
   speed](https://biometryhub.github.io/speed/articles/factorial.md):
+- [Relationship-Aware Adjacency in
+  speed](https://biometryhub.github.io/speed/articles/genetic_relationship.md):
 - [Multi-Environment Trials with
   speed](https://biometryhub.github.io/speed/articles/met.md):
 - [Common Agricultural Experimental Designs with

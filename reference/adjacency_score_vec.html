@@ -26,6 +26,7 @@ Implemented by stacking shifted copies of the matrix once per offset."></head><b
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/complex_designs.html">Complex Agricultural Experimental Designs with speed</a></li>
     <li><a class="dropdown-item" href="../articles/custom_objective_functions.html">Custom Objective Functions and Advanced Options for Optimisation in speed</a></li>
     <li><a class="dropdown-item" href="../articles/factorial.html">Factorial Design with speed</a></li>
+    <li><a class="dropdown-item" href="../articles/genetic_relationship.html">Relationship-Aware Adjacency in speed</a></li>
     <li><a class="dropdown-item" href="../articles/met.html">Multi-Environment Trials with speed</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -57,7 +58,8 @@ Implemented by stacking shifted copies of the matrix once per offset.</p>
 <span>  <span class="va">design_matrix</span>,</span>
 <span>  dists <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>,</span>
 <span>  weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>,</span>
-<span>  ring_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"manhattan"</span>, <span class="st">"chebyshev"</span><span class="op">)</span></span>
+<span>  ring_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"manhattan"</span>, <span class="st">"chebyshev"</span><span class="op">)</span>,</span>
+<span>  relationship <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -80,6 +82,16 @@ Implemented by stacking shifted copies of the matrix once per offset.</p>
 <dt id="arg-ring-type">ring_type<a class="anchor" aria-label="anchor" href="#arg-ring-type"></a></dt>
 <dd><p>Ring shape: <code>"manhattan"</code> (default; diamond ring)
 or <code>"chebyshev"</code> (square ring). See <code><a href="ring_offsets.html">ring_offsets()</a></code>.</p></dd>
+
+
+<dt id="arg-relationship">relationship<a class="anchor" aria-label="anchor" href="#arg-relationship"></a></dt>
+<dd><p>Optional pairwise-relationship lookup produced by
+<code><a href="prep_relationship.html">prep_relationship()</a></code>. When supplied, each neighbour pair contributes
+<code>relationship[cell, neighbour]</code> rather than <code>1</code> for matches and <code>0</code>
+otherwise. NA-padded cells off the design edge contribute <code>0</code>. Defaults
+to <code>NULL</code>, which keeps the strict identity match. Pass the raw matrix
+through <code><a href="prep_relationship.html">prep_relationship()</a></code> first; the score functions consume only
+the prepped form.</p></dd>
 
 </dl></div>
     <div class="section level2">

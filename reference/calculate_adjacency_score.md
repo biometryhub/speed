@@ -8,6 +8,10 @@ adjusted with arguments provided.
 Internally this is a thin wrapper around
 [`adjacency_score_vec()`](https://biometryhub.github.io/speed/reference/adjacency_score_vec.md).
 
+Pass a `relationship` matrix to score neighbour pairs by a graded
+similarity (e.g. genetic relatedness) instead of a strict identity
+match.
+
 ## Usage
 
 ``` r
@@ -18,7 +22,8 @@ calculate_adjacency_score(
   col_column = "col",
   ring_dists = 1,
   ring_weights = 1,
-  ring_type = c("manhattan", "chebyshev")
+  ring_type = c("manhattan", "chebyshev"),
+  relationship = NULL
 )
 ```
 
@@ -55,6 +60,18 @@ calculate_adjacency_score(
   (square ring). See
   [`ring_offsets()`](https://biometryhub.github.io/speed/reference/ring_offsets.md).
 
+- relationship:
+
+  Optional pairwise-relationship lookup produced by
+  [`prep_relationship()`](https://biometryhub.github.io/speed/reference/prep_relationship.md).
+  When supplied, each neighbour pair contributes
+  `relationship[cell, neighbour]` rather than `1` for matches and `0`
+  otherwise. NA-padded cells off the design edge contribute `0`.
+  Defaults to `NULL`, which keeps the strict identity match. Pass the
+  raw matrix through
+  [`prep_relationship()`](https://biometryhub.github.io/speed/reference/prep_relationship.md)
+  first; the score functions consume only the prepped form.
+
 ## Value
 
 A non-negative numeric value: the number of like-treatment edges in the
@@ -84,4 +101,14 @@ design_with_adj <- data.frame(
 )
 calculate_adjacency_score(design_with_adj, "treatment") # 6
 #> [1] 6
+
+# Example 3: graded relationship between A and B
+rel <- prep_relationship(matrix(
+  c(1, 0.3, 0.3, 1),
+  nrow = 2,
+  dimnames = list(c("A", "B"), c("A", "B"))
+))
+calculate_adjacency_score(design_no_adj, "treatment", relationship = rel)
+#> [1] 3.6
+# 3.6: each of the 12 A-B edges contributes 0.3
 ```

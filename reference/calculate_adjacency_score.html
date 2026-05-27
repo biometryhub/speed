@@ -3,11 +3,15 @@
 that share the same treatment. Lower scores indicate better separation. The
 distance of plots to be considered adjacent can be adjusted with arguments
 provided.
-Internally this is a thin wrapper around adjacency_score_vec()."><meta property="og:description" content="Counts adjacent plots, immediate horizontal and vertical neighbours by default,
+Internally this is a thin wrapper around adjacency_score_vec().
+Pass a relationship matrix to score neighbour pairs by a graded
+similarity (e.g. genetic relatedness) instead of a strict identity match."><meta property="og:description" content="Counts adjacent plots, immediate horizontal and vertical neighbours by default,
 that share the same treatment. Lower scores indicate better separation. The
 distance of plots to be considered adjacent can be adjusted with arguments
 provided.
-Internally this is a thin wrapper around adjacency_score_vec()."></head><body>
+Internally this is a thin wrapper around adjacency_score_vec().
+Pass a relationship matrix to score neighbour pairs by a graded
+similarity (e.g. genetic relatedness) instead of a strict identity match."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -30,6 +34,7 @@ Internally this is a thin wrapper around adjacency_score_vec()."></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/complex_designs.html">Complex Agricultural Experimental Designs with speed</a></li>
     <li><a class="dropdown-item" href="../articles/custom_objective_functions.html">Custom Objective Functions and Advanced Options for Optimisation in speed</a></li>
     <li><a class="dropdown-item" href="../articles/factorial.html">Factorial Design with speed</a></li>
+    <li><a class="dropdown-item" href="../articles/genetic_relationship.html">Relationship-Aware Adjacency in speed</a></li>
     <li><a class="dropdown-item" href="../articles/met.html">Multi-Environment Trials with speed</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -55,6 +60,8 @@ that share the same treatment. Lower scores indicate better separation. The
 distance of plots to be considered adjacent can be adjusted with arguments
 provided.</p>
 <p>Internally this is a thin wrapper around <code><a href="adjacency_score_vec.html">adjacency_score_vec()</a></code>.</p>
+<p>Pass a <code>relationship</code> matrix to score neighbour pairs by a graded
+similarity (e.g. genetic relatedness) instead of a strict identity match.</p>
     </div>
 
     <div class="section level2">
@@ -66,7 +73,8 @@ provided.</p>
 <span>  col_column <span class="op">=</span> <span class="st">"col"</span>,</span>
 <span>  ring_dists <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  ring_weights <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  ring_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"manhattan"</span>, <span class="st">"chebyshev"</span><span class="op">)</span></span>
+<span>  ring_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"manhattan"</span>, <span class="st">"chebyshev"</span><span class="op">)</span>,</span>
+<span>  relationship <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -105,6 +113,16 @@ provided.</p>
 <dd><p>Ring shape: <code>"manhattan"</code> (default; diamond ring)
 or <code>"chebyshev"</code> (square ring). See <code><a href="ring_offsets.html">ring_offsets()</a></code>.</p></dd>
 
+
+<dt id="arg-relationship">relationship<a class="anchor" aria-label="anchor" href="#arg-relationship"></a></dt>
+<dd><p>Optional pairwise-relationship lookup produced by
+<code><a href="prep_relationship.html">prep_relationship()</a></code>. When supplied, each neighbour pair contributes
+<code>relationship[cell, neighbour]</code> rather than <code>1</code> for matches and <code>0</code>
+otherwise. NA-padded cells off the design edge contribute <code>0</code>. Defaults
+to <code>NULL</code>, which keeps the strict identity match. Pass the raw matrix
+through <code><a href="prep_relationship.html">prep_relationship()</a></code> first; the score functions consume only
+the prepped form.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -135,6 +153,16 @@ in the row/column adjacency graph.</p>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">calculate_adjacency_score</span><span class="op">(</span><span class="va">design_with_adj</span>, <span class="st">"treatment"</span><span class="op">)</span> <span class="co"># 6</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 6</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example 3: graded relationship between A and B</span></span></span>
+<span class="r-in"><span><span class="va">rel</span> <span class="op">&lt;-</span> <span class="fu"><a href="prep_relationship.html">prep_relationship</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0.3</span>, <span class="fl">0.3</span>, <span class="fl">1</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  nrow <span class="op">=</span> <span class="fl">2</span>,</span></span>
+<span class="r-in"><span>  dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">calculate_adjacency_score</span><span class="op">(</span><span class="va">design_no_adj</span>, <span class="st">"treatment"</span>, relationship <span class="op">=</span> <span class="va">rel</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3.6</span>
+<span class="r-in"><span><span class="co"># 3.6: each of the 12 A-B edges contributes 0.3</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

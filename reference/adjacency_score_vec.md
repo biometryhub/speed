@@ -11,7 +11,8 @@ adjacency_score_vec(
   design_matrix,
   dists = c(1, 2),
   weights = c(1, 2),
-  ring_type = c("manhattan", "chebyshev")
+  ring_type = c("manhattan", "chebyshev"),
+  relationship = NULL
 )
 ```
 
@@ -34,6 +35,18 @@ adjacency_score_vec(
   Ring shape: `"manhattan"` (default; diamond ring) or `"chebyshev"`
   (square ring). See
   [`ring_offsets()`](https://biometryhub.github.io/speed/reference/ring_offsets.md).
+
+- relationship:
+
+  Optional pairwise-relationship lookup produced by
+  [`prep_relationship()`](https://biometryhub.github.io/speed/reference/prep_relationship.md).
+  When supplied, each neighbour pair contributes
+  `relationship[cell, neighbour]` rather than `1` for matches and `0`
+  otherwise. NA-padded cells off the design edge contribute `0`.
+  Defaults to `NULL`, which keeps the strict identity match. Pass the
+  raw matrix through
+  [`prep_relationship()`](https://biometryhub.github.io/speed/reference/prep_relationship.md)
+  first; the score functions consume only the prepped form.
 
 ## Value
 

@@ -62,6 +62,8 @@ Utility functions to initialize objects.
   : Initialise Design Data Frame
 - [`add_buffers()`](https://biometryhub.github.io/speed/reference/add_buffers.md)
   : Add buffers to an existing design
+- [`prep_relationship()`](https://biometryhub.github.io/speed/reference/prep_relationship.md)
+  : Validate and Flatten a Relationship Matrix for Lookup
 
 ## Advanced options
 
