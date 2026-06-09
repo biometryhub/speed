@@ -1,46 +1,42 @@
 #' Generate a Neighbour Design by Swapping Treatments
 #'
 #' @param design Data frame containing the current design
-#' @param swap Column name of the treatment to swap, or named list for hierarchical designs
-#' @param swap_within Column name defining groups within which to swap treatments, or named list for hierarchical designs
-#' @param level The level of the design to be optimised in the current loop. Relevant for sequential designs. Simple designs pass this as `NULL`.
+#' @param swap Column name of the treatment to swap, or named list for
+#'   hierarchical designs
+#' @param swap_within Column name defining groups within which to swap
+#'   treatments, or named list for hierarchical designs
 #' @param swap_count Number of swaps to perform
 #' @param swap_all_blocks Whether to perform swaps in all blocks or just one
+#' @param swap_all Whether to swap all matching items or a single item at a time
+#'   (default: FALSE)
 #'
-#' @return A list with the updated design after swapping and information about swapped items
+#' @return A list with the updated design after swapping and information about
+#'   swapped items
 #'
 #' @keywords internal
 # fmt: skip
 generate_neighbour <- function(design,
                                swap,
                                swap_within,
-                               level = NULL,
                                swap_count = getOption("speed.swap_count", 1),
-                               swap_all_blocks = getOption("speed.swap_all_blocks", FALSE)) {
-
-  # Check if this is a hierarchical design
-  is_hierarchical <- is.list(swap) && !is.null(names(swap))
-
-  if (is_hierarchical) {
-    return(generate_sequential_neighbour(design, swap, swap_within, level, swap_count, swap_all_blocks))
+                               swap_all_blocks = getOption("speed.swap_all_blocks", FALSE),
+                               swap_all = FALSE) {
+  if (swap_all) {
+    return(generate_multi_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks))
   } else {
-    return(generate_simple_neighbour(design, swap, swap_within, level, swap_count, swap_all_blocks))
+    return(generate_single_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks))
   }
 }
 
 #' Generate neighbour for simple (non-hierarchical) designs
 #' @keywords internal
 # fmt: skip
-generate_simple_neighbour <- function(design,
-                                      swap,
-                                      swap_within,
-                                      level,
-                                      swap_count,
-                                      swap_all_blocks) {
+generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks) {
   new_design <- design
 
   # Get unique blocks
-  blocks <- unique(design[[swap_within]])
+  all_blocks <- design[[swap_within]]
+  blocks <- levels(all_blocks)
 
   if (swap_all_blocks) {
     # Swap in all blocks
@@ -56,28 +52,35 @@ generate_simple_neighbour <- function(design,
   # Perform swaps in selected blocks
   for (block in blocks_to_swap) {
     # Get indices of plots in this block
-    block_indices <- which(
-      design[[swap_within]] == block & !is.na(design[[swap]])
-    )
+    block_indices <- which(all_blocks == block & !is.na(all_blocks) & !is.na(design[[swap]]))
 
     if (length(block_indices) >= 2) {
       # Need at least 2 plots to swap
       for (i in 1:swap_count) {
         # Select two random plots in this block
         swap_pair <- sample(block_indices, 2)
-        if (design[[swap]][swap_pair[1]] == design[[swap]][swap_pair[2]]) {
-          no_dupe_filter <- design[[swap]][block_indices] != design[[swap]][swap_pair[1]]
-          swap_pair[[2]] <- sample(block_indices[no_dupe_filter], 1)
+        to_be_swapped <- new_design[[swap]][swap_pair]
+
+        # If both plots have the same treatment, try to find a different one
+        if (to_be_swapped[1] == to_be_swapped[2]) {
+          different_indices <- block_indices[new_design[[swap]][block_indices] != to_be_swapped[1]]
+
+          # Only proceed with swap if different treatments are available
+          if (length(different_indices) > 0) {
+            swap_pair[[2]] <- sample(different_indices, 1)
+            to_be_swapped[2] <- new_design[[swap]][[swap_pair[[2]]]]
+          } else {
+            # Skip this swap - no different treatments available
+            to_be_swapped <- NULL
+          }
         }
 
-        # Swap treatments
-        temp <- new_design[[swap]][swap_pair[1]]
-        new_design[[swap]][swap_pair[1]] <- new_design[[swap]][swap_pair[2]]
-        new_design[[swap]][swap_pair[2]] <- temp
-
-        swapped_items[swapped_idx] <- new_design[[swap]][swap_pair[1]]
-        swapped_items[swapped_idx + 1] <- new_design[[swap]][swap_pair[2]]
-        swapped_idx <- swapped_idx + 2
+        # Perform the swap only if we have valid treatments to swap
+        if (!is.null(to_be_swapped)) {
+          new_design[[swap]][rev(swap_pair)] <- to_be_swapped
+          swapped_items[swapped_idx:(swapped_idx + 1)] <- to_be_swapped
+          swapped_idx <- swapped_idx + 2
+        }
       }
     }
   }
@@ -88,20 +91,11 @@ generate_simple_neighbour <- function(design,
 #' Generate neighbour for sequential or hierarchical designs
 #' @keywords internal
 # fmt: skip
-generate_sequential_neighbour <- function(design,
-                                          swap,
-                                          swap_within,
-                                          level,
-                                          swap_count,
-                                          swap_all_blocks) {
+generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks) {
   new_design <- design
-  
-  # Get the swap columns for the specified level
-  level_swap <- swap[[level]]
-  level_swap_within <- swap_within[[level]]
 
   # Get unique groups for this level
-  groups <- unique(design[[level_swap_within]])
+  groups <- levels(design[[swap_within]])
 
   if (swap_all_blocks) {
     # Swap in all groups
@@ -117,33 +111,29 @@ generate_sequential_neighbour <- function(design,
   # Perform swaps in selected groups
   for (group in groups_to_swap) {
     # Get unique treatments within this group
-    group_data <- design[design[[level_swap_within]] == group & !is.na(design[[level_swap]]), ]
-    group_treatments <- unique(design[design[[level_swap_within]] == group & !is.na(design[[level_swap]]), level_swap])
+    group_filter <- new_design[[swap_within]] == group & !is.na(new_design[[swap_within]])
+    group_data <- new_design[group_filter & !is.na(new_design[[swap]]), ]
+    group_treatments <- unique(group_data[[swap]])
 
     if (nrow(group_data) >= 2) {
       for (i in 1:swap_count) {
-        # Select two random treatments
-        swap_pair <- sample(group_treatments, 2)
-
-        # Ensure they're different treatments
-        if (swap_pair[1] == swap_pair[2]) {
-          different_treatments <- group_treatments[group_treatments != swap_pair[1]]
-          if (length(different_treatments) > 0) {
-            swap_pair[2] <- sample(different_treatments, 1)
-          } else {
-            next  # Skip this swap if no different treatments available
-          }
+        # Only proceed if there are at least 2 different treatments
+        if (length(group_treatments) < 2) {
+          # Skip this swap - only one treatment in this group
+          next
         }
 
+        # Select two different treatments
+        # Use sample with replace=FALSE to ensure they're different
+        swap_pair <- sample(group_treatments, 2, replace = FALSE)
+
         # Find all plots with these treatments in this group
-        plots_1 <- which(new_design[[level_swap_within]] == group &
-                         new_design[[level_swap]] == swap_pair[1])
-        plots_2 <- which(new_design[[level_swap_within]] == group &
-                         new_design[[level_swap]] == swap_pair[2])
+        plots_1 <- which(group_filter & new_design[[swap]] == swap_pair[1])
+        plots_2 <- which(group_filter & new_design[[swap]] == swap_pair[2])
 
         # Swap all instances of these treatments
-        new_design[[level_swap]][plots_1] <- swap_pair[2]
-        new_design[[level_swap]][plots_2] <- swap_pair[1]
+        new_design[[swap]][plots_1] <- swap_pair[2]
+        new_design[[swap]][plots_2] <- swap_pair[1]
 
         swapped_items[swapped_idx] <- swap_pair[1]
         swapped_items[swapped_idx + 1] <- swap_pair[2]
@@ -155,17 +145,87 @@ generate_sequential_neighbour <- function(design,
   return(list(design = new_design, swapped_items = swapped_items[1:(swapped_idx - 1)]))
 }
 
+#' Infer 'row' and 'col' with Patterns
+#'
+#' @description
+#' Infer data frame names with patterns to determine if variations of 'row' and 'col' columns exist.
+#'
+#' @inheritParams objective_function_signature
+#' @param grid_factors A named list specifying grid factors to construct a
+#'   matrix for calculating adjacency score, `dim1` for row and `dim2` for
+#'   column. (default: `list(dim1 = "row", dim2 = "col")`).
+#' @param quiet Logical (default: FALSE). If TRUE, output will be suppressed.
+#'
+#' @returns A list containing:
+#' - **inferred** - Logical; if TRUE, row and column columns were inferred from the data frame
+#' - **row** - Name of the row column
+#' - **col** - Name of the column column
+#'
+#' @keywords internal
+# fmt: skip
+infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "col"), quiet = FALSE) {
+  if (grid_factors$dim1 %in% names(layout_df) && grid_factors$dim2 %in% names(layout_df)) {
+    row_col <- grid_factors$dim1
+    col_col <- grid_factors$dim2
+    if (!quiet) {
+      message(row_col, " and ", col_col, " are used as row and column, respectively.")
+    }
+    return(list(inferred = TRUE, row = row_col, col = col_col))
+  }
+
+  row_pattern <- "(?i)^row(s|)$"
+  col_pattern <- "(?i)^(col(umn|)|range)(s|)$"
+
+  row_col <- grep(row_pattern, names(layout_df), value = TRUE)[1]
+  col_col <- grep(col_pattern, names(layout_df), value = TRUE)[1]
+  if (is.na(row_col) || is.na(col_col)) {
+    if (is.na(row_col)) {
+      warning(
+        "Cannot infer row in the design data frame. speed.adj_weight is set to 0 for this call. If this is not",
+        " intended, provide `grid_factors` argument.",
+        call. = FALSE
+      )
+    } else {
+      warning(
+        "Cannot infer column in the design data frame. speed.adj_weight is set to 0 for this call. If this is",
+        " not intended, provide `grid_factors` argument.",
+        call. = FALSE
+      )
+    }
+
+    return(list(inferred = FALSE))
+  }
+  if (!quiet) {
+    message(row_col, " and ", col_col, " are used as row and column, respectively.")
+  }
+  return(list(inferred = TRUE, row = row_col, col = col_col))
+}
+
 #' Initialise Design Data Frame
 #'
 #' @description
 #' Initialise a design data frame with or without blocking.
 #'
-#' @param items Items to be placed in the design. Either a single numeric value (the number of
-#' equally replicated items), or a vector of items.
-#' @param nrows Number of rows in the design
-#' @param ncols Number of columns in the design
-#' @param block_nrows Number of rows in each block
-#' @param block_ncols Number of columns in each block
+#' @param items Items to be placed in the design. Either a single numeric value
+#'   (the number of equally replicated items), or a vector of items. (default:
+#'   `NULL`)
+#' @param nrows Number of rows in the design (default: `NULL`)
+#' @param ncols Number of columns in the design (default: `NULL`)
+#' @param block_nrows Number of rows in each block (default: `NULL`)
+#' @param block_ncols Number of columns in each block (default: `NULL`)
+#' @param splits A named list of nested-unit specifications, ordered from the
+#'   outermost level to the innermost. Each entry is itself a list with
+#'   `nrows` and `ncols` (the dimensions of one unit at that level, in cells)
+#'   and an optional `items` (treatments to allocate across the units at that
+#'   level, one item per unit, ordered by parent then within-parent ID).
+#'   For each level, `<name>` and `<name>_treatment` columns are added (the
+#'   latter only if `items` is provided). Used to build hierarchical layouts
+#'   such as split-plot, split-split-plot, and strip-plot designs.
+#'   (default: `NULL`)
+#' @param designs A list of named arguments describing design specifications,
+#'   required if `nrows` and `ncols` are absent. (default: `NULL`)
+#' @param design_col A column name to distinguish different designs (default:
+#'   `"site"`)
 #'
 #' @return A data frame containing the design
 #'
@@ -179,36 +239,197 @@ generate_sequential_neighbour <- function(design,
 #' # blocking
 #' initialise_design_df(rep(1:8, 4), 8, 4, 2, 2)
 #'
+#' # another blocking example
+#' initialise_design_df(
+#'   items = paste0("T", 1:6),
+#'   nrows = 4,
+#'   ncols = 6,
+#'   block_nrows = 2,
+#'   block_ncols = 3
+#' )
+#'
+#' # MET
+#' initialise_design_df(
+#'   items = c(rep(1:10, 6), rep(11:20, 8)),
+#'   designs = list(
+#'     a = list(nrows = 10, ncols = 3),
+#'     b = list(nrows = 10, ncols = 5),
+#'     c = list(nrows = 10, ncols = 6)
+#'   )
+#' )
+#'
+#' # MET with different items for each site
+#' initialise_design_df(
+#'   designs = list(
+#'     a = list(items = 1:30, nrows = 10, ncols = 6),
+#'     b = list(items = 1:25, nrows = 10, ncols = 5),
+#'     c = list(items = 16:30, nrows = 10, ncols = 3)
+#'   )
+#' )
+#'
+#' # split-plot: 4 replicate blocks of 12x1, each block holds 3 wholeplots of 4x1,
+#' # each wholeplot holds 4 subplots
+#' initialise_design_df(
+#'   nrows = 12, ncols = 4,
+#'   block_nrows = 12, block_ncols = 1,
+#'   splits = list(
+#'     wholeplot = list(nrows = 4, ncols = 1, items = LETTERS[1:3]),
+#'     subplot = list(nrows = 1, ncols = 1, items = letters[1:4])
+#'   )
+#' )
+#'
 #' @export
 # fmt: skip
-initialise_design_df <- function(items,
-                                 nrows,
-                                 ncols,
+initialise_design_df <- function(items = NULL,
+                                 nrows = NULL,
+                                 ncols = NULL,
                                  block_nrows = NULL,
-                                 block_ncols = NULL) {
-  .verify_initialise_design_df(nrows, ncols, block_nrows, block_ncols)
+                                 block_ncols = NULL,
+                                 splits = NULL,
+                                 designs = NULL,
+                                 design_col = "site") {
+  .verify_initialise_design_df(items, nrows, ncols, block_nrows, block_ncols, splits, designs, design_col)
 
   # If items is a single numeric value, take it as the number of equally replicated treatments
   if (length(items) == 1 && is.numeric(items)) {
     items <- paste0("T", 1:items)
   }
 
-  rows <- rep(1:nrows, ncols)
-  cols <- rep(1:ncols, each = nrows)
-  df <- data.frame(
-    row = rows,
-    col = cols,
-    treatment = items
-  )
+  # if designs is provided, usually for multi-site
+  if (!is.null(designs)) {
+    return(initialise_multiple_designs_df(items, designs, design_col))
+  }
+
+  # Create grid
+  df <- expand.grid(row = 1:nrows, col = 1:ncols)
+  if (!is.null(items)) {
+    df$treatment <- items
+  }
+
+  # If blocked design
   if (!is.null(block_nrows)) {
     nblocks_row <- nrows / block_nrows
-    nblocks_col <- ncols / block_ncols
 
-    df$row_block <- rep(1:nblocks_row, ncols, each = block_nrows)
-    df$col_block <- rep(1:nblocks_col, each = nrows * block_ncols)
-    df$block <- as.numeric(df$row_block) +
-      nblocks_row * (as.numeric(df$col_block) - 1)
+    df$row_block <- ceiling(df$row / block_nrows)
+    df$col_block <- ceiling(df$col / block_ncols)
+    df$block <- df$row_block + nblocks_row * (df$col_block - 1)
+
+    # For each block, assign treatments
+    if (!is.null(items)) {
+      df$treatment[order(df$block)] <- items
+    }
   }
+
+  if (!is.null(splits)) {
+    df <- apply_splits(df, splits, nrows, ncols, block_nrows, block_ncols)
+  }
+
+  return(df)
+}
+
+#' Apply Nested Splits to a Design Data Frame
+#'
+#' @description
+#' Adds nested-unit ID columns (and optional treatment columns) to a design data
+#' frame produced by [initialise_design_df()]. Each split level subdivides the
+#' parent unit (block, or the whole grid if there are no blocks) into smaller
+#' rectangular units of size `nrows` by `ncols`. Subsequent levels subdivide
+#' the units of the previous level, with the same column-major numbering that
+#' [initialise_design_df()] uses for blocks.
+#'
+#' @inheritParams initialise_design_df
+#' @param df A data frame with `row` and `col` columns (and `block` if blocking
+#'   is in use), as built by [initialise_design_df()].
+#'
+#' @return The data frame with one ID column per split (named after the split)
+#'   and one `<name>_treatment` column per split that supplies `items`.
+#'
+#' @keywords internal
+apply_splits <- function(df, splits, nrows, ncols, block_nrows, block_ncols) {
+  splits <- add_names(splits)
+
+  if (!is.null(block_nrows)) {
+    parent_id <- df$block
+    parent_nrows <- block_nrows
+    parent_ncols <- block_ncols
+  } else {
+    parent_id <- rep(1L, nrow(df))
+    parent_nrows <- nrows
+    parent_ncols <- ncols
+  }
+
+  for (split_name in names(splits)) {
+    split <- splits[[split_name]]
+
+    # Local row/col within the parent unit (parents are contiguous rectangles)
+    local_row <- ((df$row - 1) %% parent_nrows) + 1
+    local_col <- ((df$col - 1) %% parent_ncols) + 1
+
+    child_row_idx <- ceiling(local_row / split$nrows)
+    child_col_idx <- ceiling(local_col / split$ncols)
+    n_child_rows <- parent_nrows / split$nrows
+    n_children_per_parent <- n_child_rows * (parent_ncols / split$ncols)
+
+    df[[split_name]] <- (parent_id - 1) * n_children_per_parent +
+      child_row_idx +
+      n_child_rows * (child_col_idx - 1)
+
+    if (!is.null(split$items)) {
+      treatment_col <- paste0(split_name, "_treatment")
+      n_children <- max(df[[split_name]])
+      items_vec <- split$items
+
+      if (length(items_vec) == 1 && is.numeric(items_vec)) {
+        items_vec <- paste0("T", seq_len(items_vec))
+      }
+
+      if (length(items_vec) != n_children) {
+        if (n_children %% length(items_vec) == 0) {
+          # Recycle once per parent unit so each parent receives a full set
+          items_vec <- rep(items_vec, length.out = n_children)
+        } else {
+          stop(sprintf(
+            "`items` for split `%s` must have length %d (or divide it); got %d",
+            split_name, n_children, length(items_vec)
+          ), call. = FALSE)
+        }
+      }
+
+      df[[treatment_col]] <- items_vec[df[[split_name]]]
+    }
+
+    parent_id <- df[[split_name]]
+    parent_nrows <- split$nrows
+    parent_ncols <- split$ncols
+  }
+
+  return(df)
+}
+
+#' Initialise Multiple Design Data Frames
+#'
+#' @inheritParams initialise_design_df
+#'
+#' @keywords internal
+initialise_multiple_designs_df <- function(items, designs, design_col) {
+  designs <- add_names(designs)
+  df <- data.frame()
+  for (design_name in names(designs)) {
+    design_args <- designs[[design_name]]
+    items_sub <- design_args$items
+    if (is.null(items_sub)) {
+      item_idx <- seq_len(design_args$nrows * design_args$ncols)
+      items_sub <- items[item_idx]
+      items <- items[-item_idx]
+    }
+
+    df_sub <- initialise_design_df(
+      items_sub, design_args$nrows, design_args$ncols, design_args$block_nrows, design_args$block_ncols
+    )
+    df_sub[[design_col]] <- design_name
+    df <- rbind_fill(df, df_sub)
+  }
+
   return(df)
 }
 
@@ -220,25 +441,137 @@ initialise_design_df <- function(items,
 #' @return A data frame with the items shuffled
 #'
 #' @keywords internal
+# fmt: skip
 shuffle_items <- function(design, swap, swap_within, seed = NULL) {
   if (!is.null(seed)) {
     set.seed(seed)
   }
 
-  for (i in unique(design[[swap_within]])) {
-    items <- design[design[[swap_within]] == i, ][[swap]]
-    design[design[[swap_within]] == i, ][[swap]] <- sample(items)
+  for (i in levels(design[[swap_within]])) {
+    swap_within_filter <- design[[swap_within]] == i & !is.na(design[[swap_within]])
+    items <- design[swap_within_filter, ][[swap]]
+    design[swap_within_filter, ][[swap]] <- sample(items)
   }
 
   return(design)
 }
 
+#' Random Initialise
+#'
+#' @description
+#' Randomly shuffle items with [shuffle_items] n times and return the best design.
+#'
+#' @inheritParams speed
+#'
+#' @return A data frame with the items shuffled
+#'
+#' @keywords internal
+random_initialise <- function(design, optimise, seed = NULL, ...) {
+  random_initialisation <- optimise[[1]]$optimise_params$random_initialisation
+  if (random_initialisation == 0) {
+    return(design)
+  }
+
+  if (length(optimise) > 1) {
+    groups <- c()
+    for (i in seq_along(optimise)) {
+      groups <- c(groups, optimise[[i]]$swap_within)
+      if (i == 1) next
+
+      now <- as.numeric(Sys.time())
+      dummy_col <- paste0(paste(groups, collapse = "_"), "_", now)
+      optimise[[i]]$swap_within <- dummy_col
+      design[[dummy_col]] <- apply(design[, groups], 1, paste, collapse = "-") |>
+        factor()
+    }
+  }
+
+  best_score <- Inf
+  best_design <- design
+  for (i in seq_len(random_initialisation)) {
+    shuffled_design <- design
+    for (opt in optimise) {
+      shuffled_design <- shuffle_items(shuffled_design, opt$swap, opt$swap_within, seed + i - 1)
+    }
+
+    # scoring
+    current_score <- 0
+    for (opt in optimise) {
+      spatial_cols <- all.vars(opt$spatial_factors)
+      adj_weight <- opt$optimise_params$adj_weight
+      bal_weight <- opt$optimise_params$bal_weight
+      current_score <- current_score + opt$obj_function(
+        shuffled_design,
+        opt$swap,
+        spatial_cols,
+        adj_weight = adj_weight,
+        bal_weight = bal_weight,
+        ...
+      )$score
+    }
+
+    if (current_score < best_score) {
+      if (current_score == 0) {
+        return(shuffled_design)
+      }
+
+      best_score <- current_score
+      best_design <- shuffled_design
+    }
+  }
+
+  for (opt in optimise[-1]) {
+    best_design[[opt$swap_within]] <- NULL
+  }
+
+  return(best_design)
+}
+
 # fmt: skip
-.verify_initialise_design_df <- function(nrows,
+.verify_initialise_design_df <- function(items,
+                                         nrows,
                                          ncols,
                                          block_nrows,
-                                         block_ncols) {
-  verify_positive_whole_number(nrows, ncols)
+                                         block_ncols,
+                                         splits,
+                                         designs,
+                                         design_col) {
+  if (is.null(designs) && is.null(nrows) && is.null(ncols)) {
+    stop("Either `nrows` and `ncols` or `designs` must be provided")
+  }
+
+  if (is.null(designs)) {
+    verify_positive_whole_number(nrows, ncols)
+    if (!is.null(items)) {
+      verify_positive_whole_number(length(items))
+    } else if (is.null(splits)) {
+      stop("`items` must be provided when `splits` is `NULL`", call. = FALSE)
+    }
+  } else {
+    verify_list(designs)
+    valid_args <- c("items", "nrows", "ncols", "block_nrows", "block_ncols")
+    for (design in designs) {
+      verify_list(design)
+      for (arg in names(design)) {
+        if (!(arg %in% valid_args)) {
+          stop(paste0("`", arg, "` is an invalid argument"))
+        }
+      }
+      if (length(setdiff(c("nrows", "ncols"), names(design))) > 0) {
+        stop("`nrows` and `ncols` must be provided for each design")
+      }
+    }
+
+    # check items
+    items_exist <- unlist(lapply(designs, function(x) "items" %in% names(x)))
+    if (any(items_exist) && !all(items_exist)) {
+      stop("`items` must be provided for all designs")
+    }
+    if (all(!items_exist) && is.null(items)) {
+      stop("`items` must be provided for all designs or `items` must be provided to `initialise_design_df`")
+    }
+  }
+  verify_character(design_col)
 
   if (
     (!is.null(block_nrows) && is.null(block_ncols)) ||
@@ -253,9 +586,40 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
 
     verify_multiple_of(nrows, block_nrows)
     verify_multiple_of(ncols, block_ncols)
+    if (!is.null(items)) {
+      verify_multiple_of(nrows * ncols, length(items))
+    }
+  }
+
+  if (!is.null(splits)) {
+    verify_list(splits)
+    valid_split_args <- c("nrows", "ncols", "items")
+    parent_nrows <- if (!is.null(block_nrows)) block_nrows else nrows
+    parent_ncols <- if (!is.null(block_ncols)) block_ncols else ncols
+
+    splits_named <- add_names(splits)
+    for (split_name in names(splits_named)) {
+      split <- splits_named[[split_name]]
+      verify_list(split)
+      for (arg in names(split)) {
+        if (!(arg %in% valid_split_args)) {
+          stop(paste0("`", arg, "` is an invalid argument in `splits$", split_name, "`"), call. = FALSE)
+        }
+      }
+      if (length(setdiff(c("nrows", "ncols"), names(split))) > 0) {
+        stop(paste0("`nrows` and `ncols` must be provided for split `", split_name, "`"), call. = FALSE)
+      }
+      verify_positive_whole_number(split$nrows, split$ncols)
+      verify_multiple_of(parent_nrows, split$nrows)
+      verify_multiple_of(parent_ncols, split$ncols)
+
+      parent_nrows <- split$nrows
+      parent_ncols <- split$ncols
+    }
   }
 }
 
 # Alias for the function to maintain backward compatibility
 #' @rdname initialise_design_df
+#' @export
 initialize_design_df <- initialise_design_df

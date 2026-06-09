@@ -6,32 +6,55 @@
 \title{Initialise Design Data Frame}
 \usage{
 initialise_design_df(
-  items,
-  nrows,
-  ncols,
+  items = NULL,
+  nrows = NULL,
+  ncols = NULL,
   block_nrows = NULL,
-  block_ncols = NULL
+  block_ncols = NULL,
+  splits = NULL,
+  designs = NULL,
+  design_col = "site"
 )
 
 initialize_design_df(
-  items,
-  nrows,
-  ncols,
+  items = NULL,
+  nrows = NULL,
+  ncols = NULL,
   block_nrows = NULL,
-  block_ncols = NULL
+  block_ncols = NULL,
+  splits = NULL,
+  designs = NULL,
+  design_col = "site"
 )
 }
 \arguments{
-\item{items}{Items to be placed in the design. Either a single numeric value (the number of
-equally replicated items), or a vector of items.}
+\item{items}{Items to be placed in the design. Either a single numeric value
+(the number of equally replicated items), or a vector of items. (default:
+\code{NULL})}
 
-\item{nrows}{Number of rows in the design}
+\item{nrows}{Number of rows in the design (default: \code{NULL})}
 
-\item{ncols}{Number of columns in the design}
+\item{ncols}{Number of columns in the design (default: \code{NULL})}
 
-\item{block_nrows}{Number of rows in each block}
+\item{block_nrows}{Number of rows in each block (default: \code{NULL})}
 
-\item{block_ncols}{Number of columns in each block}
+\item{block_ncols}{Number of columns in each block (default: \code{NULL})}
+
+\item{splits}{A named list of nested-unit specifications, ordered from the
+outermost level to the innermost. Each entry is itself a list with
+\code{nrows} and \code{ncols} (the dimensions of one unit at that level, in cells)
+and an optional \code{items} (treatments to allocate across the units at that
+level, one item per unit, ordered by parent then within-parent ID).
+For each level, \verb{<name>} and \verb{<name>_treatment} columns are added (the
+latter only if \code{items} is provided). Used to build hierarchical layouts
+such as split-plot, split-split-plot, and strip-plot designs.
+(default: \code{NULL})}
+
+\item{designs}{A list of named arguments describing design specifications,
+required if \code{nrows} and \code{ncols} are absent. (default: \code{NULL})}
+
+\item{design_col}{A column name to distinguish different designs (default:
+\code{"site"})}
 }
 \value{
 A data frame containing the design
@@ -48,5 +71,44 @@ initialise_design_df(
 
 # blocking
 initialise_design_df(rep(1:8, 4), 8, 4, 2, 2)
+
+# another blocking example
+initialise_design_df(
+  items = paste0("T", 1:6),
+  nrows = 4,
+  ncols = 6,
+  block_nrows = 2,
+  block_ncols = 3
+)
+
+# MET
+initialise_design_df(
+  items = c(rep(1:10, 6), rep(11:20, 8)),
+  designs = list(
+    a = list(nrows = 10, ncols = 3),
+    b = list(nrows = 10, ncols = 5),
+    c = list(nrows = 10, ncols = 6)
+  )
+)
+
+# MET with different items for each site
+initialise_design_df(
+  designs = list(
+    a = list(items = 1:30, nrows = 10, ncols = 6),
+    b = list(items = 1:25, nrows = 10, ncols = 5),
+    c = list(items = 16:30, nrows = 10, ncols = 3)
+  )
+)
+
+# split-plot: 4 replicate blocks of 12x1, each block holds 3 wholeplots of 4x1,
+# each wholeplot holds 4 subplots
+initialise_design_df(
+  nrows = 12, ncols = 4,
+  block_nrows = 12, block_ncols = 1,
+  splits = list(
+    wholeplot = list(nrows = 4, ncols = 1, items = LETTERS[1:3]),
+    subplot = list(nrows = 1, ncols = 1, items = letters[1:4])
+  )
+)
 
 }

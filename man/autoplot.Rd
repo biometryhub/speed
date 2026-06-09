@@ -13,7 +13,6 @@ autoplot(object, ...)
   size = 4,
   margin = FALSE,
   palette = "default",
-  buffer = NULL,
   row = NULL,
   column = NULL,
   block = NULL,
@@ -33,9 +32,7 @@ autoplot(object, ...)
 
 \item{margin}{Logical (default \code{FALSE}). A value of \code{FALSE} will expand the plot to the edges of the plotting area i.e. remove white space between plot and axes.}
 
-\item{palette}{A string specifying the colour scheme to use for plotting or a vector of custom colours to use as the palette. Default is equivalent to "Spectral". Colour blind friendly palettes can also be provided via options \code{"colour blind"} (or \code{"color blind"}, both equivalent to \code{"viridis"}), \code{"magma"}, \code{"inferno"}, \code{"plasma"}, \code{"cividis"}, \code{"rocket"}, \code{"mako"} or \code{"turbo"}. Other palettes from \code{\link[scales:pal_brewer]{scales::brewer_pal()}} are also possible.}
-
-\item{buffer}{A string specifying the buffer plots to include for plotting. Default is \code{NULL} (no buffers plotted). Other options are "edge" (outer edge of trial area), "rows" (between rows), "columns" (between columns), "double row" (a buffer row each side of a treatment row) or "double column" (a buffer row each side of a treatment column). "blocks" (a buffer around each treatment block) will be implemented in a future release.}
+\item{palette}{A string specifying the colour scheme to use for plotting or a vector of custom colours to use as the palette. Default is equivalent to "Spectral". Colour blind friendly palettes can also be provided via options \code{"colour blind"} (or \code{"color blind"}, both equivalent to \code{"viridis"}), \code{"magma"}, \code{"inferno"}, \code{"plasma"}, \code{"cividis"}, \code{"rocket"}, \code{"mako"} or \code{"turbo"}. Other palettes from \code{\link[scales:brewer_pal]{scales::brewer_pal()}} are also possible.}
 
 \item{row}{A variable to plot a column from \code{object} as rows.}
 
@@ -61,14 +58,11 @@ df <- data.frame(
      treatment = rep(LETTERS[1:8], 3),
      block = rep(1:3, each = 8))
 
-# Set seed for reproducibility
-set.seed(42)
-
 # Optimise while respecting blocks
 result <- speed(df,
                 "treatment",
                 swap_within = "block",
-                iterations = 5000)
+                seed = 42)
 
 # Plot the design with block boundaries
 autoplot(result)
@@ -82,21 +76,9 @@ autoplot(result, palette = "colour-blind")
 # Alternative colour scheme
 autoplot(result, palette = "plasma")
 
-df <- data.frame(
-      row = rep(1:4, each = 3),
-      col = rep(1:3, times = 4),
-      treatment = rep(LETTERS[1:4], 3))
-
-# Set seed for reproducibility
-set.seed(42)
-
-# Optimise while respecting blocks
-result <- speed(df,
-                "treatment",
-                iterations = 5000)
-
 # Custom colour palette
-autoplot(result, palette = c("#ef746a", "#3fbfc5", "#81ae00", "#c37cff"))
+autoplot(result, palette = c("#ef746a", "#3fbfc5", "#81ae00", "#c37cff",
+                             "#304702", "#dde024", "#630380ff", "#df7700"))
 }
 \seealso{
 \code{\link[=speed]{speed()}}

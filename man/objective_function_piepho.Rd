@@ -11,6 +11,8 @@ objective_function_piepho(
   current_score_obj = NULL,
   swapped_items = NULL,
   pair_mapping = NULL,
+  row_column = "row",
+  col_column = "col",
   ...
 )
 }
@@ -26,6 +28,10 @@ objective_function_piepho(
 \item{swapped_items}{The items that had just been swapped}
 
 \item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
+
+\item{row_column}{Name of column representing the row of the design (default: "row")}
+
+\item{col_column}{Name of column representing the column of the design (default: "col")}
 
 \item{...}{Extra parameters passed from \link{speed}}
 }
@@ -53,7 +59,7 @@ objective_function_piepho(design_df, "treatment", c("row", "col"), pair_mapping 
 \references{
 Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of distribution
 of treatment replications in row-column designs. Biometrical journal. Biometrische Zeitschrift, 60(6),
-1172–1189. \url{https://doi.org/10.1002/bimj.201800013}
+1172-1189. \url{https://doi.org/10.1002/bimj.201800013}
 }
 \seealso{
 \code{\link[=objective_function]{objective_function()}}, \code{\link[=create_pair_mapping]{create_pair_mapping()}}
