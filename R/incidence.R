@@ -13,11 +13,11 @@
 #' are immediate neighbours.
 #'
 #' @param design A `design` object returned by [speed()], or a plain data
-#'   frame containing at least the columns named by `swap`, `row_col`, and
-#'   `col_col`.
+#'   frame containing at least the columns named by `swap`, `row_column`, and
+#'   `col_column`.
 #' @param swap Column name of the treatment variable (default `"treatment"`).
-#' @param row_col Column name of the row position variable (default `"row"`).
-#' @param col_col Column name of the column position variable (default `"col"`).
+#' @param row_column Column name of the row position variable (default `"row"`).
+#' @param col_column Column name of the column position variable (default `"col"`).
 #' @param as_list If `TRUE`, returns a named list instead of a matrix: one
 #'   entry per treatment, each a named integer vector of neighbour counts with
 #'   every other treatment (including itself on the diagonal). This is the
@@ -31,27 +31,33 @@
 #'   is a named integer vector of neighbour counts for that treatment.
 #'
 #' @examples
-#' # 3x3 Latin square — all pairs equally adjacent, zero self-adjacency
-#' df <- initialise_design_df(
+#' # From a speed() result
+#' df <- data.frame(
+#'   row = rep(1:4, times = 3),
+#'   col = rep(1:3, each = 4),
+#'   treatment = rep(c("A", "B", "C"), 4)
+#' )
+#' result <- speed(df, swap = "treatment", seed = 42, iterations = 200)
+#' calculate_pair_incidence(result)
+#'
+#' # From a plain data frame; as named list
+#' df2 <- initialise_design_df(
 #'   items = c("A", "B", "C", "B", "C", "A", "C", "A", "B"),
 #'   nrows = 3,
 #'   ncols = 3
 #' )
-#' calculate_pair_incidence(df)
-#'
-#' # as named list
-#' calculate_pair_incidence(df, as_list = TRUE)
+#' calculate_pair_incidence(df2, as_list = TRUE)
 #'
 #' @seealso [calculate_adjacency_score()], [calculate_position_incidence()]
 #'
 #' @export
 calculate_pair_incidence <- function(design,
                                      swap = "treatment",
-                                     row_col = "row",
-                                     col_col = "col",
+                                     row_column = "row",
+                                     col_column = "col",
                                      as_list = FALSE) {
   df <- if (inherits(design, "design")) design$design_df else design
-  missing_cols <- setdiff(c(swap, row_col, col_col), names(df))
+  missing_cols <- setdiff(c(swap, row_column, col_column), names(df))
   if (length(missing_cols)) {
     stop(
       "Column(s) not found in data: ",
@@ -60,7 +66,7 @@ calculate_pair_incidence <- function(design,
     )
   }
 
-  m <- build_design_matrix(df, swap, row_col, col_col)
+  m <- build_design_matrix(df, swap, row_column, col_column)
   nr <- nrow(m)
   nc <- ncol(m)
 
@@ -128,12 +134,14 @@ calculate_pair_incidence <- function(design,
 #'   distribution of treatment A.
 #'
 #' @examples
-#' df <- initialise_design_df(
-#'   items = c("A", "B", "C", "B", "C", "A", "C", "A", "B"),
-#'   nrows = 3,
-#'   ncols = 3
+#' # From a speed() result
+#' df <- data.frame(
+#'   row = rep(1:4, times = 3),
+#'   col = rep(1:3, each = 4),
+#'   treatment = rep(c("A", "B", "C"), 4)
 #' )
-#' res <- calculate_position_incidence(df)
+#' result <- speed(df, swap = "treatment", seed = 42, iterations = 200)
+#' res <- calculate_position_incidence(result)
 #' res$row  # treatment × row counts
 #' res$col  # treatment × column counts
 #'
@@ -142,10 +150,10 @@ calculate_pair_incidence <- function(design,
 #' @export
 calculate_position_incidence <- function(design,
                                          swap = "treatment",
-                                         row_col = "row",
-                                         col_col = "col") {
+                                         row_column = "row",
+                                         col_column = "col") {
   df <- if (inherits(design, "design")) design$design_df else design
-  missing_cols <- setdiff(c(swap, row_col, col_col), names(df))
+  missing_cols <- setdiff(c(swap, row_column, col_column), names(df))
   if (length(missing_cols)) {
     stop(
       "Column(s) not found in data: ",
@@ -160,8 +168,8 @@ calculate_position_incidence <- function(design,
   )
   trt_fac <- factor(df[[swap]], levels = lvls)
 
-  row_tbl <- table(trt_fac, df[[row_col]])
-  col_tbl <- table(trt_fac, df[[col_col]])
+  row_tbl <- table(trt_fac, df[[row_column]])
+  col_tbl <- table(trt_fac, df[[col_column]])
 
   row_mat <- matrix(
     as.integer(row_tbl),

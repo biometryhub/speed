@@ -7,20 +7,20 @@
 calculate_position_incidence(
   design,
   swap = "treatment",
-  row_col = "row",
-  col_col = "col"
+  row_column = "row",
+  col_column = "col"
 )
 }
 \arguments{
 \item{design}{A \code{design} object returned by \code{\link[=speed]{speed()}}, or a plain data
-frame containing at least the columns named by \code{swap}, \code{row_col}, and
-\code{col_col}.}
+frame containing at least the columns named by \code{swap}, \code{row_column}, and
+\code{col_column}.}
 
 \item{swap}{Column name of the treatment variable (default \code{"treatment"}).}
 
-\item{row_col}{Column name of the row position variable (default \code{"row"}).}
+\item{row_column}{Column name of the row position variable (default \code{"row"}).}
 
-\item{col_col}{Column name of the column position variable (default \code{"col"}).}
+\item{col_column}{Column name of the column position variable (default \code{"col"}).}
 }
 \value{
 A named list with two integer matrices, both with treatments as rows
@@ -39,12 +39,14 @@ what \code{\link[=calculate_balance_score]{calculate_balance_score()}} collapses
 counts reveal where spatial imbalance lies.
 }
 \examples{
-df <- initialise_design_df(
-  items = c("A", "B", "C", "B", "C", "A", "C", "A", "B"),
-  nrows = 3,
-  ncols = 3
+# From a speed() result
+df <- data.frame(
+  row = rep(1:4, times = 3),
+  col = rep(1:3, each = 4),
+  treatment = rep(c("A", "B", "C"), 4)
 )
-res <- calculate_position_incidence(df)
+result <- speed(df, swap = "treatment", seed = 42)
+res <- calculate_position_incidence(result)
 res$row  # treatment × row counts
 res$col  # treatment × column counts
 

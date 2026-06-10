@@ -7,21 +7,21 @@
 calculate_pair_incidence(
   design,
   swap = "treatment",
-  row_col = "row",
-  col_col = "col",
+  row_column = "row",
+  col_column = "col",
   as_list = FALSE
 )
 }
 \arguments{
 \item{design}{A \code{design} object returned by \code{\link[=speed]{speed()}}, or a plain data
-frame containing at least the columns named by \code{swap}, \code{row_col}, and
-\code{col_col}.}
+frame containing at least the columns named by \code{swap}, \code{row_column}, and
+\code{col_column}.}
 
 \item{swap}{Column name of the treatment variable (default \code{"treatment"}).}
 
-\item{row_col}{Column name of the row position variable (default \code{"row"}).}
+\item{row_column}{Column name of the row position variable (default \code{"row"}).}
 
-\item{col_col}{Column name of the column position variable (default \code{"col"}).}
+\item{col_column}{Column name of the column position variable (default \code{"col"}).}
 
 \item{as_list}{If \code{TRUE}, returns a named list instead of a matrix: one
 entry per treatment, each a named integer vector of neighbour counts with
@@ -49,16 +49,22 @@ is the total number of edges where treatment \eqn{i} and treatment \eqn{j}
 are immediate neighbours.
 }
 \examples{
-# 3x3 Latin square — all pairs equally adjacent, zero self-adjacency
-df <- initialise_design_df(
+# From a speed() result
+df <- data.frame(
+  row = rep(1:4, times = 3),
+  col = rep(1:3, each = 4),
+  treatment = rep(c("A", "B", "C"), 4)
+)
+result <- speed(df, swap = "treatment", seed = 42)
+calculate_pair_incidence(result)
+
+# From a plain data frame; as named list
+df2 <- initialise_design_df(
   items = c("A", "B", "C", "B", "C", "A", "C", "A", "B"),
   nrows = 3,
   ncols = 3
 )
-calculate_pair_incidence(df)
-
-# as named list
-calculate_pair_incidence(df, as_list = TRUE)
+calculate_pair_incidence(df2, as_list = TRUE)
 
 }
 \seealso{
