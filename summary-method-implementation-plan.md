@@ -332,8 +332,11 @@ Adapted from the colleague's `sommario.duplicates.span.doe`:
 1. ~~**Connectedness scope**~~ — **resolved** (revised): two base-R paths —
    block-graph (needs a block) and `lm` model-estimability (needs row/col). No
    igraph/lme4. Only degrades to `NA` when neither block nor row/col exists.
-2. **Default for `concurrence`** — auto-on when a block exists (current plan) vs
-   always opt-in.
+2. ~~**Default for `concurrence`**~~ — **resolved**: auto-on only for an
+   *incomplete* block factor (some treatment absent from some block, i.e. a zero
+   in the incidence matrix). Complete blocks (RCBD, split-plot, ...) make every
+   concurrence equal the replication, so they are skipped with a note unless
+   `concurrence = TRUE` forces them.
 3. ~~**Neighbour balance / ED**~~ — **resolved**: `neighbour = NULL` auto-detects
    from Phase-1 metadata whether the NB objective was used.
 

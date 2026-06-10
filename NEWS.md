@@ -1,3 +1,20 @@
+# speed 0.0.9
+
+## Major Changes
+
+- Added a `summary()` method for `"design"` objects that reports design-evaluation
+  metrics: structure and replication, the optimised score decomposed into
+  adjacency and balance components, connectedness, within-block concurrences (for
+  incomplete blocks), replicate spatial spans, an opt-in A-efficiency factor, and
+  neighbour balance (for neighbour-balance designs).
+
+## Minor Changes
+
+- `print()` for designs now shows a compact identity card (layout, replication,
+  convergence) and points to `summary()` for evaluation metrics.
+- `speed()` results now carry a `metadata` field recording each level's swap
+  variable, spatial factors, weights and optimisation settings.
+
 # speed 0.0.8
 
 ## Major Changes

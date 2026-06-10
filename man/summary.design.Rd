@@ -48,6 +48,20 @@ The returned object is a list of class \code{"summary.design"}; it can be assign
 and queried programmatically (e.g. \verb{s <- summary(d); s$per_level$score}).
 Printing it is handled by \code{\link[=print.summary.design]{print.summary.design()}}.
 }
+\examples{
+df <- data.frame(
+  row = rep(1:4, times = 3),
+  col = rep(1:3, each = 4),
+  treatment = rep(LETTERS[1:3], 4)
+)
+design <- speed(df, swap = "treatment", swap_within = "1",
+                spatial_factors = ~ row + col, iterations = 100, seed = 1)
+summary(design)
+
+# Opt in to the (heavier) A-efficiency factor
+summary(design, efficiency = TRUE)
+
+}
 \seealso{
 \code{\link[=print.design]{print.design()}}, \code{\link[=speed]{speed()}}
 }

@@ -143,3 +143,156 @@ test_that("summary errors clearly when metadata is absent", {
   d$metadata <- NULL
   expect_error(summary(d), "no `metadata`")
 })
+
+# --- Phase 4: evaluation metrics ------------------------------------------
+
+block_design <- function(seed = 7) {
+  d <- data.frame(
+    row = rep(1:4, each = 6),
+    col = rep(1:6, times = 4),
+    block = rep(1:4, each = 6),
+    treatment = rep(LETTERS[1:6], 4)
+  )
+  speed(d, swap = "treatment", swap_within = "block",
+        spatial_factors = ~ row + col + block, iterations = 300, seed = seed,
+        quiet = TRUE)
+}
+
+test_that("replicate spans are computed per level", {
+  rs <- summary(simple_design())$per_level[[1]]$evaluation$replicate_span
+  expect_true(rs$available)
+  expect_equal(rs$n_replicated, 3)
+  expect_true(is.finite(rs$min_row_span))
+  expect_true(is.finite(rs$min_col_span))
+  # Spans are at least 2 (a replicate cannot be 0 apart; +1 inclusive).
+  expect_gte(rs$min_row_span, 2)
+})
+
+test_that("connectedness uses the model path for grid designs", {
+  cn <- summary(simple_design())$per_level[[1]]$evaluation$connectedness
+  expect_true(cn$available)
+  expect_match(cn$method, "model")
+  expect_true(cn$connected)
+})
+
+test_that(".design_connectedness detects confounding (model) and components (graph)", {
+  # treatment perfectly aliased with row -> not estimable
+  dconf <- data.frame(row = rep(1:4, each = 3), col = rep(1:3, times = 4),
+                      treatment = rep(LETTERS[1:4], each = 3))
+  cn <- .design_connectedness(dconf, "treatment", NULL, "row", "col")
+  expect_false(cn$connected)
+  expect_gt(cn$n_aliased, 0)
+
+  # block-graph path: two disjoint treatment groups
+  dg <- data.frame(block = c(1, 1, 2, 2, 3, 3, 4, 4),
+                   treatment = c("A", "B", "A", "B", "C", "D", "C", "D"))
+  disc <- .design_connectedness(dg, "treatment", "block", NA, NA)
+  expect_match(disc$method, "block graph")
+  expect_false(disc$connected)
+  expect_equal(disc$n_components, 2)
+
+  dg2 <- data.frame(block = c(1, 1, 2, 2, 3, 3),
+                    treatment = c("A", "B", "B", "C", "C", "A"))
+  conn <- .design_connectedness(dg2, "treatment", "block", NA, NA)
+  expect_true(conn$connected)
+  expect_equal(conn$n_components, 1)
+})
+
+test_that("concurrence is computed for incomplete blocks, skipped for complete", {
+  # Incomplete BIBD: 4 treatments in 6 blocks of size 2, every pair once.
+  inc <- data.frame(
+    block = rep(1:6, each = 2),
+    treatment = c("A", "B", "A", "C", "A", "D", "B", "C", "B", "D", "C", "D")
+  )
+  cc <- .design_concurrence(inc, "treatment", "block")
+  expect_true(cc$available)
+  expect_false(cc$complete)
+  expect_true(cc$lambda_constant)   # BIBD: lambda = 1 for every pair
+  expect_equal(cc$lambda_max, 1)
+
+  # Complete blocks (RCBD): every treatment in every block -> uninformative.
+  comp <- data.frame(block = rep(1:3, each = 4),
+                     treatment = rep(c("A", "B", "C", "D"), 3))
+  cc2 <- .design_concurrence(comp, "treatment", "block")
+  expect_false(cc2$available)
+  expect_true(cc2$complete)
+
+  # ...unless forced.
+  cc3 <- .design_concurrence(comp, "treatment", "block", force = TRUE)
+  expect_true(cc3$available)
+  expect_true(cc3$complete)
+})
+
+test_that("complete-block designs auto-skip concurrence in summary()", {
+  # block_design() is an RCBD (each block holds every treatment once).
+  cc <- summary(block_design())$per_level[[1]]$evaluation$concurrence
+  expect_false(cc$available)
+  expect_true(isTRUE(cc$complete))
+
+  # Forcing it on computes it anyway.
+  cc_forced <- summary(block_design(), concurrence = TRUE)$per_level[[1]]$evaluation$concurrence
+  expect_true(cc_forced$available)
+})
+
+test_that("concurrence is skipped for designs without a block", {
+  cc <- summary(simple_design())$per_level[[1]]$evaluation$concurrence
+  expect_false(cc$available)
+  expect_match(cc$reason, "no block factor")
+})
+
+test_that("efficiency is opt-in and guarded", {
+  off <- summary(simple_design())$per_level[[1]]$evaluation$efficiency
+  expect_false(off$available)
+  expect_match(off$reason, "efficiency = TRUE")
+
+  on <- summary(simple_design(), efficiency = TRUE)$per_level[[1]]$evaluation$efficiency
+  expect_true(on$available)
+  expect_true(is.finite(on$value))
+
+  # Guard: < 3 treatments returns NA with a reason rather than erroring.
+  two <- .efficiency_factor(
+    data.frame(row = rep(1:2, 2), col = rep(1:2, each = 2),
+               treatment = rep(c("A", "B"), 2)),
+    "treatment"
+  )
+  expect_false(two$available)
+})
+
+test_that("neighbour balance auto-detects the piepho objective", {
+  d <- data.frame(row = rep(1:4, times = 3), col = rep(1:3, each = 4),
+                  treatment = rep(LETTERS[1:3], 4))
+  r <- speed(d, swap = "treatment", swap_within = "1", spatial_factors = ~ row + col,
+             obj_function = objective_function_piepho, iterations = 200, seed = 42,
+             quiet = TRUE)
+  nb <- summary(r)$per_level[[1]]$evaluation$neighbour
+  expect_false(is.null(nb))
+  expect_true(nb$available)
+  expect_true(is.finite(nb$nb_var))
+
+  # Default (objective_function) does not compute neighbour balance.
+  expect_null(summary(simple_design())$per_level[[1]]$evaluation$neighbour)
+})
+
+test_that("the disconnected flag fires and prints", {
+  # Build a summary then inject a disconnected verdict to exercise the flag path.
+  s <- summary(simple_design())
+  s$per_level[[1]]$evaluation$connectedness <-
+    list(available = TRUE, connected = FALSE, method = "model (row + col)",
+         message = "2 aliased coefficient(s)")
+  s$flags$disconnected <- names(s$per_level)
+  out <- capture_output(print(s))
+  expect_match(out, "DISCONNECTED")
+})
+
+test_that("the Evaluation section prints expected metrics", {
+  out <- capture_output(print(summary(block_design())))
+  expect_match(out, "Evaluation")
+  expect_match(out, "Connected:")
+  expect_match(out, "Repl. span:")
+  # Complete blocks -> concurrence shown as a skip note, no lambda.
+  expect_match(out, "Concurrence:.*complete blocks")
+
+  # Forcing concurrence prints the lambda line.
+  out_forced <- capture_output(print(summary(block_design(), concurrence = TRUE)))
+  expect_match(out_forced, "Concurrence:.*lambda")
+})

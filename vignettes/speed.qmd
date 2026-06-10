@@ -76,7 +76,7 @@ crd_result
 
 ### Output of the Optimisation
 
-The printed output from the returned design object shows the final optimisation score (lower is better), the number of iterations taken to reach that result, if the iterations stopped early due to lack of improvement, the treatments present in the design, and the seed. The output object contains some additional components, which can be seen below:
+The printed output from the returned design object is a compact identity card: the field layout, the treatments and their replication, the final optimisation score (lower is better), how many iterations were run (and whether it stopped early), and the seed. For a fuller, statistically meaningful evaluation of the design, use `summary()` (see [Evaluating a Design](#evaluating-a-design)). The output object contains some additional components, which can be seen below:
 
 ```{r crd-output}
 str(crd_result)
@@ -93,6 +93,38 @@ autoplot(crd_result)
 A nicely randomised[^1] and spatially optimal design!
 
 [^1]: Note that this design is not a true randomised design, as `speed` performs restricted randomisation and this design has been optimised to reduce neighbour effects. However, it can still be considered a Completely Randomised Design as it does not account for any blocking or other sources of variation.
+
+# Evaluating a Design {#evaluating-a-design}
+
+`print()` tells you *what* a design is; `summary()` helps you *evaluate and defend* it. Calling `summary()` on any design object reports a set of structural and evaluation metrics:
+
+```{r crd-summary}
+summary(crd_result)
+```
+
+The output is organised into sections:
+
+- **Structure** -- the layout, the number of treatments and their replication, and the spatial factors with their numbers of levels.
+- **Optimisation** -- the objective used, the final score decomposed into its **adjacency** and **balance** components (each shown as `raw x weight = contribution`), the initial-to-final score, the iterations run and the temperature schedule.
+- **Evaluation** -- design-quality diagnostics:
+  - **Connectedness** -- whether treatment effects are estimable. For a row--column design this fits `lm(~ row + col + treatment)` and checks for aliased terms; designs with a block factor fall back to a block-connectivity check.
+  - **Concurrence** -- for *incomplete* block designs, how often pairs of treatments share a block (constant concurrences indicate a balanced incomplete-block design). It is skipped for complete designs such as RCBD and split-plots, where it carries no information.
+  - **Replicate span** -- the smallest spatial separation between replicates of a treatment; small values flag replicates sitting close together.
+
+Any issues -- a design that ran to its iteration cap, unequal replication, or a disconnected design -- are surfaced as **Flags** at the top.
+
+Some metrics are opt-in or context-dependent. The A-efficiency factor (a row--column model metric) is computed only when you ask for it:
+
+```{r crd-summary-efficiency}
+summary(crd_result, efficiency = TRUE)
+```
+
+The returned summary is also a list, so individual metrics can be pulled out programmatically:
+
+```{r crd-summary-access}
+s <- summary(crd_result)
+s$per_level[[1]]$score
+```
 
 # Randomised Complete Block Design (RCBD)
 
