@@ -249,7 +249,7 @@ calculate_adjacency_score <- function(layout_df,
 
   design_matrix <- build_design_matrix(
     layout_df, swap,
-    row_col = row_column, col_col = col_column
+    row_column = row_column, col_column = col_column
   )
 
   per_cell <- adjacency_score_vec(
