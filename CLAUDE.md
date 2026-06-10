@@ -56,7 +56,7 @@ quarto::quarto_render("vignettes/speed.qmd")  # render a vignette (Quarto, not k
 Code formatting is handled by [Air](https://posit-dev.github.io/air/) - see `air.toml` (80-col, 2-space indent).
 Per `CONTRIBUTING.md`, do **not** restyle code that is unrelated to your PR.
 
-User-facing changes should add a bullet to the top of `NEWS.md`.
+User-facing changes should add a bullet to the top of `NEWS.md`. Use headings Major Changes, Minor Changes and Bug Fixes to document changes appropriately. Link to an issue number or PR such as (#999) where relevant.
 
 ## Architecture
 
