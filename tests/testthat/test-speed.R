@@ -46,7 +46,8 @@ test_that("speed returns correct output structure", {
       "iterations_run",
       "stopped_early",
       "treatments",
-      "seed"
+      "seed",
+      "metadata"
     )
   )
 
@@ -504,7 +505,8 @@ test_that("speed runs with random initialisation", {
       "iterations_run",
       "stopped_early",
       "treatments",
-      "seed"
+      "seed",
+      "metadata"
     )
   )
 
@@ -599,7 +601,8 @@ test_that("speed handles split-split plot designs", {
       "iterations_run",
       "stopped_early",
       "treatments",
-      "seed"
+      "seed",
+      "metadata"
     )
   )
 
@@ -674,7 +677,8 @@ test_that("speed handles strip plot designs", {
       "iterations_run",
       "stopped_early",
       "treatments",
-      "seed"
+      "seed",
+      "metadata"
     )
   )
 
@@ -1838,21 +1842,19 @@ test_that("print.design works for simple designs", {
 
   # Check that the printed output contains expected elements
   expect_match(output, "Optimised Experimental Design")
-  expect_match(output, "Score:")
-  expect_match(output, "Iterations Run:")
-  expect_match(output, "Stopped Early:")
+  expect_match(output, "Layout:.*plots")
   expect_match(output, "Treatments:")
+  expect_match(output, "Score:")
+  expect_match(output, "Iterations:.*/")
   expect_match(output, "Seed:")
+  expect_match(output, "Use summary\\(\\) for design evaluation metrics")
 
   # Check specific values
-  expect_match(output, paste("Score:", result$score))
-  expect_match(output, paste("Iterations Run:", result$iterations_run))
-  expect_match(output, paste("Stopped Early:", result$stopped_early))
-  expect_match(output, paste("Seed:", result$seed))
+  expect_match(output, paste0("Seed:\\s+", result$seed))
 
-  # Check treatments are displayed correctly for simple design
+  # Check the full treatment list is still displayed for simple designs
   expected_treatments <- paste(result$treatments, collapse = ", ")
-  expect_match(output, paste("Treatments:", expected_treatments))
+  expect_match(output, expected_treatments, fixed = TRUE)
 
   # Verify invisible return
   expect_identical(print(result), result)
@@ -1881,9 +1883,9 @@ test_that("print.design works for hierarchical designs", {
 
   # Check that the printed output contains expected elements
   expect_match(output, "Optimised Experimental Design")
+  expect_match(output, "Layout:.*plots")
   expect_match(output, "Score:")
-  expect_match(output, "Iterations Run:")
-  expect_match(output, "Stopped Early:")
+  expect_match(output, "Iterations:")
   expect_match(output, "Treatments:")
   expect_match(output, "Seed:")
 
@@ -1891,14 +1893,17 @@ test_that("print.design works for hierarchical designs", {
   expect_match(output, "wp:")  # Level name should be shown
   expect_match(output, "sp:")  # Level name should be shown
 
-  # Check that treatments for each level are displayed
+  # Check that treatments for each level are displayed as "<level>: <n> (<list>)"
   for (level_name in names(result$treatments)) {
     expected_treatments <- paste(result$treatments[[level_name]], collapse = ", ")
-    expect_match(output, paste0(level_name, ": ", expected_treatments))
+    n <- length(result$treatments[[level_name]])
+    expect_match(output, paste0(level_name, ": ", n, " (", expected_treatments, ")"),
+                 fixed = TRUE)
   }
 
-  # Verify stopped_early is shown correctly for hierarchical (should show both levels)
-  expect_match(output, "Stopped Early:")
+  # Iterations are shown per level (both levels show a run / total line)
+  expect_match(output, "wp:.*/")
+  expect_match(output, "sp:.*/")
 
   # Verify invisible return
   expect_identical(print(result), result)
@@ -1923,7 +1928,7 @@ test_that("print.design handles different stopped_early formats", {
   )
 
   output_simple <- capture_output(print(result_simple))
-  expect_match(output_simple, "Stopped Early: (TRUE|FALSE)")
+  expect_match(output_simple, "Iterations:.*/")
 
   # Test with hierarchical design where stopped_early is named logical vector
   df_split <- data.frame(
@@ -1944,7 +1949,7 @@ test_that("print.design handles different stopped_early formats", {
                               quiet = TRUE)
 
   output_hierarchical <- capture_output(print(result_hierarchical))
-  expect_match(output_hierarchical, "Stopped Early:")
+  expect_match(output_hierarchical, "Iterations:")
 })
 
 test_that("print.design displays correct treatment counts and names", {
@@ -2075,6 +2080,10 @@ test_that("speed runs with legacy options(speed.{option})", {
     "Setting options with `options\\(speed.\\{option\\}=...\\)` is deprecated. Please use `optim_params\\(\\)` instead."
   )))
 
+  # The two designs are built from differently-written speed() calls, so their
+  # captured metadata$call differs by construction - compare the rest.
+  result_legacy$metadata$call <- NULL
+  result$metadata$call <- NULL
   expect_true(isTRUE(all.equal(result_legacy, result)))
 })
 

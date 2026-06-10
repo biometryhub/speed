@@ -17,9 +17,40 @@ workshop audience) interrogate and defend a design.
    argument.
 3. **`print.design` keeps the full treatment list** — do not truncate. Print is
    slimmed only by adding structure/convergence lines, not by removing treatments.
-4. **Connectedness** — include the cheap, dependency-free graph-based check as the
-   core. The optional model-based estimability path (`model = ~ ...`) is deferred /
-   flagged as an open decision (see Open Questions).
+4. **Connectedness** — two complementary base-R paths, no igraph/lme4 dependency
+   (revised after reviewing a colleague's `sommario.ed.connectedness`):
+   - **Block-graph** (when a block factor exists): treatment × block incidence
+     via `xtabs()`, adjacency `A <- (M %*% t(M)) > 0`, zero diagonal, single
+     component via base-R BFS. Answers "are treatments linked through shared
+     blocks?".
+   - **Model estimability** (when row/col exist): fit `lm(dummy ~ row + col +
+     treatment)` and count aliased (`NA`) coefficients — `0` ⇒ connected. Plain
+     base `lm`; the response is a dummy because estimability is a property of the
+     design-matrix rank, not the data. Answers "is `treatment` estimable after
+     adjusting for row + col?" — the question that matters for how these designs
+     are actually analysed.
+
+   Pick the path from what factors are present (prefer the model path when row/col
+   exist; fall back to / additionally report the block-graph when a block exists).
+   This removes the earlier "no block factor → `NA`" gap.
+5. **Concurrence vs. spatial incidence** — `calculate_pair_incidence()` and
+   `calculate_position_incidence()` (from `feature/incidence`) count spatial grid
+   neighbours; concurrence uses a block-membership incidence matrix
+   (`xtabs(~ treatment + block)`). Different things — `summary()` computes block
+   incidence independently. No changes to the incidence functions.
+6. **Neighbour balance auto-detected from metadata** — `neighbour = NULL` (default)
+   auto-enables NB/ED output when Phase-1 metadata records the objective as
+   `objective_function_piepho`. Users can override with `TRUE`/`FALSE`.
+7. **Replicate spatial span** — new metric adopted from the colleague's
+   `sommario.duplicates.span.doe`: per treatment, the minimum Manhattan
+   separation between its replicate plots (`min(dist(rows, "manhattan")) + 1`,
+   likewise for cols), plus the worst-case (minimum) span across treatments. A
+   small span flags replicates clustered together. Pure base R (`tapply` +
+   `dist`). Reported in the evaluation section.
+8. **Replication breakdown, not just equal/unequal** — `print()`/`summary()`
+   report the replication *distribution* (e.g. counts of treatments at each rep
+   level), framed for p-rep-style designs (single-rep entries vs replicated
+   entries) rather than a bare "unequal reps" flag.
 
 ---
 
@@ -88,29 +119,45 @@ exposes per-level swap/spatial/weight info.
 Keep the full treatment list (per decision 3). Add:
 
 - **Layout line**: `<nrows> rows x <ncols> cols (<n> plots)` derived from `design_df`.
-- **Treatment count + replication summary**: e.g. `8 (3 reps each)` or
-  `8 (unequal reps - see summary())`.
-- **Convergence line**: collapse "Iterations Run / Stopped Early" into one human
-  line — `stopped early at 2,525 / 5,000` vs `ran full 5,000 iterations`.
+- **Treatment count + replication summary** (decision 8): equal reps →
+  `8 (3 reps each)`; unequal → a compact distribution rather than a bare flag,
+  e.g. `20 (12 x 1 rep, 8 x 3 reps)`. Full per-rep breakdown lives in
+  `summary()`.
+- **Iterations line**: compact `run / total`, with a `(stopped early)` note only
+  when it stopped early (e.g. `2,525 / 5,000 (stopped early)` vs `5,000 / 5,000`).
 - **Hint footer**: `Use summary() for design evaluation metrics.`
+- **Uniform layout**: every field is `label  value` with a fixed-width label
+  column; continuation / per-level lines align under the value column.
 
-Target output:
+Target output (simple):
 
 ```
 Optimised Experimental Design
-------------------------------
-Layout:        12 rows x 4 cols (48 plots)
-Treatments:    8 (3 reps each)
-               V1, V2, V3, V4, V5, V6, V7, V8
-Score:         1.43
-Convergence:   stopped early at 2,525 / 5,000 iterations
-Seed:          42
+-----------------------------
+Layout:       12 rows x 4 cols (48 plots)
+Treatments:   8 (3 reps each)
+              V1, V2, V3, V4, V5, V6, V7, V8
+Score:        1.43
+Iterations:   2,525 / 5,000 (stopped early)
+Seed:         42
 
 Use summary() for design evaluation metrics.
 ```
 
-Hierarchical: keep the existing per-level treatment block; add layout +
-convergence lines.
+Hierarchical: per-level lines under Treatments and Iterations, with the first
+level on the label line and the rest indented. Treatments show `<level>: <n>
+(<list>)`; per-level replication is left to `summary()` (at plot level it is
+ambiguous for nested factors):
+
+```
+Layout:       6 rows x 4 cols (24 plots)
+Treatments:   wp: 3 (A, B, C)
+              sp: 4 (a, b, c, d)
+Score:        47
+Iterations:   wp: 50 / 50
+              sp: 50 / 50
+Seed:         42
+```
 
 **Acceptance:** print snapshot updated; full treatment list still shown.
 
@@ -124,11 +171,10 @@ convergence lines.
 
 ```r
 summary.design <- function(object,
-                           efficiency   = FALSE,   # opt-in (decision 2)
-                           connectedness = TRUE,    # graph-based, cheap
-                           concurrence  = NULL,     # NULL = auto when a block exists
-                           neighbour    = FALSE,    # NB / ED
-                           model        = NULL,     # optional formula, see Open Qs
+                           efficiency    = FALSE,  # opt-in (decision 2)
+                           connectedness = TRUE,   # graph-based, base-R BFS
+                           concurrence   = NULL,   # NULL = auto when a block exists
+                           neighbour     = NULL,   # NULL = auto from metadata (decision 6)
                            ...)
 ```
 
@@ -143,7 +189,7 @@ does formatting only.
 - replication table (reps per treatment; min/mean/max; equal-rep flag)
 - per-level structure (hierarchical)
 
-**B. Optimisation provenance**
+**B. Optimisation**
 - final score **decomposed into adjacency vs balance** components, recomputed via
   `calculate_adjacency_score` × `adj_weight` and `calculate_balance_score` ×
   `bal_weight` using the Phase-1 metadata
@@ -154,11 +200,15 @@ does formatting only.
 **C. Evaluation metrics**
 - adjacency diagnostics: count of remaining same-treatment neighbours; which
   treatments still self-touch
+- replicate spatial span (decision 7): per-treatment min Manhattan separation of
+  replicates (row + col), plus worst-case span across treatments; flag clustered
+  replicates (Phase 4)
 - A-efficiency factor — **only if `efficiency = TRUE`** (`calculate_efficiency_factor`)
-- connectedness — graph-based (Phase 4)
+- connectedness — block-graph and/or model-estimability, by available factors
+  (Phase 4)
 - concurrence λ — when a block factor exists (Phase 4)
-- neighbour balance / even distribution — only if `neighbour = TRUE`
-  (`calculate_nb` / `calculate_ed`)
+- neighbour balance / even distribution — when `neighbour = TRUE`, or `NULL` and
+  Phase-1 metadata records a NB-based objective (`calculate_nb` / `calculate_ed`)
 
 **D. Flags** (rendered prominently at the top of the printed summary)
 - did not converge (hit iteration cap)
@@ -167,17 +217,18 @@ does formatting only.
 
 ### `print.summary.design`
 
-- Flags block first.
+- Flags block first, only if relevant, otherwise omit.
 - Then Structure → Provenance → Evaluation, each a titled block.
 - Skipped/opt-out metrics shown as a one-line note (e.g.
   `Efficiency factor:  not computed (efficiency = TRUE to enable)`).
 
 ### Internal helpers (same file)
 
-- `.replication_table(design_df, swap)`
+- `.replication_table(design_df, swap)` — rep distribution (decision 8)
 - `.score_components(design_df, meta)` — returns adj/bal split per level
-- `.design_connectedness(...)` — Phase 4
+- `.design_connectedness(...)` — Phase 4 (block-graph + model-estimability)
 - `.design_concurrence(...)` — Phase 4
+- `.replicate_spans(design_df, swap, row, col)` — Phase 4 (decision 7)
 
 ### Hierarchical handling
 
@@ -192,16 +243,39 @@ whole-design metrics (efficiency, connectedness) on `design_df`.
 
 ### Connectedness (base R, no new deps)
 
+Two complementary paths (decision 4); choose by available factors, report
+whichever applies (both, when both row/col and a block exist):
+
+**Block-graph path** (needs a block factor):
 - Build the treatment × block incidence matrix with `xtabs(~ treatment + block)`.
 - Two treatments are adjacent if they share a block: `A <- (M %*% t(M)) > 0`;
   zero the diagonal.
 - Design is connected iff the adjacency graph is a single component (reachability
-  / DFS from node 1, check all visited).
-- Returns `list(connected = TRUE/FALSE, n_components = k, message = ...)`.
-- **No `lme4`/`lmer` dependency.** (The sandbox `R/connectedness.R` uses lme4; we
-  do not adopt that as a hard dependency.)
-- Requires a block-type factor. When absent, return `NA` with a reason (use the
-  optional model path instead — see Open Questions).
+  / BFS from node 1, check all visited).
+
+**Model-estimability path** (needs row + col):
+- Fit `lm(dummy ~ row + col + treatment)` with a constant/dummy response and
+  count aliased coefficients: `sum(is.na(coef(fit)))`. Zero ⇒ `treatment` is
+  estimable ⇒ connected. (Adapted from the colleague's
+  `sommario.ed.connectedness`; the response is irrelevant — estimability is a
+  rank property of the design matrix.)
+
+- Both paths return `list(connected = TRUE/FALSE, n_components = k, method = ...,
+  message = ...)`.
+- **No `lme4`/`lmer` dependency** — base `lm` suffices. (The sandbox
+  `R/connectedness.R` uses lme4; we do not adopt that as a hard dependency.)
+- When neither a block nor row/col is available, return `NA` with a reason.
+
+### Replicate spatial span (base R, decision 7)
+
+Adapted from the colleague's `sommario.duplicates.span.doe`:
+- For each treatment, `min(dist(rows, method = "manhattan")) + 1` (the `+ 1`
+  counts plots inclusively), and likewise for cols, via `tapply(swap, ...)`.
+- Report per-treatment row/col spans plus the worst-case (minimum) span across
+  treatments; a small worst-case span flags replicates clustered together.
+- Guard: treatments with a single rep have no pairwise distance — return `NA` for
+  those and exclude them from the minima. Needs row/col columns; degrade to `NA`
+  + reason when absent.
 
 ### Concurrence
 
@@ -255,15 +329,13 @@ whole-design metrics (efficiency, connectedness) on `design_df`.
 
 ## Open questions / still to decide
 
-1. **Connectedness scope** — ship graph-based only (current plan), or also add the
-   optional `model = ~ row + col + block` estimability path (base-R `lm`,
-   NA/aliased-coefficient check, no lme4)? The model path is the only way to assess
-   connectedness for pure row–column designs with no block factor. Leaning: add the
-   `model =` hook in a follow-up once the graph-based core lands.
+1. ~~**Connectedness scope**~~ — **resolved** (revised): two base-R paths —
+   block-graph (needs a block) and `lm` model-estimability (needs row/col). No
+   igraph/lme4. Only degrades to `NA` when neither block nor row/col exists.
 2. **Default for `concurrence`** — auto-on when a block exists (current plan) vs
    always opt-in.
-3. **Neighbour balance / ED** — surface in summary at all, or leave as standalone
-   exported functions? Currently behind `neighbour = FALSE`.
+3. ~~**Neighbour balance / ED**~~ — **resolved**: `neighbour = NULL` auto-detects
+   from Phase-1 metadata whether the NB objective was used.
 
 ---
 
