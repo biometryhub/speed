@@ -1,3 +1,10 @@
+# speed 0.0.9
+
+## Major Changes
+
+- Added `calculate_pair_incidence()` to return a symmetric treatment × treatment matrix of neighbour-pair counts.
+- Added `calculate_position_incidence()` to return treatment × row/column position count matrices.
+
 # speed 0.0.8
 
 ## Major Changes
