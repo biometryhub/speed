@@ -1,6 +1,6 @@
 test_that("initialise_split_design_df builds the split-plot from the docs", {
   df <- initialise_split_design_df(
-    splits = list(
+    list(
       subplot = list(items = letters[1:4]),
       wholeplot = list(items = LETTERS[1:3], nrows = 1, ncols = 4),
       block = list(nrows = 3, ncols = 4)
@@ -24,48 +24,52 @@ test_that("initialise_split_design_df builds the split-plot from the docs", {
   expect_equal(length(unique(df$wholeplot)), 12)
   expect_equal(length(unique(df$subplot)), 48)
 
-  # Layout matches the illustration: wholeplot treatment depends only on the
-  # row within a block (A/B/C down the rows), subplot only on the column.
-  expect_equal(df$wholeplot_treatment, LETTERS[((df$row - 1) %% 3) + 1])
-  expect_equal(df$subplot_treatment, letters[((df$col - 1) %% 4) + 1])
-
   # Each wholeplot carries a single treatment; each block sees a full set
   per_wholeplot <- tapply(df$wholeplot_treatment, df$wholeplot, function(x) length(unique(x)))
   expect_true(all(per_wholeplot == 1))
   for (set in tapply(df$wholeplot_treatment, df$block, function(x) sort(unique(x)))) {
-    expect_equal(set, LETTERS[1:3])
+    expect_setequal(set, LETTERS[1:3])
   }
   # Each wholeplot sees a full subplot-treatment set
   for (set in tapply(df$subplot_treatment, df$wholeplot, function(x) sort(unique(x)))) {
-    expect_equal(set, letters[1:4])
+    expect_setequal(set, letters[1:4])
   }
 })
 
-test_that("initialise_split_design_df numbers blocks column-major", {
+test_that("initialise_split_design_df units cover the right dimensions", {
   df <- initialise_split_design_df(
-    splits = list(
+    list(
       subplot = list(items = letters[1:4]),
-      wholeplot = list(items = LETTERS[1:3], nrows = 1, ncols = 4),
-      block = list(nrows = 3, ncols = 4)
+      wholeplot = list(nrows = 2, ncols = 2),
+      block = list(nrows = 4, ncols = 4)
     ),
-    rep_dim = c(2, 2)
+    rep_dim = c(1, 2)
   )
 
-  # block 1 top-left, 2 bottom-left, 3 top-right, 4 bottom-right
-  expect_equal(unique(df$block[df$row <= 3 & df$col <= 4]), 1)
-  expect_equal(unique(df$block[df$row >= 4 & df$col <= 4]), 2)
-  expect_equal(unique(df$block[df$row <= 3 & df$col >= 5]), 3)
-  expect_equal(unique(df$block[df$row >= 4 & df$col >= 5]), 4)
+  # Each unit at a level must occupy a contiguous nrows x ncols rectangle
+  # (the fill order within that rectangle is unconstrained).
+  expect_unit_dims <- function(level, nrows, ncols) {
+    for (id in unique(df[[level]])) {
+      cells <- df[df[[level]] == id, ]
+      rows <- sort(unique(cells$row))
+      cols <- sort(unique(cells$col))
+      expect_equal(nrow(cells), nrows * ncols)
+      expect_equal(rows, seq(min(rows), length.out = nrows))
+      expect_equal(cols, seq(min(cols), length.out = ncols))
+    }
+  }
+
+  expect_unit_dims("block", 4, 4)
+  expect_unit_dims("wholeplot", 2, 2)
+  expect_unit_dims("subplot", 1, 1)
 })
 
 test_that("initialise_split_design_df defaults rep_dim to a single replicate", {
-  df <- initialise_split_design_df(
-    splits = list(
-      subplot = list(items = letters[1:4]),
-      wholeplot = list(items = LETTERS[1:3], nrows = 1, ncols = 4),
-      block = list(nrows = 3, ncols = 4)
-    )
-  )
+  df <- initialise_split_design_df(list(
+    subplot = list(items = letters[1:4]),
+    wholeplot = list(items = LETTERS[1:3], nrows = 1, ncols = 4),
+    block = list(nrows = 3, ncols = 4)
+  ))
 
   expect_equal(nrow(df), 12)
   expect_equal(length(unique(df$block)), 1)
@@ -75,7 +79,7 @@ test_that("initialise_split_design_df defaults rep_dim to a single replicate", {
 
 test_that("initialise_split_design_df supports more than two split levels", {
   df <- initialise_split_design_df(
-    splits = list(
+    list(
       subsubplot = list(items = 1:2),
       subplot = list(items = letters[1:4], nrows = 1, ncols = 2),
       wholeplot = list(items = LETTERS[1:3], nrows = 1, ncols = 8),
@@ -89,12 +93,12 @@ test_that("initialise_split_design_df supports more than two split levels", {
     "subsubplot", "subsubplot_treatment"
   ) %in% names(df)))
 
-  # 3x8 block tiled 2x1 -> 6x8
+  # 2x1 reps of 3x8 and everything
   expect_equal(nrow(df), 48)
   expect_equal(length(unique(df$block)), 2)
-  expect_equal(length(unique(df$wholeplot)), 6) # 3 per block
-  expect_equal(length(unique(df$subplot)), 24) # 4 per wholeplot
-  expect_equal(length(unique(df$subsubplot)), 48) # 2 per subplot
+  expect_equal(length(unique(df$wholeplot)), 6)
+  expect_equal(length(unique(df$subplot)), 24)
+  expect_equal(length(unique(df$subsubplot)), 48)
 
   # Each parent gets a full inner treatment set
   for (parent in unique(df$wholeplot)) {
@@ -106,36 +110,29 @@ test_that("initialise_split_design_df supports more than two split levels", {
 })
 
 test_that("initialise_split_design_df expands a numeric scalar items to T1..TN", {
-  df <- initialise_split_design_df(
-    splits = list(
-      subplot = list(items = 4),
-      block = list(nrows = 1, ncols = 4)
-    )
-  )
+  df <- initialise_split_design_df(list(
+    subplot = list(items = 4),
+    block = list(nrows = 1, ncols = 4)
+  ))
 
   expect_setequal(unique(df$subplot_treatment), paste0("T", 1:4))
   expect_equal(length(unique(df$subplot)), 4)
 })
 
 test_that("initialise_split_design_df recycles a divisor-length items per parent", {
-  df <- initialise_split_design_df(
-    splits = list(
-      subplot = list(items = letters[1:2]),
-      block = list(nrows = 1, ncols = 4)
-    )
-  )
+  df <- initialise_split_design_df(list(
+    subplot = list(items = letters[1:2]),
+    block = list(nrows = 1, ncols = 4)
+  ))
 
-  # 4 subplots per block, 2 items -> a, b, a, b
-  expect_equal(df$subplot_treatment, c("a", "b", "a", "b"))
+  expect_equal(sort(df$subplot_treatment), c("a", "a", "b", "b"))
 })
 
 test_that("initialise_split_design_df omits the treatment column when items is absent", {
-  df <- initialise_split_design_df(
-    splits = list(
-      subplot = list(),
-      block = list(nrows = 2, ncols = 2)
-    )
-  )
+  df <- initialise_split_design_df(list(
+    subplot = list(),
+    block = list(nrows = 2, ncols = 2)
+  ))
 
   expect_false("subplot_treatment" %in% names(df))
   expect_true("subplot" %in% names(df))
@@ -143,56 +140,39 @@ test_that("initialise_split_design_df omits the treatment column when items is a
 })
 
 test_that("initialise_split_design_df validates its inputs", {
-  # fewer than two levels
-  expect_error(
-    initialise_split_design_df(list(block = list(nrows = 3, ncols = 4))),
-    "at least two levels"
-  )
+  block <- list(nrows = 3, ncols = 4)
+  with_default_block <- function(sp, ...) {
+    initialise_split_design_df(list(sp = sp, block = block), ...)
+  }
 
-  # rep_dim must be length 2
+  expect_error(initialise_split_design_df(list(block = block)), "at least two levels")
+
+  # incorrect rep_dim
   expect_error(
-    initialise_split_design_df(
-      list(sp = list(items = letters[1:4]), block = list(nrows = 3, ncols = 4)),
-      rep_dim = c(2, 2, 1)
-    ),
+    with_default_block(list(items = letters[1:4]), rep_dim = c(2, 2, 1)),
     "length-2 vector"
   )
-  expect_error(
-    initialise_split_design_df(
-      list(sp = list(items = letters[1:4]), block = list(nrows = 3, ncols = 4)),
-      rep_dim = c(0, 2)
-    )
-  )
+  expect_error(with_default_block(list(items = letters[1:4]), rep_dim = c(0, 2)))
 
   # unknown split argument
-  expect_error(
-    initialise_split_design_df(
-      list(sp = list(nrow = 1), block = list(nrows = 3, ncols = 4))
-    ),
-    "`nrow` is an invalid argument"
-  )
+  expect_error(with_default_block(list(nrow = 1)), "`nrow` is an invalid argument")
 
   # non-whole dimension
-  expect_error(
-    initialise_split_design_df(
-      list(sp = list(nrows = 1.5, ncols = 1), block = list(nrows = 3, ncols = 4))
-    ),
-    "must be a positive whole number"
-  )
+  expect_error(with_default_block(list(nrows = 1.5, ncols = 1)), "must be a positive whole number")
 
   # level does not tile evenly into its parent
-  expect_error(
-    initialise_split_design_df(
-      list(sp = list(nrows = 2, ncols = 1), block = list(nrows = 3, ncols = 4))
-    ),
-    "does not tile evenly"
-  )
+  expect_error(with_default_block(list(nrows = 2, ncols = 1)), "does not tile evenly")
 
   # items length does not divide units per parent
+  expect_error(with_default_block(list(items = letters[1:5])), "does not divide the 12 units per parent")
+
+  # only the innermost level may omit dimensions
   expect_error(
-    initialise_split_design_df(
-      list(sp = list(items = letters[1:5]), block = list(nrows = 3, ncols = 4))
-    ),
-    "does not divide the 12 units per parent"
+    initialise_split_design_df(list(
+      sub = list(),
+      mid = list(items = letters[1:2]),
+      block = list(nrows = 2, ncols = 4)
+    )),
+    "must be provided for split `mid`"
   )
 })

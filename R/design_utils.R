@@ -736,6 +736,9 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
   valid_split_args <- c("nrows", "ncols", "items")
   splits <- add_names(splits)
 
+  # only the innermost level may omit dimensions (it defaults to 1x1)
+  innermost_name <- names(splits)[[1]]
+
   # outermost -> innermost; the outermost's parent is the rep-tiled field
   outer_split <- splits[[length(splits)]]
   parent_name <- "field"
@@ -750,6 +753,14 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
       if (!(arg %in% valid_split_args)) {
         stop(sprintf("`%s` is an invalid argument in `splits$%s`", arg, split_name), call. = FALSE)
       }
+    }
+
+    # only the innermost level may omit dimensions (it defaults to 1x1)
+    if (split_name != innermost_name && (is.null(split$nrows) || is.null(split$ncols))) {
+      stop(sprintf(
+        "`nrows` and `ncols` must be provided for split `%s`; only the innermost level may omit them",
+        split_name
+      ), call. = FALSE)
     }
 
     # check unit dimensions are positive whole numbers (innermost defaults to 1x1)
