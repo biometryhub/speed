@@ -4,23 +4,25 @@
 \alias{build_design_matrix}
 \title{Build a Spatial Design Matrix from a Data Frame}
 \usage{
-build_design_matrix(df, swap, row_col = "row", col_col = "col")
+build_design_matrix(df, swap, row_column = "row", col_column = "col")
 }
 \arguments{
-\item{df}{A data frame with columns named by \code{swap}, \code{row_col}, \code{col_col}.}
+\item{df}{A data frame with columns named by \code{swap}, \code{row_column},
+\code{col_column}.}
 
 \item{swap}{Column name of the treatment variable.}
 
-\item{row_col}{Column name of the row position variable (default \code{"row"}).}
+\item{row_column}{Column name of the row position variable (default \code{"row"}).}
 
-\item{col_col}{Column name of the column position variable (default \code{"col"}).}
+\item{col_column}{Column name of the column position variable
+(default \code{"col"}).}
 }
 \value{
 A character matrix of dimensions \verb{max(row) × max(col)}.
 }
 \description{
-Places each treatment value at the grid position given by its \code{row_col} and
-\code{col_col} coordinates, returning a character matrix of dimensions
+Places each treatment value at the grid position given by its \code{row_column}
+and \code{col_column} coordinates, returning a character matrix of dimensions
 \verb{max(row) × max(col)}. Cells with no corresponding row in \code{df} are \code{NA}.
 Unlike filling via \code{matrix(..., byrow)}, this is robust to any row ordering
 of \code{df}.

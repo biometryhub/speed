@@ -55,7 +55,7 @@ df <- data.frame(
   col = rep(1:3, each = 4),
   treatment = rep(c("A", "B", "C"), 4)
 )
-result <- speed(df, swap = "treatment", seed = 42)
+result <- speed(df, swap = "treatment", seed = 42, iterations = 200)
 calculate_pair_incidence(result)
 
 # From a plain data frame; as named list

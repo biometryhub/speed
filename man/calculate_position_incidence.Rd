@@ -45,7 +45,7 @@ df <- data.frame(
   col = rep(1:3, each = 4),
   treatment = rep(c("A", "B", "C"), 4)
 )
-result <- speed(df, swap = "treatment", seed = 42)
+result <- speed(df, swap = "treatment", seed = 42, iterations = 200)
 res <- calculate_position_incidence(result)
 res$row  # treatment × row counts
 res$col  # treatment × column counts
