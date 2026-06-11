@@ -42,7 +42,7 @@ test_that("summary.design returns a summary.design with the expected shape", {
   expect_s3_class(s, "summary.design")
   expect_false(s$hierarchical)
   expect_named(s, c("hierarchical", "layout", "levels", "per_level", "score",
-                    "seed", "flags", "call", "settings"))
+                    "seed", "flags", "call"))
 
   # Layout
   expect_equal(s$layout$n_plots, 12)
@@ -66,13 +66,41 @@ test_that("summary score components are programmatically accessible", {
   s <- summary(simple_design())
   sc <- s$per_level[[1]]$score
 
-  expect_named(sc, c("adjacency", "adj_weight", "adj_contribution",
-                     "balance", "bal_weight", "bal_contribution",
-                     "initial", "final"))
-  # Weighted components sum to the recomputed final score (default objective).
-  expect_equal(sc$adj_contribution + sc$bal_contribution, sc$final)
+  expect_named(sc, c("initial", "final", "components"))
+  # The default objective decomposes into adjacency + balance.
+  expect_named(sc$components, c("adjacency", "balance"))
+  # The components sum to the final score (faithful decomposition).
+  expect_equal(sum(sc$components), sc$final)
   # The level's final score matches the overall design score for a simple design.
   expect_equal(sc$final, s$score)
+})
+
+test_that("score components are faithful for non-default objectives (piepho)", {
+  d <- data.frame(row = rep(1:5, each = 5), col = rep(1:5, times = 5),
+                  treatment = rep(LETTERS[1:5], 5))
+  r <- speed(d, swap = "treatment", spatial_factors = ~ row + col,
+             obj_function = objective_function_piepho, iterations = 500, seed = 1,
+             quiet = TRUE)
+  sc <- summary(r)$per_level[[1]]$score
+  # Piepho exposes four additive components that sum to its score - the bug this
+  # fixes was the old adjacency+balance recompute not matching the piepho score.
+  expect_named(sc$components,
+               c("neighbour_balance", "even_distribution", "balance", "adjacency"))
+  expect_equal(sum(sc$components), sc$final)
+})
+
+test_that("custom objectives without components degrade gracefully", {
+  custom <- function(layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1, ...) {
+    list(score = calculate_balance_score(layout_df, swap, spatial_cols))
+  }
+  d <- data.frame(row = rep(1:4, times = 3), col = rep(1:3, each = 4),
+                  treatment = rep(LETTERS[1:3], 4))
+  r <- speed(d, swap = "treatment", swap_within = "1", spatial_factors = ~ row + col,
+             obj_function = custom, iterations = 100, seed = 1, quiet = TRUE)
+  sc <- summary(r)$per_level[[1]]$score
+  expect_null(sc$components)
+  # Still prints without error (no decomposition shown).
+  expect_no_error(capture_output(print(summary(r))))
 })
 
 test_that("summary handles hierarchical designs with per-level metrics", {
@@ -144,6 +172,28 @@ test_that("summary errors clearly when metadata is absent", {
   expect_error(summary(d), "no `metadata`")
 })
 
+test_that("buffers are excluded from summary() and print() entirely", {
+  r  <- simple_design()
+  rb <- add_buffers(r, "edge")
+  # The buffered design carries extra "buffer" rows...
+  expect_gt(nrow(rb$design_df), nrow(r$design_df))
+
+  s <- summary(rb)
+  # ...but the summary reports only the experimental units, identical to the
+  # unbuffered design.
+  expect_equal(s$layout$n_plots, nrow(r$design_df))
+  expect_equal(s$layout$nrow, 4)
+  expect_equal(s$layout$ncol, 3)
+  expect_true(s$per_level[[1]]$replication$equal)
+  expect_equal(s$per_level[[1]]$replication$max, 4)
+  expect_equal(s$per_level[[1]]$n_treatments, 3)
+
+  # Buffers are never mentioned, and there is no buffer-count field.
+  expect_false("n_buffers" %in% names(s$layout))
+  expect_false(any(grepl("buffer", capture_output(print(s)), ignore.case = TRUE)))
+  expect_false(any(grepl("buffer", capture_output(print(rb)), ignore.case = TRUE)))
+})
+
 # --- Phase 4: evaluation metrics ------------------------------------------
 
 block_design <- function(seed = 7) {
@@ -175,27 +225,64 @@ test_that("connectedness uses the model path for grid designs", {
   expect_true(cn$connected)
 })
 
-test_that(".design_connectedness detects confounding (model) and components (graph)", {
-  # treatment perfectly aliased with row -> not estimable
+test_that(".design_connectedness flags non-estimable treatments via the model", {
+  # treatment fully confounded with row -> not estimable given row + col
   dconf <- data.frame(row = rep(1:4, each = 3), col = rep(1:3, times = 4),
                       treatment = rep(LETTERS[1:4], each = 3))
-  cn <- .design_connectedness(dconf, "treatment", NULL, "row", "col")
+  cn <- .design_connectedness(dconf, "treatment", NULL, c("row", "col"))
   expect_false(cn$connected)
   expect_gt(cn$n_aliased, 0)
 
-  # block-graph path: two disjoint treatment groups
+  # two variety groups that never share a block -> disconnected given block
   dg <- data.frame(block = c(1, 1, 2, 2, 3, 3, 4, 4),
                    treatment = c("A", "B", "A", "B", "C", "D", "C", "D"))
-  disc <- .design_connectedness(dg, "treatment", "block", NA, NA)
-  expect_match(disc$method, "block graph")
+  disc <- .design_connectedness(dg, "treatment", "block", character(0))
+  expect_match(disc$method, "block")
   expect_false(disc$connected)
-  expect_equal(disc$n_components, 2)
+  expect_gt(disc$n_aliased, 0)
 
+  # a connected block structure
   dg2 <- data.frame(block = c(1, 1, 2, 2, 3, 3),
                     treatment = c("A", "B", "B", "C", "C", "A"))
-  conn <- .design_connectedness(dg2, "treatment", "block", NA, NA)
+  conn <- .design_connectedness(dg2, "treatment", "block", character(0))
   expect_true(conn$connected)
-  expect_equal(conn$n_components, 1)
+  expect_equal(conn$n_aliased, 0)
+})
+
+test_that("connectedness skips very large designs unless forced, and FALSE skips entirely", {
+  # A large layout: O(n * p^2) lm would be expensive, so the auto path skips it
+  # (this returns before any model is fitted, so the test stays fast).
+  big <- data.frame(
+    row = rep(1:200, each = 200),
+    col = rep(1:200, times = 200),
+    treatment = factor(rep(seq_len(1000), length.out = 40000))
+  )
+  skipped <- .design_connectedness(big, "treatment", NULL, c("row", "col"), force = FALSE)
+  expect_false(skipped$available)
+  expect_match(skipped$reason, "large design")
+
+  # Small designs still compute on the auto (NULL) path.
+  auto <- summary(simple_design())$per_level[[1]]$evaluation$connectedness
+  expect_true(auto$available)
+
+  # connectedness = FALSE skips entirely.
+  off <- summary(simple_design(), connectedness = FALSE)$per_level[[1]]$evaluation$connectedness
+  expect_false(off$available)
+  expect_match(off$reason, "connectedness = FALSE")
+})
+
+test_that("connectedness does not false-positive when block is collinear with rows", {
+  # BIBD laid out one block per row: block aliases row, but treatment is fully
+  # estimable. Counting aliasing only among treatment terms must keep it connected.
+  bibd <- data.frame(
+    row   = rep(1:6, each = 2),
+    block = rep(1:6, each = 2),
+    col   = rep(1:2, times = 6),
+    treatment = c("A", "B", "A", "C", "A", "D", "B", "C", "B", "D", "C", "D")
+  )
+  cn <- .design_connectedness(bibd, "treatment", "block", c("row", "col"))
+  expect_true(cn$connected)
+  expect_equal(cn$n_aliased, 0)
 })
 
 test_that("concurrence is computed for incomplete blocks, skipped for complete", {
@@ -234,6 +321,17 @@ test_that("complete-block designs auto-skip concurrence in summary()", {
   expect_true(cc_forced$available)
 })
 
+test_that(".design_block_factor prefers a block-named factor over others", {
+  df <- data.frame(row = 1, col = 1, rep = 1, block = 1, treatment = "A")
+  # spatial factors listed with 'rep' before 'block' - block should still win.
+  meta <- list(per_level = list(l1 = list(spatial_cols = c("row", "col", "rep", "block"))))
+  expect_equal(.design_block_factor(df, meta, "row", "col"), "block")
+
+  # No block-named factor: falls back to the first non-row/col spatial factor.
+  meta2 <- list(per_level = list(l1 = list(spatial_cols = c("row", "col", "rep"))))
+  expect_equal(.design_block_factor(df, meta2, "row", "col"), "rep")
+})
+
 test_that("concurrence is skipped for designs without a block", {
   cc <- summary(simple_design())$per_level[[1]]$evaluation$concurrence
   expect_false(cc$available)
@@ -253,7 +351,7 @@ test_that("efficiency is opt-in and guarded", {
   two <- .efficiency_factor(
     data.frame(row = rep(1:2, 2), col = rep(1:2, each = 2),
                treatment = rep(c("A", "B"), 2)),
-    "treatment"
+    "treatment", "row", "col"
   )
   expect_false(two$available)
 })

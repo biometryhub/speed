@@ -368,21 +368,26 @@ speed_hierarchical <- function(data, optimise, quiet, seed, call = NULL, ...) {
     bal_weight <- optimise_params$bal_weight
     spatial_cols <- all.vars(opt$spatial_factors)
 
-    # treatments and score for each level
+    # treatments and score for each level. Capture the full objective return
+    # (not just the score) so the additive score components - computed with the
+    # exact arguments used during optimisation, including any ring args - are
+    # available to summary() for a faithful decomposition.
     treatments[[level]] <- stringi::stri_sort(unique(as.vector(best_design[[opt$swap]])), numeric = TRUE)
-    level_scores[level] <- opt$obj_function(best_design, opt$swap, spatial_cols, adj_weight = adj_weight,
-                                            bal_weight = bal_weight, ...)$score
+    score_obj <- opt$obj_function(best_design, opt$swap, spatial_cols, adj_weight = adj_weight,
+                                  bal_weight = bal_weight, ...)
+    level_scores[level] <- score_obj$score
     per_level_meta[[level]] <- list(
-      swap            = opt$swap,
-      spatial_factors = opt$spatial_factors,
-      spatial_cols    = spatial_cols,
-      adj_weight      = adj_weight,
-      bal_weight      = bal_weight,
-      iterations      = opt$iterations,
-      start_temp      = optimise_params$start_temp,
-      cooling_rate    = optimise_params$cooling_rate,
-      obj_function    = opt$obj_function,
-      final_score     = level_scores[[level]]
+      swap             = opt$swap,
+      spatial_factors  = opt$spatial_factors,
+      spatial_cols     = spatial_cols,
+      adj_weight       = adj_weight,
+      bal_weight       = bal_weight,
+      iterations       = opt$iterations,
+      start_temp       = optimise_params$start_temp,
+      cooling_rate     = optimise_params$cooling_rate,
+      obj_function     = opt$obj_function,
+      final_score      = score_obj$score,
+      final_components = score_obj$components
     )
   }
 
@@ -450,7 +455,9 @@ speed_hierarchical <- function(data, optimise, quiet, seed, call = NULL, ...) {
 #' @export
 print.design <- function(x, ...) {
   meta <- x$metadata
-  df <- x$design_df
+  # Buffer plots (add_buffers()) are a field-layout convenience, not part of the
+  # statistical design - exclude them from the reported layout and replication.
+  df <- .drop_buffer_rows(x$design_df, meta)
   hierarchical <- is.list(x$treatments)
 
   # Uniform field layout: a fixed-width label, then the value. Continuation /

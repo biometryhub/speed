@@ -7,7 +7,7 @@
 \method{summary}{design}(
   object,
   efficiency = FALSE,
-  connectedness = TRUE,
+  connectedness = NULL,
   concurrence = NULL,
   neighbour = NULL,
   ...
@@ -16,19 +16,25 @@
 \arguments{
 \item{object}{A \code{"design"} object returned by \code{\link[=speed]{speed()}}.}
 
-\item{efficiency}{Logical; compute the A-efficiency factor (a row--column
-model metric). Off by default as it is the heaviest metric. \emph{(Computed in a
-later phase.)}}
+\item{efficiency}{Logical (default \code{FALSE}); if \code{TRUE}, compute the
+A-efficiency factor (a row--column model metric and the heaviest to
+compute). Returns \code{NA} with a reason when its assumptions are not met
+(columns named \code{row} and \code{col}, and at least 3 treatments).}
 
-\item{connectedness}{Logical; assess whether the design is connected.
-\emph{(Computed in a later phase.)}}
+\item{connectedness}{\code{NULL} (default) checks whether treatments are estimable
+(connected), but skips the check for very large designs where the model fit
+would be expensive; \code{TRUE} forces it regardless of size; \code{FALSE} skips it.
+The check fits \verb{lm(~ <spatial factors + block> + treatment)} and looks for
+aliased treatment contrasts.}
 
-\item{concurrence}{\code{NULL} (default) computes treatment concurrences when a
-block factor is present, otherwise skips. \emph{(Computed in a later phase.)}}
+\item{concurrence}{\code{NULL} (default) computes within-block treatment
+concurrences only when an \emph{incomplete} block factor is present (they are
+uninformative for complete blocks such as RCBD/split-plot); \code{TRUE} forces
+them even for complete blocks, \code{FALSE} skips them.}
 
 \item{neighbour}{\code{NULL} (default) reports neighbour-balance diagnostics when
-the design was optimised with a neighbour-balance objective; override with
-\code{TRUE}/\code{FALSE}. \emph{(Computed in a later phase.)}}
+the design was optimised with \code{objective_function_piepho}; override with
+\code{TRUE}/\code{FALSE}.}
 
 \item{...}{Unused; for S3 compatibility.}
 }
@@ -45,7 +51,7 @@ evaluation metrics that let you interrogate and defend a design.
 }
 \details{
 The returned object is a list of class \code{"summary.design"}; it can be assigned
-and queried programmatically (e.g. \verb{s <- summary(d); s$per_level$score}).
+and queried programmatically (e.g. \verb{s <- summary(d); s$per_level[[1]]$score}).
 Printing it is handled by \code{\link[=print.summary.design]{print.summary.design()}}.
 }
 \examples{

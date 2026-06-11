@@ -7,7 +7,10 @@
 .design_block_factor(df, meta, rc, cc)
 }
 \description{
-Looks for a spatial factor (across levels) that is not the row or column
-factor; failing that, a column literally named \code{block}.
+Among the spatial factors (across levels) that are not the row or column
+factor, prefer one named like \code{block}; otherwise take the first such factor.
+Failing that, fall back to a column literally named \code{block}. The chosen factor
+is surfaced in the concurrence output (\verb{[block: ...]}), so the choice is
+visible to the user.
 }
 \keyword{internal}

@@ -74,7 +74,11 @@ objective_function <- function(layout_df,
   )
 
   return(list(
-    score = round(adj_weight * adj_score + bal_weight * bal_score, 10)
+    score = round(adj_weight * adj_score + bal_weight * bal_score, 10),
+    components = c(
+      adjacency = adj_weight * adj_score,
+      balance   = bal_weight * bal_score
+    )
   ))
 }
 
@@ -138,7 +142,13 @@ objective_function_factorial <- function(layout_df,
     subtreatment_scores <- 0
   }
 
-  return(list(score = main_weight * sum(subtreatment_scores) + interaction_weight * treatment_score))
+  return(list(
+    score = main_weight * sum(subtreatment_scores) + interaction_weight * treatment_score,
+    components = c(
+      main        = main_weight * sum(subtreatment_scores),
+      interaction = interaction_weight * treatment_score
+    )
+  ))
 }
 
 #' Calculate Balance Score for Experimental Design
@@ -199,7 +209,9 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #'
 #' @return A function which returns a named list of numeric values with one required name `score` representing
 #'   the score of the design (lower is better) with a signature `function(design_df, swap, spatial_cols, ...)`.
-#'   See signature
+#'   An objective may optionally return a `components` element: a named numeric vector of the additive pieces
+#'   that sum to `score` (e.g. `c(adjacency = ..., balance = ...)`). When present, [summary.design()] reports
+#'   this as a faithful score decomposition. See signature
 #'   details in [objective_function_signature].
 #'
 #' @references Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of distribution
@@ -240,7 +252,13 @@ objective_function_piepho <- function(design,
     ed = ed,
     bal = bal_score,
     adj = adj_score,
-    nb = nb
+    nb = nb,
+    components = c(
+      neighbour_balance = nb_score,
+      even_distribution = ed_score,
+      balance           = bal_score,
+      adjacency         = adj_score
+    )
   ))
 }
 
@@ -631,6 +649,8 @@ create_pair_mapping <- function(items) {
 #'
 #' @param design_df A data frame containing the experimental design with spatial coordinates
 #' @param item A column name of the items in the design (e.g., `treatment`, `variety`, `genotype`, etc)
+#' @param row_column Name of the column giving the row of the design (default: "row")
+#' @param col_column Name of the column giving the column of the design (default: "col")
 #'
 #' @examples
 #' df_design <- initialise_design_df(c(
@@ -648,14 +668,14 @@ create_pair_mapping <- function(items) {
 #'   21, 227-242 (2016). <https://doi.org/10.1007/s13253-015-0241-2>
 #'
 #' @export
-calculate_efficiency_factor <- function(design_df, item) {
+calculate_efficiency_factor <- function(design_df, item, row_column = "row", col_column = "col") {
   item <- as.character(substitute(item))
 
   # Design parameters
   encoded_items <- as.integer(as.factor(design_df[[item]]))
   n_treatments <- length(unique(encoded_items))
-  n_rows <- max(as_numeric_factor(design_df$row), na.rm = TRUE)
-  n_cols <- max(as_numeric_factor(design_df$col), na.rm = TRUE)
+  n_rows <- max(as_numeric_factor(design_df[[row_column]]), na.rm = TRUE)
+  n_cols <- max(as_numeric_factor(design_df[[col_column]]), na.rm = TRUE)
   n_plots <- nrow(design_df)
 
   # Create design matrix X for treatments
