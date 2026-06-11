@@ -440,11 +440,6 @@ speed_hierarchical <- function(data, optimise, quiet, seed, call = NULL, ...) {
 
 #' Print method for speed design objects
 #'
-#' Prints a compact output for the design: its layout, treatments and
-#' replication, optimised score, convergence and seed. The full treatment list
-#' is always shown. For richer, statistically meaningful evaluation metrics use
-#' [summary()][summary.design()].
-#'
 #' @param x Design object returned by speed function
 #' @param ... Additional arguments passed to print
 #'
@@ -454,100 +449,25 @@ speed_hierarchical <- function(data, optimise, quiet, seed, call = NULL, ...) {
 #'
 #' @export
 print.design <- function(x, ...) {
-  meta <- x$metadata
-  # Buffer plots (add_buffers()) are a field-layout convenience, not part of the
-  # statistical design - exclude them from the reported layout and replication.
-  df <- .drop_buffer_rows(x$design_df, meta)
-  hierarchical <- is.list(x$treatments)
-
-  # Uniform field layout: a fixed-width label, then the value. Continuation /
-  # per-level lines are indented to line up under the value column.
-  pad <- 14
-  lab <- function(s) formatC(s, width = -pad)
-  indent <- strrep(" ", pad)
-  # Integer formatting with thousands separators (e.g. 2,525).
-  fmt_int <- function(n) format(n, big.mark = ",", scientific = FALSE, trim = TRUE)
-
-  # Compact convergence: "run / total", with a note only when it stopped early.
-  iter_line <- function(run, requested, stopped) {
-    base <- sprintf("%s / %s", fmt_int(run), fmt_int(requested %||% run))
-    if (isTRUE(stopped)) paste0(base, " (stopped early)") else base
-  }
-
-  # Print a multi-level field: first level on the label line, the rest indented.
-  level_field <- function(label, value_fn) {
-    lv <- names(x$treatments)
-    for (i in seq_along(lv)) {
-      cat(if (i == 1) lab(label) else indent,
-          lv[i], ": ", value_fn(lv[i]), "\n", sep = "")
-    }
-  }
-
   cat("Optimised Experimental Design\n")
-  cat("-----------------------------\n")
+  cat("----------------------------\n")
+  cat("Score:", x$score, "\n")
+  cat("Iterations Run:", x$iterations_run, "\n")
+  cat("Stopped Early:", x$stopped_early, "\n")
 
-  # Layout: <nrows> rows x <ncols> cols (<n> plots), or just plot count when no
-  # row/column factors are recorded.
-  rc <- meta$row_column
-  cc <- meta$col_column
-  n_plots <- nrow(df)
-  if (!is.null(rc) && !is.null(cc) && all(c(rc, cc) %in% names(df))) {
-    layout <- sprintf(
-      "%d rows x %d cols (%s plots)",
-      length(unique(df[[rc]])), length(unique(df[[cc]])), fmt_int(n_plots)
-    )
-  } else {
-    layout <- sprintf("%s plots", fmt_int(n_plots))
-  }
-  cat(lab("Layout:"), layout, "\n", sep = "")
-
-  # Treatments. Simple: count + replication, then the full list. Hierarchical:
-  # count + list per level (per-level replication is reported by summary()).
-  if (hierarchical) {
-    level_field("Treatments:", function(lv) {
-      sprintf("%d (%s)", length(x$treatments[[lv]]),
-              paste(x$treatments[[lv]], collapse = ", "))
-    })
-  } else {
-    swap <- meta$per_level[[1]]$swap
-    n_trt <- length(x$treatments)
-    if (!is.null(swap) && swap %in% names(df)) {
-      reps <- table(df[[swap]])
-      if (length(unique(reps)) == 1) {
-        rep_str <- sprintf("%d (%s reps each)", n_trt, fmt_int(reps[[1]]))
-      } else {
-        # Unequal replication: report the distribution, e.g.
-        # "20 (12 x 1 rep, 8 x 3 reps)" rather than a bare flag.
-        rep_dist <- table(reps)
-        parts <- vapply(names(rep_dist), function(r) {
-          sprintf("%d x %s rep%s", rep_dist[[r]], r, if (r == "1") "" else "s")
-        }, character(1))
-        rep_str <- sprintf("%d (%s)", n_trt, paste(parts, collapse = ", "))
-      }
-    } else {
-      rep_str <- as.character(n_trt)
+  # Handle treatments display for hierarchical vs simple designs
+  if (is.list(x$treatments)) {
+    # Hierarchical design - show each level with its name
+    cat("Treatments:\n")
+    for (level_name in names(x$treatments)) {
+      cat("  ", level_name, ": ", paste(x$treatments[[level_name]], collapse = ", "), "\n", sep = "")
     }
-    cat(lab("Treatments:"), rep_str, "\n", sep = "")
-    cat(indent, paste(x$treatments, collapse = ", "), "\n", sep = "")
-  }
-
-  cat(lab("Score:"), x$score, "\n", sep = "")
-
-  # Iterations: run / total (+ stopped-early note). For hierarchical designs the
-  # per-level run count is the length of that level's score trace.
-  if (hierarchical) {
-    level_field("Iterations:", function(lv) {
-      iter_line(length(x$scores[[lv]]), meta$per_level[[lv]]$iterations,
-                x$stopped_early[[lv]])
-    })
   } else {
-    cat(lab("Iterations:"),
-        iter_line(x$iterations_run, meta$per_level[[1]]$iterations, x$stopped_early),
-        "\n", sep = "")
+    # Simple design - show treatments as before
+    cat("Treatments:", paste(x$treatments, collapse = ", "), "\n")
   }
 
-  cat(lab("Seed:"), x$seed, "\n", sep = "")
-  cat("\nUse summary() for design evaluation metrics.\n")
+  cat("Seed:", x$seed, "\n\n")
 
   return(invisible(x))
 }

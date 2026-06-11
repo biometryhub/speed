@@ -139,7 +139,8 @@ test_that("print.summary.design shows the expected sections", {
   expect_match(out, "Objective:.*objective_function")
   expect_match(out, "adjacency")
   expect_match(out, "balance")
-  expect_match(out, "Iterations:.*/")
+  # Iterations report run / total plus an explicit convergence note.
+  expect_match(out, "Iterations:.*/.*\\((stopped early|ran to cap)\\)")
 })
 
 test_that("print.summary.design shows per-level blocks and a total for hierarchical", {

@@ -637,7 +637,7 @@ print.summary.design <- function(x, ...) {
     }
   }
   iter <- sprintf("%s / %s", fmt_int(o$iterations_run), fmt_int(o$iterations_requested))
-  if (!o$stopped_early) iter <- paste0(iter, " (ran to cap)")
+  iter <- paste0(iter, if (o$stopped_early) " (stopped early)" else " (ran to cap)")
   cat(lab("Iterations:"), iter, "\n", sep = "")
   cat(lab("Temperature:"),
       sprintf("start %s, cooling %s", fmt_num(o$start_temp), fmt_num(o$cooling_rate)),

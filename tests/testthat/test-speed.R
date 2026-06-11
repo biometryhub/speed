@@ -1842,19 +1842,21 @@ test_that("print.design works for simple designs", {
 
   # Check that the printed output contains expected elements
   expect_match(output, "Optimised Experimental Design")
-  expect_match(output, "Layout:.*plots")
-  expect_match(output, "Treatments:")
   expect_match(output, "Score:")
-  expect_match(output, "Iterations:.*/")
+  expect_match(output, "Iterations Run:")
+  expect_match(output, "Stopped Early:")
+  expect_match(output, "Treatments:")
   expect_match(output, "Seed:")
-  expect_match(output, "Use summary\\(\\) for design evaluation metrics")
 
   # Check specific values
-  expect_match(output, paste0("Seed:\\s+", result$seed))
+  expect_match(output, paste("Score:", result$score))
+  expect_match(output, paste("Iterations Run:", result$iterations_run))
+  expect_match(output, paste("Stopped Early:", result$stopped_early))
+  expect_match(output, paste("Seed:", result$seed))
 
-  # Check the full treatment list is still displayed for simple designs
+  # Check treatments are displayed correctly for simple design
   expected_treatments <- paste(result$treatments, collapse = ", ")
-  expect_match(output, expected_treatments, fixed = TRUE)
+  expect_match(output, paste("Treatments:", expected_treatments))
 
   # Verify invisible return
   expect_identical(print(result), result)
@@ -1883,9 +1885,9 @@ test_that("print.design works for hierarchical designs", {
 
   # Check that the printed output contains expected elements
   expect_match(output, "Optimised Experimental Design")
-  expect_match(output, "Layout:.*plots")
   expect_match(output, "Score:")
-  expect_match(output, "Iterations:")
+  expect_match(output, "Iterations Run:")
+  expect_match(output, "Stopped Early:")
   expect_match(output, "Treatments:")
   expect_match(output, "Seed:")
 
@@ -1893,17 +1895,14 @@ test_that("print.design works for hierarchical designs", {
   expect_match(output, "wp:")  # Level name should be shown
   expect_match(output, "sp:")  # Level name should be shown
 
-  # Check that treatments for each level are displayed as "<level>: <n> (<list>)"
+  # Check that treatments for each level are displayed
   for (level_name in names(result$treatments)) {
     expected_treatments <- paste(result$treatments[[level_name]], collapse = ", ")
-    n <- length(result$treatments[[level_name]])
-    expect_match(output, paste0(level_name, ": ", n, " (", expected_treatments, ")"),
-                 fixed = TRUE)
+    expect_match(output, paste0(level_name, ": ", expected_treatments))
   }
 
-  # Iterations are shown per level (both levels show a run / total line)
-  expect_match(output, "wp:.*/")
-  expect_match(output, "sp:.*/")
+  # Verify stopped_early is shown correctly for hierarchical (should show both levels)
+  expect_match(output, "Stopped Early:")
 
   # Verify invisible return
   expect_identical(print(result), result)
@@ -1928,7 +1927,7 @@ test_that("print.design handles different stopped_early formats", {
   )
 
   output_simple <- capture_output(print(result_simple))
-  expect_match(output_simple, "Iterations:.*/")
+  expect_match(output_simple, "Stopped Early: (TRUE|FALSE)")
 
   # Test with hierarchical design where stopped_early is named logical vector
   df_split <- data.frame(
@@ -1949,7 +1948,7 @@ test_that("print.design handles different stopped_early formats", {
                               quiet = TRUE)
 
   output_hierarchical <- capture_output(print(result_hierarchical))
-  expect_match(output_hierarchical, "Iterations:")
+  expect_match(output_hierarchical, "Stopped Early:")
 })
 
 test_that("print.design displays correct treatment counts and names", {
