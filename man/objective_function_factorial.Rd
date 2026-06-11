@@ -28,7 +28,7 @@ objective_function_factorial(
 \item{factorial_separator}{A character used to separate treatments in the factorial design (default: "-")}
 
 \item{...}{
-  Arguments passed on to \code{\link{objective_function}}
+  Arguments passed on to \code{\link[=objective_function]{objective_function}}
   \describe{
     \item{\code{adj_weight}}{Weight for adjacency score (default: 1)}
     \item{\code{bal_weight}}{Weight for balance score (default: 1)}
