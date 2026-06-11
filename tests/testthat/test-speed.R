@@ -2207,13 +2207,68 @@ test_that("speed errors when adj_weight/bal_weight go through ...", {
   )
 })
 
-# TODO: Test cases to add/update
-# - Add more detailed checking of current designs
-# - NSE
-# - Prints progress when quiet = FALSE
-# - different designs
-# - Adaptive swaps
-# - Seed not set
-# - Objective function not numeric result
-# - swap_all_blocks
-# - Print method output
+test_that("speed errors when the objective function returns a non-numeric score", {
+  bad_obj_function <- function(design, swap, spatial_cols, ...) {
+    list(score = "not a number")
+  }
+  bad_obj_data <- data.frame(
+    row = rep(1:4, each = 4),
+    col = rep(1:4, times = 4),
+    treatment = rep(LETTERS[1:4], 4)
+  )
+
+  expect_error(
+    speed(
+      data = bad_obj_data,
+      swap = "treatment",
+      spatial_factors = ~ row + col,
+      obj_function = bad_obj_function,
+      iterations = 10,
+      seed = 42,
+      quiet = TRUE
+    ),
+    "`score` from `objective_function` must be numeric\\."
+  )
+})
+
+test_that("swap_all_blocks changes the optimisation while preserving block composition", {
+  dat_blocks <- data.frame(
+    row = rep(1:4, each = 6),
+    col = rep(1:6, times = 4),
+    treat = rep(LETTERS[1:6], times = 4),
+    block = rep(1:4, each = 6)
+  )
+
+  result_all <- speed(dat_blocks,
+    swap = "treat",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    iterations = 200,
+    optimise_params = optim_params(swap_all_blocks = TRUE),
+    seed = 1,
+    quiet = TRUE
+  )
+  result_one <- speed(dat_blocks,
+    swap = "treat",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    iterations = 200,
+    optimise_params = optim_params(swap_all_blocks = FALSE),
+    seed = 1,
+    quiet = TRUE
+  )
+
+  expect_s3_class(result_all, "design")
+  expect_s3_class(result_one, "design")
+
+  # Both settings only ever swap within a block, so each block must keep its
+  # full set of treatments exactly once regardless of swap_all_blocks.
+  for (result in list(result_all, result_one)) {
+    block_treatment_counts <- table(result$design_df$block, result$design_df$treat)
+    expect_true(all(block_treatment_counts == 1))
+  }
+
+  # swap_all_blocks alters which plots are swapped each step, so the same seed
+  # must lead the optimiser down a different path.
+  expect_false(identical(result_all$design_df$treat, result_one$design_df$treat))
+})
