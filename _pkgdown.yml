@@ -24,6 +24,8 @@ reference:
       - autoplot
       - starts_with("plot")
       - print.design
+      - summary.design
+      - print.summary.design
   - title: Helper Functions
     desc: Utility functions to initialize objects.
   - contents:

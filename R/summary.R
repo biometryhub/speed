@@ -1,7 +1,7 @@
 #' Summarise a speed design
 #'
 #' Produces a richer, statistically meaningful evaluation of a design than
-#' [print()][print.design()]. Where `print()` is a compact identity card,
+#' [print()][print.design()]. Where `print()` is a compact output,
 #' `summary()` decomposes the optimised score and reports structural and
 #' evaluation metrics that let you interrogate and defend a design.
 #'

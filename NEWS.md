@@ -10,7 +10,7 @@
 
 ## Minor Changes
 
-- `print()` for designs now shows a compact identity card (layout, replication,
+- `print()` for designs now shows a compact output (layout, replication,
   convergence) and points to `summary()` for evaluation metrics.
 - `speed()` results now carry a `metadata` field recording each level's swap
   variable, spatial factors, weights and optimisation settings.

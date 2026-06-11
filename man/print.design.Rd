@@ -15,7 +15,7 @@
 x invisibly
 }
 \description{
-Prints a compact "identity card" for the design: its layout, treatments and
+Prints a compact output for the design: its layout, treatments and
 replication, optimised score, convergence and seed. The full treatment list
 is always shown. For richer, statistically meaningful evaluation metrics use
 \link[=summary.design]{summary()}.

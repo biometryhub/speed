@@ -45,7 +45,7 @@ per level), \code{score}, \code{seed}, \code{flags} and the recorded \code{call}
 }
 \description{
 Produces a richer, statistically meaningful evaluation of a design than
-\link[=print.design]{print()}. Where \code{print()} is a compact identity card,
+\link[=print.design]{print()}. Where \code{print()} is a compact output,
 \code{summary()} decomposes the optimised score and reports structural and
 evaluation metrics that let you interrogate and defend a design.
 }

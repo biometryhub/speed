@@ -76,7 +76,7 @@ crd_result
 
 ### Output of the Optimisation
 
-The printed output from the returned design object is a compact identity card: the field layout, the treatments and their replication, the final optimisation score (lower is better), how many iterations were run (and whether it stopped early), and the seed. For a fuller, statistically meaningful evaluation of the design, use `summary()` (see [Evaluating a Design](#evaluating-a-design)). The output object contains some additional components, which can be seen below:
+The printed output from the returned design object is a compact output: the field layout, the treatments and their replication, the final optimisation score (lower is better), how many iterations were run (and whether it stopped early), and the seed. For a fuller, statistically meaningful evaluation of the design, use `summary()` (see [Evaluating a Design](#evaluating-a-design)). The output object contains some additional components, which can be seen below:
 
 ```{r crd-output}
 str(crd_result)
