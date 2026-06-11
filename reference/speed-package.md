@@ -25,11 +25,9 @@ Authors:
 
 - Sam Rogers <sam.rogers@adelaide.edu.au>
 
-- Julian Taylor <julian.taylor@adelaide.edu.au>
-
-- Russell Edson <russell.edson@adelaide.edu.au>
-
 - Wasin Pipattungsakul <wasin.pipattungsakul@adelaide.edu.au>
+
+- Julian Taylor <julian.taylor@adelaide.edu.au>
 
 Other contributors:
 

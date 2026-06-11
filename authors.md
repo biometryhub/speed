@@ -4,11 +4,9 @@
 
 - **Sam Rogers**. Author, maintainer.
 
-- **Julian Taylor**. Author.
-
-- **Russell Edson**. Author.
-
 - **Wasin Pipattungsakul**. Author.
+
+- **Julian Taylor**. Author.
 
 - **University of Adelaide**. Copyright holder, funder.  
   https://adelaide.edu.au/
@@ -22,13 +20,13 @@
 Source:
 [`DESCRIPTION`](https://github.com/biometryhub/speed/blob/main/DESCRIPTION)
 
-Rogers S, Taylor J, Edson R, Pipattungsakul W (2026). *speed: Generate
-Spatially Efficient Experimental Designs*. R package version 0.0.8,
+Rogers S, Pipattungsakul W, Taylor J (2026). *speed: Generate Spatially
+Efficient Experimental Designs*. R package version 0.0.8,
 <https://biometryhub.github.io/speed/>.
 
     @Manual{,
       title = {speed: Generate Spatially Efficient Experimental Designs},
-      author = {Sam Rogers and Julian Taylor and Russell Edson and Wasin Pipattungsakul},
+      author = {Sam Rogers and Wasin Pipattungsakul and Julian Taylor},
       year = {2026},
       note = {R package version 0.0.8},
       url = {https://biometryhub.github.io/speed/},
