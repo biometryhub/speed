@@ -213,7 +213,8 @@ infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "c
 #' @param ncols Number of columns in the design (default: `NULL`)
 #' @param block_nrows Number of rows in each block (default: `NULL`)
 #' @param block_ncols Number of columns in each block (default: `NULL`)
-#' @param splits A named list of nested-unit specifications, ordered from the
+#' @param splits Deprecated; use [initialise_split_design_df()] instead. A named
+#'   list of nested-unit specifications, ordered from the
 #'   outermost level to the innermost. Each entry is itself a list with
 #'   `nrows` and `ncols` (the dimensions of one unit at that level, in cells)
 #'   and an optional `items` (treatments to allocate across the units at that
@@ -321,6 +322,20 @@ initialise_design_df <- function(items = NULL,
   }
 
   if (!is.null(splits)) {
+    # The suggestion is only a migration aid; never let it turn the deprecation
+    # warning into a hard error.
+    suggestion <- tryCatch(
+      paste0(
+        "Use `initialise_split_design_df()` instead:\n",
+        suggest_split_design_df(splits, nrows, ncols, block_nrows, block_ncols)
+      ),
+      error = function(e) "Use `initialise_split_design_df()` instead."
+    )
+    warning(
+      "The `splits` argument of `initialise_design_df()` is deprecated.\n",
+      suggestion,
+      call. = FALSE
+    )
     df <- apply_splits(df, splits, nrows, ncols, block_nrows, block_ncols)
   }
 
@@ -404,6 +419,48 @@ apply_splits <- function(df, splits, nrows, ncols, block_nrows, block_ncols) {
   }
 
   return(df)
+}
+
+#' Suggest an `initialise_split_design_df()` Call
+#'
+#' @description
+#' Translate the deprecated `splits` arguments of [initialise_design_df()] into
+#' the equivalent [initialise_split_design_df()] call and return it as a
+#' deparsed code string for use in the deprecation warning.
+#'
+#' @inheritParams apply_splits
+#'
+#' @return A single string containing the suggested call.
+#'
+#' @keywords internal
+suggest_split_design_df <- function(splits, nrows, ncols, block_nrows, block_ncols) {
+  splits <- add_names(splits)
+
+  # `initialise_split_design_df()` orders splits innermost -> outermost, the
+  # reverse of `initialise_design_df()`, and always needs an explicit outermost
+  # (replicated) unit. Append the block, or the whole field if unblocked, so the
+  # suggested call is valid (>= 2 levels) and its field dimensions line up.
+  new_splits <- rev(splits)
+
+  if (!is.null(block_nrows)) {
+    new_splits$block <- list(nrows = block_nrows, ncols = block_ncols)
+    rep_dim <- c(nrows %/% block_nrows, ncols %/% block_ncols)
+  } else {
+    new_splits$field <- list(nrows = nrows, ncols = ncols)
+    rep_dim <- c(1, 1)
+  }
+
+  # surface `items` first within each level to match the documented examples
+  new_splits <- lapply(new_splits, function(split) {
+    split[order(names(split) != "items")]
+  })
+
+  call <- bquote(initialise_split_design_df(
+    splits = .(new_splits),
+    rep_dim = .(rep_dim)
+  ))
+
+  return(paste(deparse(call), collapse = "\n"))
 }
 
 #' Initialise a Split-Plot Design Data Frame

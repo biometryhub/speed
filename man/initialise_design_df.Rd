@@ -40,7 +40,8 @@ initialize_design_df(
 
 \item{block_ncols}{Number of columns in each block (default: \code{NULL})}
 
-\item{splits}{A named list of nested-unit specifications, ordered from the
+\item{splits}{Deprecated; use \code{\link[=initialise_split_design_df]{initialise_split_design_df()}} instead. A named
+list of nested-unit specifications, ordered from the
 outermost level to the innermost. Each entry is itself a list with
 \code{nrows} and \code{ncols} (the dimensions of one unit at that level, in cells)
 and an optional \code{items} (treatments to allocate across the units at that

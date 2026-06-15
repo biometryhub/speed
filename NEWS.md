@@ -1,3 +1,10 @@
+# speed 0.0.9
+
+## Major Changes
+
+- Deprecated the `splits` argument of `initialise_design_df()` in favor of `initialise_split_design_df()`.
+  Passing `splits` now warns with the equivalent suggested call.
+
 # speed 0.0.8
 
 ## Major Changes

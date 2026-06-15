@@ -269,7 +269,7 @@ test_that("initialize_design_df throws error for invalid inputs", {
 test_that("initialise_design_df builds a split-plot via splits", {
   skip_if_not_installed("vdiffr")
 
-  df <- initialise_design_df(
+  df <- suppressWarnings(initialise_design_df(
     nrows = 12,
     ncols = 4,
     block_nrows = 12,
@@ -278,7 +278,7 @@ test_that("initialise_design_df builds a split-plot via splits", {
       wholeplot = list(nrows = 4, ncols = 1, items = LETTERS[1:3]),
       subplot = list(nrows = 1, ncols = 1, items = letters[1:4])
     )
-  )
+  ))
 
   expect_setequal(names(df), c(
     "row", "col", "row_block", "col_block", "block", "wholeplot",
@@ -317,7 +317,7 @@ test_that("initialise_design_df builds a split-plot via splits", {
 test_that("initialise_design_df supports split-split-plot via nested splits", {
   skip_if_not_installed("vdiffr")
 
-  df <- initialise_design_df(
+  df <- suppressWarnings(initialise_design_df(
     nrows = 8,
     ncols = 4,
     block_nrows = 8,
@@ -327,7 +327,7 @@ test_that("initialise_design_df supports split-split-plot via nested splits", {
       sp = list(nrows = 2, ncols = 2, items = letters[1:2]),
       ssp = list(nrows = 1, ncols = 1, items = c("x", "y", "z", "w"))
     )
-  )
+  ))
 
   expect_true(all(c("wp", "wp_treatment", "sp", "sp_treatment", "ssp", "ssp_treatment") %in% names(df)))
   # 2 blocks, each holding 2 wholeplots, each holding 2 subplots, each holding 4 sub-subplots.
@@ -357,20 +357,20 @@ test_that("initialise_design_df supports split-split-plot via nested splits", {
 })
 
 test_that("initialise_design_df expands a numeric scalar `items` in splits to T1..TN", {
-  df <- initialise_design_df(
+  df <- suppressWarnings(initialise_design_df(
     nrows = 4, ncols = 2,
     splits = list(plot = list(nrows = 2, ncols = 1, items = 4))
-  )
+  ))
 
   expect_setequal(unique(df$plot_treatment), paste0("T", 1:4))
   expect_equal(length(unique(df$plot)), 4)
 })
 
 test_that("initialise_design_df applies splits without an outer block", {
-  df <- initialise_design_df(
+  df <- suppressWarnings(initialise_design_df(
     nrows = 6, ncols = 4,
     splits = list(plot = list(nrows = 2, ncols = 2, items = LETTERS[1:6]))
-  )
+  ))
 
   expect_setequal(names(df), c("row", "col", "plot", "plot_treatment"))
   # No block columns when block_nrows/block_ncols is NULL.
@@ -381,6 +381,30 @@ test_that("initialise_design_df applies splits without an outer block", {
   # Every plot has a single treatment (one-to-one mapping).
   per_plot <- tapply(df$plot_treatment, df$plot, function(x) length(unique(x)))
   expect_true(all(per_plot == 1))
+})
+
+test_that("initialise_design_df warns that `splits` is deprecated and suggests a runnable call", {
+  expect_warning(
+    initialise_design_df(
+      nrows = 12, ncols = 4,
+      block_nrows = 3, block_ncols = 4,
+      splits = list(
+        wholeplot = list(nrows = 1, ncols = 4, items = LETTERS[1:3]),
+        subplot = list(nrows = 1, ncols = 1, items = letters[1:4])
+      )
+    ),
+    "deprecated"
+  )
+
+  # The suggested `initialise_split_design_df()` call must itself be runnable.
+  suggestion <- suggest_split_design_df(
+    splits = list(
+      wholeplot = list(nrows = 1, ncols = 4, items = LETTERS[1:3]),
+      subplot = list(nrows = 1, ncols = 1, items = letters[1:4])
+    ),
+    nrows = 12, ncols = 4, block_nrows = 3, block_ncols = 4
+  )
+  expect_no_error(eval(parse(text = suggestion)))
 })
 
 test_that("initialise_design_df splits validate parent dimensions", {
