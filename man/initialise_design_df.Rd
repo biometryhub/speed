@@ -101,15 +101,4 @@ initialise_design_df(
   )
 )
 
-# split-plot: 4 replicate blocks of 12x1, each block holds 3 wholeplots of 4x1,
-# each wholeplot holds 4 subplots
-initialise_design_df(
-  nrows = 12, ncols = 4,
-  block_nrows = 12, block_ncols = 1,
-  splits = list(
-    wholeplot = list(nrows = 4, ncols = 1, items = LETTERS[1:3]),
-    subplot = list(nrows = 1, ncols = 1, items = letters[1:4])
-  )
-)
-
 }
