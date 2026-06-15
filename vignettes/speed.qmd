@@ -241,7 +241,7 @@ Split-Plot Design is used when some treatments are easier to apply to large area
 
 ## Setting Up Split Plot Design with speed
 
-Now we can create a data frame representing a split plot design. We can build it with `initialise_design_df()` by passing a `splits` list - one entry per nested level, each describing the size of one unit and the treatments to allocate to it.
+Now we can create a data frame representing a split plot design. We can build it with `initialise_split_design_df()` by passing a `splits` list - one entry per nested level, each describing the size of one unit and the treatments to allocate to it.
 
 ```{r split-plot-df}
 splits <- list(
