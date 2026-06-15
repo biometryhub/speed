@@ -435,11 +435,6 @@ apply_splits <- function(df, splits, nrows, ncols, block_nrows, block_ncols) {
 #' @keywords internal
 suggest_split_design_df <- function(splits, nrows, ncols, block_nrows, block_ncols) {
   splits <- add_names(splits)
-
-  # `initialise_split_design_df()` orders splits innermost -> outermost, the
-  # reverse of `initialise_design_df()`, and always needs an explicit outermost
-  # (replicated) unit. Append the block, or the whole field if unblocked, so the
-  # suggested call is valid (>= 2 levels) and its field dimensions line up.
   new_splits <- rev(splits)
 
   if (!is.null(block_nrows)) {
@@ -450,7 +445,7 @@ suggest_split_design_df <- function(splits, nrows, ncols, block_nrows, block_nco
     rep_dim <- c(1, 1)
   }
 
-  # surface `items` first within each level to match the documented examples
+  # make `items` first member within each level to match the documented examples
   new_splits <- lapply(new_splits, function(split) {
     split[order(names(split) != "items")]
   })
@@ -512,7 +507,6 @@ suggest_split_design_df <- function(splits, nrows, ncols, block_nrows, block_nco
 #' )
 #'
 #' @export
-# fmt: skip
 initialise_split_design_df <- function(splits, rep_dim = c(1, 1)) {
   .verify_initialise_split_design_df(splits, rep_dim)
 
@@ -776,7 +770,6 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
   }
 }
 
-# fmt: skip
 .verify_initialise_split_design_df <- function(splits, rep_dim) {
   # need at least a nested level and the replicated unit
   verify_list(splits)

@@ -423,11 +423,13 @@ test_that("initialise_design_df splits validate parent dimensions", {
   expect_error(initialise_design_df(nrows = 4, ncols = 4), "`items` must be provided when `splits` is `NULL`")
 
   # `items` length must equal n_children or divide it; 5 items into 6 children -> error.
+  # This case passes validation, so it reaches (and emits) the deprecation warning
+  # before `apply_splits` throws; suppress it like the other deprecated-path tests.
   expect_error(
-    initialise_design_df(
+    suppressWarnings(initialise_design_df(
       nrows = 6, ncols = 2,
       splits = list(wp = list(nrows = 2, ncols = 1, items = LETTERS[1:5]))
-    ),
+    )),
     "`items` for split `wp` must have length 6 \\(or divide it\\); got 5"
   )
 
