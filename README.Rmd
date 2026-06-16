@@ -28,6 +28,7 @@ knitr::opts_chunk$set(
 * [Overview](#overview)
 * [Installation](#installation)
 * [Features](#features)
+* [What's New](#whats-new)
 * [Examples](#examples)
   * [Basic](#basic)
   * [Blocked design](#blocked-design)
@@ -77,6 +78,10 @@ remotes::install_github("biometryhub/speed")
 - Early stopping when convergence is reached
 
 See the package [documentation](https://biometryhub.github.io/speed/reference/index.html) for more detailed examples and options.
+
+## What's New
+
+See [news][news].
 
 ## Examples
 
@@ -140,6 +145,7 @@ For more detailed examples, see the [getting started vignette][getting-started] 
 * [BIBD][bibd]
 * [Multi-Environment trial (MET)][met]
 * [Factorial][factorial]
+* [Relationship matrix][relationship-matrix]
 
 ## How It Works
 
@@ -177,6 +183,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) f
 [bibd]: https://biometryhub.github.io/speed/articles/complex_designs.html#balanced-incomplete-block-design-bibd
 [met]: https://biometryhub.github.io/speed/articles/met.html
 [factorial]: https://biometryhub.github.io/speed/articles/factorial.html
+[relationship-matrix]: https://biometryhub.github.io/speed/articles/genetic_relationship.html
+
+<!-- internal -->
+
+[news]: ./NEWS.md
 
 ## Code of Conduct
 
