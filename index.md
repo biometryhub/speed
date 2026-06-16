@@ -5,6 +5,7 @@
 - [Overview](#overview)
 - [Installation](#installation)
 - [Features](#features)
+- [What’s New](#whats-new)
 - [Examples](#examples)
   - [Basic](#basic)
   - [Blocked design](#blocked-design)
@@ -63,6 +64,10 @@ remotes::install_github("biometryhub/speed")
 See the package
 [documentation](https://biometryhub.github.io/speed/reference/index.html)
 for more detailed examples and options.
+
+## What’s New
+
+See [news](https://biometryhub.github.io/speed/NEWS.md).
 
 ## Examples
 
@@ -156,6 +161,8 @@ including, but not limited to:
 - [Multi-Environment trial
   (MET)](https://biometryhub.github.io/speed/articles/met.html)
 - [Factorial](https://biometryhub.github.io/speed/articles/factorial.html)
+- [Relationship
+  matrix](https://biometryhub.github.io/speed/articles/genetic_relationship.html)
 
 ## How It Works
 
@@ -188,16 +195,16 @@ Warning in citation("speed"): could not determine year for 'speed' from package
 DESCRIPTION file
 To cite package 'speed' in publications use:
 
-  Rogers S, Taylor J, Edson R, Pipattungsakul W (????). _speed:
-  Generate Spatially Efficient Experimental Designs_. R package version
-  0.0.4, <https://biometryhub.github.io/speed/>.
+  Rogers S, Pipattungsakul W, Taylor J (????). _speed: Generate
+  Spatially Efficient Experimental Designs_. R package version 0.0.8,
+  <https://biometryhub.github.io/speed/>.
 
 A BibTeX entry for LaTeX users is
 
   @Manual{,
     title = {speed: Generate Spatially Efficient Experimental Designs},
-    author = {Sam Rogers and Julian Taylor and Russell Edson and Wasin Pipattungsakul},
-    note = {R package version 0.0.4},
+    author = {Sam Rogers and Wasin Pipattungsakul and Julian Taylor},
+    note = {R package version 0.0.8},
     url = {https://biometryhub.github.io/speed/},
   }
 ```
