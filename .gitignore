@@ -1,6 +1,8 @@
 .Rproj.user
 .Rhistory
 .RData
+*\.RData
+*\.rds
 .Ruserdata
 lib/
 docs
@@ -12,3 +14,8 @@ inst/doc
 
 Rplots.pdf
 *.local.json
+.DS_Store
+Thumbs.db
+*\.txt
+*\.xlsx
+*\.csv

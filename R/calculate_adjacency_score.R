@@ -247,11 +247,9 @@ calculate_adjacency_score <- function(layout_df,
                                       relationship = NULL) {
   ring_type <- match.arg(ring_type)
 
-  design_matrix <- matrix(
-    layout_df[[swap]],
-    nrow = max(as_numeric_factor(layout_df[[row_column]]), na.rm = TRUE),
-    ncol = max(as_numeric_factor(layout_df[[col_column]]), na.rm = TRUE),
-    byrow = TRUE
+  design_matrix <- build_design_matrix(
+    layout_df, swap,
+    row_column = row_column, col_column = col_column
   )
 
   per_cell <- adjacency_score_vec(

@@ -623,3 +623,33 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
 #' @rdname initialise_design_df
 #' @export
 initialize_design_df <- initialise_design_df
+
+#' Build a Spatial Design Matrix from a Data Frame
+#'
+#' @description
+#' Places each treatment value at the grid position given by its `row_column`
+#' and `col_column` coordinates, returning a character matrix of dimensions
+#' `max(row) × max(col)`. Cells with no corresponding row in `df` are `NA`.
+#' Unlike filling via `matrix(..., byrow)`, this is robust to any row ordering
+#' of `df`.
+#'
+#' @param df A data frame with columns named by `swap`, `row_column`,
+#'   `col_column`.
+#' @param swap Column name of the treatment variable.
+#' @param row_column Column name of the row position variable (default `"row"`).
+#' @param col_column Column name of the column position variable
+#'   (default `"col"`).
+#'
+#' @return A character matrix of dimensions `max(row) × max(col)`.
+#'
+#' @keywords internal
+build_design_matrix <- function(df, swap, row_column = "row", col_column = "col") {
+  nr <- max(as_numeric_factor(df[[row_column]]), na.rm = TRUE)
+  nc <- max(as_numeric_factor(df[[col_column]]), na.rm = TRUE)
+  m <- matrix(NA_character_, nrow = nr, ncol = nc)
+  m[cbind(
+    as_numeric_factor(df[[row_column]]),
+    as_numeric_factor(df[[col_column]])
+  )] <- as.character(df[[swap]])
+  m
+}

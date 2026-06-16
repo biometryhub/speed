@@ -219,10 +219,9 @@ objective_function_piepho <- function(design,
                                       row_column = "row",
                                       col_column = "col",
                                       ...) {
-  design_matrix <- matrix(
-    design[[swap]],
-    nrow = max(as_numeric_factor(design[[row_column]]), na.rm = TRUE),
-    ncol = max(as_numeric_factor(design[[col_column]]), na.rm = TRUE)
+  design_matrix <- build_design_matrix(
+    design, swap,
+    row_column = row_column, col_column = col_column
   )
 
   ed <- calculate_ed(design_matrix, current_score_obj$ed, swapped_items)
