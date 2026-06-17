@@ -92,15 +92,13 @@ Nitrogen Rate × Variety interactions with three hierarchical levels.
 
 ``` r
 
-split_split_df <- initialise_design_df(
-  nrows = 16, ncols = 9,
-  block_nrows = 4, block_ncols = 9,
-  splits = list(
-    wholeplot = list(nrows = 4, ncols = 3, items = LETTERS[1:3]),
-    subplot = list(nrows = 1, ncols = 3, items = letters[1:4]),
-    subsubplot = list(nrows = 1, ncols = 1, items = c("x", "y", "z"))
-  )
+splits <- list(
+  subsubplot = list(items = c("x", "y", "z"), nrows = 1, ncols = 1),
+  subplot = list(items = c("a", "b", "c", "d"), nrows = 1, ncols = 3),
+  wholeplot = list(items = c("A", "B", "C"), nrows = 4, ncols = 3),
+  block = list(nrows = 4, ncols = 9)
 )
+split_split_df <- initialise_split_design_df(splits = splits, rep_dim = c(4, 1))
 ```
 
 ![](complex_designs_files/figure-html/fig-ssplot1-1.png)

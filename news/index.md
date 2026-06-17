@@ -1,5 +1,15 @@
 # Changelog
 
+## speed 0.0.9
+
+### Major Changes
+
+- Deprecated the `splits` argument of
+  [`initialise_design_df()`](https://biometryhub.github.io/speed/reference/initialise_design_df.md)
+  in favor of
+  [`initialise_split_design_df()`](https://biometryhub.github.io/speed/reference/initialise_split_design_df.md).
+  Passing `splits` now warns with the equivalent suggested call.
+
 ## speed 0.0.8
 
 ### Major Changes

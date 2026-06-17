@@ -431,37 +431,28 @@ sub-plots in a single step.
 
 Now we can create a data frame representing a split plot design. We can
 build it with
-[`initialise_design_df()`](https://biometryhub.github.io/speed/reference/initialise_design_df.md)
+[`initialise_split_design_df()`](https://biometryhub.github.io/speed/reference/initialise_split_design_df.md)
 by passing a `splits` list - one entry per nested level, each describing
 the size of one unit and the treatments to allocate to it.
 
 ``` r
 
-split_plot_design <- initialise_design_df(
-  nrows = 12, ncols = 4,
-  block_nrows = 3, block_ncols = 4,
-  splits = list(
-    wholeplot = list(nrows = 1, ncols = 4, items = LETTERS[1:3]),
-    subplot = list(nrows = 1, ncols = 1, items = letters[1:4])
-  )
+splits <- list(
+  subplot = list(items = letters[1:4], nrows = 1, ncols = 1),
+  wholeplot = list(items = LETTERS[1:3], nrows = 1, ncols = 4),
+  block = list(nrows = 3, ncols = 4)
 )
+split_plot_design <- initialise_split_design_df(splits = splits, rep_dim = c(4, 1))
 head(split_plot_design)
 ```
 
-      row col row_block col_block block wholeplot wholeplot_treatment subplot
-    1   1   1         1         1     1         1                   A       1
-    2   2   1         1         1     1         2                   B       5
-    3   3   1         1         1     1         3                   C       9
-    4   4   1         2         1     2         4                   A      13
-    5   5   1         2         1     2         5                   B      17
-    6   6   1         2         1     2         6                   C      21
-      subplot_treatment
-    1                 a
-    2                 a
-    3                 a
-    4                 a
-    5                 a
-    6                 a
+      row col block wholeplot wholeplot_treatment subplot subplot_treatment
+    1   1   1     1         1                   A       1                 a
+    2   2   1     1         2                   B       5                 a
+    3   3   1     1         3                   C       9                 a
+    4   4   1     2         4                   A      13                 a
+    5   5   1     2         5                   B      17                 a
+    6   6   1     2         6                   C      21                 a
 
 ![](speed_files/figure-html/split-plot-plot1-1.png)
 
@@ -532,11 +523,9 @@ str(split_plot_result)
 ```
 
     List of 8
-     $ design_df     :Classes 'design' and 'data.frame':    48 obs. of  9 variables:
+     $ design_df     :Classes 'design' and 'data.frame':    48 obs. of  7 variables:
       ..$ row                : int [1:48] 1 1 1 1 2 2 2 2 3 3 ...
       ..$ col                : int [1:48] 1 2 3 4 1 2 3 4 1 2 ...
-      ..$ row_block          : num [1:48] 1 1 1 1 1 1 1 1 1 1 ...
-      ..$ col_block          : num [1:48] 1 1 1 1 1 1 1 1 1 1 ...
       ..$ block              : num [1:48] 1 1 1 1 1 1 1 1 1 1 ...
       ..$ wholeplot          : num [1:48] 1 1 1 1 2 2 2 2 3 3 ...
       ..$ wholeplot_treatment: chr [1:48] "C" "C" "C" "C" ...

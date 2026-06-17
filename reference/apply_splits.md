@@ -26,15 +26,17 @@ apply_splits(df, splits, nrows, ncols, block_nrows, block_ncols)
 
 - splits:
 
-  A named list of nested-unit specifications, ordered from the outermost
-  level to the innermost. Each entry is itself a list with `nrows` and
-  `ncols` (the dimensions of one unit at that level, in cells) and an
-  optional `items` (treatments to allocate across the units at that
-  level, one item per unit, ordered by parent then within-parent ID).
-  For each level, `<name>` and `<name>_treatment` columns are added (the
-  latter only if `items` is provided). Used to build hierarchical
-  layouts such as split-plot, split-split-plot, and strip-plot designs.
-  (default: `NULL`)
+  Deprecated; use
+  [`initialise_split_design_df()`](https://biometryhub.github.io/speed/reference/initialise_split_design_df.md)
+  instead. A named list of nested-unit specifications, ordered from the
+  outermost level to the innermost. Each entry is itself a list with
+  `nrows` and `ncols` (the dimensions of one unit at that level, in
+  cells) and an optional `items` (treatments to allocate across the
+  units at that level, one item per unit, ordered by parent then
+  within-parent ID). For each level, `<name>` and `<name>_treatment`
+  columns are added (the latter only if `items` is provided). Used to
+  build hierarchical layouts such as split-plot, split-split-plot, and
+  strip-plot designs. (default: `NULL`)
 
 - nrows:
 

@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +62,7 @@
       <h1>Common Agricultural Experimental Designs with speed</h1>
 
       <p class="author">Sam Rogers</p>
-      <p class="date">2026-06-16</p>
+      <p class="date">2026-06-17</p>
 
       <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/vignettes/speed.qmd" class="external-link"><code>vignettes/speed.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -443,33 +443,24 @@ Seed: 42 </code></pre>
 <li>Different error terms for different treatment levels</li>
 </ul></section><section class="level2"><h3 id="setting-up-split-plot-design-with-speed">Setting Up Split Plot Design with speed<a class="anchor" aria-label="anchor" href="#setting-up-split-plot-design-with-speed"></a>
 </h3>
-<p>Now we can create a data frame representing a split plot design. We can build it with <code><a href="../reference/initialise_design_df.html">initialise_design_df()</a></code> by passing a <code>splits</code> list - one entry per nested level, each describing the size of one unit and the treatments to allocate to it.</p>
+<p>Now we can create a data frame representing a split plot design. We can build it with <code><a href="../reference/initialise_split_design_df.html">initialise_split_design_df()</a></code> by passing a <code>splits</code> list - one entry per nested level, each describing the size of one unit and the treatments to allocate to it.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">split_plot_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/initialise_design_df.html">initialise_design_df</a></span><span class="op">(</span></span>
-<span>  nrows <span class="op">=</span> <span class="fl">12</span>, ncols <span class="op">=</span> <span class="fl">4</span>,</span>
-<span>  block_nrows <span class="op">=</span> <span class="fl">3</span>, block_ncols <span class="op">=</span> <span class="fl">4</span>,</span>
-<span>  splits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>    wholeplot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrows <span class="op">=</span> <span class="fl">1</span>, ncols <span class="op">=</span> <span class="fl">4</span>, items <span class="op">=</span> <span class="va">LETTERS</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span><span class="op">)</span>,</span>
-<span>    subplot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrows <span class="op">=</span> <span class="fl">1</span>, ncols <span class="op">=</span> <span class="fl">1</span>, items <span class="op">=</span> <span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span><span class="op">)</span></span>
-<span>  <span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">splits</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  subplot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>items <span class="op">=</span> <span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span>, nrows <span class="op">=</span> <span class="fl">1</span>, ncols <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
+<span>  wholeplot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>items <span class="op">=</span> <span class="va">LETTERS</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>, nrows <span class="op">=</span> <span class="fl">1</span>, ncols <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
+<span>  block <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrows <span class="op">=</span> <span class="fl">3</span>, ncols <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
+<span><span class="va">split_plot_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/initialise_split_design_df.html">initialise_split_design_df</a></span><span class="op">(</span>splits <span class="op">=</span> <span class="va">splits</span>, rep_dim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">split_plot_design</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  row col row_block col_block block wholeplot wholeplot_treatment subplot
-1   1   1         1         1     1         1                   A       1
-2   2   1         1         1     1         2                   B       5
-3   3   1         1         1     1         3                   C       9
-4   4   1         2         1     2         4                   A      13
-5   5   1         2         1     2         5                   B      17
-6   6   1         2         1     2         6                   C      21
-  subplot_treatment
-1                 a
-2                 a
-3                 a
-4                 a
-5                 a
-6                 a</code></pre>
+<pre><code>  row col block wholeplot wholeplot_treatment subplot subplot_treatment
+1   1   1     1         1                   A       1                 a
+2   2   1     1         2                   B       5                 a
+3   3   1     1         3                   C       9                 a
+4   4   1     2         4                   A      13                 a
+5   5   1     2         5                   B      17                 a
+6   6   1     2         6                   C      21                 a</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -537,11 +528,9 @@ Seed: 42 </code></pre>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">split_plot_result</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>List of 8
- $ design_df     :Classes 'design' and 'data.frame':    48 obs. of  9 variables:
+ $ design_df     :Classes 'design' and 'data.frame':    48 obs. of  7 variables:
   ..$ row                : int [1:48] 1 1 1 1 2 2 2 2 3 3 ...
   ..$ col                : int [1:48] 1 2 3 4 1 2 3 4 1 2 ...
-  ..$ row_block          : num [1:48] 1 1 1 1 1 1 1 1 1 1 ...
-  ..$ col_block          : num [1:48] 1 1 1 1 1 1 1 1 1 1 ...
   ..$ block              : num [1:48] 1 1 1 1 1 1 1 1 1 1 ...
   ..$ wholeplot          : num [1:48] 1 1 1 1 2 2 2 2 3 3 ...
   ..$ wholeplot_treatment: chr [1:48] "C" "C" "C" "C" ...

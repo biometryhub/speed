@@ -283,6 +283,8 @@ Utility functions to initialize objects.
 - [`initialise_design_df()`](https://biometryhub.github.io/speed/reference/initialise_design_df.md)
   [`initialize_design_df()`](https://biometryhub.github.io/speed/reference/initialise_design_df.md)
   : Initialise Design Data Frame
+- [`initialise_split_design_df()`](https://biometryhub.github.io/speed/reference/initialise_split_design_df.md)
+  : Initialise a Split-Plot Design Data Frame
 - [`add_buffers()`](https://biometryhub.github.io/speed/reference/add_buffers.md)
   : Add buffers to an existing design
 - [`prep_relationship()`](https://biometryhub.github.io/speed/reference/prep_relationship.md)
