@@ -266,153 +266,16 @@ test_that("initialize_design_df throws error for invalid inputs", {
   )), "`items` must be provided for all designs or `items` must be provided to `initialise_design_df`")
 })
 
-test_that("initialise_design_df builds a split-plot via splits", {
-  skip_if_not_installed("vdiffr")
-
-  df <- initialise_design_df(
-    nrows = 12,
-    ncols = 4,
-    block_nrows = 12,
-    block_ncols = 1,
-    splits = list(
-      wholeplot = list(nrows = 4, ncols = 1, items = LETTERS[1:3]),
-      subplot = list(nrows = 1, ncols = 1, items = letters[1:4])
-    )
-  )
-
-  expect_setequal(names(df), c(
-    "row", "col", "row_block", "col_block", "block", "wholeplot",
-    "wholeplot_treatment", "subplot", "subplot_treatment"
-  ))
-  expect_equal(nrow(df), 48)
-
-  # 4 blocks (replicates), each holding 3 wholeplots, each holding 4 subplots.
-  expect_equal(length(unique(df$block)), 4)
-  expect_equal(length(unique(df$wholeplot)), 12)
-  expect_equal(length(unique(df$subplot)), 48)
-
-  # Every wholeplot has exactly one wholeplot treatment.
-  per_wholeplot <- tapply(df$wholeplot_treatment, df$wholeplot, function(x) length(unique(x)))
-  expect_true(all(per_wholeplot == 1))
-
-  # Every block sees a full wholeplot-treatment set.
-  per_block <- tapply(df$wholeplot_treatment, df$block, function(x) sort(unique(x)))
-  for (set in per_block) expect_equal(set, LETTERS[1:3])
-
-  # Every wholeplot sees a full subplot-treatment set.
-  per_wholeplot_sp <- tapply(df$subplot_treatment, df$wholeplot, function(x) sort(unique(x)))
-  for (set in per_wholeplot_sp) expect_equal(set, letters[1:4])
-
-  class(df) <- c("design", class(df))
-  vdiffr::expect_doppelganger(
-    "initialise-splitplot-wholeplot",
-    autoplot(df, treatments = "wholeplot_treatment")
-  )
-  vdiffr::expect_doppelganger(
-    "initialise-splitplot-subplot",
-    autoplot(df, treatments = "subplot_treatment", block = "wholeplot")
-  )
-})
-
-test_that("initialise_design_df supports split-split-plot via nested splits", {
-  skip_if_not_installed("vdiffr")
-
-  df <- initialise_design_df(
-    nrows = 8,
-    ncols = 4,
-    block_nrows = 8,
-    block_ncols = 2,
-    splits = list(
-      wp = list(nrows = 4, ncols = 2, items = LETTERS[1:2]),
-      sp = list(nrows = 2, ncols = 2, items = letters[1:2]),
-      ssp = list(nrows = 1, ncols = 1, items = c("x", "y", "z", "w"))
-    )
-  )
-
-  expect_true(all(c("wp", "wp_treatment", "sp", "sp_treatment", "ssp", "ssp_treatment") %in% names(df)))
-  # 2 blocks, each holding 2 wholeplots, each holding 2 subplots, each holding 4 sub-subplots.
-  expect_equal(length(unique(df$block)), 2)
-  expect_equal(length(unique(df$wp)), 4)
-  expect_equal(length(unique(df$sp)), 8)
-  expect_equal(length(unique(df$ssp)), 32)
-
-  # Each parent unit gets a full inner treatment set.
-  for (parent in unique(df$wp)) {
-    expect_setequal(df$sp_treatment[df$wp == parent], letters[1:2])
-  }
-  for (parent in unique(df$sp)) {
-    expect_setequal(df$ssp_treatment[df$sp == parent], c("x", "y", "z", "w"))
-  }
-
-  class(df) <- c("design", class(df))
-  vdiffr::expect_doppelganger("initialise-splitsplit-wp", autoplot(df, treatments = "wp_treatment"))
-  vdiffr::expect_doppelganger(
-    "initialise-splitsplit-sp",
-    autoplot(df, treatments = "sp_treatment", block = "wp")
-  )
-  vdiffr::expect_doppelganger(
-    "initialise-splitsplit-ssp",
-    autoplot(df, treatments = "ssp_treatment", block = "sp")
-  )
-})
-
-test_that("initialise_design_df expands a numeric scalar `items` in splits to T1..TN", {
-  df <- initialise_design_df(
-    nrows = 4, ncols = 2,
-    splits = list(plot = list(nrows = 2, ncols = 1, items = 4))
-  )
-
-  expect_setequal(unique(df$plot_treatment), paste0("T", 1:4))
-  expect_equal(length(unique(df$plot)), 4)
-})
-
-test_that("initialise_design_df applies splits without an outer block", {
-  df <- initialise_design_df(
-    nrows = 6, ncols = 4,
-    splits = list(plot = list(nrows = 2, ncols = 2, items = LETTERS[1:6]))
-  )
-
-  expect_setequal(names(df), c("row", "col", "plot", "plot_treatment"))
-  # No block columns when block_nrows/block_ncols is NULL.
-  expect_false(any(c("block", "row_block", "col_block") %in% names(df)))
-  # 6 cells per child (2x2), 24 cells total -> 6 children, each treatment used once.
-  expect_equal(length(unique(df$plot)), 6)
-  expect_setequal(unique(df$plot_treatment), LETTERS[1:6])
-  # Every plot has a single treatment (one-to-one mapping).
-  per_plot <- tapply(df$plot_treatment, df$plot, function(x) length(unique(x)))
-  expect_true(all(per_plot == 1))
-})
-
-test_that("initialise_design_df splits validate parent dimensions", {
-  expect_error(initialise_design_df(
-    nrows = 6,
-    ncols = 2,
-    block_nrows = 6,
-    block_ncols = 2,
-    splits = list(wp = list(nrows = 4, ncols = 2))
-  ))
-  expect_error(initialise_design_df(
-    nrows = 6,
-    ncols = 2,
-    splits = list(wp = list(nrows = 3, ncols = 2, foo = 1))
-  ), "`foo` is an invalid argument")
-  expect_error(initialise_design_df(nrows = 4, ncols = 4), "`items` must be provided when `splits` is `NULL`")
-
-  # `items` length must equal n_children or divide it; 5 items into 6 children -> error.
-  expect_error(
+test_that("initialise_design_df warns that `splits` is deprecated", {
+  expect_warning(
     initialise_design_df(
-      nrows = 6, ncols = 2,
-      splits = list(wp = list(nrows = 2, ncols = 1, items = LETTERS[1:5]))
+      nrows = 12, ncols = 4,
+      block_nrows = 3, block_ncols = 4,
+      splits = list(
+        wholeplot = list(nrows = 1, ncols = 4, items = LETTERS[1:3]),
+        subplot = list(nrows = 1, ncols = 1, items = letters[1:4])
+      )
     ),
-    "`items` for split `wp` must have length 6 \\(or divide it\\); got 5"
-  )
-
-  # Each split entry must provide both `nrows` and `ncols`.
-  expect_error(
-    initialise_design_df(
-      nrows = 6, ncols = 2,
-      splits = list(wp = list(nrows = 2))
-    ),
-    "`nrows` and `ncols` must be provided for split `wp`"
+    "deprecated and will be removed in a future version"
   )
 })

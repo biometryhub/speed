@@ -40,7 +40,8 @@ initialize_design_df(
 
 \item{block_ncols}{Number of columns in each block (default: \code{NULL})}
 
-\item{splits}{A named list of nested-unit specifications, ordered from the
+\item{splits}{Deprecated; use \code{\link[=initialise_split_design_df]{initialise_split_design_df()}} instead. A named
+list of nested-unit specifications, ordered from the
 outermost level to the innermost. Each entry is itself a list with
 \code{nrows} and \code{ncols} (the dimensions of one unit at that level, in cells)
 and an optional \code{items} (treatments to allocate across the units at that
@@ -97,17 +98,6 @@ initialise_design_df(
     a = list(items = 1:30, nrows = 10, ncols = 6),
     b = list(items = 1:25, nrows = 10, ncols = 5),
     c = list(items = 16:30, nrows = 10, ncols = 3)
-  )
-)
-
-# split-plot: 4 replicate blocks of 12x1, each block holds 3 wholeplots of 4x1,
-# each wholeplot holds 4 subplots
-initialise_design_df(
-  nrows = 12, ncols = 4,
-  block_nrows = 12, block_ncols = 1,
-  splits = list(
-    wholeplot = list(nrows = 4, ncols = 1, items = LETTERS[1:3]),
-    subplot = list(nrows = 1, ncols = 1, items = letters[1:4])
   )
 )
 
