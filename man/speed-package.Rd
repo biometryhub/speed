@@ -20,9 +20,9 @@ Useful links:
 
 Authors:
 \itemize{
-  \item Julian Taylor \email{julian.taylor@adelaide.edu.au}
-  \item Russell Edson \email{russell.edson@adelaide.edu.au}
+  \item Sam Rogers \email{sam.rogers@adelaide.edu.au}
   \item Wasin Pipattungsakul \email{wasin.pipattungsakul@adelaide.edu.au}
+  \item Julian Taylor \email{julian.taylor@adelaide.edu.au}
   \item Kai Bagley \email{kai.bagley@curtin.edu.au} (\href{https://orcid.org/0009-0004-6579-6959}{ORCID})
 }
 

@@ -11,6 +11,7 @@ initialise_design_df(
   ncols = NULL,
   block_nrows = NULL,
   block_ncols = NULL,
+  splits = NULL,
   designs = NULL,
   design_col = "site"
 )
@@ -21,6 +22,7 @@ initialize_design_df(
   ncols = NULL,
   block_nrows = NULL,
   block_ncols = NULL,
+  splits = NULL,
   designs = NULL,
   design_col = "site"
 )
@@ -37,6 +39,17 @@ initialize_design_df(
 \item{block_nrows}{Number of rows in each block (default: \code{NULL})}
 
 \item{block_ncols}{Number of columns in each block (default: \code{NULL})}
+
+\item{splits}{Deprecated; use \code{\link[=initialise_split_design_df]{initialise_split_design_df()}} instead. A named
+list of nested-unit specifications, ordered from the
+outermost level to the innermost. Each entry is itself a list with
+\code{nrows} and \code{ncols} (the dimensions of one unit at that level, in cells)
+and an optional \code{items} (treatments to allocate across the units at that
+level, one item per unit, ordered by parent then within-parent ID).
+For each level, \verb{<name>} and \verb{<name>_treatment} columns are added (the
+latter only if \code{items} is provided). Used to build hierarchical layouts
+such as split-plot, split-split-plot, and strip-plot designs.
+(default: \code{NULL})}
 
 \item{designs}{A list of named arguments describing design specifications,
 required if \code{nrows} and \code{ncols} are absent. (default: \code{NULL})}

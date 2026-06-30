@@ -22,3 +22,10 @@ codemeta.json
 ^CODE_OF_CONDUCT\.md$
 ^doc$
 ^\.dir-locals\.el$
+\.[Rr][Dd]ata$
+\.[Rr]ds$
+\.[Xx]lsx$
+\.[Tt]xt$
+CLAUDE.md
+.claude
+Rplots.pdf

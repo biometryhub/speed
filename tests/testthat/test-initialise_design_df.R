@@ -265,3 +265,17 @@ test_that("initialize_design_df throws error for invalid inputs", {
     list(nrows = 4, ncols = 4)
   )), "`items` must be provided for all designs or `items` must be provided to `initialise_design_df`")
 })
+
+test_that("initialise_design_df warns that `splits` is deprecated", {
+  expect_warning(
+    initialise_design_df(
+      nrows = 12, ncols = 4,
+      block_nrows = 3, block_ncols = 4,
+      splits = list(
+        wholeplot = list(nrows = 1, ncols = 4, items = LETTERS[1:3]),
+        subplot = list(nrows = 1, ncols = 1, items = letters[1:4])
+      )
+    ),
+    "deprecated and will be removed in a future version"
+  )
+})

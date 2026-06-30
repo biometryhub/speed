@@ -1,24 +1,20 @@
 Type: Package
 Package: speed
 Title: Generate Spatially Efficient Experimental Designs
-Version: 0.0.6
+Version: 0.0.9
 Authors@R:
     c(person(given = "Sam",
              family = "Rogers",
              role = c("aut", "cre"),
              email = "sam.rogers@adelaide.edu.au"),
-      person(given = "Julian",
-             family = "Taylor",
-             role = "aut",
-             email = "julian.taylor@adelaide.edu.au"),
-      person(given = "Russell",
-             family = "Edson",
-             role = "aut",
-             email = "russell.edson@adelaide.edu.au"),
       person(given = "Wasin",
              family = "Pipattungsakul",
              role = "aut",
              email = "wasin.pipattungsakul@adelaide.edu.au"),
+      person(given = "Julian",
+             family = "Taylor",
+             role = "aut",
+             email = "julian.taylor@adelaide.edu.au"),
       person(given = "Kai",
              family = "Bagley",
              email = "kai.bagley@curtin.edu.au",
@@ -62,5 +58,5 @@ Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 VignetteBuilder: quarto
+Config/roxygen2/version: 8.0.0
