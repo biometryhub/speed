@@ -15,7 +15,8 @@ objective_function_info(
 )
 }
 \arguments{
-\item{layout_df}{Data frame representing the spatial layout of the experiment.}
+\item{layout_df}{Data frame representing the spatial layout of the
+experiment.}
 
 \item{swap}{Column name to swap, usually the treatment.}
 
@@ -23,11 +24,13 @@ objective_function_info(
 
 \item{criterion}{Either \code{"A"} or \code{"D"}, representing A or D
 optimality.
-- A-optimality: Minimises \eqn{\mathrm{tr} \left( \mathcal{I}^- \right)}{tr(I⁻)}.
-    - D-optimality: Minimises \eqn{-\log \left| \mathcal{I} \right|}{-log(|I|)}}
+- A-optimality: Minimises \eqn{\mathrm{tr} \left( \mathcal{I}^-
+      \right)}{tr(I⁻)}.
+    - D-optimality: Minimises \eqn{-\log \left| \mathcal{I} \right|}{-
+      log(|I|)}}
 
 \item{L_matrix}{Precomputed projection matrix. Use
-\code{precompute_projection} to generate it. If \code{NULL}, then the
+\code{compute_L_projection} to generate it. If \code{NULL}, then the
 identity covariance structure will be assumed, and the projection will be
 computed using the structure of the design's blocks.}
 

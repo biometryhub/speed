@@ -16,7 +16,7 @@
 #'     - D-optimality: Minimises \eqn{-\log \left| \mathcal{I} \right|}{-
 #'       log(|I|)}
 #' @param L_matrix Precomputed projection matrix. Use
-#'   \code{precompute_projection} to generate it. If \code{NULL}, then the
+#'   \code{compute_L_projection} to generate it. If \code{NULL}, then the
 #'   identity covariance structure will be assumed, and the projection will be
 #'   computed using the structure of the design's blocks.
 #' @param block_column Column name of the design's block factor. Used when
@@ -190,7 +190,7 @@ objective_function_info <- function(
   list(info = info, v = v, trt_levels = trt_levels)
 }
 
-# Helper functions
+# Information matrix diagnostics and covariance utilities
 
 #' Compute L projection
 #'

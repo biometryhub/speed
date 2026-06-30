@@ -12,7 +12,8 @@ calculate_efficiency_factors(
 )
 }
 \arguments{
-\item{layout_df}{Data frame representing the spatial layout of the experiment.}
+\item{layout_df}{Data frame representing the spatial layout of the
+experiment.}
 
 \item{treatment_column}{Column name containing the design's treatments in
 \code{layout_df}.}

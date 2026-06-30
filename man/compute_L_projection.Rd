@@ -7,11 +7,13 @@
 compute_L_projection(layout_df, Sigma, block_column = "block")
 }
 \arguments{
-\item{layout_df}{Data frame representing the spatial layout of the experiment.}
+\item{layout_df}{Data frame representing the spatial layout of the
+experiment.}
 
 \item{Sigma}{Covariance structure to use.}
 
-\item{block_column}{Column name of the design's block factor in \code{layout_df}.}
+\item{block_column}{Column name of the design's block factor in
+\code{layout_df}.}
 }
 \value{
 \eqn{(n \times n)} numeric matrix.
