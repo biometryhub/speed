@@ -72,9 +72,6 @@
 #'   quiet = TRUE
 #' )
 #'
-#' # Inspect the optimised design
-#' calc_info_matrix(result_spatial$design_df, L_matrix = L)
-#'
 #' @return A named list with \code{score}, \code{info_matrix},
 #'   \code{eigenvalues}, \code{criterion}.
 #'
@@ -259,7 +256,7 @@ compute_L_projection <- function(
 #' @param block_column Column name containing the designs block in
 #'   \code{layout_df}.
 #'
-#' @export
+#' @keywords internal
 calc_info_matrix <- function(
   layout_df,
   treatment_column = "treatment",
@@ -312,7 +309,7 @@ calc_info_matrix <- function(
 #' @return \eqn{v \times b} matrix of integers, with treatment levels as row
 #'   names, and block levels as column names.
 #'
-#' @export
+#' @keywords internal
 calc_incidence_matrix <- function(
   layout_df,
   treatment_column = "treatment",
@@ -340,7 +337,7 @@ calc_incidence_matrix <- function(
 #'
 #' @return Symmetric \eqn{N N^\intercal}{N Nᵀ} matrix.
 #'
-#' @export
+#' @keywords internal
 calc_concurrence_matrix <- function(
   layout_df,
   treatment_column = "treatment",
@@ -365,7 +362,7 @@ calc_concurrence_matrix <- function(
 #'
 #' @return A list with \code{efficiency_factors}, \code{E}, \code{replication}.
 #'
-#' @export
+#' @keywords internal
 calculate_efficiency_factors <- function(
   layout_df,
   treatment_column = "treatment",

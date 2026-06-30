@@ -27,3 +27,4 @@ experiment.}
 \description{
 Calculate the Fisher information in the experimental design
 }
+\keyword{internal}

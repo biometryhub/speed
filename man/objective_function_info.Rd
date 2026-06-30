@@ -98,7 +98,4 @@ result_spatial <- speed(
   quiet = TRUE
 )
 
-# Inspect the optimised design
-calc_info_matrix(result_spatial$design_df, L_matrix = L)
-
 }

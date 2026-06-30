@@ -30,3 +30,4 @@ A list with \code{efficiency_factors}, \code{E}, \code{replication}.
 \description{
 Calculate canonical efficiency factors
 }
+\keyword{internal}

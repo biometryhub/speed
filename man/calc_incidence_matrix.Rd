@@ -27,3 +27,4 @@ names, and block levels as column names.
 \description{
 Calculate incidence matrix
 }
+\keyword{internal}

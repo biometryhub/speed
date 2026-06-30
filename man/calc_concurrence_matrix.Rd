@@ -26,3 +26,4 @@ Symmetric \eqn{N N^\intercal}{N Nᵀ} matrix.
 \description{
 Calculate concurrence matrix
 }
+\keyword{internal}
