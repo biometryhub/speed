@@ -404,24 +404,32 @@ apply_splits <- function(df, splits, nrows, ncols, block_nrows, block_ncols) {
 #' Initialise a Split-Plot Design Data Frame
 #'
 #' @description
-#' Build a split plot design from the ground up, given the nested unit
-#' structure and how many times the largest unit is replicated. The field
-#' dimensions are derived from the nested structure, and any number of split
-#' levels is supported (split-plot, split-split-plot, and so on).
+#' Build a split-plot design (or split-split-plot, and so on) from its nested
+#' unit structure. You describe the hierarchy from the largest replicated unit
+#' (e.g. a block) down to the smallest unit (e.g. a subplot), and `rep_dim`
+#' gives how many copies of that largest unit to lay out across the field. The
+#' field dimensions follow from the structure; any number of nesting levels is
+#' supported.
 #'
-#' @param splits A named list of nested-unit specifications, ordered from the
-#'   *innermost* (smallest) level to the *outermost* (the replicated unit, e.g.
-#'   the block). Each entry is itself a list with:
-#'   - `nrows`, `ncols` - the dimensions of one unit at that level, in cells.
-#'     The innermost level is always 1x1, so its `nrows`/`ncols` may be omitted.
-#'   - `items` - optional treatments to allocate across the units at that level,
-#'     one item per unit. A single number is expanded to `T1`, `T2`, ...;
-#'     a shorter vector is reused to fill each parent unit.
-#'   The outermost entry defines the replicated unit; `rep_dim` tiles it across
+#' @param splits A named list describing the nested units, **ordered from the
+#'   largest (outermost) replicated unit down to the smallest (innermost)
+#'   unit** - for a split-plot, `list(block = ..., wholeplot = ..., subplot =
+#'   ...)`. Each entry is itself a list with:
+#'   - `nrows`, `ncols` - the size of one unit at that level, measured in base
+#'     grid cells (not in child units). Each level must tile evenly into the
+#'     level that contains it (the previous entry, or the field for the first
+#'     entry). The innermost (last) level defaults to a single cell (1x1), so
+#'     its `nrows`/`ncols` may be omitted.
+#'   - `items` - optional treatments for the units at that level. The vector is
+#'     recycled to fill the units within each parent, so its length must divide
+#'     the number of units per parent; the same assignment then repeats in every
+#'     parent. A single number `k` is shorthand for `T1, ..., Tk`.
+#'   The first (outermost) entry is the unit that `rep_dim` replicates across
 #'   the field. For each level a `<name>` ID column is added, plus a
 #'   `<name>_treatment` column wherever `items` is supplied.
-#' @param rep_dim Length-2 integer vector `c(row_reps, col_reps)` giving the
-#'   replicate dimension of the whole structure (default: `c(1, 1)`).
+#' @param rep_dim Length-2 integer vector `c(row_reps, col_reps)` giving how
+#'   many copies of the outermost unit to tile down and across the field
+#'   (default: `c(1, 1)`, a single copy).
 #'
 #' @return A data frame with `row` and `col` columns plus one ID (and optional
 #'   treatment) column per split level.
@@ -431,9 +439,9 @@ apply_splits <- function(df, splits, nrows, ncols, block_nrows, block_ncols) {
 #' # (1x4, treatments A-C), each wholeplot holds 4 subplots (1x1, treatments a-d)
 #' initialise_split_design_df(
 #'   splits = list(
-#'     subplot   = list(items = letters[1:4]),
+#'     block     = list(nrows = 3, ncols = 4),
 #'     wholeplot = list(items = LETTERS[1:3], nrows = 1, ncols = 4),
-#'     block     = list(nrows = 3, ncols = 4)
+#'     subplot   = list(items = letters[1:4])
 #'   ),
 #'   rep_dim = c(2, 2)
 #' )
@@ -441,10 +449,10 @@ apply_splits <- function(df, splits, nrows, ncols, block_nrows, block_ncols) {
 #' # split-split-plot: an extra level nested inside the subplot
 #' initialise_split_design_df(
 #'   splits = list(
-#'     subsubplot = list(items = 1:2),
-#'     subplot    = list(items = letters[1:4], nrows = 1, ncols = 2),
+#'     block      = list(nrows = 3, ncols = 8),
 #'     wholeplot  = list(items = LETTERS[1:3], nrows = 1, ncols = 8),
-#'     block      = list(nrows = 3, ncols = 8)
+#'     subplot    = list(items = letters[1:4], nrows = 1, ncols = 2),
+#'     subsubplot = list(items = 1:2)
 #'   ),
 #'   rep_dim = c(2, 1)
 #' )
@@ -453,7 +461,9 @@ apply_splits <- function(df, splits, nrows, ncols, block_nrows, block_ncols) {
 initialise_split_design_df <- function(splits, rep_dim = c(1, 1)) {
   .verify_initialise_split_design_df(splits, rep_dim)
 
-  splits <- add_names(splits)
+  # `splits` is given outermost-first (block -> ... -> subplot) for a natural
+  # reading order; the build below works innermost-first, so reverse it once.
+  splits <- rev(add_names(splits))
 
   # fill innermost dim
   if (is.null(splits[[1]]$nrows)) splits[[1]]$nrows <- 1
@@ -729,15 +739,16 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
   valid_split_args <- c("nrows", "ncols", "items")
   splits <- add_names(splits)
 
-  # only the innermost level may omit dimensions (it defaults to 1x1)
-  innermost_name <- names(splits)[[1]]
+  # `splits` is outermost-first: the first entry is the replicated unit and the
+  # last is the innermost. Only the innermost level may omit dimensions.
+  innermost_name <- names(splits)[[length(splits)]]
 
-  # outermost -> innermost; the outermost's parent is the rep-tiled field
-  outer_split <- splits[[length(splits)]]
+  # walk outermost -> innermost; the outermost's parent is the rep-tiled field
+  outer_split <- splits[[1]]
   parent_name <- "field"
   parent_nrows <- (if (is.null(outer_split$nrows)) 1 else outer_split$nrows) * rep_dim[[1]]
   parent_ncols <- (if (is.null(outer_split$ncols)) 1 else outer_split$ncols) * rep_dim[[2]]
-  for (split_name in rev(names(splits))) {
+  for (split_name in names(splits)) {
     split <- splits[[split_name]]
 
     # check for unknown arguments (catches typos like `nrow`)

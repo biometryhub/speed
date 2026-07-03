@@ -91,10 +91,10 @@ Consider a complex agricultural trial examining Tillage System × Nitrogen Rate 
 
 ```{r split-split-design-df}
 splits <- list(
-  subsubplot = list(items = c("x", "y", "z"), nrows = 1, ncols = 1),
-  subplot = list(items = c("a", "b", "c", "d"), nrows = 1, ncols = 3),
+  block = list(nrows = 4, ncols = 9),
   wholeplot = list(items = c("A", "B", "C"), nrows = 4, ncols = 3),
-  block = list(nrows = 4, ncols = 9)
+  subplot = list(items = c("a", "b", "c", "d"), nrows = 1, ncols = 3),
+  subsubplot = list(items = c("x", "y", "z"), nrows = 1, ncols = 1)
 )
 split_split_df <- initialise_split_design_df(splits = splits, rep_dim = c(4, 1))
 ```

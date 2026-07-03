@@ -2,6 +2,8 @@
 
 ## Major Changes
 
+- Added `initialise_split_design_df()` for building split-plot, split-split-plot, and deeper nested designs.
+  Its `splits` list is ordered from the outermost (replicated) unit down to the innermost unit.
 - Deprecated the `splits` argument of `initialise_design_df()` in favor of `initialise_split_design_df()`.
   Passing `splits` now warns with the equivalent suggested call.
 

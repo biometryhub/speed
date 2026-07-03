@@ -1,9 +1,9 @@
 test_that("initialise_split_design_df builds the split-plot from the docs", {
   df <- initialise_split_design_df(
     list(
-      subplot = list(items = letters[1:4]),
+      block = list(nrows = 3, ncols = 4),
       wholeplot = list(items = LETTERS[1:3], nrows = 1, ncols = 4),
-      block = list(nrows = 3, ncols = 4)
+      subplot = list(items = letters[1:4])
     ),
     rep_dim = c(2, 2)
   )
@@ -39,9 +39,9 @@ test_that("initialise_split_design_df builds the split-plot from the docs", {
 test_that("initialise_split_design_df units cover the right dimensions", {
   df <- initialise_split_design_df(
     list(
-      subplot = list(items = letters[1:4]),
+      block = list(nrows = 4, ncols = 4),
       wholeplot = list(nrows = 2, ncols = 2),
-      block = list(nrows = 4, ncols = 4)
+      subplot = list(items = letters[1:4])
     ),
     rep_dim = c(1, 2)
   )
@@ -66,9 +66,9 @@ test_that("initialise_split_design_df units cover the right dimensions", {
 
 test_that("initialise_split_design_df defaults rep_dim to a single replicate", {
   df <- initialise_split_design_df(list(
-    subplot = list(items = letters[1:4]),
+    block = list(nrows = 3, ncols = 4),
     wholeplot = list(items = LETTERS[1:3], nrows = 1, ncols = 4),
-    block = list(nrows = 3, ncols = 4)
+    subplot = list(items = letters[1:4])
   ))
 
   expect_equal(nrow(df), 12)
@@ -80,10 +80,10 @@ test_that("initialise_split_design_df defaults rep_dim to a single replicate", {
 test_that("initialise_split_design_df supports more than two split levels", {
   df <- initialise_split_design_df(
     list(
-      subsubplot = list(items = 1:2),
-      subplot = list(items = letters[1:4], nrows = 1, ncols = 2),
+      block = list(nrows = 3, ncols = 8),
       wholeplot = list(items = LETTERS[1:3], nrows = 1, ncols = 8),
-      block = list(nrows = 3, ncols = 8)
+      subplot = list(items = letters[1:4], nrows = 1, ncols = 2),
+      subsubplot = list(items = 1:2)
     ),
     rep_dim = c(2, 1)
   )
@@ -111,8 +111,8 @@ test_that("initialise_split_design_df supports more than two split levels", {
 
 test_that("initialise_split_design_df expands a numeric scalar items to T1..TN", {
   df <- initialise_split_design_df(list(
-    subplot = list(items = 4),
-    block = list(nrows = 1, ncols = 4)
+    block = list(nrows = 1, ncols = 4),
+    subplot = list(items = 4)
   ))
 
   expect_setequal(unique(df$subplot_treatment), paste0("T", 1:4))
@@ -121,8 +121,8 @@ test_that("initialise_split_design_df expands a numeric scalar items to T1..TN",
 
 test_that("initialise_split_design_df recycles a divisor-length items per parent", {
   df <- initialise_split_design_df(list(
-    subplot = list(items = letters[1:2]),
-    block = list(nrows = 1, ncols = 4)
+    block = list(nrows = 1, ncols = 4),
+    subplot = list(items = letters[1:2])
   ))
 
   expect_equal(sort(df$subplot_treatment), c("a", "a", "b", "b"))
@@ -130,8 +130,8 @@ test_that("initialise_split_design_df recycles a divisor-length items per parent
 
 test_that("initialise_split_design_df omits the treatment column when items is absent", {
   df <- initialise_split_design_df(list(
-    subplot = list(),
-    block = list(nrows = 2, ncols = 2)
+    block = list(nrows = 2, ncols = 2),
+    subplot = list()
   ))
 
   expect_false("subplot_treatment" %in% names(df))
@@ -142,7 +142,7 @@ test_that("initialise_split_design_df omits the treatment column when items is a
 test_that("initialise_split_design_df validates its inputs", {
   block <- list(nrows = 3, ncols = 4)
   with_default_block <- function(sp, ...) {
-    initialise_split_design_df(list(sp = sp, block = block), ...)
+    initialise_split_design_df(list(block = block, sp = sp), ...)
   }
 
   expect_error(initialise_split_design_df(list(block = block)), "at least two levels")
@@ -169,9 +169,9 @@ test_that("initialise_split_design_df validates its inputs", {
   # only the innermost level may omit dimensions
   expect_error(
     initialise_split_design_df(list(
-      sub = list(),
+      block = list(nrows = 2, ncols = 4),
       mid = list(items = letters[1:2]),
-      block = list(nrows = 2, ncols = 4)
+      sub = list()
     )),
     "must be provided for split `mid`"
   )

@@ -7,41 +7,48 @@
 initialise_split_design_df(splits, rep_dim = c(1, 1))
 }
 \arguments{
-\item{splits}{A named list of nested-unit specifications, ordered from the
-\emph{innermost} (smallest) level to the \emph{outermost} (the replicated unit, e.g.
-the block). Each entry is itself a list with:
+\item{splits}{A named list describing the nested units, \strong{ordered from the
+largest (outermost) replicated unit down to the smallest (innermost)
+unit} - for a split-plot, \code{list(block = ..., wholeplot = ..., subplot = ...)}. Each entry is itself a list with:
 \itemize{
-\item \code{nrows}, \code{ncols} - the dimensions of one unit at that level, in cells.
-The innermost level is always 1x1, so its \code{nrows}/\code{ncols} may be omitted.
-\item \code{items} - optional treatments to allocate across the units at that level,
-one item per unit. A single number is expanded to \code{T1}, \code{T2}, ...;
-a shorter vector is reused to fill each parent unit.
-The outermost entry defines the replicated unit; \code{rep_dim} tiles it across
+\item \code{nrows}, \code{ncols} - the size of one unit at that level, measured in base
+grid cells (not in child units). Each level must tile evenly into the
+level that contains it (the previous entry, or the field for the first
+entry). The innermost (last) level defaults to a single cell (1x1), so
+its \code{nrows}/\code{ncols} may be omitted.
+\item \code{items} - optional treatments for the units at that level. The vector is
+recycled to fill the units within each parent, so its length must divide
+the number of units per parent; the same assignment then repeats in every
+parent. A single number \code{k} is shorthand for \verb{T1, ..., Tk}.
+The first (outermost) entry is the unit that \code{rep_dim} replicates across
 the field. For each level a \verb{<name>} ID column is added, plus a
 \verb{<name>_treatment} column wherever \code{items} is supplied.
 }}
 
-\item{rep_dim}{Length-2 integer vector \code{c(row_reps, col_reps)} giving the
-replicate dimension of the whole structure (default: \code{c(1, 1)}).}
+\item{rep_dim}{Length-2 integer vector \code{c(row_reps, col_reps)} giving how
+many copies of the outermost unit to tile down and across the field
+(default: \code{c(1, 1)}, a single copy).}
 }
 \value{
 A data frame with \code{row} and \code{col} columns plus one ID (and optional
 treatment) column per split level.
 }
 \description{
-Build a split plot design from the ground up, given the nested unit
-structure and how many times the largest unit is replicated. The field
-dimensions are derived from the nested structure, and any number of split
-levels is supported (split-plot, split-split-plot, and so on).
+Build a split-plot design (or split-split-plot, and so on) from its nested
+unit structure. You describe the hierarchy from the largest replicated unit
+(e.g. a block) down to the smallest unit (e.g. a subplot), and \code{rep_dim}
+gives how many copies of that largest unit to lay out across the field. The
+field dimensions follow from the structure; any number of nesting levels is
+supported.
 }
 \examples{
 # split-plot: 4 blocks (2x2) of 3x4 cells; each block holds 3 wholeplots
 # (1x4, treatments A-C), each wholeplot holds 4 subplots (1x1, treatments a-d)
 initialise_split_design_df(
   splits = list(
-    subplot   = list(items = letters[1:4]),
+    block     = list(nrows = 3, ncols = 4),
     wholeplot = list(items = LETTERS[1:3], nrows = 1, ncols = 4),
-    block     = list(nrows = 3, ncols = 4)
+    subplot   = list(items = letters[1:4])
   ),
   rep_dim = c(2, 2)
 )
@@ -49,10 +56,10 @@ initialise_split_design_df(
 # split-split-plot: an extra level nested inside the subplot
 initialise_split_design_df(
   splits = list(
-    subsubplot = list(items = 1:2),
-    subplot    = list(items = letters[1:4], nrows = 1, ncols = 2),
+    block      = list(nrows = 3, ncols = 8),
     wholeplot  = list(items = LETTERS[1:3], nrows = 1, ncols = 8),
-    block      = list(nrows = 3, ncols = 8)
+    subplot    = list(items = letters[1:4], nrows = 1, ncols = 2),
+    subsubplot = list(items = 1:2)
   ),
   rep_dim = c(2, 1)
 )
