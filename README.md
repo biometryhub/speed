@@ -81,7 +81,7 @@ for more detailed examples and options.
 
 ## What’s New
 
-See [news](./NEWS.md).
+See \[news\]\[<https://biometryhub.github.io/speed/news/index.html>\].
 
 ## Examples
 
@@ -112,7 +112,7 @@ result <- speed(df, "treatment", seed = 42)
 autoplot(result)
 ```
 
-<img src="man/figures/README-example-1.png" width="100%" />
+<img src="man/figures/README-example-1.png" alt="" width="100%" />
 
 ``` r
 
@@ -120,7 +120,7 @@ autoplot(result)
 plot_progress(result)
 ```
 
-<img src="man/figures/README-example-2.png" width="100%" /><img src="man/figures/README-example-3.png" width="100%" />
+<img src="man/figures/README-example-2.png" alt="" width="100%" /><img src="man/figures/README-example-3.png" alt="" width="100%" />
 
 ### Blocked design
 
@@ -152,7 +152,7 @@ result <- speed(df,
 autoplot(result)
 ```
 
-<img src="man/figures/README-blocks-1.png" width="100%" />
+<img src="man/figures/README-blocks-1.png" alt="" width="100%" />
 
 ### More Examples
 
@@ -201,12 +201,10 @@ for details).
 
 If you use `speed` in your research, please cite:
 
-    Warning in citation("speed"): could not determine year for 'speed' from package
-    DESCRIPTION file
     To cite package 'speed' in publications use:
 
-      Rogers S, Pipattungsakul W, Taylor J (????). _speed: Generate
-      Spatially Efficient Experimental Designs_. R package version 0.0.8,
+      Rogers S, Pipattungsakul W, Taylor J (2026). _speed: Generate
+      Spatially Efficient Experimental Designs_. R package version 0.0.9,
       <https://biometryhub.github.io/speed/>.
 
     A BibTeX entry for LaTeX users is
@@ -214,7 +212,8 @@ If you use `speed` in your research, please cite:
       @Manual{,
         title = {speed: Generate Spatially Efficient Experimental Designs},
         author = {Sam Rogers and Wasin Pipattungsakul and Julian Taylor},
-        note = {R package version 0.0.8},
+        year = {2026},
+        note = {R package version 0.0.9},
         url = {https://biometryhub.github.io/speed/},
       }
 
