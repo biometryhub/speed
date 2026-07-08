@@ -67,7 +67,7 @@ for more detailed examples and options.
 
 ## What’s New
 
-See [news](https://biometryhub.github.io/speed/NEWS.md).
+See \[news\]\[<https://biometryhub.github.io/speed/news/index.html>\].
 
 ## Examples
 
@@ -191,12 +191,10 @@ for details).
 If you use `speed` in your research, please cite:
 
 ``` R
-Warning in citation("speed"): could not determine year for 'speed' from package
-DESCRIPTION file
 To cite package 'speed' in publications use:
 
-  Rogers S, Pipattungsakul W, Taylor J (????). _speed: Generate
-  Spatially Efficient Experimental Designs_. R package version 0.0.8,
+  Rogers S, Pipattungsakul W, Taylor J (2026). _speed: Generate
+  Spatially Efficient Experimental Designs_. R package version 0.0.9,
   <https://biometryhub.github.io/speed/>.
 
 A BibTeX entry for LaTeX users is
@@ -204,7 +202,8 @@ A BibTeX entry for LaTeX users is
   @Manual{,
     title = {speed: Generate Spatially Efficient Experimental Designs},
     author = {Sam Rogers and Wasin Pipattungsakul and Julian Taylor},
-    note = {R package version 0.0.8},
+    year = {2026},
+    note = {R package version 0.0.9},
     url = {https://biometryhub.github.io/speed/},
   }
 ```
