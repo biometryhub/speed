@@ -81,7 +81,7 @@ for more detailed examples and options.
 
 ## What’s New
 
-See \[news\]\[<https://biometryhub.github.io/speed/news/index.html>\].
+See [news](https://biometryhub.github.io/speed/news/index.html).
 
 ## Examples
 

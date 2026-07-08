@@ -81,7 +81,7 @@ See the package [documentation](https://biometryhub.github.io/speed/reference/in
 
 ## What's New
 
-See [news][https://biometryhub.github.io/speed/news/index.html].
+See [news](https://biometryhub.github.io/speed/news/index.html).
 
 ## Examples
 
