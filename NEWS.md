@@ -5,6 +5,11 @@
 - Deprecated the `splits` argument of `initialise_design_df()` in favor of `initialise_split_design_df()`.
   Passing `splits` now warns with the equivalent suggested call.
 
+## Bug Fixes
+
+- `speed()` no longer emits a "Setting row names on a tibble is deprecated" warning when passed a tibble;
+  row labels are now only reset for base data frames.
+
 # speed 0.0.8
 
 ## Major Changes
