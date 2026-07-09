@@ -206,6 +206,27 @@ test_that("to_types converts data frame data to input types", {
   expect_equal(typed_data$logical_col, test_data$logical_col)
 })
 
+test_that("to_factor/to_types handle multi-class (vctrs-style) columns", {
+  # Columns with a multi-element class() (e.g. vctrs-backed columns such as
+  # those in an edibble design) previously broke to_types() with
+  # "first argument has length > 1". They should round-trip as character.
+  test_data <- data.frame(
+    plain = LETTERS[1:5],
+    numeric_col = as.numeric(1:5)
+  )
+  # Attach an extra class to mimic a vctrs / edibble column.
+  class(test_data$plain) <- c("edbl_unit", "edbl_fct", "character")
+
+  factored <- to_factor(test_data)
+  expect_equal(unname(factored$input_types[["plain"]]), "character")
+  expect_s3_class(factored$df$plain, "factor")
+
+  expect_no_error(typed_data <- to_types(factored$df, factored$input_types))
+  expect_type(typed_data$plain, "character")
+  expect_equal(typed_data$plain, LETTERS[1:5])
+  expect_equal(typed_data$numeric_col, test_data$numeric_col)
+})
+
 # test_that("parse_swap_formula parses with defaults", {
 #   swap <- ~ single(treatment)
 #   parsed <- parse_swap_formula(swap)
