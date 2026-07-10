@@ -18,6 +18,12 @@ reference:
       - starts_with("calculate")
       - get_edges
       - get_vertices
+  - subtitle: Spatial covariance utilities
+    desc: Functions for constructing spatial covariance inputs for Fisher information objectives
+  - contents:
+      - compute_L_projection
+      - cor_ar1
+      - cor_ar1_ar1
   - title: Plotting
     desc: Functions for checking designs.
   - contents:
