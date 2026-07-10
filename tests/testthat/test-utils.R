@@ -207,9 +207,7 @@ test_that("to_types converts data frame data to input types", {
 })
 
 test_that("to_factor/to_types handle multi-class (vctrs-style) columns", {
-  # Columns with a multi-element class() (e.g. vctrs-backed columns such as
-  # those in an edibble design) previously broke to_types() with
-  # "first argument has length > 1". They should round-trip as character.
+
   test_data <- data.frame(
     plain = LETTERS[1:5],
     numeric_col = as.numeric(1:5)
