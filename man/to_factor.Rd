@@ -13,7 +13,8 @@ to_factor(df)
 A list containing:
 \itemize{
 \item \strong{df} - A data frame with factors
-\item \strong{input_types} - A named list of the original type of each column
+\item \strong{input_types} - A named character vector of the original base type of
+each column (for restoring via \code{\link[=to_types]{to_types()}})
 }
 }
 \description{

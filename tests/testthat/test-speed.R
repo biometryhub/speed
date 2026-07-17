@@ -2308,3 +2308,26 @@ test_that("swap_all_blocks changes the optimisation while preserving block compo
   # must lead the optimiser down a different path.
   expect_false(identical(result_all$design_df$treat, result_one$design_df$treat))
 })
+
+
+# Regression test: tibble input must not warn about deprecated row names (#issue)
+test_that("speed does not warn about tibble row names when passed a tibble", {
+  skip_if_not_installed("tibble")
+
+  test_data <- tibble::tibble(
+    row = rep(1:5, times = 4),
+    col = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  expect_no_warning(
+    speed(
+      data = test_data,
+      swap = "treatment",
+      spatial_factors = ~ row + col,
+      iterations = 100,
+      seed = 42,
+      quiet = TRUE
+    )
+  )
+})

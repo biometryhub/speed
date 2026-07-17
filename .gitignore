@@ -12,3 +12,9 @@ inst/doc
 
 Rplots.pdf
 *.local.json
+
+*\.RData
+*\.rds
+*\.txt
+*\.xlsx
+**/*.quarto_ipynb
