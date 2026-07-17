@@ -4,12 +4,21 @@
 \alias{calculate_efficiency_factor}
 \title{Calculate Efficiency Factor according Piepho}
 \usage{
-calculate_efficiency_factor(design_df, item)
+calculate_efficiency_factor(
+  design_df,
+  item,
+  row_column = "row",
+  col_column = "col"
+)
 }
 \arguments{
 \item{design_df}{A data frame containing the experimental design with spatial coordinates}
 
 \item{item}{A column name of the items in the design (e.g., \code{treatment}, \code{variety}, \code{genotype}, etc)}
+
+\item{row_column}{Name of the column giving the row of the design (default: "row")}
+
+\item{col_column}{Name of the column giving the column of the design (default: "col")}
 }
 \value{
 A numeric value representing the efficiency factor of the design. Higher values indicate more efficient designs.

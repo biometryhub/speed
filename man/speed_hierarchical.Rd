@@ -4,7 +4,7 @@
 \alias{speed_hierarchical}
 \title{Speed function for hierarchical designs}
 \usage{
-speed_hierarchical(data, optimise, quiet, seed, ...)
+speed_hierarchical(data, optimise, quiet, seed, call = NULL, ...)
 }
 \description{
 Speed function for hierarchical designs

@@ -56,6 +56,12 @@
 #'   named list of treatment vectors (for hierarchical designs)
 #' - **seed** - Random seed used for reproducibility of the design. If not set
 #'   in the function, the seed is set to the third element of `.Random.seed`.
+#' - **metadata** - A list describing how the design was produced: the captured
+#'   `call`, the ordered `levels`, the resolved `row_column` / `col_column`
+#'   names, and a `per_level` list recording each level's swap variable,
+#'   spatial factors, adjacency/balance weights, requested iterations, starting
+#'   temperature, cooling rate, objective function and achieved score. Used by
+#'   [summary()][summary.design()] to recompute per-level evaluation metrics.
 #'
 #' @details
 #' This function provides a very general interface for producing experimental
@@ -163,6 +169,7 @@ speed <- function(data,
                   seed = NULL,
                   ...) {
   rlang::check_dots_used()
+  call <- match.call()
 
   if (is.null(optimise)) {
     # Check if this is a legacy hierarchical design
@@ -221,6 +228,10 @@ speed <- function(data,
          row_column = row_column, col_column = col_column),
     dots
   ))
+  # Attach the captured call here rather than threading it through `do.call()`:
+  # a language object passed via `do.call(quote = FALSE)` would be evaluated,
+  # re-invoking speed() recursively.
+  design$metadata$call <- call
   design$design_df[[dummy_group]] <- NULL
   design$design_df <- to_types(design$design_df, factored$input_types)
 
@@ -232,7 +243,7 @@ speed <- function(data,
 #' Speed function for hierarchical designs
 #' @keywords internal
 # fmt: skip
-speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
+speed_hierarchical <- function(data, optimise, quiet, seed, call = NULL, ...) {
   # Set seed for reproducibility
   if (is.null(seed)) {
     seed <- .GlobalEnv$.Random.seed[3]
@@ -351,6 +362,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   }
 
   # Collect and set up output and results
+  per_level_meta <- list()
   treatments <- list()
   level_scores <- numeric()
   for (level in hierarchy_levels) {
@@ -360,11 +372,37 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     bal_weight <- optimise_params$bal_weight
     spatial_cols <- all.vars(opt$spatial_factors)
 
-    # treatments and score for each level
+    # treatments and score for each level. Capture the full objective return
+    # (not just the score) so the additive score components - computed with the
+    # exact arguments used during optimisation, including any ring args - are
+    # available to summary() for a faithful decomposition.
     treatments[[level]] <- stringi::stri_sort(unique(as.vector(best_design[[opt$swap]])), numeric = TRUE)
-    level_scores[level] <- opt$obj_function(best_design, opt$swap, spatial_cols, adj_weight = adj_weight,
-                                            bal_weight = bal_weight, ...)$score
+    score_obj <- opt$obj_function(best_design, opt$swap, spatial_cols, adj_weight = adj_weight,
+                                  bal_weight = bal_weight, ...)
+    level_scores[level] <- score_obj$score
+    per_level_meta[[level]] <- list(
+      swap             = opt$swap,
+      spatial_factors  = opt$spatial_factors,
+      spatial_cols     = spatial_cols,
+      adj_weight       = adj_weight,
+      bal_weight       = bal_weight,
+      iterations       = opt$iterations,
+      start_temp       = optimise_params$start_temp,
+      cooling_rate     = optimise_params$cooling_rate,
+      obj_function     = opt$obj_function,
+      final_score      = score_obj$score,
+      final_components = score_obj$components
+    )
   }
+
+  .dots <- list(...)
+  metadata <- list(
+    call       = call,
+    levels     = hierarchy_levels,
+    row_column = .dots$row_column %||% "row",
+    col_column = .dots$col_column %||% "col",
+    per_level  = per_level_meta
+  )
 
   # Check which levels stopped early
   stopped_early <- sapply(hierarchy_levels, function(level) {
@@ -382,7 +420,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       iterations_run = total_iterations[[1]],
       stopped_early = stopped_early[[1]],
       treatments = treatments[[1]],
-      seed = seed
+      seed = seed,
+      metadata = metadata
     )
   } else {
     output <- list(
@@ -393,7 +432,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       iterations_run = total_iterations,
       stopped_early = stopped_early,
       treatments = treatments,
-      seed = seed
+      seed = seed,
+      metadata = metadata
     )
   }
 

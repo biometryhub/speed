@@ -193,3 +193,20 @@ test_that("calculate_efficiency_factor uses pseudoinverse for matrices with high
   expect_true(is.finite(result))
   expect_gt(result, 0)
 })
+
+test_that("calculate_efficiency_factor honours custom row/col column names", {
+  df <- initialise_design_df(c(
+    "a", "b", "d", "c",
+    "e", "a", "f", "b",
+    "c", "f", "e", "d"
+  ), 3, 4)
+  base <- calculate_efficiency_factor(df, "treatment")
+
+  # Same design, grid columns renamed - must give the same efficiency.
+  df2 <- df
+  names(df2)[names(df2) == "row"] <- "Row"
+  names(df2)[names(df2) == "col"] <- "Column"
+  custom <- calculate_efficiency_factor(df2, "treatment",
+                                        row_column = "Row", col_column = "Column")
+  expect_equal(custom, base)
+})

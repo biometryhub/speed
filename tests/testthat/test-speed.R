@@ -46,7 +46,8 @@ test_that("speed returns correct output structure", {
       "iterations_run",
       "stopped_early",
       "treatments",
-      "seed"
+      "seed",
+      "metadata"
     )
   )
 
@@ -504,7 +505,8 @@ test_that("speed runs with random initialisation", {
       "iterations_run",
       "stopped_early",
       "treatments",
-      "seed"
+      "seed",
+      "metadata"
     )
   )
 
@@ -599,7 +601,8 @@ test_that("speed handles split-split plot designs", {
       "iterations_run",
       "stopped_early",
       "treatments",
-      "seed"
+      "seed",
+      "metadata"
     )
   )
 
@@ -674,7 +677,8 @@ test_that("speed handles strip plot designs", {
       "iterations_run",
       "stopped_early",
       "treatments",
-      "seed"
+      "seed",
+      "metadata"
     )
   )
 
@@ -2075,6 +2079,10 @@ test_that("speed runs with legacy options(speed.{option})", {
     "Setting options with `options\\(speed.\\{option\\}=...\\)` is deprecated. Please use `optim_params\\(\\)` instead."
   )))
 
+  # The two designs are built from differently-written speed() calls, so their
+  # captured metadata$call differs by construction - compare the rest.
+  result_legacy$metadata$call <- NULL
+  result$metadata$call <- NULL
   expect_true(isTRUE(all.equal(result_legacy, result)))
 })
 
