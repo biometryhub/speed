@@ -7,3 +7,14 @@ docs
 
 /.quarto/
 inst/doc
+/doc/
+/Meta/
+
+Rplots.pdf
+*.local.json
+
+*\.RData
+*\.rds
+*\.txt
+*\.xlsx
+**/*.quarto_ipynb

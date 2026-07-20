@@ -61,13 +61,13 @@ df_strip <- data.frame(
   row = rep(1:12, each = 6),  # 24 rows total (4 rows per block x 6 blocks)
   col = rep(1:6, times = 12),  # 3 columns repeated
   block = rep(rep(1:2, each = 3), times = 4) + rep(0:2*2, each = 24),  # 6 blocks, 12 plots each
-  
+
   # Horizontal strips (3 levels, applied to rows within each block)
   vertical_treatment = rep(rep(LETTERS[1:3], times = 2), times = 12),  # A, B, C
-  
-  # Vertical strips (4 levels, applied to columns within each block)  
+
+  # Vertical strips (4 levels, applied to columns within each block)
   horizontal_treatment = rep(rep(letters[1:4], each = 6), times = 3),  # a, b, c, d
-  
+
   # Plot identifier within each block
   plot_in_block = rep(1:12, times = 6)
 )
@@ -83,3 +83,29 @@ result_strip <- speed(df_strip,
 
 autoplot(result_strip, treatments = "horizontal_treatment")
 autoplot(result_strip, treatments = "vertical_treatment")
+
+
+
+
+
+
+result_strip <- speed(df_strip,
+                      swap = list(trial = "variety", within_trial = "variety"),
+                      swap_within = list(trial = "1", within_trial = "site"),
+                      spatial_factors = list(trial = ~trial, within_trial = ~colBlocks + Lane + Position),
+                      adj_factors = list(dim1 = "Lane", dim2 = "Position"),
+                      obj_function = list(trial = objective_function(), within_trial = objective_function(adj)))
+
+result_strip <- speed(df_strip,
+                      swap = list(trial = "variety", within_trial = "variety"),
+                      swap_within = list(trial = "1", within_trial = "site"),
+                      spatial_factors = ~row+col,
+                      grid_factors = list(dim1 = "row", dim2 = "column"),
+                      obj_function = list(trial = objective_function(), within_trial = objective_function(adj)))
+
+speed(factorial_design,
+      swap = list(A = "A",
+                  B = "B"),
+      swap_within = list(A = "block:B", B = "block:A"),
+      spatial_factors = ~row + column,
+      seed = 42)
