@@ -1,9 +1,23 @@
 # Benchmarking speed and odw
 
 library(bench)
+library(dae)
 library(dplyr)
 library(odw)
 library(speed)
+
+# Report design anatomy (canonical efficiency factors) via dae.
+# `treatment` is one or more column names; `units` is the physical structure.
+report_anatomy <- function(design, treatment, units = ~ row * col) {
+  design <- as.data.frame(design)
+  cols <- unique(c(all.vars(units), treatment))
+  design[cols] <- lapply(design[cols], factor)
+  anatomy <- dae::designAnatomy(
+    list(units = units, treatments = stats::reformulate(treatment)),
+    data = design
+  )
+  summary(anatomy)
+}
 
 row <- rep(1:20, each = 20)
 col <- rep(1:20, 20)
@@ -31,6 +45,7 @@ table(desd$treat, desd$row)
 table(desd$treat, desd$col)
 
 calculate_efficiency_factor(des$design_df, treat)
+report_anatomy(des$design_df, "treat", ~ (rowBlock / row) * col)
 
 
 str(dat)
@@ -71,6 +86,7 @@ table(desd$treat, desd$row)
 table(desd$treat, desd$col)
 
 calculate_efficiency_factor(twod.od$design, treat)
+report_anatomy(twod.od$design, "treat", ~ (rowBlock / row) * col)
 
 res1 <- bench::mark(
   check = FALSE, iterations = 10,
@@ -92,6 +108,7 @@ df <- initialise_design_df(10, 10, 6, 10, 1)
 # Optimise the design
 result <- speed(df, swap = "treatment", seed = 42)
 autoplot(result)
+report_anatomy(result$design_df, "treatment", ~ block / row)
 
 
 df_od <- df |> mutate(across(1:6, factor))
@@ -123,6 +140,7 @@ des$row <- as.numeric(des$row)
 des$col <- as.numeric(des$col)
 class(des) <- c(class(des), "design")
 autoplot(des)
+report_anatomy(des, "treatment", ~ block / row)
 
 
 res2 <- bench::mark(
@@ -183,6 +201,7 @@ speed_result$design_df$block <- as.numeric(speed_result$design_df$block)
 unique(table(design_df$treatment, design_df$row))
 unique(table(design_df$treatment, design_df$col))
 speed::calculate_adjacency_score(design_df, "treatment")
+report_anatomy(design_df, "treatment", ~ (block / row) * col)
 
 png("speed-15x5.png", height = 1080, width = 480)
 speed::autoplot(speed_result)
@@ -221,6 +240,7 @@ df_digger$col <- as.numeric(df_digger$col)
 unique(table(df_digger$treatment, df_digger$row))
 unique(table(df_digger$treatment, df_digger$col))
 speed::calculate_adjacency_score(df_digger, "treatment")
+report_anatomy(df_digger, "treatment", ~ (block / row) * col)
 
 digger_result <- speed_result
 digger_result$design_df <- df_digger
@@ -271,6 +291,7 @@ df_odw$block <- as.numeric(df_odw$block)
 odw_result <- speed_result
 odw_result$design_df <- df_odw
 speed::calculate_adjacency_score(df_odw, "treatment")
+report_anatomy(df_odw, "treatment", ~ (block / row) * col)
 
 unique(table(df_odw$treatment, df_odw$row))
 unique(table(df_odw$treatment, df_odw$col))
@@ -333,6 +354,7 @@ speed_result$design_df$block <- as.numeric(design_df$block)
 unique(table(design_df$treatment, design_df$row_block))
 unique(table(design_df$treatment, design_df$col_block))
 speed::calculate_adjacency_score(design_df, "treatment")
+report_anatomy(design_df, "treatment", ~ (col_block / col) * row)
 
 png("speed-20x20.png", height = 720, width = 720)
 speed::autoplot(speed_result)
@@ -369,6 +391,7 @@ df_digger$treatment <- c(digger_design)
 unique(table(df_digger$treatment, df_digger$row_block))
 unique(table(df_digger$treatment, df_digger$col_block))
 speed::calculate_adjacency_score(df_digger, "treatment")
+report_anatomy(df_digger, "treatment", ~ (col_block / col) * row)
 
 digger_result <- speed_result
 digger_result$design_df <- df_digger
@@ -423,6 +446,7 @@ odw_result$design_df <- df_odw
 unique(table(df_odw$treatment, df_odw$col_block))
 unique(table(df_odw$treatment, df_odw$row_block))
 speed::calculate_adjacency_score(df_odw, "treatment")
+report_anatomy(df_odw, "treatment", ~ (col_block / col) * row)
 
 png("odw-20x20.png", height = 720, width = 720)
 speed::autoplot(odw_result)
@@ -524,6 +548,7 @@ speed_result$design_df$wholeplot <- as.numeric(design_df$wholeplot)
 unique(table(design_df$wholeplot_treatment, design_df$block))
 unique(table(design_df$subplot_treatment, design_df$wholeplot))
 speed::calculate_adjacency_score(design_df, "subplot_treatment")
+report_anatomy(design_df, c("wholeplot_treatment", "subplot_treatment"), ~ block / wholeplot / col)
 
 png("speed-split-whole.png", height = 720, width = 240)
 speed::autoplot(speed_result, treatments = "wholeplot_treatment")
@@ -589,6 +614,7 @@ df_digger$wholeplot_treatment <- c(t(ifelse(digger_design <= 4, "A", ifelse(digg
 unique(table(df_digger$wholeplot_treatment, df_digger$block))
 unique(table(df_digger$subplot_treatment, df_digger$wholeplot))
 speed::calculate_adjacency_score(df_digger, "subplot_treatment")
+report_anatomy(df_digger, c("wholeplot_treatment", "subplot_treatment"), ~ block / wholeplot / col)
 
 digger_result <- speed_result
 digger_result$design_df <- df_digger
@@ -720,6 +746,7 @@ odw_result$design_df <- df_odw
 unique(table(df_odw$wholeplot_treatment, df_odw$block))
 unique(table(df_odw$subplot_treatment, df_odw$wholeplot))
 speed::calculate_adjacency_score(df_odw, "subplot_treatment")
+report_anatomy(df_odw, c("wholeplot_treatment", "subplot_treatment"), ~ block / wholeplot / col)
 
 png("odw-split-whole.png", height = 720, width = 240)
 speed::autoplot(odw_result, treatments = "wholeplot_treatment")
