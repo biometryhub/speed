@@ -1,9 +1,10 @@
-source('./R/objective_connectivity.R')
+source('./objective_connectivity.R')
 library(bench)
 library(dae)
 library(dplyr)
 library(odw)
 library(speed)
+library(ggplot2)
 
 efficiency <- function(design, treatment, units = ~ row * col) {
   design <- as.data.frame(design)
@@ -32,10 +33,15 @@ bottom_stratum_eff <- function(anatomy_summary) {
   ))
 }
 
-run_benchmarks <- function(designs, seeds, csv = "benchmark-results.csv") {
-  rows <- list()
+# Writes one CSV per design (`<csv_prefix>-<design>.csv`) and returns a named
+# list of per-design result data frames. A design spec may supply
+# `custom_metrics`, a function of the design data frame returning a named list
+# of scalars; these are appended as the right-most columns of each bench run.
+run_benchmarks <- function(designs, seeds, csv_prefix = "benchmark") {
+  results <- list()
   for (design_name in names(designs)) {
     spec <- designs[[design_name]]
+    rows <- list()
     for (tool_name in names(spec$tools)) {
       run_tool <- spec$tools[[tool_name]]
       for (seed in seeds) {
@@ -79,7 +85,7 @@ run_benchmarks <- function(designs, seeds, csv = "benchmark-results.csv") {
             }
           )
         }
-        rows[[length(rows) + 1L]] <- data.frame(
+        row <- data.frame(
           tool = tool_name,
           design = design_name,
           seed = seed,
@@ -89,11 +95,43 @@ run_benchmarks <- function(designs, seeds, csv = "benchmark-results.csv") {
           eefficiency = metrics$eeff,
           stringsAsFactors = FALSE
         )
+
+        # Design-specific custom columns, appended to the right
+        if (!is.null(run) && is.function(spec$custom_metrics)) {
+          custom <- tryCatch(
+            as.data.frame(
+              as.list(spec$custom_metrics(run$design_df)),
+              stringsAsFactors = FALSE
+            ),
+            error = function(e) {
+              warning(sprintf(
+                "%s/%s/seed=%s custom metrics failed: %s",
+                design_name,
+                tool_name,
+                seed,
+                conditionMessage(e)
+              ))
+              NULL
+            }
+          )
+          if (!is.null(custom)) {
+            row <- cbind(row, custom)
+          }
+        }
+
+        rows[[length(rows) + 1L]] <- row
       }
     }
+    # bind_rows fills NA for runs that produced no custom columns (e.g. failures)
+    design_results <- dplyr::bind_rows(rows)
+    utils::write.csv(
+      design_results,
+      sprintf("%s-%s.csv", csv_prefix, design_name),
+      sep = '|',
+      row.names = FALSE
+    )
+    results[[design_name]] <- design_results
   }
-  results <- do.call(rbind, rows)
-  utils::write.csv(results, csv, row.names = FALSE)
   return(results)
 }
 
@@ -129,49 +167,49 @@ png("layout-15x5.png", height = 500, width = 500)
 speed::autoplot(df_layout, treatments = "plot_in_block")
 dev.off()
 
-bench_speed_15x5 <- function(seed = 112) {
-  speed::speed(
-    data = df_initial_15x5,
-    swap = "treatment",
-    swap_within = "block",
-    spatial_factors = ~ col + row_in_block,
-    optimise_params = optim_params(random_initialisation = TRUE),
-    seed = seed
-  )
-}
-speed_result <- bench_speed_15x5()
-
-design_df <- speed_result$design_df
-speed_result$design_df$row <- as.numeric(speed_result$design_df$row)
-speed_result$design_df$col <- as.numeric(speed_result$design_df$col)
-speed_result$design_df$block <- as.numeric(speed_result$design_df$block)
-unique(table(design_df$treatment, design_df$col))
-unique(table(design_df$treatment, design_df$block))
-unique(table(design_df$treatment, design_df$row_in_block))
-speed::calculate_adjacency_score(design_df, "treatment")
-efficiency(design_df, "treatment", ~ (block / row) * col)
-# Source.units   df1 Source.treatments df2 aefficiency eefficiency order
-# block            4
-# row[block]      20 treatment          14      0.0585      0.0082    14
-#                    Residual            6
-# col              2 treatment           2      0.0400      0.0400     1
-# block#col        8 treatment           8      0.1208      0.0323     8
-# row#col[block]  40 treatment          14      0.4157      0.1174    14
-#                    Residual           26
-
-# with row_in_block
-# Source.units   df1 Source.treatments df2 aefficiency eefficiency order
-# block            4
-# row[block]      20 treatment          12      0.1396      0.0296    12
-#                    Residual            8
-# col              2 treatment           2      0.0400      0.0400     1
-# block#col        8 treatment           8      0.0405      0.0065     8
-# row#col[block]  40 treatment          14      0.4354      0.1360    14
-#                    Residual           26
-
-png("speed-15x5.png", height = 1080, width = 480)
-speed::autoplot(speed_result)
-dev.off()
+# bench_speed_15x5 <- function(seed = 112) {
+#   speed::speed(
+#     data = df_initial_15x5,
+#     swap = "treatment",
+#     swap_within = "block",
+#     spatial_factors = ~ col + row_in_block,
+#     optimise_params = optim_params(random_initialisation = TRUE),
+#     seed = seed
+#   )
+# }
+# speed_result <- bench_speed_15x5()
+#
+# design_df <- speed_result$design_df
+# speed_result$design_df$row <- as.numeric(speed_result$design_df$row)
+# speed_result$design_df$col <- as.numeric(speed_result$design_df$col)
+# speed_result$design_df$block <- as.numeric(speed_result$design_df$block)
+# unique(table(design_df$treatment, design_df$col))
+# unique(table(design_df$treatment, design_df$block))
+# unique(table(design_df$treatment, design_df$row_in_block))
+# speed::calculate_adjacency_score(design_df, "treatment")
+# efficiency(design_df, "treatment", ~ (block / row) * col)
+# # Source.units   df1 Source.treatments df2 aefficiency eefficiency order
+# # block            4
+# # row[block]      20 treatment          14      0.0585      0.0082    14
+# #                    Residual            6
+# # col              2 treatment           2      0.0400      0.0400     1
+# # block#col        8 treatment           8      0.1208      0.0323     8
+# # row#col[block]  40 treatment          14      0.4157      0.1174    14
+# #                    Residual           26
+#
+# # with row_in_block
+# # Source.units   df1 Source.treatments df2 aefficiency eefficiency order
+# # block            4
+# # row[block]      20 treatment          12      0.1396      0.0296    12
+# #                    Residual            8
+# # col              2 treatment           2      0.0400      0.0400     1
+# # block#col        8 treatment           8      0.0405      0.0065     8
+# # row#col[block]  40 treatment          14      0.4354      0.1360    14
+# #                    Residual           26
+#
+# png("speed-15x5.png", height = 1080, width = 480)
+# speed::autoplot(speed_result)
+# dev.off()
 
 # here
 bench_speed_15x5 <- function(seed = 112) {
@@ -179,20 +217,16 @@ bench_speed_15x5 <- function(seed = 112) {
     data = df_initial_15x5,
     swap = "treatment",
     swap_within = "block",
-    # spatial_factors = ~ col,
     score_formula = ~ (block / row) * col,
     obj_function = objective_function_connectivity,
-    iterations = 200000,
-    early_stop_iterations = 10000,
-    optimise_params = optim_params(
-      random_initialisation = TRUE,
-      adaptive_swaps = TRUE,
-      swap_count = 3
-    ),
+    optimise_params = optim_params(random_initialisation = TRUE),
     seed = seed
   )
 }
 speed_result <- bench_speed_15x5()
+# speed_result <- NULL
+# prof <- profvis::profvis(speed_result <<- bench_speed_15x5())
+# htmlwidgets::saveWidget(prof, "profile-new-15x5.html", selfcontained = TRUE)
 
 design_df <- speed_result$design_df
 speed_result$design_df$row <- as.numeric(speed_result$design_df$row)
@@ -200,13 +234,22 @@ speed_result$design_df$col <- as.numeric(speed_result$design_df$col)
 speed_result$design_df$block <- as.numeric(speed_result$design_df$block)
 unique(table(design_df$treatment, design_df$col))
 unique(table(design_df$treatment, design_df$block))
-unique(table(design_df$treatment, design_df$row_in_block))
 speed::calculate_adjacency_score(design_df, "treatment")
 efficiency(design_df, "treatment", ~ (block / row) * col)
+# Source.units   df1 Source.treatments df2 aefficiency eefficiency order
+# block            4
+# row[block]      20 treatment          14      0.2173      0.0755    14
+#                    Residual            6
+# col              2 treatment           2      0.0400      0.0400     1
+# block#col        8 treatment           8      0.2307      0.1580     5
+# row#col[block]  40 treatment          14      0.5363      0.3393    14
+#                    Residual           26
 
 png("speed-new-15x5.png", height = 1080, width = 480)
 speed::autoplot(speed_result)
 dev.off()
+
+source('./objective_connectivity.R')
 
 # digger
 bench_digger_15x5 <- function(seed = 112) {
@@ -231,6 +274,7 @@ df_digger$row <- as.numeric(df_digger$row)
 df_digger$col <- as.numeric(df_digger$col)
 unique(table(df_digger$treatment, df_digger$row))
 unique(table(df_digger$treatment, df_digger$col))
+unique(table(df_digger$treatment, df_digger$block))
 speed::calculate_adjacency_score(df_digger, "treatment")
 efficiency(df_digger, "treatment", ~ (block / row) * col)
 # Source.units   df1 Source.treatments df2 aefficiency eefficiency order
@@ -265,7 +309,7 @@ df_initial_odw_15x5$row <- as.factor(df_initial_odw_15x5$row)
 df_initial_odw_15x5$col <- as.factor(df_initial_odw_15x5$col)
 
 initial_param_table_15x5 <- odw::odw(
-  random = ~ treatment + col + block / row,
+  random = ~ treatment + (block / row) + col,
   data = df_initial_odw_15x5,
   permute = ~treatment,
   swap = ~block,
@@ -274,19 +318,19 @@ initial_param_table_15x5 <- odw::odw(
 )$vparameters.table
 initial_param_table_15x5
 
-initial_param_table_15x5[c(2, 4), 2] <- 100
+initial_param_table_15x5[3:4, 2] <- 100
 initial_param_table_15x5
 
 bench_odw_15x5 <- function() {
   odw::odw(
-    random = ~ treatment + col + block / row,
+    random = ~ treatment + (block / row) + col,
     data = df_initial_odw_15x5,
     permute = ~treatment,
     swap = ~block,
     search = "tabu",
     G.param = initial_param_table_15x5,
     R.param = initial_param_table_15x5,
-    maxit = 2
+    maxit = 9
   )
 }
 design_object <- bench_odw_15x5()
@@ -297,7 +341,6 @@ df_odw$col <- as.numeric(df_odw$col)
 df_odw$block <- as.numeric(df_odw$block)
 odw_result <- speed_result
 odw_result$design_df <- df_odw
-unique(table(df_odw$treatment, df_odw$row))
 unique(table(df_odw$treatment, df_odw$col))
 speed::calculate_adjacency_score(df_odw, "treatment")
 efficiency(df_odw, "treatment", ~ (block / row) * col)
@@ -308,7 +351,7 @@ efficiency(df_odw, "treatment", ~ (block / row) * col)
 # col              2 treatment           2      0.0400      0.0400     1
 # block#col        8 treatment           8      0.1329      0.0440     8
 # row#col[block]  40 treatment          14      0.5029      0.2585    14
-#                    Residual           26                                                  Residual           26
+#                    Residual           26
 
 png("odw-15x5.png", height = 500, width = 500)
 speed::autoplot(odw_result)
@@ -318,12 +361,23 @@ designs[["15x5"]] <- list(
   units = ~ (block / row) * col,
   treatment = "treatment",
   is_converged = function(df) TRUE,
+  custom_metrics = function(df) {
+    list(
+      adjacency = speed::calculate_adjacency_score(df, "treatment"),
+      row_unique = paste(unique(table(df$treatment, df$row)), collapse = ','),
+      col_unique = paste(unique(table(df$treatment, df$col)), collapse = ','),
+      block_unique = paste(
+        unique(table(df$treatment, df$block)),
+        collapse = ','
+      )
+    )
+  },
   tools = list(
     speed = function(seed) bench_speed_15x5(seed)$design_df,
     digger = function(seed) {
       d <- df_initial_15x5
       d$treatment <- c(DiGGer::getDesign(bench_digger_15x5(seed)))
-      d
+      return(d)
     },
     odw = function(seed) bench_odw_15x5()$design
   )
@@ -504,6 +558,9 @@ designs[["20x20"]] <- list(
   units = ~ (row_block / row) * col,
   treatment = "treatment",
   is_converged = function(df) TRUE,
+  custom_metrics = function(df) {
+    list(adjacency = speed::calculate_adjacency_score(df, "treatment"))
+  },
   tools = list(
     speed = function(seed) bench_speed_20x20(seed)$design_df,
     digger = function(seed) {
@@ -775,6 +832,15 @@ designs[["split-plot"]] <- list(
   units = ~ block / wholeplot / col,
   treatment = c("wholeplot_treatment", "subplot_treatment"),
   is_converged = function(df) TRUE,
+  custom_metrics = function(df) {
+    list(
+      sub_adjacency = speed::calculate_adjacency_score(df, "subplot_treatment"),
+      whole_adjacency = speed::calculate_adjacency_score(
+        df,
+        "wholeplot_treatment"
+      )
+    )
+  },
   tools = list(
     speed = function(seed) bench_speed_split(seed)$design_df,
     digger = function(seed) {
@@ -821,3 +887,37 @@ dev.off()
 
 benchmark_results <- run_benchmarks(designs, seeds = 1:10)
 benchmark_results
+
+# Compare tools across metrics for the 15x5 design
+results_15x5 <- read.csv("benchmark-15x5.csv")
+metrics_15x5 <- c(
+  run_time = "Run time (s) - lower better",
+  aefficiency = "A-efficiency - higher better",
+  eefficiency = "E-efficiency - higher better",
+  adjacency = "Adjacency - lower better"
+)
+long_15x5 <- do.call(rbind, lapply(names(metrics_15x5), function(m) {
+  data.frame(
+    tool = results_15x5$tool,
+    metric = unname(metrics_15x5[m]),
+    value = results_15x5[[m]]
+  )
+}))
+long_15x5$tool <- factor(long_15x5$tool, levels = c("speed", "digger", "odw"))
+long_15x5$metric <- factor(long_15x5$metric, levels = unname(metrics_15x5))
+
+png("bench-15x5-compare.png", height = 720, width = 960, res = 150)
+ggplot(long_15x5, aes(tool, value, fill = tool)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.55, width = 0.6) +
+  geom_jitter(width = 0.12, height = 0, size = 1.6, alpha = 0.8) +
+  facet_wrap(~metric, scales = "free_y", nrow = 2) +
+  scale_fill_brewer(palette = "Set2", guide = "none") +
+  labs(
+    title = "15x5 design: tool comparison across metrics",
+    subtitle = "10 seeds per tool; points are individual runs",
+    x = NULL,
+    y = NULL
+  ) +
+  theme_bw(base_size = 12) +
+  theme(strip.text = element_text(face = "bold"))
+dev.off()
