@@ -72,8 +72,10 @@ summary.design <- function(object,
 
   # Resolve evaluation toggles. concurrence auto-on only when an *incomplete*
   # block factor exists (it is uninformative for complete blocks); neighbour
-  # auto-on when any level used the neighbour-balance objective.
-  block <- .design_block_factor(df, meta, rc, cc)
+  # auto-on when any level used the neighbour-balance objective. The block
+  # factor itself is resolved per level below (each level may have different
+  # spatial factors, so a block column meaningful to one level need not be
+  # meaningful to another).
   want_neighbour <- if (is.null(neighbour)) {
     any(vapply(meta$per_level,
                function(p) identical(p$obj_function, objective_function_piepho),
@@ -97,6 +99,7 @@ summary.design <- function(object,
     swap <- pm$swap
     trts <- if (hierarchical) object$treatments[[lv]] else object$treatments
     sf <- pm$spatial_cols
+    block <- .design_block_factor(df, sf, rc, cc)
 
     # Plot counts per treatment. For a simple design this is the replication;
     # for a nested level it is plots-per-treatment (replication x sub-units).
@@ -457,18 +460,22 @@ print.summary.design <- function(x, ...) {
   )
 }
 
-#' Detect a block-type factor in a design
+#' Detect a block-type factor for one level of a design
 #'
-#' Among the spatial factors (across levels) that are not the row or column
-#' factor, prefer one named like `block`; otherwise take the first such factor.
+#' Among *that level's* spatial factors that are not the row or column factor,
+#' prefer one named like `block`; otherwise take the first such factor.
 #' Failing that, fall back to a column literally named `block`. The chosen factor
 #' is surfaced in the concurrence output (`[block: ...]`), so the choice is
 #' visible to the user.
 #'
+#' Resolved per level (rather than once from the union of every level's spatial
+#' factors) so that a hierarchical design whose levels are blocked by different
+#' factors doesn't have one level's block column applied to another.
+#'
+#' @param spatial_cols Character vector of this level's spatial factor columns.
 #' @keywords internal
-.design_block_factor <- function(df, meta, rc, cc) {
-  sc <- unique(unlist(lapply(meta$per_level, function(p) p$spatial_cols)))
-  cand <- setdiff(sc, c(rc, cc))
+.design_block_factor <- function(df, spatial_cols, rc, cc) {
+  cand <- setdiff(spatial_cols, c(rc, cc))
   cand <- cand[cand %in% names(df)]
   block_like <- cand[grepl("block", cand, ignore.case = TRUE)]
   if (length(block_like)) return(block_like[[1]])

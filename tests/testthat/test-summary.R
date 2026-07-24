@@ -325,12 +325,19 @@ test_that("complete-block designs auto-skip concurrence in summary()", {
 test_that(".design_block_factor prefers a block-named factor over others", {
   df <- data.frame(row = 1, col = 1, rep = 1, block = 1, treatment = "A")
   # spatial factors listed with 'rep' before 'block' - block should still win.
-  meta <- list(per_level = list(l1 = list(spatial_cols = c("row", "col", "rep", "block"))))
-  expect_equal(.design_block_factor(df, meta, "row", "col"), "block")
+  expect_equal(.design_block_factor(df, c("row", "col", "rep", "block"), "row", "col"), "block")
 
   # No block-named factor: falls back to the first non-row/col spatial factor.
-  meta2 <- list(per_level = list(l1 = list(spatial_cols = c("row", "col", "rep"))))
-  expect_equal(.design_block_factor(df, meta2, "row", "col"), "rep")
+  expect_equal(.design_block_factor(df, c("row", "col", "rep"), "row", "col"), "rep")
+})
+
+test_that(".design_block_factor is resolved per level, not shared across levels", {
+  # wp is blocked by 'block'; sp has no block-like spatial factor of its own and
+  # should fall back to the literal "block" column rather than silently reusing
+  # wp's resolved factor for a level it doesn't describe.
+  df <- data.frame(row = 1, col = 1, block = 1, rep = 1, treatment = "A")
+  expect_equal(.design_block_factor(df, c("row", "col", "block"), "row", "col"), "block")
+  expect_equal(.design_block_factor(df, c("row", "col", "rep"), "row", "col"), "rep")
 })
 
 test_that("concurrence is skipped for designs without a block", {

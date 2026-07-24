@@ -243,7 +243,7 @@ speed <- function(data,
 #' Speed function for hierarchical designs
 #' @keywords internal
 # fmt: skip
-speed_hierarchical <- function(data, optimise, quiet, seed, call = NULL, ...) {
+speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   # Set seed for reproducibility
   if (is.null(seed)) {
     seed <- .GlobalEnv$.Random.seed[3]
@@ -396,8 +396,9 @@ speed_hierarchical <- function(data, optimise, quiet, seed, call = NULL, ...) {
   }
 
   .dots <- list(...)
+  # `call` is attached by speed() after this returns (see the comment there) -
+  # not set here, since this function has no meaningful call to record.
   metadata <- list(
-    call       = call,
     levels     = hierarchy_levels,
     row_column = .dots$row_column %||% "row",
     col_column = .dots$col_column %||% "col",

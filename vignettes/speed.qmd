@@ -105,9 +105,9 @@ summary(crd_result)
 The output is organised into sections:
 
 - **Structure** -- the layout, the number of treatments and their replication, and the spatial factors with their numbers of levels.
-- **Optimisation** -- the objective used, the final score decomposed into its **adjacency** and **balance** components (each shown as `raw x weight = contribution`), the initial-to-final score, the iterations run and the temperature schedule.
+- **Optimisation** -- the objective used, the final score decomposed into its **adjacency** and **balance** components (each already weighted, so they sum to the final score), the initial-to-final score, the iterations run and the temperature schedule.
 - **Evaluation** -- design-quality diagnostics:
-  - **Connectedness** -- whether treatment effects are estimable. For a row--column design this fits `lm(~ row + col + treatment)` and checks for aliased terms; designs with a block factor fall back to a block-connectivity check.
+  - **Connectedness** -- whether treatment effects are estimable. Fits `lm(~ <spatial factors + block> + treatment)` and checks for aliased treatment terms; the nuisance side of the model adjusts to whatever the design is stratified by (row/col, and a block factor when present).
   - **Concurrence** -- for *incomplete* block designs, how often pairs of treatments share a block (constant concurrences indicate a balanced incomplete-block design). It is skipped for complete designs such as RCBD and split-plots, where it carries no information.
   - **Replicate span** -- the smallest spatial separation between replicates of a treatment; small values flag replicates sitting close together.
 
