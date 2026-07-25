@@ -21,9 +21,8 @@ Useful links:
 Authors:
 \itemize{
   \item Sam Rogers \email{sam.rogers@adelaide.edu.au}
-  \item Julian Taylor \email{julian.taylor@adelaide.edu.au}
-  \item Russell Edson \email{russell.edson@adelaide.edu.au}
   \item Wasin Pipattungsakul \email{wasin.pipattungsakul@adelaide.edu.au}
+  \item Julian Taylor \email{julian.taylor@adelaide.edu.au}
 }
 
 Other contributors:
