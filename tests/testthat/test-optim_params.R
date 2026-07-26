@@ -34,7 +34,11 @@ test_that("optim_params works with arguments", {
   expect_true(is.list(optimize_params))
   expect_equal(optimize_params$swap_count, 2)
 
-  optimize_params <- optim_params(swap_count = 2, swap_all_blocks = TRUE, start_temp = 99)
+  optimize_params <- optim_params(
+    swap_count = 2,
+    swap_all_blocks = TRUE,
+    start_temp = 99
+  )
 
   expect_named(optimize_params, params)
   expect_true(is.list(optimize_params))
@@ -72,23 +76,29 @@ test_that("optim_params works with legacy options", {
     "bal_weight"
   )
 
-  withr::with_options(list(speed.swap_count = 2), expect_warning(
-    {
-      optimize_params <- optim_params()
-    },
-    "Setting options with `options\\(speed.\\{option\\}=...\\)` is deprecated. Please use `optim_params\\(\\)` instead."
-  ))
+  withr::with_options(
+    list(speed.swap_count = 2),
+    expect_warning(
+      {
+        optimize_params <- optim_params()
+      },
+      "Setting options with `options\\(speed.\\{option\\}=...\\)` is deprecated. Please use `optim_params\\(\\)` instead."
+    )
+  )
 
   expect_named(optimize_params, params)
   expect_true(is.list(optimize_params))
   expect_equal(optimize_params$swap_count, 2)
 
-  withr::with_options(list(speed.swap_count = 2, speed.start_temp = 88), expect_warning(
-    {
-      optimize_params <- optim_params(swap_all_blocks = TRUE)
-    },
-    "Setting options with `options\\(speed.\\{option\\}=...\\)` is deprecated. Please use `optim_params\\(\\)` instead."
-  ))
+  withr::with_options(
+    list(speed.swap_count = 2, speed.start_temp = 88),
+    expect_warning(
+      {
+        optimize_params <- optim_params(swap_all_blocks = TRUE)
+      },
+      "Setting options with `options\\(speed.\\{option\\}=...\\)` is deprecated. Please use `optim_params\\(\\)` instead."
+    )
+  )
 
   expect_named(optimize_params, params)
   expect_true(is.list(optimize_params))

@@ -156,17 +156,19 @@ to_types <- function(df, types) {
 #' @inheritParams speed
 #'
 #' @keywords internal
-create_speed_input <- function(swap,
-                               swap_within,
-                               spatial_factors,
-                               grid_factors,
-                               iterations,
-                               early_stop_iterations,
-                               obj_function,
-                               swap_all,
-                               optimise_params,
-                               optimise = NULL,
-                               row_col_inferred = TRUE) {
+create_speed_input <- function(
+  swap,
+  swap_within,
+  spatial_factors,
+  grid_factors,
+  iterations,
+  early_stop_iterations,
+  obj_function,
+  swap_all,
+  optimise_params,
+  optimise = NULL,
+  row_col_inferred = TRUE
+) {
   speed_args <- c(
     "swap",
     "swap_within",
@@ -210,7 +212,10 @@ create_speed_input <- function(swap,
       )
 
       for (arg in speed_args) {
-        if (!(arg %in% c("swap", "swap_within", "grid_factors", "optimise_params"))) {
+        if (
+          !(arg %in%
+            c("swap", "swap_within", "grid_factors", "optimise_params"))
+        ) {
           if (is.null(optimise[[optimise_name]][[arg]])) {
             optimise_var <- get(arg)
             optimise[[optimise_name]][[arg]] <- if (is.list(optimise_var)) {

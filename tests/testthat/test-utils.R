@@ -41,7 +41,11 @@ test_that("pseudo_inverse works with rectangular matrices", {
   expect_equal(dim(result), c(3, 2))
 
   # Check that A * A_inv * A = A (approximately)
-  expect_equal(rect_matrix %*% result %*% rect_matrix, rect_matrix, tolerance = 1e-10)
+  expect_equal(
+    rect_matrix %*% result %*% rect_matrix,
+    rect_matrix,
+    tolerance = 1e-10
+  )
 })
 
 test_that("pseudo_inverse respects tolerance parameter", {
@@ -207,7 +211,6 @@ test_that("to_types converts data frame data to input types", {
 })
 
 test_that("to_factor/to_types handle multi-class (vctrs-style) columns", {
-
   test_data <- data.frame(
     plain = LETTERS[1:5],
     numeric_col = as.numeric(1:5)
@@ -259,29 +262,35 @@ test_that("create_speed_input creates an input from a named list", {
   )
   ordered_names <- sort(names(speed_input[[1]]))
 
-  expect_equal(speed_input$wp[ordered_names], list(
-    swap = "wholeplot_treatment",
-    swap_within = "block",
-    spatial_factors = ~ row + col,
-    grid_factors = list(dim1 = "row", dim2 = "col"),
-    iterations = 10000,
-    early_stop_iterations = 1000,
-    obj_function = objective_function,
-    swap_all = TRUE,
-    optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
-  )[ordered_names])
+  expect_equal(
+    speed_input$wp[ordered_names],
+    list(
+      swap = "wholeplot_treatment",
+      swap_within = "block",
+      spatial_factors = ~ row + col,
+      grid_factors = list(dim1 = "row", dim2 = "col"),
+      iterations = 10000,
+      early_stop_iterations = 1000,
+      obj_function = objective_function,
+      swap_all = TRUE,
+      optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
+    )[ordered_names]
+  )
 
-  expect_equal(speed_input$sp[ordered_names], list(
-    swap = "subplot_treatment",
-    swap_within = "wholeplot",
-    spatial_factors = ~ row + col,
-    grid_factors = list(dim1 = "row", dim2 = "col"),
-    iterations = 10000,
-    early_stop_iterations = 10000,
-    obj_function = objective_function,
-    swap_all = TRUE,
-    optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
-  )[ordered_names])
+  expect_equal(
+    speed_input$sp[ordered_names],
+    list(
+      swap = "subplot_treatment",
+      swap_within = "wholeplot",
+      spatial_factors = ~ row + col,
+      grid_factors = list(dim1 = "row", dim2 = "col"),
+      iterations = 10000,
+      early_stop_iterations = 10000,
+      obj_function = objective_function,
+      swap_all = TRUE,
+      optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
+    )[ordered_names]
+  )
 })
 
 test_that("create_speed_input creates an input from a string", {
@@ -298,25 +307,34 @@ test_that("create_speed_input creates an input from a string", {
   )
   ordered_names <- sort(names(speed_input))
 
-  expect_equal(speed_input[ordered_names], list(
-    "single treatment within block" = list(
-      swap = "treatment",
-      swap_within = "block",
-      spatial_factors = ~ row + col,
-      grid_factors = list(dim1 = "row", dim2 = "col"),
-      iterations = 10000,
-      early_stop_iterations = 1000,
-      obj_function = objective_function,
-      swap_all = FALSE,
-      optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
-    )
-  )[ordered_names])
+  expect_equal(
+    speed_input[ordered_names],
+    list(
+      "single treatment within block" = list(
+        swap = "treatment",
+        swap_within = "block",
+        spatial_factors = ~ row + col,
+        grid_factors = list(dim1 = "row", dim2 = "col"),
+        iterations = 10000,
+        early_stop_iterations = 1000,
+        obj_function = objective_function,
+        swap_all = FALSE,
+        optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
+      )
+    )[ordered_names]
+  )
 })
 
 test_that("create_speed_input creates an input from optimise argument", {
   optimise <- list(
-    connectivity = list(swap_within = "swappable_site", spatial_factors = ~site),
-    balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+    connectivity = list(
+      swap_within = "swappable_site",
+      spatial_factors = ~site
+    ),
+    balance = list(
+      swap_within = "site",
+      spatial_factors = ~ site_col + site_block
+    )
   )
 
   speed_input <- create_speed_input(
@@ -333,29 +351,35 @@ test_that("create_speed_input creates an input from optimise argument", {
   )
   ordered_names <- sort(names(speed_input[[1]]))
 
-  expect_equal(speed_input$connectivity[ordered_names], list(
-    swap = "treatment",
-    swap_within = "swappable_site",
-    spatial_factors = ~site,
-    grid_factors = list(dim1 = "row", dim2 = "col"),
-    iterations = 10000,
-    early_stop_iterations = 1000,
-    obj_function = objective_function,
-    swap_all = FALSE,
-    optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
-  )[ordered_names])
+  expect_equal(
+    speed_input$connectivity[ordered_names],
+    list(
+      swap = "treatment",
+      swap_within = "swappable_site",
+      spatial_factors = ~site,
+      grid_factors = list(dim1 = "row", dim2 = "col"),
+      iterations = 10000,
+      early_stop_iterations = 1000,
+      obj_function = objective_function,
+      swap_all = FALSE,
+      optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
+    )[ordered_names]
+  )
 
-  expect_equal(speed_input$balance[ordered_names], list(
-    swap = "treatment",
-    swap_within = "site",
-    spatial_factors = ~ site_col + site_block,
-    grid_factors = list(dim1 = "row", dim2 = "col"),
-    iterations = 10000,
-    early_stop_iterations = 1000,
-    obj_function = objective_function,
-    swap_all = FALSE,
-    optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
-  )[ordered_names])
+  expect_equal(
+    speed_input$balance[ordered_names],
+    list(
+      swap = "treatment",
+      swap_within = "site",
+      spatial_factors = ~ site_col + site_block,
+      grid_factors = list(dim1 = "row", dim2 = "col"),
+      iterations = 10000,
+      early_stop_iterations = 1000,
+      obj_function = objective_function,
+      swap_all = FALSE,
+      optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
+    )[ordered_names]
+  )
 })
 
 test_that("add_names adds names to a list", {

@@ -14,15 +14,32 @@ dat <- dat[order(dat$col, dat$row), ]
 dat$colBlock <- rep(1:10, each = 40)
 
 ## swap in rowBlocks and also balance across colBlocks
-options(speed.swap_count = 5, speed.swap_all_blocks = TRUE, speed.adaptive_swaps = TRUE, speed.cooling_rate = 0.99)
-des <- speed(dat,
-  swap = "treat", swap_within = "rowBlock",
-  spatial_factors = ~colBlock, iterations = 150000,
-  early_stop_iterations = 50000, seed = 123
+options(
+  speed.swap_count = 5,
+  speed.swap_all_blocks = TRUE,
+  speed.adaptive_swaps = TRUE,
+  speed.cooling_rate = 0.99
+)
+des <- speed(
+  dat,
+  swap = "treat",
+  swap_within = "rowBlock",
+  spatial_factors = ~colBlock,
+  iterations = 150000,
+  early_stop_iterations = 50000,
+  seed = 123
 )
 
-lapply(split(desd, desd$rowBlock), function(el, trs) trs %in% as.character(unique(el$treat)), trs)
-lapply(split(desd, desd$colBlock), function(el, trs) trs %in% as.character(unique(el$treat)), trs)
+lapply(
+  split(desd, desd$rowBlock),
+  function(el, trs) trs %in% as.character(unique(el$treat)),
+  trs
+)
+lapply(
+  split(desd, desd$colBlock),
+  function(el, trs) trs %in% as.character(unique(el$treat)),
+  trs
+)
 
 ## already optimal across rows and cols
 
@@ -43,7 +60,9 @@ twod_od <- function() {
     data = od_dat,
     permute = ~treat,
     swap = ~dummy,
-    search = "tabu+rw", maxit = 10, start.values = TRUE
+    search = "tabu+rw",
+    maxit = 10,
+    start.values = TRUE
   )
 
   pars.init <- twod.odi$vparameters.table
@@ -55,14 +74,23 @@ twod_od <- function() {
     permute = ~treat,
     swap = ~dummy,
     search = "tabu+rw",
-    G.param = pars.init, R.param = pars.init,
+    G.param = pars.init,
+    R.param = pars.init,
     maxit = 10
   )
 }
 
 twod.od <- twod_od()
-lapply(split(twod.od$design, twod.od$design$rowBlock), function(el, trs) trs %in% as.character(unique(el$treat)), trs)
-lapply(split(twod.od$design, twod.od$design$colBlock), function(el, trs) trs %in% as.character(unique(el$treat)), trs)
+lapply(
+  split(twod.od$design, twod.od$design$rowBlock),
+  function(el, trs) trs %in% as.character(unique(el$treat)),
+  trs
+)
+lapply(
+  split(twod.od$design, twod.od$design$colBlock),
+  function(el, trs) trs %in% as.character(unique(el$treat)),
+  trs
+)
 
 ## already optimal across rows and cols
 
@@ -73,17 +101,22 @@ table(desd$treat, desd$col)
 calculate_efficiency_factor(twod.od$design, treat)
 
 res1 <- bench::mark(
-  check = FALSE, iterations = 10,
-  speed = speed(dat,
-    swap = "treat", swap_within = "rowBlock",
-    spatial_factors = ~colBlock, iterations = 150000,
-    early_stop_iterations = 50000, seed = 123, quiet = TRUE
+  check = FALSE,
+  iterations = 10,
+  speed = speed(
+    dat,
+    swap = "treat",
+    swap_within = "rowBlock",
+    spatial_factors = ~colBlock,
+    iterations = 150000,
+    early_stop_iterations = 50000,
+    seed = 123,
+    quiet = TRUE
   ),
   odw = twod_od()
 )
 
 autoplot(res1, type = "boxplot")
-
 
 
 ### Easy case
@@ -101,7 +134,10 @@ rcb_od <- function() {
     data = df_od,
     permute = ~treatment,
     swap = ~block,
-    search = "tabu+rw", maxit = 10, start.values = TRUE, trace = FALSE
+    search = "tabu+rw",
+    maxit = 10,
+    start.values = TRUE,
+    trace = FALSE
   )
 
   pars.init <- rcb.odi$vparameters.table
@@ -113,8 +149,10 @@ rcb_od <- function() {
     permute = ~treatment,
     swap = ~block,
     search = "tabu+rw",
-    G.param = pars.init, R.param = pars.init,
-    maxit = 10, trace = FALSE
+    G.param = pars.init,
+    R.param = pars.init,
+    maxit = 10,
+    trace = FALSE
   )
 }
 
@@ -126,7 +164,8 @@ autoplot(des)
 
 
 res2 <- bench::mark(
-  check = FALSE, iterations = 10,
+  check = FALSE,
+  iterations = 10,
   speed = speed(df, swap = "treatment", seed = 42, quiet = T),
   odw = rcb_od()
 )
@@ -154,7 +193,13 @@ n_rows <- 25
 n_cols <- 3
 
 # speed
-df_initial <- speed::initialise_design_df(rep(1:n_treatments, n_reps), n_rows, n_cols, 5, 3)
+df_initial <- speed::initialise_design_df(
+  rep(1:n_treatments, n_reps),
+  n_rows,
+  n_cols,
+  5,
+  3
+)
 df_initial$treatment <- as.factor(df_initial$treatment)
 df_initial$block <- as.factor(df_initial$block)
 df_initial$row <- as.factor(df_initial$row)
@@ -226,7 +271,13 @@ speed::autoplot(digger_result)
 dev.off()
 
 # odw
-df_initial_odw <- speed::initialise_design_df(rep(1:n_treatments, n_reps), n_rows, n_cols, 5, 3)
+df_initial_odw <- speed::initialise_design_df(
+  rep(1:n_treatments, n_reps),
+  n_rows,
+  n_cols,
+  5,
+  3
+)
 df_initial_odw <- shuffle_items(df_initial_odw, "treatment", "block", 112)
 df_initial_odw$treatment <- as.factor(df_initial_odw$treatment)
 df_initial_odw$block <- as.factor(df_initial_odw$block)
@@ -295,8 +346,20 @@ n_rows <- 20
 n_cols <- 20
 
 # speed
-df_initial <- speed::initialise_design_df(rep(1:n_treatments, n_reps), n_rows, n_cols, 2, 20)
-df_dummy <- speed::initialise_design_df(rep(1:n_treatments, n_reps), n_rows, n_cols, 20, 2)
+df_initial <- speed::initialise_design_df(
+  rep(1:n_treatments, n_reps),
+  n_rows,
+  n_cols,
+  2,
+  20
+)
+df_dummy <- speed::initialise_design_df(
+  rep(1:n_treatments, n_reps),
+  n_rows,
+  n_cols,
+  20,
+  2
+)
 df_initial$row_block <- as.factor(df_initial$block)
 df_initial$col_block <- as.factor(df_dummy$block)
 df_initial$treatment <- as.factor(df_initial$treatment)
@@ -489,16 +552,24 @@ png("layout-split-whole.png", height = 720, width = 240)
 speed::autoplot(df_layout, treatments = "wholeplot_treatment")
 dev.off()
 png("layout-split-sub.png", height = 720, width = 240)
-speed::autoplot(df_layout, treatments = "subplot_treatment", block = "wholeplot")
+speed::autoplot(
+  df_layout,
+  treatments = "subplot_treatment",
+  block = "wholeplot"
+)
 dev.off()
 
 bench_speed <- function() {
   speed::speed(
     data = df_initial,
-    swap = list(wholeplot = "wholeplot_treatment", subplot = "subplot_treatment"),
+    swap = list(
+      wholeplot = "wholeplot_treatment",
+      subplot = "subplot_treatment"
+    ),
     swap_within = list(wholeplot = "block", subplot = "wholeplot"),
     spatial_factors = ~col,
-    early_stop_iterations = list(wholeplot = 1000, subplot = 10000), ,
+    early_stop_iterations = list(wholeplot = 1000, subplot = 10000),
+    ,
     seed = 13
   )
 }
@@ -518,7 +589,11 @@ png("speed-split-whole.png", height = 720, width = 240)
 speed::autoplot(speed_result, treatments = "wholeplot_treatment")
 dev.off()
 png("speed-split-sub.png", height = 720, width = 240)
-speed::autoplot(speed_result, treatments = "subplot_treatment", block = "wholeplot")
+speed::autoplot(
+  speed_result,
+  treatments = "subplot_treatment",
+  block = "wholeplot"
+)
 dev.off()
 
 # for presentation
@@ -582,7 +657,11 @@ png("digger-split-whole.png", height = 720, width = 240)
 speed::autoplot(digger_result, treatments = "wholeplot_treatment")
 dev.off()
 png("digger-split-sub.png", height = 720, width = 240)
-speed::autoplot(digger_result, treatments = "subplot_treatment", block = "wholeplot")
+speed::autoplot(
+  digger_result,
+  treatments = "subplot_treatment",
+  block = "wholeplot"
+)
 dev.off()
 
 # for presentation
@@ -709,7 +788,11 @@ png("odw-split-whole.png", height = 720, width = 240)
 speed::autoplot(odw_result, treatments = "wholeplot_treatment")
 dev.off()
 png("odw-split-sub.png", height = 720, width = 240)
-speed::autoplot(odw_result, treatments = "subplot_treatment", block = "wholeplot")
+speed::autoplot(
+  odw_result,
+  treatments = "subplot_treatment",
+  block = "wholeplot"
+)
 dev.off()
 
 bench_result <- bench::mark(
