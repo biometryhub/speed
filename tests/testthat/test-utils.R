@@ -409,7 +409,7 @@ test_that("create_speed_input creates an input from optimise argument", {
     balance = list(
       swap_within = "site",
       spatial_factors = ~ site_col + site_block
-    )
+    ),
     connectivity = list(
       swap_within = "swappable_site",
       spatial_factors = ~site
