@@ -167,18 +167,20 @@ to_types <- function(df, types) {
 #' @inheritParams speed
 #'
 #' @keywords internal
-create_speed_input <- function(swap,
-                               swap_within,
-                               spatial_factors,
-                               grid_factors,
-                               iterations,
-                               early_stop_iterations,
-                               obj_function,
-                               swap_all,
-                               optimise_params,
-                               linked_cols = NULL,
-                               optimise = NULL,
-                               row_col_inferred = TRUE) {
+create_speed_input <- function(
+  swap,
+  swap_within,
+  spatial_factors,
+  grid_factors,
+  iterations,
+  early_stop_iterations,
+  obj_function,
+  swap_all,
+  optimise_params,
+  linked_cols = NULL,
+  optimise = NULL,
+  row_col_inferred = TRUE
+) {
   speed_args <- c(
     "swap",
     "swap_within",
@@ -200,7 +202,10 @@ create_speed_input <- function(swap,
       }
 
       if (is.null(optimise[[optimise_name]][["linked_cols"]])) {
-        optimise[[optimise_name]][["linked_cols"]] <- .level_linked_cols(linked_cols, optimise_name)
+        optimise[[optimise_name]][["linked_cols"]] <- .level_linked_cols(
+          linked_cols,
+          optimise_name
+        )
       }
 
       # if (!row_col_inferred) {
@@ -242,7 +247,10 @@ create_speed_input <- function(swap,
       }
 
       # Assigned rather than built into the list above so that a NULL stays absent
-      optimise[[optimise_name]][["linked_cols"]] <- .level_linked_cols(linked_cols, optimise_name)
+      optimise[[optimise_name]][["linked_cols"]] <- .level_linked_cols(
+        linked_cols,
+        optimise_name
+      )
     }
   } else {
     optimise <- list()
@@ -267,7 +275,10 @@ create_speed_input <- function(swap,
     )
 
     # Assigned rather than built into the list above so that a NULL stays absent
-    optimise[[optimise_name]][["linked_cols"]] <- .level_linked_cols(linked_cols, optimise_name)
+    optimise[[optimise_name]][["linked_cols"]] <- .level_linked_cols(
+      linked_cols,
+      optimise_name
+    )
   }
 
   if (!row_col_inferred) {
@@ -298,8 +309,10 @@ create_speed_input <- function(swap,
 
   if (is.list(linked_cols)) {
     if (is.null(names(linked_cols))) {
-      stop("`linked_cols` must be a character vector, or a named list with names matching `swap`.",
-           call. = FALSE)
+      stop(
+        "`linked_cols` must be a character vector, or a named list with names matching `swap`.",
+        call. = FALSE
+      )
     }
     if (!(level %in% names(linked_cols))) {
       return(NULL)
@@ -351,7 +364,12 @@ create_speed_input <- function(swap,
 
   # Timestamped like `dummy_<timestamp>` in `speed()` so the name cannot collide
   # with a user column. It is stripped before returning, so it is never seen.
-  origin_cols <- paste0(".origin_", seq_along(swap_cols), "_", as.integer(Sys.time()))
+  origin_cols <- paste0(
+    ".origin_",
+    seq_along(swap_cols),
+    "_",
+    as.integer(Sys.time())
+  )
   names(origin_cols) <- swap_cols
 
   return(origin_cols)

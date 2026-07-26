@@ -109,15 +109,25 @@
   if (is.list(linked_cols) && !is.null(names(linked_cols))) {
     unknown <- setdiff(names(linked_cols), names(optimise))
     if (length(unknown) > 0) {
-      stop("`linked_cols` has no matching level for ", paste0("'", unknown, "'", collapse = ", "),
-           ". Available levels: ", paste0("'", names(optimise), "'", collapse = ", "), ".",
-           call. = FALSE)
+      stop(
+        "`linked_cols` has no matching level for ",
+        paste0("'", unknown, "'", collapse = ", "),
+        ". Available levels: ",
+        paste0("'", names(optimise), "'", collapse = ", "),
+        ".",
+        call. = FALSE
+      )
     }
   }
 
   # Columns taking part in the optimisation cannot also travel as passengers
   reserved <- unique(unlist(lapply(optimise, function(opt) {
-    c(opt$swap, opt$swap_within, all.vars(opt$spatial_factors), unlist(opt$grid_factors))
+    c(
+      opt$swap,
+      opt$swap_within,
+      all.vars(opt$spatial_factors),
+      unlist(opt$grid_factors)
+    )
   })))
 
   owner <- character(0)
@@ -129,21 +139,36 @@
     }
 
     if (!is.character(cols)) {
-      stop("`linked_cols` must be a character vector of column names.", call. = FALSE)
+      stop(
+        "`linked_cols` must be a character vector of column names.",
+        call. = FALSE
+      )
     }
 
     for (col in cols) {
       verify_column_exists(col, data, "linked column")
 
       if (col %in% reserved) {
-        stop("`linked_cols` column '", col, "' is already used as a swap, swap_within or spatial ",
-             "factor column. Linked columns must be separate from the columns being optimised.",
-             call. = FALSE)
+        stop(
+          "`linked_cols` column '",
+          col,
+          "' is already used as a swap, swap_within or spatial ",
+          "factor column. Linked columns must be separate from the columns being optimised.",
+          call. = FALSE
+        )
       }
 
       if (col %in% names(owner) && owner[[col]] != opt$swap) {
-        stop("`linked_cols` column '", col, "' is linked to both '", owner[[col]], "' and '",
-             opt$swap, "'. A column can only travel with one swap column.", call. = FALSE)
+        stop(
+          "`linked_cols` column '",
+          col,
+          "' is linked to both '",
+          owner[[col]],
+          "' and '",
+          opt$swap,
+          "'. A column can only travel with one swap column.",
+          call. = FALSE
+        )
       }
       owner[[col]] <- opt$swap
 
@@ -182,10 +207,20 @@
 
   example_values <- unique(values[keep][keys[keep] == clashes[1]])
   stop(
-    "`linked_cols` column '", col, "' is not uniquely determined by '", swap, "' at level '",
-    level, "': treatment '", clashes[1], "' has ", length(example_values), " different values (",
+    "`linked_cols` column '",
+    col,
+    "' is not uniquely determined by '",
+    swap,
+    "' at level '",
+    level,
+    "': treatment '",
+    clashes[1],
+    "' has ",
+    length(example_values),
+    " different values (",
     paste0("'", utils::head(example_values, 3), "'", collapse = ", "),
-    if (length(example_values) > 3) ", ..." else "", "). ",
+    if (length(example_values) > 3) ", ..." else "",
+    "). ",
     "A level using `swap_all = TRUE` moves whole treatment groups at once, so its linked ",
     "columns must have exactly one value per treatment.",
     call. = FALSE
