@@ -5,8 +5,22 @@
 ## usethis namespace: end
 NULL
 
-utils::globalVariables(c("var", "combn", "tail", "runif",
-                         ".data", "x", "y", "xend", "yend",
-                         "iteration", "score", "temperature",
-                         "xmin", "xmax", "ymin", "ymax",
-                         "create_buffers"))
+utils::globalVariables(c(
+  "var",
+  "combn",
+  "tail",
+  "runif",
+  ".data",
+  "x",
+  "y",
+  "xend",
+  "yend",
+  "iteration",
+  "score",
+  "temperature",
+  "xmin",
+  "xmax",
+  "ymin",
+  "ymax",
+  "create_buffers"
+))
