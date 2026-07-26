@@ -1,4 +1,4 @@
-# speed 0.0.9
+# speed 0.0.10
 
 ## Major Changes
 
@@ -7,6 +7,11 @@
   are returned in the optimised order with their original type and position, and take no part in scoring.
   For hierarchical designs, pass a named list to link different columns at different levels, e.g.
   `linked_cols = list(wp = "wholeplot_label", sp = "subplot_label")`.
+
+# speed 0.0.9
+
+## Major Changes
+
 - Deprecated the `splits` argument of `initialise_design_df()` in favor of `initialise_split_design_df()`.
   Passing `splits` now warns with the equivalent suggested call.
 
