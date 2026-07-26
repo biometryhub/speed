@@ -10,6 +10,17 @@
 - Deprecated the `splits` argument of `initialise_design_df()` in favor of `initialise_split_design_df()`.
   Passing `splits` now warns with the equivalent suggested call.
 
+## Bug Fixes
+
+- `speed()` no longer returns numeric and integer columns as their factor level codes; a `treatment` column of
+  `c(10, 100, 30, 9)` was previously returned as `c(2, 4, 3, 1)`. Numeric `row` and `col` values other than
+  `1:n` were affected in the same way.
+- `speed()` no longer emits a "Setting row names on a tibble is deprecated" warning when passed a tibble;
+  row labels are now only reset for base data frames.
+- `speed()` now accepts designs with `vctrs`-backed columns that report a multi-class `class()` (such as the
+  tables produced by the `edibble` package). Previously these failed with
+  "first argument has length > 1" when restoring column types; such columns are now restored as `character`.
+
 # speed 0.0.8
 
 ## Major Changes

@@ -387,7 +387,8 @@ apply_splits <- function(df, splits, nrows, ncols, block_nrows, block_ncols) {
     n_child_rows <- parent_nrows / split$nrows
     n_children_per_parent <- n_child_rows * (parent_ncols / split$ncols)
 
-    df[[split_name]] <- (parent_id - 1) * n_children_per_parent +
+    df[[split_name]] <- (parent_id - 1) *
+      n_children_per_parent +
       child_row_idx +
       n_child_rows * (child_col_idx - 1)
 
@@ -405,10 +406,15 @@ apply_splits <- function(df, splits, nrows, ncols, block_nrows, block_ncols) {
           # Recycle once per parent unit so each parent receives a full set
           items_vec <- rep(items_vec, length.out = n_children)
         } else {
-          stop(sprintf(
-            "`items` for split `%s` must have length %d (or divide it); got %d",
-            split_name, n_children, length(items_vec)
-          ), call. = FALSE)
+          stop(
+            sprintf(
+              "`items` for split `%s` must have length %d (or divide it); got %d",
+              split_name,
+              n_children,
+              length(items_vec)
+            ),
+            call. = FALSE
+          )
         }
       }
 
@@ -478,8 +484,12 @@ initialise_split_design_df <- function(splits, rep_dim = c(1, 1)) {
   splits <- add_names(splits)
 
   # fill innermost dim
-  if (is.null(splits[[1]]$nrows)) splits[[1]]$nrows <- 1
-  if (is.null(splits[[1]]$ncols)) splits[[1]]$ncols <- 1
+  if (is.null(splits[[1]]$nrows)) {
+    splits[[1]]$nrows <- 1
+  }
+  if (is.null(splits[[1]]$ncols)) {
+    splits[[1]]$ncols <- 1
+  }
 
   # construct the design with outermost level and rep dim
   outer_split <- splits[[length(splits)]]
@@ -511,7 +521,9 @@ initialise_split_design_df <- function(splits, rep_dim = c(1, 1)) {
       if (length(items) == 1 && is.numeric(items)) {
         items <- paste0("T", seq_len(items))
       }
-      df[[paste0(split_name, "_treatment")]] <- items[(unit_in_parent - 1) %% length(items) + 1]
+      df[[paste0(split_name, "_treatment")]] <- items[
+        (unit_in_parent - 1) %% length(items) + 1
+      ]
     }
 
     parent_id <- df[[split_name]]
@@ -540,7 +552,11 @@ initialise_multiple_designs_df <- function(items, designs, design_col) {
     }
 
     df_sub <- initialise_design_df(
-      items_sub, design_args$nrows, design_args$ncols, design_args$block_nrows, design_args$block_ncols
+      items_sub,
+      design_args$nrows,
+      design_args$ncols,
+      design_args$block_nrows,
+      design_args$block_ncols
     )
     df_sub[[design_col]] <- design_name
     df <- rbind_fill(df, df_sub)
@@ -598,12 +614,19 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
     groups <- c()
     for (i in seq_along(optimise)) {
       groups <- c(groups, optimise[[i]]$swap_within)
-      if (i == 1) next
+      if (i == 1) {
+        next
+      }
 
       now <- as.numeric(Sys.time())
       dummy_col <- paste0(paste(groups, collapse = "_"), "_", now)
       optimise[[i]]$swap_within <- dummy_col
-      design[[dummy_col]] <- apply(design[, groups], 1, paste, collapse = "-") |>
+      design[[dummy_col]] <- apply(
+        design[, groups],
+        1,
+        paste,
+        collapse = "-"
+      ) |>
         factor()
     }
   }
@@ -623,14 +646,15 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
       spatial_cols <- all.vars(opt$spatial_factors)
       adj_weight <- opt$optimise_params$adj_weight
       bal_weight <- opt$optimise_params$bal_weight
-      current_score <- current_score + opt$obj_function(
-        shuffled_design,
-        opt$swap,
-        spatial_cols,
-        adj_weight = adj_weight,
-        bal_weight = bal_weight,
-        ...
-      )$score
+      current_score <- current_score +
+        opt$obj_function(
+          shuffled_design,
+          opt$swap,
+          spatial_cols,
+          adj_weight = adj_weight,
+          bal_weight = bal_weight,
+          ...
+        )$score
     }
 
     if (current_score < best_score) {
@@ -752,7 +776,10 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
   # rep_dim is c(row_reps, col_reps)
   verify_positive_whole_numbers(rep_dim)
   if (length(rep_dim) != 2) {
-    stop("`rep_dim` must be a length-2 vector `c(row_reps, col_reps)`", call. = FALSE)
+    stop(
+      "`rep_dim` must be a length-2 vector `c(row_reps, col_reps)`",
+      call. = FALSE
+    )
   }
 
   valid_split_args <- c("nrows", "ncols", "items")
@@ -764,8 +791,10 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
   # outermost -> innermost; the outermost's parent is the rep-tiled field
   outer_split <- splits[[length(splits)]]
   parent_name <- "field"
-  parent_nrows <- (if (is.null(outer_split$nrows)) 1 else outer_split$nrows) * rep_dim[[1]]
-  parent_ncols <- (if (is.null(outer_split$ncols)) 1 else outer_split$ncols) * rep_dim[[2]]
+  parent_nrows <- (if (is.null(outer_split$nrows)) 1 else outer_split$nrows) *
+    rep_dim[[1]]
+  parent_ncols <- (if (is.null(outer_split$ncols)) 1 else outer_split$ncols) *
+    rep_dim[[2]]
   for (split_name in rev(names(splits))) {
     split <- splits[[split_name]]
 
@@ -773,44 +802,78 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
     verify_list(split)
     for (arg in names(split)) {
       if (!(arg %in% valid_split_args)) {
-        stop(sprintf("`%s` is an invalid argument in `splits$%s`", arg, split_name), call. = FALSE)
+        stop(
+          sprintf(
+            "`%s` is an invalid argument in `splits$%s`",
+            arg,
+            split_name
+          ),
+          call. = FALSE
+        )
       }
     }
 
     # only the innermost level may omit dimensions (it defaults to 1x1)
-    if (split_name != innermost_name && (is.null(split$nrows) || is.null(split$ncols))) {
-      stop(sprintf(
-        "`nrows` and `ncols` must be provided for split `%s`; only the innermost level may omit them",
-        split_name
-      ), call. = FALSE)
+    if (
+      split_name != innermost_name &&
+        (is.null(split$nrows) || is.null(split$ncols))
+    ) {
+      stop(
+        sprintf(
+          "`nrows` and `ncols` must be provided for split `%s`; only the innermost level may omit them",
+          split_name
+        ),
+        call. = FALSE
+      )
     }
 
     # check unit dimensions are positive whole numbers (innermost defaults to 1x1)
     this_nrows <- if (is.null(split$nrows)) 1 else split$nrows
     this_ncols <- if (is.null(split$ncols)) 1 else split$ncols
     verify_positive_whole_number(
-      this_nrows, this_ncols,
-      var_names = c(sprintf("splits$%s$nrows", split_name), sprintf("splits$%s$ncols", split_name))
+      this_nrows,
+      this_ncols,
+      var_names = c(
+        sprintf("splits$%s$nrows", split_name),
+        sprintf("splits$%s$ncols", split_name)
+      )
     )
 
     # check if fit in parent dimension
     if (parent_nrows %% this_nrows != 0 || parent_ncols %% this_ncols != 0) {
-      stop(sprintf(
-        "split `%s` (%dx%d) does not tile evenly into %s (%dx%d)",
-        split_name, this_nrows, this_ncols, parent_name, parent_nrows, parent_ncols
-      ), call. = FALSE)
+      stop(
+        sprintf(
+          "split `%s` (%dx%d) does not tile evenly into %s (%dx%d)",
+          split_name,
+          this_nrows,
+          this_ncols,
+          parent_name,
+          parent_nrows,
+          parent_ncols
+        ),
+        call. = FALSE
+      )
     }
 
     # check items fill the units in a parent a whole number of times
     items <- split$items
     if (!is.null(items)) {
       n_units <- (parent_nrows * parent_ncols) %/% (this_nrows * this_ncols)
-      n_items <- if (length(items) == 1 && is.numeric(items)) items else length(items)
+      n_items <- if (length(items) == 1 && is.numeric(items)) {
+        items
+      } else {
+        length(items)
+      }
       if (n_units %% n_items != 0) {
-        stop(sprintf(
-          "`items` for split `%s` has length %d, which does not divide the %d units per parent",
-          split_name, n_items, n_units
-        ), call. = FALSE)
+        stop(
+          sprintf(
+            "`items` for split `%s` has length %d, which does not divide the %d units per parent",
+            split_name,
+            n_items,
+            n_units
+          ),
+          call. = FALSE
+        )
       }
     }
 

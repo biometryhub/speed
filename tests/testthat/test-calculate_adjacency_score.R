@@ -75,7 +75,12 @@ test_that("adjacency_score_vec scores per-cell matches", {
   # 1 1
   # 2 2
   m <- matrix(c(1, 2, 1, 2), nrow = 2, ncol = 2)
-  score <- adjacency_score_vec(m, dists = 1, weights = 1, ring_type = "manhattan")
+  score <- adjacency_score_vec(
+    m,
+    dists = 1,
+    weights = 1,
+    ring_type = "manhattan"
+  )
   expect_equal(score, matrix(1, 2, 2))
 
   # full match: every neighbour counts (4 interior, fewer at edges/corners)
@@ -87,7 +92,10 @@ test_that("adjacency_score_vec scores per-cell matches", {
     ring_type = "manhattan"
   )
   # corners: 2 neighbours, edges: 3, centre: 4
-  expect_equal(score_uniform, matrix(c(2, 3, 2, 3, 4, 3, 2, 3, 2), nrow = 3, byrow = TRUE))
+  expect_equal(
+    score_uniform,
+    matrix(c(2, 3, 2, 3, 4, 3, 2, 3, 2), nrow = 3, byrow = TRUE)
+  )
 })
 
 test_that("adjacency_score_vec applies per-ring weights", {
@@ -164,7 +172,11 @@ test_that("calculate_adjacency_score with identity relationship matches default"
   dimnames(rel_mat) <- list(c("A", "B"), c("A", "B"))
 
   expect_equal(
-    calculate_adjacency_score(design, "swap", relationship = prep_relationship(rel_mat)),
+    calculate_adjacency_score(
+      design,
+      "swap",
+      relationship = prep_relationship(rel_mat)
+    ),
     calculate_adjacency_score(design, "swap")
   )
 })
@@ -173,7 +185,12 @@ test_that("prep_relationship validates input", {
   expect_error(prep_relationship(list()), "numeric matrix")
 
   expect_error(
-    prep_relationship(matrix("x", 2, 2, dimnames = list(c("A", "B"), c("A", "B")))),
+    prep_relationship(matrix(
+      "x",
+      2,
+      2,
+      dimnames = list(c("A", "B"), c("A", "B"))
+    )),
     "numeric matrix"
   )
 
@@ -225,7 +242,10 @@ test_that("speed preps a raw relationship matrix once before the SA loop", {
     seed = 1
   )
 
-  expect_named(seen$relationship, c("flat", "row_levels", "col_levels", "n_row"))
+  expect_named(
+    seen$relationship,
+    c("flat", "row_levels", "col_levels", "n_row")
+  )
   expect_s3_class(result, "design")
 })
 
