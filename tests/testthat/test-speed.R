@@ -2540,3 +2540,52 @@ test_that("speed does not warn about tibble row names when passed a tibble", {
     )
   )
 })
+
+
+# Regression test: numeric columns were returned as factor level codes, because
+# restoring them ran as.numeric() over a factor instead of over its labels.
+test_that("speed returns numeric treatments as values, not level codes", {
+  test_data <- data.frame(
+    row = rep(1:4, times = 5),
+    col = rep(1:5, each = 4),
+    treatment = rep(c(10, 100, 30, 9), 5)
+  )
+
+  result <- speed(test_data, swap = "treatment", seed = 42, quiet = TRUE)
+  treatment <- result$design_df$treatment
+
+  expect_type(treatment, "double")
+  expect_setequal(treatment, c(9, 10, 30, 100))
+  # Each treatment is still replicated 5 times, just rearranged.
+  expect_equal(sort(treatment), sort(test_data$treatment))
+})
+
+test_that("speed returns integer treatments as values, not level codes", {
+  test_data <- data.frame(
+    row = rep(1:4, times = 5),
+    col = rep(1:5, each = 4),
+    treatment = rep(c(10L, 100L, 30L, 9L), 5)
+  )
+
+  result <- speed(test_data, swap = "treatment", seed = 42, quiet = TRUE)
+  treatment <- result$design_df$treatment
+
+  expect_type(treatment, "integer")
+  expect_setequal(treatment, c(9L, 10L, 30L, 100L))
+  expect_equal(sort(treatment), sort(test_data$treatment))
+})
+
+test_that("speed preserves non-consecutive numeric row and column values", {
+  # row/col are converted to factors alongside the swap column, so they were
+  # corrupted in the same way.
+  test_data <- data.frame(
+    row = rep(c(2, 4, 6, 8), times = 5),
+    col = rep(seq(10, 50, 10), each = 4),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  result <- speed(test_data, swap = "treatment", seed = 42, quiet = TRUE)
+
+  expect_setequal(result$design_df$row, c(2, 4, 6, 8))
+  expect_setequal(result$design_df$col, seq(10, 50, 10))
+})

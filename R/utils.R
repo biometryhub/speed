@@ -92,6 +92,12 @@ to_factor <- function(df) {
 
 #' Convert Data Frame Data to Provided Types
 #'
+#' Columns are converted via `as.<type>()`. Factors are routed through
+#' [as.character()] first, because `as.numeric()` and friends applied to a
+#' factor return its integer level codes rather than its labels - the labels are
+#' what hold the original values. Columns whose target type is `factor` are left
+#' as-is, since re-factoring would re-sort the levels.
+#'
 #' @inheritParams to_factor
 #' @param types A named list of the types for each column
 #'
@@ -100,7 +106,12 @@ to_factor <- function(df) {
 #' @keywords internal
 to_types <- function(df, types) {
   df[names(types)] <- mapply(
-    \(t, x) get(sprintf("as.%s", t), mode = "function")(x),
+    \(t, x) {
+      if (is.factor(x) && t != "factor") {
+        x <- as.character(x)
+      }
+      get(sprintf("as.%s", t), mode = "function")(x)
+    },
     types,
     df[names(types)],
     SIMPLIFY = FALSE
