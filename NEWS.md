@@ -2,6 +2,11 @@
 
 ## Major Changes
 
+- Added the `linked_cols` argument to `speed()`, naming columns that should be rearranged along with the
+  `swap` column, for example a `variety_name` label belonging to a numeric `variety` code. Linked columns
+  are returned in the optimised order with their original type and position, and take no part in scoring.
+  For hierarchical designs, pass a named list to link different columns at different levels, e.g.
+  `linked_cols = list(wp = "wholeplot_label", sp = "subplot_label")`.
 - Deprecated the `splits` argument of `initialise_design_df()` in favor of `initialise_split_design_df()`.
   Passing `splits` now warns with the equivalent suggested call.
 

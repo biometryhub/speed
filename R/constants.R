@@ -4,5 +4,6 @@
   grid_factors = list(dim1 = "row", dim2 = "col"),
   iterations = 10000,
   early_stop_iterations = 2000,
-  swap_all = FALSE
+  swap_all = FALSE,
+  linked_cols = NULL
 )

@@ -14,6 +14,7 @@ speed(
   early_stop_iterations = 2000,
   obj_function = objective_function,
   swap_all = FALSE,
+  linked_cols = NULL,
   optimise = NULL,
   optimise_params = optim_params(),
   quiet = FALSE,
@@ -59,6 +60,19 @@ be a named list with names matching \code{swap}.}
 
 \item{swap_all}{Logical; Whether to swap all matching items or a single item
 at a time (default: FALSE)}
+
+\item{linked_cols}{Character vector of column names that should travel with
+the \code{swap} column, for example a \code{variety_name} label belonging to a
+numeric \code{variety} code. These columns are rearranged alongside \code{swap} and
+returned in the optimised order, keeping their original type and position.
+They take no part in scoring. For hierarchical designs, provide a named
+list with names matching \code{swap} to link different columns at different
+levels, e.g.
+\code{list(wp = "wholeplot_label", sp = "subplot_label")}; a bare character
+vector applies to every level. Columns used as \code{swap}, \code{swap_within} or
+spatial factors cannot be linked. On a level with \code{swap_all = TRUE} whole
+treatment groups move at once, so a linked column must have exactly one
+value per treatment at that level (default: \code{NULL}).}
 
 \item{optimise}{A list of named arguments describing optimising parameters;
 see more in example.}
@@ -121,6 +135,11 @@ df <- data.frame(
 # Optimise the design
 result <- speed(df, swap = "treatment", seed = 42)
 autoplot(result)
+
+# Keep a label column travelling with its treatment
+df$treatment_name <- paste("Variety", df$treatment)
+result <- speed(df, swap = "treatment", linked_cols = "treatment_name", seed = 42)
+head(result$design_df)
 
 # Hierarchical split-plot design
 df_split <- data.frame(

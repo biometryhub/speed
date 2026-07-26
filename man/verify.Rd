@@ -3,6 +3,8 @@
 \name{.verify_speed_inputs}
 \alias{.verify_speed_inputs}
 \alias{.verify_hierarchical_inputs}
+\alias{.verify_linked_cols}
+\alias{.verify_functionally_dependent}
 \alias{.verify_optim_params}
 \title{Verify Inputs for \code{speed}}
 \usage{
@@ -28,6 +30,10 @@
   quiet,
   seed
 )
+
+.verify_linked_cols(data, optimise, linked_cols = NULL)
+
+.verify_functionally_dependent(data, swap, col, level)
 
 .verify_optim_params(
   swap_count,
@@ -76,8 +82,31 @@ reproducibility of results (default: \code{NULL}).}
 \item{obj_function}{Objective function used to calculate score (lower is
 better) (default: \code{\link[=objective_function]{objective_function()}}). For hierarchical designs, can
 be a named list with names matching \code{swap}.}
+
+\item{optimise}{Per-level \code{optimise} list as built by \code{\link[=create_speed_input]{create_speed_input()}}.}
+
+\item{linked_cols}{Character vector of column names that should travel with
+the \code{swap} column, for example a \code{variety_name} label belonging to a
+numeric \code{variety} code. These columns are rearranged alongside \code{swap} and
+returned in the optimised order, keeping their original type and position.
+They take no part in scoring. For hierarchical designs, provide a named
+list with names matching \code{swap} to link different columns at different
+levels, e.g.
+\code{list(wp = "wholeplot_label", sp = "subplot_label")}; a bare character
+vector applies to every level. Columns used as \code{swap}, \code{swap_within} or
+spatial factors cannot be linked. On a level with \code{swap_all = TRUE} whole
+treatment groups move at once, so a linked column must have exactly one
+value per treatment at that level (default: \code{NULL}).}
+
+\item{col}{Name of the linked column being checked.}
+
+\item{level}{Name of the hierarchy level the column is declared on.}
 }
 \description{
 Verify inputs for the \code{speed} function.
+
+Checks the columns named in \code{linked_cols} after they have been merged into
+the per-level \code{optimise} list, so all three input shapes are covered by one
+set of rules.
 }
 \keyword{internal}

@@ -136,6 +136,7 @@ create_speed_input <- function(swap,
                                obj_function,
                                swap_all,
                                optimise_params,
+                               linked_cols = NULL,
                                optimise = NULL,
                                row_col_inferred = TRUE) {
   speed_args <- c(
@@ -156,6 +157,10 @@ create_speed_input <- function(swap,
         if (is.null(optimise[[optimise_name]][[arg]])) {
           optimise[[optimise_name]][[arg]] <- get(arg)
         }
+      }
+
+      if (is.null(optimise[[optimise_name]][["linked_cols"]])) {
+        optimise[[optimise_name]][["linked_cols"]] <- .level_linked_cols(linked_cols, optimise_name)
       }
 
       # if (!row_col_inferred) {
@@ -192,6 +197,9 @@ create_speed_input <- function(swap,
           }
         }
       }
+
+      # Assigned rather than built into the list above so that a NULL stays absent
+      optimise[[optimise_name]][["linked_cols"]] <- .level_linked_cols(linked_cols, optimise_name)
     }
   } else {
     optimise <- list()
@@ -214,6 +222,9 @@ create_speed_input <- function(swap,
       swap_all = swap_all,
       optimise_params = optimise_params
     )
+
+    # Assigned rather than built into the list above so that a NULL stays absent
+    optimise[[optimise_name]][["linked_cols"]] <- .level_linked_cols(linked_cols, optimise_name)
   }
 
   if (!row_col_inferred) {
@@ -223,6 +234,84 @@ create_speed_input <- function(swap,
   }
 
   return(optimise)
+}
+
+#' Resolve `linked_cols` for A Single Level
+#'
+#' @description
+#' `linked_cols` is either a bare character vector, which applies to every
+#' level, or a named list with one entry per hierarchy level.
+#'
+#' @inheritParams speed
+#' @param level Name of the hierarchy level being resolved.
+#'
+#' @return A character vector of column names, or `NULL`.
+#'
+#' @keywords internal
+.level_linked_cols <- function(linked_cols, level) {
+  if (is.null(linked_cols)) {
+    return(NULL)
+  }
+
+  if (is.list(linked_cols)) {
+    if (is.null(names(linked_cols))) {
+      stop("`linked_cols` must be a character vector, or a named list with names matching `swap`.",
+           call. = FALSE)
+    }
+    if (!(level %in% names(linked_cols))) {
+      return(NULL)
+    }
+    return(linked_cols[[level]])
+  }
+
+  return(linked_cols)
+}
+
+#' Map Each Linked Column to The Swap Column It Travels With
+#'
+#' @param optimise Per-level `optimise` list as built by [create_speed_input()].
+#'
+#' @return A named character vector; names are linked column names, values are
+#'   the swap column each one follows. Empty when no level uses `linked_cols`.
+#'
+#' @keywords internal
+.linked_col_map <- function(optimise) {
+  map <- character(0)
+  for (level in names(optimise)) {
+    cols <- optimise[[level]]$linked_cols
+    for (col in cols) {
+      map[[col]] <- optimise[[level]]$swap
+    }
+  }
+
+  return(map)
+}
+
+#' Name One Provenance Index Column per Distinct Swap Column
+#'
+#' @description
+#' Provenance is tracked per *swap column*, not per level: two levels that
+#' optimise the same column (as in a MET design) share one index so it
+#' accumulates both passes, while levels with different swap columns get
+#' independent indices.
+#'
+#' @param linked_map A named character vector from `.linked_col_map()`.
+#'
+#' @return A named character vector mapping swap column to index column name.
+#'
+#' @keywords internal
+.origin_col_names <- function(linked_map) {
+  swap_cols <- unique(unname(linked_map))
+  if (length(swap_cols) == 0) {
+    return(character(0))
+  }
+
+  # Timestamped like `dummy_<timestamp>` in `speed()` so the name cannot collide
+  # with a user column. It is stripped before returning, so it is never seen.
+  origin_cols <- paste0(".origin_", seq_along(swap_cols), "_", as.integer(Sys.time()))
+  names(origin_cols) <- swap_cols
+
+  return(origin_cols)
 }
 
 `%||%` <- function(a, b) if (!is.null(a)) a else b
