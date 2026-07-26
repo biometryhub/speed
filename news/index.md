@@ -13,6 +13,11 @@
 ### Bug Fixes
 
 - [`speed()`](https://biometryhub.github.io/speed/reference/speed.md) no
+  longer returns numeric and integer columns as their factor level
+  codes; a `treatment` column of `c(10, 100, 30, 9)` was previously
+  returned as `c(2, 4, 3, 1)`. Numeric `row` and `col` values other than
+  `1:n` were affected in the same way.
+- [`speed()`](https://biometryhub.github.io/speed/reference/speed.md) no
   longer emits a “Setting row names on a tibble is deprecated” warning
   when passed a tibble; row labels are now only reset for base data
   frames.
