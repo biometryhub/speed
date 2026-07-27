@@ -323,11 +323,13 @@ test_that("autoplot palettes work with different numbers of treatments", {
 })
 
 test_that("autoplot palettes work with hierarchical designs", {
-  # Hierarchical split-plot design
+  # Hierarchical split-plot design. Whole plots must nest inside blocks so that
+  # each whole-plot treatment is equally replicated per block; `swap_all = TRUE`
+  # rejects unequal within-group replication.
   df_split <- data.frame(
     row = rep(1:6, each = 4),
     col = rep(1:4, times = 6),
-    wholeplot_treatment = rep(LETTERS[1:3], each = 8),
+    wholeplot_treatment = rep(rep(LETTERS[1:3], each = 4), times = 2),
     subplot_treatment = rep(letters[1:4], 6),
     block = rep(1:2, each = 12)
   )

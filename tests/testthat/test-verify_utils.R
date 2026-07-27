@@ -533,3 +533,155 @@ test_that("edge cases and error handling", {
   expect_false(is_whole_number(small_num, tol = .Machine$double.eps))
   expect_true(is_whole_number(small_num, tol = small_num * 2))
 })
+
+test_that(".verify_swap_all_replication rejects unequal within-group replication", {
+  # A occupies 3 plots per block, B 2 and C 1, so exchanging every plot of one
+  # for every plot of another would swap their replication counts
+  unequal <- data.frame(
+    row = rep(1:6, times = 2),
+    col = rep(1:2, each = 6),
+    block = rep(1:2, each = 6),
+    treatment = rep(c("A", "A", "A", "B", "B", "C"), 2)
+  )
+
+  optimise <- list(
+    `all treatment within block` = list(
+      swap = "treatment",
+      swap_within = "block",
+      swap_all = TRUE
+    )
+  )
+
+  expect_error(
+    .verify_swap_all_replication(unequal, optimise),
+    "requires equal replication within each swap group"
+  )
+
+  msg <- tryCatch(
+    .verify_swap_all_replication(unequal, optimise),
+    error = conditionMessage
+  )
+  # reports the offending column, group and counts
+  expect_match(msg, "`treatment` is unequally replicated", fixed = TRUE)
+  expect_match(msg, "within `block` 1: A (3), B (2), C (1)", fixed = TRUE)
+  expect_match(msg, "and in 1 other group(s)", fixed = TRUE)
+  # no level name for a single-level design
+  expect_false(grepl("level", msg, fixed = TRUE))
+
+  # levels that do not use swap_all are not checked
+  optimise[[1]]$swap_all <- FALSE
+  expect_silent(.verify_swap_all_replication(unequal, optimise))
+})
+
+test_that(".verify_swap_all_replication accepts designs the swap can preserve", {
+  # equal replication within each block
+  equal <- data.frame(
+    block = rep(1:2, each = 6),
+    treatment = rep(c("A", "A", "B", "B", "C", "C"), 2)
+  )
+  optimise <- list(
+    lvl = list(swap = "treatment", swap_within = "block", swap_all = TRUE)
+  )
+  expect_silent(.verify_swap_all_replication(equal, optimise))
+
+  # incomplete blocks are fine: only the treatments present in a group can be
+  # chosen for a swap, so absent treatments cannot cause an unequal exchange
+  incomplete <- data.frame(
+    block = rep(1:3, each = 2),
+    treatment = c("A", "B", "B", "C", "A", "C")
+  )
+  expect_silent(.verify_swap_all_replication(incomplete, optimise))
+
+  # NA groups and NA treatments are excluded, matching the neighbour generator
+  with_na <- data.frame(
+    block = c(1, 1, 1, 1, NA, NA),
+    treatment = c("A", "A", "B", "B", "C", NA)
+  )
+  expect_silent(.verify_swap_all_replication(with_na, optimise))
+
+  # a group holding a single treatment is never swapped, so is not an error
+  one_treatment <- data.frame(
+    block = c(1, 1, 1, 2, 2, 2),
+    treatment = c("A", "A", "A", "B", "B", "C")
+  )
+  expect_error(
+    .verify_swap_all_replication(one_treatment, optimise),
+    "within `block` 2: B (2), C (1)",
+    fixed = TRUE
+  )
+})
+
+test_that(".verify_swap_all_replication names the level and the whole design", {
+  split_plot <- data.frame(
+    block = rep(1:2, each = 6),
+    wholeplot = rep(1:4, times = c(3, 3, 3, 3)),
+    wp_trt = rep(c("A", "A", "A", "B", "B", "B"), 2),
+    sp_trt = rep(c("a", "a", "b", "a", "b", "b"), 2)
+  )
+
+  two_level <- list(
+    wp = list(swap = "wp_trt", swap_within = "block", swap_all = TRUE),
+    sp = list(swap = "sp_trt", swap_within = "wholeplot", swap_all = TRUE)
+  )
+
+  # wp is balanced within block; sp is not balanced within wholeplot
+  expect_error(
+    .verify_swap_all_replication(split_plot, two_level),
+    "(level `sp`)",
+    fixed = TRUE
+  )
+
+  # a level with no swap_within boundary is described as the whole design
+  no_group <- data.frame(
+    treatment = c("A", "A", "A", "B", "B", "C"),
+    dummy_1 = factor(rep(1, 6))
+  )
+  dummy <- list(
+    lvl = list(swap = "treatment", swap_within = "dummy_1", swap_all = TRUE)
+  )
+  expect_error(
+    .verify_swap_all_replication(no_group, dummy, dummy_group = "dummy_1"),
+    "unequally replicated across the whole design",
+    fixed = TRUE
+  )
+})
+
+test_that("speed() errors instead of altering replication when swap_all = TRUE", {
+  df <- data.frame(
+    row = rep(1:6, times = 2),
+    col = rep(1:2, each = 6),
+    block = rep(1:2, each = 6),
+    treatment = rep(c("A", "A", "A", "B", "B", "C"), 2)
+  )
+
+  expect_error(
+    speed(
+      df,
+      swap = "treatment",
+      swap_within = "block",
+      swap_all = TRUE,
+      seed = 1,
+      quiet = TRUE
+    ),
+    "requires equal replication within each swap group"
+  )
+
+  # unequal replication with no swap_within is equally undefined
+  expect_error(
+    speed(df, swap = "treatment", swap_all = TRUE, seed = 1, quiet = TRUE),
+    "unequally replicated across the whole design",
+    fixed = TRUE
+  )
+
+  # the same design is untouched by the single-swap generator
+  result <- speed(
+    df,
+    swap = "treatment",
+    swap_within = "block",
+    swap_all = FALSE,
+    iterations = 100,
+    seed = 1,
+    quiet = TRUE
+  )
+  expect_equal(c(table(result$design_df$treatment)), c(table(df$treatment)))
+})

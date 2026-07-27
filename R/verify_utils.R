@@ -231,6 +231,8 @@
 #'
 #' @rdname verify
 #'
+#' @inheritParams optim_params
+#'
 #' @keywords internal
 .verify_optim_params <- function(
   swap_count,
@@ -250,6 +252,83 @@
 
   if (!(random_initialisation %in% c(TRUE, FALSE))) {
     verify_non_negative_whole(random_initialisation)
+  }
+}
+
+#' Verify equal replication for `swap_all` levels
+#'
+#' @description
+#' `swap_all = TRUE` proposes a move by exchanging *every* plot holding one
+#' treatment with *every* plot holding another. That is a rearrangement of the
+#' design only when both treatments occupy the same number of plots within the
+#' swap group; when they do not, the two treatments exchange replication counts
+#' and the design that comes back is not the design that went in. Error before
+#' any optimisation happens rather than silently altering replication.
+#'
+#' Called on the resolved `optimise` list, so it covers simple, legacy
+#' hierarchical and `optimise = ` calls alike, including levels that set
+#' `swap_all` individually.
+#'
+#' @param dummy_group Name of the internal placeholder column used for a level
+#'   with no `swap_within` boundary, so it can be described as the whole design.
+#'
+#' @rdname verify
+#'
+#' @keywords internal
+.verify_swap_all_replication <- function(data, optimise, dummy_group = NULL) {
+  for (level in names(optimise)) {
+    opt <- optimise[[level]]
+    if (!isTRUE(opt$swap_all)) {
+      next
+    }
+
+    groups <- as.character(data[[opt$swap_within]])
+    treatments <- as.character(data[[opt$swap]])
+    keep <- !is.na(groups) & !is.na(treatments)
+    by_group <- split(treatments[keep], groups[keep])
+
+    # The generator only swaps in groups holding two or more treatments, so a
+    # single-treatment group can never produce an unequal exchange.
+    unequal <- vapply(
+      by_group,
+      function(x) {
+        counts <- table(x)
+        length(counts) > 1 && length(unique(as.integer(counts))) > 1
+      },
+      logical(1)
+    )
+
+    if (!any(unequal)) {
+      next
+    }
+
+    bad <- names(by_group)[unequal]
+    counts <- table(by_group[[bad[1]]])
+    stop(
+      "`swap_all = TRUE` requires equal replication within each swap group",
+      if (length(optimise) > 1) paste0(" (level `", level, "`)") else "",
+      ", because a swap exchanges every plot of one treatment with every plot",
+      " of another.\n`",
+      opt$swap,
+      "` is unequally replicated ",
+      if (identical(opt$swap_within, dummy_group)) {
+        "across the whole design"
+      } else {
+        paste0("within `", opt$swap_within, "` ", bad[1])
+      },
+      ": ",
+      paste0(names(counts), " (", as.integer(counts), ")", collapse = ", "),
+      if (length(bad) > 1) {
+        paste0(", and in ", length(bad) - 1, " other group(s)")
+      } else {
+        ""
+      },
+      ".\nSwapping these would change the replication of the design. Use",
+      " `swap_all = FALSE`, or correct the replication of `",
+      opt$swap,
+      "`.",
+      call. = FALSE
+    )
   }
 }
 

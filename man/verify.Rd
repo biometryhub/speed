@@ -6,6 +6,7 @@
 \alias{.verify_linked_cols}
 \alias{.verify_functionally_dependent}
 \alias{.verify_optim_params}
+\alias{.verify_swap_all_replication}
 \title{Verify Inputs for \code{speed}}
 \usage{
 .verify_speed_inputs(
@@ -45,6 +46,8 @@
   adj_weight,
   bal_weight
 )
+
+.verify_swap_all_replication(data, optimise, dummy_group = NULL)
 }
 \arguments{
 \item{data}{A data frame containing the experimental design with spatial
@@ -101,6 +104,35 @@ value per treatment at that level (default: \code{NULL}).}
 \item{col}{Name of the linked column being checked.}
 
 \item{level}{Name of the hierarchy level the column is declared on.}
+
+\item{swap_count}{Number of treatment swaps per iteration (default: 1).}
+
+\item{swap_all_blocks}{Logical; if \code{TRUE}, performs swaps in all blocks at each iteration (default: \code{FALSE}).}
+
+\item{adaptive_swaps}{Logical; if \code{TRUE}, adjusts swap parameters based on temperature (default: \code{FALSE}).}
+
+\item{start_temp}{Starting temperature for simulated annealing (default: 100). A higher start temperature
+allows the algorithm to accept worse solutions early on, encouraging exploration of the solution space and
+helping to avoid local optima. Lower values make the algorithm greedier from the start, which can speed up
+convergence but increases the risk of getting stuck in a poor solution. A good starting temperature allows
+moderately worse solutions to be accepted with a probability of 70-90\% at the beginning of the optimisation.}
+
+\item{cooling_rate}{Rate at which temperature decreases for simulated annealing (default: 0.99). This
+controls how quickly the algorithm shifts from exploration to exploitation. The temperature is updated at
+each iteration by multiplying it by this rate: \code{T_i = start_temp * cooling_rate^i}. A higher cooling rate
+(e.g. 0.995-0.999) results in slower cooling and a longer exploration phase, which is generally better for
+complex or noisy optimisation landscapes. Lower values (e.g. 0.95-0.98) cool quickly, leading to faster
+convergence but greater risk of premature convergence to a suboptimal design.}
+
+\item{random_initialisation}{Number of times to randomly shuffle items within \code{swap_within}; the design with
+the best score is used as an initial design (default: 0).}
+
+\item{adj_weight}{Weight for adjacency score (default: 1).}
+
+\item{bal_weight}{Weight for balance score (default: 1).}
+
+\item{dummy_group}{Name of the internal placeholder column used for a level
+with no \code{swap_within} boundary, so it can be described as the whole design.}
 }
 \description{
 Verify inputs for the \code{speed} function.
@@ -108,5 +140,16 @@ Verify inputs for the \code{speed} function.
 Checks the columns named in \code{linked_cols} after they have been merged into
 the per-level \code{optimise} list, so all three input shapes are covered by one
 set of rules.
+
+\code{swap_all = TRUE} proposes a move by exchanging \emph{every} plot holding one
+treatment with \emph{every} plot holding another. That is a rearrangement of the
+design only when both treatments occupy the same number of plots within the
+swap group; when they do not, the two treatments exchange replication counts
+and the design that comes back is not the design that went in. Error before
+any optimisation happens rather than silently altering replication.
+
+Called on the resolved \code{optimise} list, so it covers simple, legacy
+hierarchical and \verb{optimise = } calls alike, including levels that set
+\code{swap_all} individually.
 }
 \keyword{internal}
