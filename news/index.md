@@ -12,6 +12,15 @@
 
 ### Bug Fixes
 
+- [`speed()`](https://biometryhub.github.io/speed/reference/speed.md)
+  now errors when `swap_all = TRUE` is used on a design whose treatments
+  are unequally replicated within a swap group, instead of silently
+  changing the replication. Such a swap exchanges every plot of one
+  treatment with every plot of another, so when the two treatments
+  occupy different numbers of plots they exchange replication counts and
+  the returned design is not a rearrangement of the input. Designs with
+  equal within-group replication, which is what `swap_all` is intended
+  for, are unaffected.
 - [`speed()`](https://biometryhub.github.io/speed/reference/speed.md) no
   longer returns numeric and integer columns as their factor level
   codes; a `treatment` column of `c(10, 100, 30, 9)` was previously

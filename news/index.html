@@ -50,6 +50,8 @@
 <div class="section level3">
 <h3 id="bug-fixes-0-0-9">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-0-9"></a></h3>
 <ul><li>
+<code><a href="../reference/speed.html">speed()</a></code> now errors when <code>swap_all = TRUE</code> is used on a design whose treatments are unequally replicated within a swap group, instead of silently changing the replication. Such a swap exchanges every plot of one treatment with every plot of another, so when the two treatments occupy different numbers of plots they exchange replication counts and the returned design is not a rearrangement of the input. Designs with equal within-group replication, which is what <code>swap_all</code> is intended for, are unaffected.</li>
+<li>
 <code><a href="../reference/speed.html">speed()</a></code> no longer returns numeric and integer columns as their factor level codes; a <code>treatment</code> column of <code>c(10, 100, 30, 9)</code> was previously returned as <code>c(2, 4, 3, 1)</code>. Numeric <code>row</code> and <code>col</code> values other than <code>1:n</code> were affected in the same way.</li>
 <li>
 <code><a href="../reference/speed.html">speed()</a></code> no longer emits a “Setting row names on a tibble is deprecated” warning when passed a tibble; row labels are now only reset for base data frames.</li>

@@ -2,6 +2,18 @@
 
 Verify inputs for the `speed` function.
 
+`swap_all = TRUE` proposes a move by exchanging *every* plot holding one
+treatment with *every* plot holding another. That is a rearrangement of
+the design only when both treatments occupy the same number of plots
+within the swap group; when they do not, the two treatments exchange
+replication counts and the design that comes back is not the design that
+went in. Error before any optimisation happens rather than silently
+altering replication.
+
+Called on the resolved `optimise` list, so it covers simple, legacy
+hierarchical and `optimise = ` calls alike, including levels that set
+`swap_all` individually.
+
 ## Usage
 
 ``` r
@@ -38,6 +50,8 @@ Verify inputs for the `speed` function.
   adj_weight,
   bal_weight
 )
+
+.verify_swap_all_replication(data, optimise, dummy_group = NULL)
 ```
 
 ## Arguments
@@ -96,3 +110,13 @@ Verify inputs for the `speed` function.
   [`objective_function()`](https://biometryhub.github.io/speed/reference/objective_functions.md)).
   For hierarchical designs, can be a named list with names matching
   `swap`.
+
+- optimise:
+
+  A list of named arguments describing optimising parameters; see more
+  in example.
+
+- dummy_group:
+
+  Name of the internal placeholder column used for a level with no
+  `swap_within` boundary, so it can be described as the whole design.
