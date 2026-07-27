@@ -389,9 +389,21 @@ calculate_ed <- function(
   current_ed = NULL,
   swapped_items = NULL
 ) {
-  if (!is.null(swapped_items)) {
-    design_matrix[!(design_matrix %in% swapped_items)] <- NA
-    msts <- lapply(current_ed, function(ed_by_rep) ed_by_rep$msts)
+  rows <- row(design_matrix)
+  cols <- col(design_matrix)
+
+  treatments <- as.character(design_matrix)
+  coords <- data.frame(
+    trt = treatments,
+    row = as.vector(rows),
+    col = as.vector(cols)
+  )
+
+  trt_groups <- split(coords[, c("row", "col")], coords$trt)
+
+  # Initialise from previous ED if supplied
+  if (!is.null(current_ed)) {
+    msts <- current_ed$msts
   } else {
     msts <- numeric(length(trt_groups))
     names(msts) <- names(trt_groups)
