@@ -144,15 +144,13 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
         plots_2 <- which(group_filter & new_design[[swap]] == swap_pair[2])
 
         # Swap all instances of these treatments
-        if (!is.null(origin_col) && length(plots_1) > 0 && length(plots_2) > 0) {
-          # Whole label sets move, and the sets can differ in size, so there is no
-          # unit-level bijection to preserve - recycle. `.verify_linked_cols` requires
-          # linked columns on a `swap_all` level to be functionally dependent on the
-          # treatment, which makes the recycling immaterial.
+        if (!is.null(origin_col)) {
+          # `.verify_swap_all_replication()` rejects unequal replication within a swap
+          # group, so the two plot sets are the same size and their provenance indices
+          # exchange one for one
           origins_1 <- new_design[[origin_col]][plots_1]
-          origins_2 <- new_design[[origin_col]][plots_2]
-          new_design[[origin_col]][plots_1] <- rep_len(origins_2, length(plots_1))
-          new_design[[origin_col]][plots_2] <- rep_len(origins_1, length(plots_2))
+          new_design[[origin_col]][plots_1] <- new_design[[origin_col]][plots_2]
+          new_design[[origin_col]][plots_2] <- origins_1
         }
         new_design[[swap]][plots_1] <- swap_pair[2]
         new_design[[swap]][plots_2] <- swap_pair[1]

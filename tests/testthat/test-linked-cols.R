@@ -421,42 +421,6 @@ test_that("linked_cols rejects a per-plot column on a swap_all level", {
   )
 })
 
-test_that("linked_cols handles unequal treatment group sizes on a swap_all level", {
-  # Treatment A occupies twice as many plots as B or C within each block, so the
-  # two label sets exchanged by a multi-swap differ in length
-  df <- data.frame(
-    row = rep(1:16, each = 2),
-    col = rep(1:2, times = 16),
-    block = rep(1:2, each = 16),
-    wholeplot = rep(1:8, each = 4),
-    wp_trt = rep(c("A", "A", "B", "C"), each = 4, times = 2),
-    sp_trt = rep(c("x", "y"), 16),
-    stringsAsFactors = FALSE
-  )
-  df$wp_label <- paste("Irrigation", df$wp_trt)
-
-  result <- speed(
-    df,
-    swap = "wp_trt",
-    swap_within = "block",
-    linked_cols = "wp_label",
-    swap_all = TRUE,
-    seed = 42,
-    quiet = TRUE
-  )
-
-  expect_pairing_preserved(df, result$design_df, "wp_trt", "wp_label")
-
-  # `swap_all = TRUE` exchanges whole label sets, so unequal group sizes change
-  # treatment replication on their own - that is existing `speed` behaviour and is
-  # not what this test is about. What matters here is that the linked column tracks
-  # whatever the treatment column ends up doing.
-  expect_equal(
-    unname(table(result$design_df$wp_label)),
-    unname(table(result$design_df$wp_trt))
-  )
-})
-
 test_that("linked_cols allows a functionally dependent column on a swap_all level", {
   df <- split_plot_df()
 
