@@ -212,6 +212,10 @@ speed <- function(data,
     }
   }
 
+  # `swap_all` exchanges whole label sets, which only preserves replication when
+  # the sets are the same size
+  .verify_swap_all_replication(data, optimise, dummy_group)
+
   dots <- list(...)
   .reject_optim_params_in_dots(dots)
   dots <- .prep_dots(dots, optimise, data)

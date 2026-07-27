@@ -4,6 +4,7 @@
 \alias{.verify_speed_inputs}
 \alias{.verify_hierarchical_inputs}
 \alias{.verify_optim_params}
+\alias{.verify_swap_all_replication}
 \title{Verify Inputs for \code{speed}}
 \usage{
 .verify_speed_inputs(
@@ -39,6 +40,8 @@
   adj_weight,
   bal_weight
 )
+
+.verify_swap_all_replication(data, optimise, dummy_group = NULL)
 }
 \arguments{
 \item{data}{A data frame containing the experimental design with spatial
@@ -76,8 +79,25 @@ reproducibility of results (default: \code{NULL}).}
 \item{obj_function}{Objective function used to calculate score (lower is
 better) (default: \code{\link[=objective_function]{objective_function()}}). For hierarchical designs, can
 be a named list with names matching \code{swap}.}
+
+\item{optimise}{A list of named arguments describing optimising parameters;
+see more in example.}
+
+\item{dummy_group}{Name of the internal placeholder column used for a level
+with no \code{swap_within} boundary, so it can be described as the whole design.}
 }
 \description{
 Verify inputs for the \code{speed} function.
+
+\code{swap_all = TRUE} proposes a move by exchanging \emph{every} plot holding one
+treatment with \emph{every} plot holding another. That is a rearrangement of the
+design only when both treatments occupy the same number of plots within the
+swap group; when they do not, the two treatments exchange replication counts
+and the design that comes back is not the design that went in. Error before
+any optimisation happens rather than silently altering replication.
+
+Called on the resolved \code{optimise} list, so it covers simple, legacy
+hierarchical and \verb{optimise = } calls alike, including levels that set
+\code{swap_all} individually.
 }
 \keyword{internal}
