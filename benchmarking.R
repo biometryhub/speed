@@ -60,6 +60,7 @@ run_benchmarks <- function(designs, seeds, csv_prefix = "benchmark") {
   results <- list()
   for (design_name in names(designs)) {
     spec <- designs[[design_name]]
+    csv_path <- sprintf("%s-%s.csv", csv_prefix, design_name)
     rows <- list()
     for (tool_name in names(spec$tools)) {
       run_tool <- spec$tools[[tool_name]]
@@ -111,17 +112,13 @@ run_benchmarks <- function(designs, seeds, csv_prefix = "benchmark") {
           run_time = if (is.null(run)) NA_real_ else run$elapsed,
           is_converged = metrics$conv,
           aefficiency = metrics$aeff,
-          eefficiency = metrics$eeff,
-          stringsAsFactors = FALSE
+          eefficiency = metrics$eeff
         )
 
         # Design-specific custom columns, appended to the right
         if (!is.null(run) && is.function(spec$custom_metrics)) {
           custom <- tryCatch(
-            as.data.frame(
-              as.list(spec$custom_metrics(run$design_df)),
-              stringsAsFactors = FALSE
-            ),
+            as.data.frame(as.list(spec$custom_metrics(run$design_df))),
             error = function(e) {
               warning(sprintf(
                 "%s/%s/seed=%s custom metrics failed: %s",
@@ -139,15 +136,11 @@ run_benchmarks <- function(designs, seeds, csv_prefix = "benchmark") {
         }
 
         rows[[length(rows) + 1L]] <- row
+        # rewrite every row each run, cheap
+        design_results <- dplyr::bind_rows(rows)
+        utils::write.csv(design_results, csv_path, row.names = FALSE)
       }
     }
-    # bind_rows fills NA for runs that produced no custom columns (e.g. failures)
-    design_results <- dplyr::bind_rows(rows)
-    utils::write.csv(
-      design_results,
-      sprintf("%s-%s.csv", csv_prefix, design_name),
-      row.names = FALSE
-    )
     results[[design_name]] <- design_results
   }
   return(results)
@@ -382,8 +375,8 @@ bench_speed_large <- function(seed = 112) {
     swap = "treatment",
     swap_within = "block",
     spatial_factors = ~ row + col,
-    iterations = 200000,
-    early_stop_iterations = 100000,
+    iterations = 1000000,
+    early_stop_iterations = 200000,
     optimise_params = optim_params(
       random_initialisation = 300,
       adaptive_swaps = TRUE,
@@ -392,23 +385,23 @@ bench_speed_large <- function(seed = 112) {
     seed = seed
   )
 }
-speed_result <- bench_speed_large()
-speed_result$score
-
-design_df <- speed_result$design_df
-get_metrics(design_df, c("row", "col", "block"))
-efficiency(design_df, "treatment", units_large)
-# Source.units df1  Source.treatments df2  aefficiency eefficiency order
-# block           5
-# row           248 treatment          248      0.0005      0.0000   248
-# col             3 treatment            1      0.0027      0.0027     1
-#                   Residual             2
-# row#col      1243 treatment          249      0.8046      0.4681   249
-#                   Residual           994
-
-png("speed-large.png", height = 720, width = 720)
-speed::autoplot(speed_result)
-dev.off()
+# speed_result <- bench_speed_large()
+# speed_result$score
+#
+# design_df <- speed_result$design_df
+# get_metrics(design_df, c("row", "col", "block"))
+# efficiency(design_df, "treatment", units_large)
+# # Source.units df1  Source.treatments df2  aefficiency eefficiency order
+# # block           5
+# # row           248 treatment          248      0.0005      0.0000   248
+# # col             3 treatment            1      0.0027      0.0027     1
+# #                   Residual             2
+# # row#col      1243 treatment          249      0.8046      0.4681   249
+# #                   Residual           994
+#
+# png("speed-large.png", height = 720, width = 720)
+# speed::autoplot(speed_result)
+# dev.off()
 
 # digger
 # bench_digger_large <- function(seed = 112) {
@@ -437,24 +430,40 @@ bench_digger_large <- function(seed = 112) {
     rngSeeds = rep(seed, 2)
   )
 }
-digger_design <- DiGGer::getDesign(bench_digger_large())
+# digger_design <- DiGGer::getDesign(bench_digger_large())
+#
+# df_digger <- df_initial_large
+# df_digger$treatment <- c(digger_design)
+# get_metrics(df_digger, c("row", "col", "block"))
+# efficiency(df_digger, "treatment", units_large)
+# # Source.units df1  Source.treatments df2  aefficiency eefficiency order
+# # block           5
+# # row           248 treatment          248      0.0002      0.0000   248
+# # col             3
+# # row#col      1243 treatment          249      0.7988      0.4177   249
+# #                   Residual           994
+#
+# digger_result <- speed_result
+# digger_result$design_df <- df_digger
+# png("digger-large.png", height = 720, width = 720)
+# speed::autoplot(digger_result)
+# dev.off()
 
-df_digger <- df_initial_large
-df_digger$treatment <- c(digger_design)
-get_metrics(df_digger, c("row", "col", "block"))
-efficiency(df_digger, "treatment", units_large)
-# Source.units df1  Source.treatments df2  aefficiency eefficiency order
-# block           5
-# row           248 treatment          248      0.0002      0.0000   248
-# col             3
-# row#col      1243 treatment          249      0.7988      0.4177   249
-#                   Residual           994
-
-digger_result <- speed_result
-digger_result$design_df <- df_digger
-png("digger-large.png", height = 720, width = 720)
-speed::autoplot(digger_result)
-dev.off()
+designs[["large"]] <- list(
+  units = units_large,
+  treatment = "treatment",
+  is_converged = function(df) TRUE,
+  custom_metrics = function(df) get_metrics(df, c("row", "col", "block")),
+  tools = list(
+    speed = function(seed) bench_speed_large(seed)$design_df,
+    digger = function(seed) {
+      d <- df_initial_large
+      d$treatment <- c(DiGGer::getDesign(bench_digger_large(seed)))
+      return(d)
+    }
+  )
+)
+run_benchmarks(designs, 1:10)
 
 # odw
 # df_initial_odw_large <- df_initial_large
