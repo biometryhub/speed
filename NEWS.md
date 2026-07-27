@@ -7,6 +7,11 @@
 
 ## Bug Fixes
 
+- `speed()` now errors when `swap_all = TRUE` is used on a design whose treatments are unequally replicated
+  within a swap group, instead of silently changing the replication. Such a swap exchanges every plot of one
+  treatment with every plot of another, so when the two treatments occupy different numbers of plots they
+  exchange replication counts and the returned design is not a rearrangement of the input. Designs with equal
+  within-group replication, which is what `swap_all` is intended for, are unaffected.
 - `speed()` no longer returns numeric and integer columns as their factor level codes; a `treatment` column of
   `c(10, 100, 30, 9)` was previously returned as `c(2, 4, 3, 1)`. Numeric `row` and `col` values other than
   `1:n` were affected in the same way.
