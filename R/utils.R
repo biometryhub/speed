@@ -41,19 +41,48 @@ pseudo_inverse <- function(a_matrix, tolerance = 1e-10) {
   }
 }
 
+#' Base Type of a Column for Round-Tripping
+#'
+#' Maps a column to a single base type name (usable as `as.<type>()`) so its
+#' type can be restored after the SA loop. Columns with an exotic or
+#' multi-class `class()` (e.g. \pkg{vctrs}-backed columns such as those in an
+#' \pkg{edibble} design) cannot be reconstructed with an `as.<class>()`
+#' function, so they are restored as `character`.
+#'
+#' @param x A vector (data frame column)
+#'
+#' @returns A length-1 character string naming a base type.
+#'
+#' @keywords internal
+base_type <- function(x) {
+  if (is.factor(x)) {
+    "factor"
+  } else if (is.integer(x)) {
+    "integer"
+  } else if (is.logical(x)) {
+    "logical"
+  } else if (is.numeric(x)) {
+    "numeric"
+  } else {
+    # character, or any vctrs / multi-class column
+    "character"
+  }
+}
+
 #' Convert Data Frame Data to Factors
 #'
 #' @param df A data frame
 #'
 #' @returns A list containing:
 #' - **df** - A data frame with factors
-#' - **input_types** - A named list of the original type of each column
+#' - **input_types** - A named character vector of the original base type of
+#'   each column (for restoring via [to_types()])
 #'
 #' @keywords internal
 to_factor <- function(df) {
-  input_types <- sapply(df, class)
+  input_types <- vapply(df, base_type, character(1))
   for (col in names(df)) {
-    if (input_types[col] != "factor") {
+    if (!is.factor(df[[col]])) {
       df[[col]] <- as.factor(df[[col]])
     }
   }
@@ -63,6 +92,12 @@ to_factor <- function(df) {
 
 #' Convert Data Frame Data to Provided Types
 #'
+#' Columns are converted via `as.<type>()`. Factors are routed through
+#' [as.character()] first, because `as.numeric()` and friends applied to a
+#' factor return its integer level codes rather than its labels - the labels are
+#' what hold the original values. Columns whose target type is `factor` are left
+#' as-is, since re-factoring would re-sort the levels.
+#'
 #' @inheritParams to_factor
 #' @param types A named list of the types for each column
 #'
@@ -71,7 +106,12 @@ to_factor <- function(df) {
 #' @keywords internal
 to_types <- function(df, types) {
   df[names(types)] <- mapply(
-    \(t, x) get(sprintf("as.%s", t), mode = "function")(x),
+    \(t, x) {
+      if (is.factor(x) && t != "factor") {
+        x <- as.character(x)
+      }
+      get(sprintf("as.%s", t), mode = "function")(x)
+    },
     types,
     df[names(types)],
     SIMPLIFY = FALSE
@@ -127,17 +167,19 @@ to_types <- function(df, types) {
 #' @inheritParams speed
 #'
 #' @keywords internal
-create_speed_input <- function(swap,
-                               swap_within,
-                               spatial_factors,
-                               grid_factors,
-                               iterations,
-                               early_stop_iterations,
-                               obj_function,
-                               swap_all,
-                               optimise_params,
-                               optimise = NULL,
-                               row_col_inferred = TRUE) {
+create_speed_input <- function(
+  swap,
+  swap_within,
+  spatial_factors,
+  grid_factors,
+  iterations,
+  early_stop_iterations,
+  obj_function,
+  swap_all,
+  optimise_params,
+  optimise = NULL,
+  row_col_inferred = TRUE
+) {
   speed_args <- c(
     "swap",
     "swap_within",
@@ -181,7 +223,10 @@ create_speed_input <- function(swap,
       )
 
       for (arg in speed_args) {
-        if (!(arg %in% c("swap", "swap_within", "grid_factors", "optimise_params"))) {
+        if (
+          !(arg %in%
+            c("swap", "swap_within", "grid_factors", "optimise_params"))
+        ) {
           if (is.null(optimise[[optimise_name]][[arg]])) {
             optimise_var <- get(arg)
             optimise[[optimise_name]][[arg]] <- if (is.list(optimise_var)) {

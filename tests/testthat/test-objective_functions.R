@@ -34,10 +34,20 @@ test_that("objective_function works with custom weights", {
   )
 
   # Test with custom weights
-  result1 <- objective_function(layout_df, "treatment", c("row", "col"),
-                                adj_weight = 2, bal_weight = 0.5)
-  result2 <- objective_function(layout_df, "treatment", c("row", "col"),
-                                adj_weight = 1, bal_weight = 1)
+  result1 <- objective_function(
+    layout_df,
+    "treatment",
+    c("row", "col"),
+    adj_weight = 2,
+    bal_weight = 0.5
+  )
+  result2 <- objective_function(
+    layout_df,
+    "treatment",
+    c("row", "col"),
+    adj_weight = 1,
+    bal_weight = 1
+  )
 
   expect_type(result1, "list")
   expect_type(result2, "list")
@@ -56,20 +66,39 @@ test_that("objective_function handles zero weights correctly", {
   )
 
   # Test with zero adjacency weight
-  result_no_adj <- objective_function(layout_df, "treatment", c("row", "col"),
-                                      adj_weight = 0, bal_weight = 1)
-  expect_equal(result_no_adj$score,
-               calculate_balance_score(layout_df, "treatment", c("row", "col")))
+  result_no_adj <- objective_function(
+    layout_df,
+    "treatment",
+    c("row", "col"),
+    adj_weight = 0,
+    bal_weight = 1
+  )
+  expect_equal(
+    result_no_adj$score,
+    calculate_balance_score(layout_df, "treatment", c("row", "col"))
+  )
 
   # Test with zero balance weight
-  result_no_bal <- objective_function(layout_df, "treatment", c("row", "col"),
-                                      adj_weight = 1, bal_weight = 0)
-  expect_equal(result_no_bal$score,
-               calculate_adjacency_score(layout_df, "treatment"))
+  result_no_bal <- objective_function(
+    layout_df,
+    "treatment",
+    c("row", "col"),
+    adj_weight = 1,
+    bal_weight = 0
+  )
+  expect_equal(
+    result_no_bal$score,
+    calculate_adjacency_score(layout_df, "treatment")
+  )
 
   # Test with both weights zero
-  result_no_weights <- objective_function(layout_df, "treatment", c("row", "col"),
-                                          adj_weight = 0, bal_weight = 0)
+  result_no_weights <- objective_function(
+    layout_df,
+    "treatment",
+    c("row", "col"),
+    adj_weight = 0,
+    bal_weight = 0
+  )
   expect_equal(result_no_weights$score, 0)
 })
 
@@ -81,13 +110,22 @@ test_that("objective_function warns for two treatments with adjacency weight", {
   )
 
   expect_warning(
-    result <- objective_function(layout_df, "treatment", c("row", "col"),
-                                 adj_weight = 1, bal_weight = 1),
+    result <- objective_function(
+      layout_df,
+      "treatment",
+      c("row", "col"),
+      adj_weight = 1,
+      bal_weight = 1
+    ),
     "Only 2 treatments detected in 'treatment'. Adjacency optimization becomes deterministic \\(checkerboard pattern\\). Setting adjacency weight to 0."
   )
 
   # Should only include balance score when adjacency weight is set to 0
-  expected_score <- calculate_balance_score(layout_df, "treatment", c("row", "col"))
+  expected_score <- calculate_balance_score(
+    layout_df,
+    "treatment",
+    c("row", "col")
+  )
   expect_equal(result$score, expected_score)
 })
 
@@ -99,11 +137,20 @@ test_that("objective_function does not warn for two treatments with zero adjacen
   )
 
   expect_no_warning(
-    result <- objective_function(layout_df, "treatment", c("row", "col"),
-                                 adj_weight = 0, bal_weight = 1)
+    result <- objective_function(
+      layout_df,
+      "treatment",
+      c("row", "col"),
+      adj_weight = 0,
+      bal_weight = 1
+    )
   )
 
-  expected_score <- calculate_balance_score(layout_df, "treatment", c("row", "col"))
+  expected_score <- calculate_balance_score(
+    layout_df,
+    "treatment",
+    c("row", "col")
+  )
   expect_equal(result$score, expected_score)
 })
 
@@ -115,7 +162,7 @@ test_that("objective_function works with single treatment", {
   )
 
   # expect_warning(
-  result <- objective_function(layout_df, "treatment", c("row", "col"))#,
+  result <- objective_function(layout_df, "treatment", c("row", "col")) #,
   # "Only 2 treatments detected"
   # )
 
@@ -198,8 +245,13 @@ test_that("objective_function handles extra parameters via ...", {
 
   # Should not error with extra parameters
   expect_no_error(
-    result <- objective_function(layout_df, "treatment", c("row", "col"),
-                                 extra_param = "test", another_param = 123)
+    result <- objective_function(
+      layout_df,
+      "treatment",
+      c("row", "col"),
+      extra_param = "test",
+      another_param = 123
+    )
   )
 
   expect_type(result, "list")
@@ -216,8 +268,12 @@ test_that("objective_function_piepho works with basic design", {
 
   pair_mapping <- create_pair_mapping(design_df$treatment)
 
-  result <- objective_function_piepho(design_df, "treatment", c("row", "col"),
-                                      pair_mapping = pair_mapping)
+  result <- objective_function_piepho(
+    design_df,
+    "treatment",
+    c("row", "col"),
+    pair_mapping = pair_mapping
+  )
 
   expect_type(result, "list")
   expect_named(result, c("score", "ed",
@@ -226,8 +282,8 @@ test_that("objective_function_piepho works with basic design", {
   expect_type(result$score, "double")
   expect_length(result$score, 1)
   expect_type(result$ed, "list")
-  # expect_type(result$bal, "double")
-  # expect_type(result$adj, "integer")
+  expect_type(result$bal, "double")
+  expect_type(result$adj, "double")
   expect_type(result$nb, "list")
 })
 
@@ -257,12 +313,24 @@ test_that("objective_function_piepho handles different treatment replication pat
   pair_mapping_3 <- create_pair_mapping(design_3_reps$treatment)
   pair_mapping_4 <- create_pair_mapping(design_4_reps$treatment)
 
-  result_2_reps <- objective_function_piepho(design_2_reps, "treatment", c("row", "col"),
-                                             pair_mapping = pair_mapping_2)
-  result_3_reps <- objective_function_piepho(design_3_reps, "treatment", c("row", "col"),
-                                             pair_mapping = pair_mapping_3)
-  result_4_reps <- objective_function_piepho(design_4_reps, "treatment", c("row", "col"),
-                                             pair_mapping = pair_mapping_4)
+  result_2_reps <- objective_function_piepho(
+    design_2_reps,
+    "treatment",
+    c("row", "col"),
+    pair_mapping = pair_mapping_2
+  )
+  result_3_reps <- objective_function_piepho(
+    design_3_reps,
+    "treatment",
+    c("row", "col"),
+    pair_mapping = pair_mapping_3
+  )
+  result_4_reps <- objective_function_piepho(
+    design_4_reps,
+    "treatment",
+    c("row", "col"),
+    pair_mapping = pair_mapping_4
+  )
 
   # All should return valid results
   expect_type(result_2_reps, "list")
@@ -302,15 +370,23 @@ test_that("objective_function_piepho handles incremental calculation with curren
   pair_mapping <- create_pair_mapping(design_df$treatment)
 
   # Calculate full score first
-  full_result <- objective_function_piepho(design_df, "treatment", c("row", "col"),
-                                           pair_mapping = pair_mapping)
+  full_result <- objective_function_piepho(
+    design_df,
+    "treatment",
+    c("row", "col"),
+    pair_mapping = pair_mapping
+  )
 
   # Now test incremental calculation by swapping two treatments
   swapped_items <- c("a", "b")
-  incremental_result <- objective_function_piepho(design_df, "treatment", c("row", "col"),
-                                                  current_score_obj = full_result,
-                                                  swapped_items = swapped_items,
-                                                  pair_mapping = pair_mapping)
+  incremental_result <- objective_function_piepho(
+    design_df,
+    "treatment",
+    c("row", "col"),
+    current_score_obj = full_result,
+    swapped_items = swapped_items,
+    pair_mapping = pair_mapping
+  )
 
   expect_type(incremental_result, "list")
   expect_named(incremental_result, c("score", "ed",
@@ -361,14 +437,30 @@ test_that("objective_function_piepho handles different spatial column configurat
   pair_mapping <- create_pair_mapping(design_df$treatment)
 
   # Test with single spatial column
-  result_row <- objective_function_piepho(design_df, "treatment", "row",
-                                          pair_mapping = pair_mapping)
-  result_col <- objective_function_piepho(design_df, "treatment", "col",
-                                          pair_mapping = pair_mapping)
-  result_block <- objective_function_piepho(design_df, "treatment", "block",
-                                            pair_mapping = pair_mapping)
-  result_multiple <- objective_function_piepho(design_df, "treatment", c("row", "col", "block"),
-                                               pair_mapping = pair_mapping)
+  result_row <- objective_function_piepho(
+    design_df,
+    "treatment",
+    "row",
+    pair_mapping = pair_mapping
+  )
+  result_col <- objective_function_piepho(
+    design_df,
+    "treatment",
+    "col",
+    pair_mapping = pair_mapping
+  )
+  result_block <- objective_function_piepho(
+    design_df,
+    "treatment",
+    "block",
+    pair_mapping = pair_mapping
+  )
+  result_multiple <- objective_function_piepho(
+    design_df,
+    "treatment",
+    c("row", "col", "block"),
+    pair_mapping = pair_mapping
+  )
 
   expect_type(result_row, "list")
   expect_type(result_col, "list")
@@ -393,16 +485,24 @@ test_that("objective_function_piepho uses custom row and column names", {
 
   # Should work with custom row and column names
   expect_no_error({
-    result <- objective_function_piepho(design_df, "treatment", c("Row", "Column"),
-                                        pair_mapping = pair_mapping,
-                                        row_column = "Row",
-                                        col_column = "Column")
+    result <- objective_function_piepho(
+      design_df,
+      "treatment",
+      c("Row", "Column"),
+      pair_mapping = pair_mapping,
+      row_column = "Row",
+      col_column = "Column"
+    )
   })
 
-  result <- objective_function_piepho(design_df, "treatment", c("Row", "Column"),
-                                      pair_mapping = pair_mapping,
-                                      row_column = "Row",
-                                      col_column = "Column")
+  result <- objective_function_piepho(
+    design_df,
+    "treatment",
+    c("Row", "Column"),
+    pair_mapping = pair_mapping,
+    row_column = "Row",
+    col_column = "Column"
+  )
   expect_type(result, "list")
   expect_named(result, c("score", "ed",
                          # "bal", "adj",
@@ -417,8 +517,12 @@ test_that("objective_function_piepho score is properly rounded to 10 decimal pla
   )
 
   pair_mapping <- create_pair_mapping(design_df$treatment)
-  result <- objective_function_piepho(design_df, "treatment", c("row", "col"),
-                                      pair_mapping = pair_mapping)
+  result <- objective_function_piepho(
+    design_df,
+    "treatment",
+    c("row", "col"),
+    pair_mapping = pair_mapping
+  )
 
   # Check that the score is rounded to 10 decimal places
   expect_equal(result$score, round(result$score, 10))
@@ -431,16 +535,26 @@ test_that("objective_function_piepho handles designs with missing values", {
     treatment = c("a", "b", NA, "b", "a", "c", "c", NA, "b")
   )
 
-  pair_mapping <- create_pair_mapping(design_df$treatment[!is.na(design_df$treatment)])
+  pair_mapping <- create_pair_mapping(design_df$treatment[
+    !is.na(design_df$treatment)
+  ])
 
   # Should handle designs with NA values
   expect_no_error({
-    result <- objective_function_piepho(design_df, "treatment", c("row", "col"),
-                                        pair_mapping = pair_mapping)
+    result <- objective_function_piepho(
+      design_df,
+      "treatment",
+      c("row", "col"),
+      pair_mapping = pair_mapping
+    )
   })
 
-  result <- objective_function_piepho(design_df, "treatment", c("row", "col"),
-                                      pair_mapping = pair_mapping)
+  result <- objective_function_piepho(
+    design_df,
+    "treatment",
+    c("row", "col"),
+    pair_mapping = pair_mapping
+  )
   expect_type(result, "list")
   expect_named(result, c("score", "ed",
                          # "bal", "adj",
@@ -465,31 +579,33 @@ test_that("objective_function_piepho individual components are reasonable", {
   )
 
   pair_mapping <- create_pair_mapping(design_df$treatment)
-  result <- objective_function_piepho(design_df, "treatment", c("row", "col"),
-                                      pair_mapping = pair_mapping)
+  result <- objective_function_piepho(
+    design_df,
+    "treatment",
+    c("row", "col"),
+    pair_mapping = pair_mapping
+  )
 
   # Check individual components are sensible
   expect_true(is.finite(result$score))
-  # expect_true(is.finite(result$bal))
-  # expect_true(is.finite(result$adj))
-  # expect_gte(result$adj, 0)  # Adjacency score should be non-negative
-  # expect_gte(result$bal, 0)  # Balance score should be non-negative
+  expect_true(is.finite(result$bal))
+  expect_true(is.finite(result$adj))
+  expect_gte(result$adj, 0) # Adjacency score should be non-negative
+  expect_gte(result$bal, 0) # Balance score should be non-negative
 
   # Check nb component structure
   expect_named(result$nb, c("nb", "max_nb", "max_pairs", "var"))
   expect_true(is.finite(result$nb$max_nb))
   expect_true(is.finite(result$nb$var))
-  expect_gte(result$nb$var, 0)  # Variance should be non-negative
+  expect_gte(result$nb$var, 0) # Variance should be non-negative
 
   # Check ed component structure
   expect_type(result$ed, "list")
-  expect_named(result$ed, c("msts", "total_mst", "inv_total_mst"))
-  expect_type(result$ed$msts, "double")
-  expect_true(all(is.finite(result$ed$msts)))
-  expect_true(is.finite(result$ed$total_mst))
-  expect_true(is.finite(result$ed$inv_total_mst))
-  expect_gte(min(result$ed$msts), 0)
-  expect_gte(result$ed$total_mst, 0)
+  for (ed_rep in result$ed) {
+    expect_named(ed_rep, c("msts", "min_mst", "min_items"))
+    expect_true(is.finite(ed_rep$min_mst))
+    expect_gte(ed_rep$min_mst, 0) # MST should be non-negative
+  }
 })
 
 test_that("objective_function_piepho handles extra parameters via ...", {
@@ -503,9 +619,14 @@ test_that("objective_function_piepho handles extra parameters via ...", {
 
   # Should not error with extra parameters
   expect_no_error({
-    result <- objective_function_piepho(design_df, "treatment", c("row", "col"),
-                                        pair_mapping = pair_mapping,
-                                        extra_param = "test", another_param = 123)
+    result <- objective_function_piepho(
+      design_df,
+      "treatment",
+      c("row", "col"),
+      pair_mapping = pair_mapping,
+      extra_param = "test",
+      another_param = 123
+    )
   })
 
   expect_type(result, "list")
@@ -517,7 +638,10 @@ test_that("objective_function_piepho handles extra parameters via ...", {
 test_that("objective_function_factorial works", {
   treatment_a <- paste0("A", 1:8)
   treatment_b <- paste0("B", 1:3)
-  treatments <- with(expand.grid(treatment_a, treatment_b), paste(Var1, Var2, sep = "-"))
+  treatments <- with(
+    expand.grid(treatment_a, treatment_b),
+    paste(Var1, Var2, sep = "-")
+  )
   df <- initialise_design_df(treatments, 24, 3, 8, 3)
   df <- shuffle_items(df, "treatment", "block", 112)
 
@@ -530,8 +654,16 @@ test_that("objective_function_factorial works", {
   df[c("treatment_a", "treatment_b")] <- subtreatments
 
   score_treatment <- calculate_balance_score(df, "treatment", c("row", "col"))
-  score_treatment_a <- objective_function(df, "treatment_a", c("row", "col"))$score
-  score_treatment_b <- objective_function(df, "treatment_b", c("row", "col"))$score
+  score_treatment_a <- objective_function(
+    df,
+    "treatment_a",
+    c("row", "col")
+  )$score
+  score_treatment_b <- objective_function(
+    df,
+    "treatment_b",
+    c("row", "col")
+  )$score
   expected_score <- score_treatment + score_treatment_a + score_treatment_b
 
   result <- objective_function_factorial(df, "treatment", c("row", "col"))
@@ -545,15 +677,28 @@ test_that("objective_function_factorial works", {
 test_that("objective_function_factorial falls back to objective_function with invalid separator", {
   treatment_a <- paste0("A", 1:8)
   treatment_b <- paste0("B", 1:3)
-  treatments <- with(expand.grid(treatment_a, treatment_b), paste(Var1, Var2, sep = "-"))
+  treatments <- with(
+    expand.grid(treatment_a, treatment_b),
+    paste(Var1, Var2, sep = "-")
+  )
   df <- initialise_design_df(treatments, 24, 3, 8, 3)
   df <- shuffle_items(df, "treatment", "block", 112)
 
   expected_score <- objective_function(df, "treatment", c("row", "col"))$score
 
-  result <- objective_function_factorial(df, "treatment", c("row", "col"), factorial_separator = "")
+  result <- objective_function_factorial(
+    df,
+    "treatment",
+    c("row", "col"),
+    factorial_separator = ""
+  )
   expect_equal(result$score, expected_score)
 
-  result <- objective_function_factorial(df, "treatment", c("row", "col"), factorial_separator = NULL)
+  result <- objective_function_factorial(
+    df,
+    "treatment",
+    c("row", "col"),
+    factorial_separator = NULL
+  )
   expect_equal(result$score, expected_score)
 })

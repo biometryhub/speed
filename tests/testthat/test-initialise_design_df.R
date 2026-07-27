@@ -35,9 +35,18 @@ test_that("initialise_design_df works with blocking", {
 
   n_items <- length(items)
 
-  design_df <- initialise_design_df(items, nrows, ncols, nrows_block, ncols_block)
+  design_df <- initialise_design_df(
+    items,
+    nrows,
+    ncols,
+    nrows_block,
+    ncols_block
+  )
 
-  expect_setequal(names(design_df), c("row", "col", "treatment", "row_block", "col_block", "block"))
+  expect_setequal(
+    names(design_df),
+    c("row", "col", "treatment", "row_block", "col_block", "block")
+  )
   expect_equal(nrow(design_df), n_items)
   expect_equal(sort(design_df$row), sort(rep(1:nrows, ncols)))
   expect_equal(sort(design_df$col), sort(rep(1:ncols, nrows)))
@@ -50,8 +59,14 @@ test_that("initialise_design_df works with blocking", {
   rows_block <- nrows / nrows_block
   cols_block <- ncols / ncols_block
   n_blocks <- rows_block * cols_block
-  expect_equal(sort(design_df$row_block), sort(rep(1:rows_block, n_items / rows_block)))
-  expect_equal(sort(design_df$col_block), sort(rep(1:cols_block, n_items / cols_block)))
+  expect_equal(
+    sort(design_df$row_block),
+    sort(rep(1:rows_block, n_items / rows_block))
+  )
+  expect_equal(
+    sort(design_df$col_block),
+    sort(rep(1:cols_block, n_items / cols_block))
+  )
   expect_equal(sort(design_df$block), sort(rep(1:n_blocks, n_items / n_blocks)))
 })
 
@@ -64,23 +79,41 @@ test_that("initialise_design_df works with blocking with different items", {
 
   n_items <- length(items)
 
-  design_df <- initialise_design_df(items, nrows, ncols, nrows_block, ncols_block)
+  design_df <- initialise_design_df(
+    items,
+    nrows,
+    ncols,
+    nrows_block,
+    ncols_block
+  )
 
-  expect_setequal(names(design_df), c("row", "col", "treatment", "row_block", "col_block", "block"))
+  expect_setequal(
+    names(design_df),
+    c("row", "col", "treatment", "row_block", "col_block", "block")
+  )
   expect_equal(nrow(design_df), n_items)
   expect_equal(sort(design_df$row), sort(rep(1:nrows, ncols)))
   expect_equal(sort(design_df$col), sort(rep(1:ncols, nrows)))
 
   # check each block
   for (block in unique(design_df$block)) {
-    expect_equal(length(unique(design_df$treatment[design_df$block == block])), 4)
+    expect_equal(
+      length(unique(design_df$treatment[design_df$block == block])),
+      4
+    )
   }
 
   rows_block <- nrows / nrows_block
   cols_block <- ncols / ncols_block
   n_blocks <- rows_block * cols_block
-  expect_equal(sort(design_df$row_block), sort(rep(1:rows_block, n_items / rows_block)))
-  expect_equal(sort(design_df$col_block), sort(rep(1:cols_block, n_items / cols_block)))
+  expect_equal(
+    sort(design_df$row_block),
+    sort(rep(1:rows_block, n_items / rows_block))
+  )
+  expect_equal(
+    sort(design_df$col_block),
+    sort(rep(1:cols_block, n_items / cols_block))
+  )
   expect_equal(sort(design_df$block), sort(rep(1:n_blocks, n_items / n_blocks)))
 })
 
@@ -106,7 +139,11 @@ test_that("initialise_design_df converts single numeric to treatment labels", {
   expect_equal(result4$treatment, c(1, 2, 3))
 
   # Verify the condition doesn't trigger when items is non-numeric
-  result5 <- initialise_design_df(items = c("A", "B", "C"), nrows = 3, ncols = 1)
+  result5 <- initialise_design_df(
+    items = c("A", "B", "C"),
+    nrows = 3,
+    ncols = 1
+  )
   expect_equal(result5$treatment, c("A", "B", "C"))
 })
 
@@ -191,7 +228,10 @@ test_that("initialise_design_df works for multi sites with separate treatments",
   expect_equal(sort(design_df$col), sort(df$col))
   expect_setequal(design_df$site, c("a", "b", "c"))
   for (site in c("a", "b", "c")) {
-    expect_equal(sort(design_df$treatment[design_df$site == site]), sort(df$treatment[df$site == site]))
+    expect_equal(
+      sort(design_df$treatment[design_df$site == site]),
+      sort(df$treatment[df$site == site])
+    )
   }
 })
 
@@ -215,7 +255,10 @@ test_that("initialise_design_df works for multi sites with partial blocking", {
     )
   )
 
-  expect_setequal(names(design_df), c("row", "col", "treatment", "site", "row_block", "col_block", "block"))
+  expect_setequal(
+    names(design_df),
+    c("row", "col", "treatment", "site", "row_block", "col_block", "block")
+  )
   expect_equal(sort(design_df$row), sort(df$row))
   expect_equal(sort(design_df$col), sort(df$col))
   expect_equal(sort(design_df$treatment), sort(items))
@@ -245,29 +288,61 @@ test_that("initialize_design_df throws error for invalid inputs", {
   expect_error(initialise_design_df(1:16, 4, 4, 0, 2))
   expect_error(initialise_design_df(1:16, 4, 4, 2, 0))
 
-  expect_error(initialise_design_df(1:16, designs = list(
-    list(nrows = 4, ncols = 4),
-    list(nrows = 4, ncols = 4, nn = 1)
-  )), "`nn` is an invalid argument")
-
-  expect_error(initialise_design_df(1:16, designs = list(
-    list(nrows = 4, ncols = 4),
-    list(nrows = 4)
-  )), "`nrows` and `ncols` must be provided for each design")
-
-  expect_error(initialise_design_df(designs = list(
-    list(items = 1:4, nrows = 4, ncols = 4),
-    list(nrows = 4, ncols = 4)
-  )), "`items` must be provided for all designs")
-
-  expect_error(initialise_design_df(designs = list(
-    list(nrows = 4, ncols = 4),
-    list(nrows = 4, ncols = 4)
-  )), "`items` must be provided for all designs or `items` must be provided to `initialise_design_df`")
-  
-  # Test that error is thrown when neither nrows/ncols nor designs are provided
   expect_error(
-    initialise_design_df(items = 1:16),
-    "Either `nrows` and `ncols` or `designs` must be provided"
+    initialise_design_df(
+      1:16,
+      designs = list(
+        list(nrows = 4, ncols = 4),
+        list(nrows = 4, ncols = 4, nn = 1)
+      )
+    ),
+    "`nn` is an invalid argument"
+  )
+
+  expect_error(
+    initialise_design_df(
+      1:16,
+      designs = list(
+        list(nrows = 4, ncols = 4),
+        list(nrows = 4)
+      )
+    ),
+    "`nrows` and `ncols` must be provided for each design"
+  )
+
+  expect_error(
+    initialise_design_df(
+      designs = list(
+        list(items = 1:4, nrows = 4, ncols = 4),
+        list(nrows = 4, ncols = 4)
+      )
+    ),
+    "`items` must be provided for all designs"
+  )
+
+  expect_error(
+    initialise_design_df(
+      designs = list(
+        list(nrows = 4, ncols = 4),
+        list(nrows = 4, ncols = 4)
+      )
+    ),
+    "`items` must be provided for all designs or `items` must be provided to `initialise_design_df`"
+  )
+})
+
+test_that("initialise_design_df warns that `splits` is deprecated", {
+  expect_warning(
+    initialise_design_df(
+      nrows = 12,
+      ncols = 4,
+      block_nrows = 3,
+      block_ncols = 4,
+      splits = list(
+        wholeplot = list(nrows = 1, ncols = 4, items = LETTERS[1:3]),
+        subplot = list(nrows = 1, ncols = 1, items = letters[1:4])
+      )
+    ),
+    "deprecated and will be removed in a future version"
   )
 })

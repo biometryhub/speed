@@ -25,7 +25,6 @@ NULL
 ggplot2::autoplot
 
 
-
 #' @rdname autoplot
 #'
 #' @importFrom farver decode_colour
@@ -64,20 +63,23 @@ ggplot2::autoplot
 #' # Custom colour palette
 #' autoplot(result, palette = c("#ef746a", "#3fbfc5", "#81ae00", "#c37cff",
 #'                              "#304702", "#dde024", "#630380ff", "#df7700"))
-autoplot.design <- function(object,
-                            rotation = 0,
-                            size = 4,
-                            margin = FALSE,
-                            palette = "default",
-                            row = NULL,
-                            column = NULL,
-                            block = NULL,
-                            treatments = NULL,
-                            legend = FALSE, ...) {
+autoplot.design <- function(
+  object,
+  rotation = 0,
+  size = 4,
+  margin = FALSE,
+  palette = "default",
+  row = NULL,
+  column = NULL,
+  block = NULL,
+  treatments = NULL,
+  legend = FALSE,
+  ...
+) {
   stopifnot(inherits(object, "design"))
   rlang::check_dots_used()
 
-  if(inherits(object, "list")) {
+  if (inherits(object, "list")) {
     object <- object$design_df
   }
 
@@ -87,17 +89,17 @@ autoplot.design <- function(object,
   trt_expr <- rlang::enquo(treatments)
 
   # If row and column are not provided, set default values
-  if(rlang::quo_is_null(row_expr)) {
-    row_expr <- rlang::sym("row")  # Default to the row column
+  if (rlang::quo_is_null(row_expr)) {
+    row_expr <- rlang::sym("row") # Default to the row column
   }
-  if(rlang::quo_is_null(column_expr)) {
-    column_expr <- rlang::sym("col")  # Default to the col column
+  if (rlang::quo_is_null(column_expr)) {
+    column_expr <- rlang::sym("col") # Default to the col column
   }
-  if(rlang::quo_is_null(block_expr)) {
-    block_expr <- rlang::sym("block")  # Default to the block column
+  if (rlang::quo_is_null(block_expr)) {
+    block_expr <- rlang::sym("block") # Default to the block column
   }
-  if(rlang::quo_is_null(trt_expr)) {
-    trt_expr <- rlang::sym("treatment")  # Default to the treatments column
+  if (rlang::quo_is_null(trt_expr)) {
+    trt_expr <- rlang::sym("treatment") # Default to the treatments column
   }
 
   row_expr <- rlang::quo_name(row_expr)
@@ -106,17 +108,34 @@ autoplot.design <- function(object,
   trt_expr <- rlang::quo_name(trt_expr)
 
   # Verify that required columns exist in the data
-  verify_column_exists(row_expr, object, suffix = "Please specify the appropriate column using the 'row' argument.")
-  verify_column_exists(column_expr, object, suffix = "Please specify the appropriate column using the 'column' argument.")
-  verify_column_exists(trt_expr, object, suffix = "Please specify the appropriate column using the 'treatments' argument.")
+  verify_column_exists(
+    row_expr,
+    object,
+    suffix = "Please specify the appropriate column using the 'row' argument."
+  )
+  verify_column_exists(
+    column_expr,
+    object,
+    suffix = "Please specify the appropriate column using the 'column' argument."
+  )
+  verify_column_exists(
+    trt_expr,
+    object,
+    suffix = "Please specify the appropriate column using the 'treatments' argument."
+  )
 
   # Only verify block column if it's being used (i.e., if blocks exist in data)
-  if(any(grepl("block", tolower(names(object))))) {
-    verify_column_exists(block_expr, object, suffix = "Please specify the appropriate column using the 'block' argument.")
+  # if(any(grepl("block", tolower(names(object))))) {
+  if (!is.null(block) && !any(grepl(block_expr, names(object)))) {
+    verify_column_exists(
+      block_expr,
+      object,
+      suffix = "Please specify the appropriate column using the 'block' argument."
+    )
   }
 
   # Set up treatments and colours
-  if("buffer" %in% as.character(object[[trt_expr]])) {
+  if ("buffer" %in% as.character(object[[trt_expr]])) {
     # Separate treatments and buffers for proper ordering
     treatments_only <- unique(as.character(object[[trt_expr]]))
     treatments_only <- treatments_only[treatments_only != "buffer"]
@@ -124,12 +143,20 @@ autoplot.design <- function(object,
 
     # Set factor levels with treatments first, then buffer at the end
     factor_levels <- c(treatments_sorted, "buffer")
-    object[[trt_expr]] <- factor(as.character(object[[trt_expr]]), levels = factor_levels)
-    ntrt <- length(treatments_sorted)  # Number of actual treatments (excluding buffer)
+    object[[trt_expr]] <- factor(
+      as.character(object[[trt_expr]]),
+      levels = factor_levels
+    )
+    ntrt <- length(treatments_sorted) # Number of actual treatments (excluding buffer)
   } else {
     # Logic for designs without buffers
-    object[[trt_expr]] <- factor(as.character(object[[trt_expr]]),
-                                 levels = unique(stringi::stri_sort(as.character(object[[trt_expr]]), numeric = TRUE)))
+    object[[trt_expr]] <- factor(
+      as.character(object[[trt_expr]]),
+      levels = unique(stringi::stri_sort(
+        as.character(object[[trt_expr]]),
+        numeric = TRUE
+      ))
+    )
     ntrt <- nlevels(object[[trt_expr]])
   }
 
@@ -137,26 +164,48 @@ autoplot.design <- function(object,
   colour_palette <- .setup_colour_palette(palette, ntrt)
 
   # Check if buffers exist and adjust palette
-  if("buffer" %in% levels(object[[trt_expr]])) {
+  if ("buffer" %in% levels(object[[trt_expr]])) {
     colour_palette <- c(colour_palette, "white")
   }
 
   # Text colour setup
-  colours <- data.frame(treatments = levels(object[[trt_expr]]),
-                        text_col = ifelse(.is_light_colour(colour_palette), "black", "white"))
+  colours <- data.frame(
+    treatments = levels(object[[trt_expr]]),
+    text_col = ifelse(.is_light_colour(colour_palette), "black", "white")
+  )
   colnames(colours)[1] <- trt_expr
   object <- merge(object, colours)
 
-
   # Create plot based on whether blocks exist
-  if(!any(grepl("block", tolower(names(object))))) {
-    plt <- create_basic_plot(object, row_expr, column_expr, trt_expr, rotation, size, ...)
+  if (any(grepl(block_expr, names(object)))) {
+    plt <- create_blocked_plot(
+      object,
+      row_expr,
+      column_expr,
+      block_expr,
+      trt_expr,
+      rotation,
+      size,
+      ...
+    )
   } else {
-    plt <- create_blocked_plot(object, row_expr, column_expr, block_expr, trt_expr, rotation, size, ...)
+    plt <- create_basic_plot(
+      object,
+      row_expr,
+      column_expr,
+      trt_expr,
+      rotation,
+      size,
+      ...
+    )
   }
 
   # Apply styling
-  plt <- plt + scale_fill_manual(values = colour_palette, name = tools::toTitleCase(trt_expr))
+  plt <- plt +
+    scale_fill_manual(
+      values = colour_palette,
+      name = tools::toTitleCase(trt_expr)
+    )
 
   # Control legend visibility
   if (!legend) {
@@ -171,10 +220,13 @@ autoplot.design <- function(object,
 #' @keywords internal
 .setup_colour_palette <- function(palette, ntrt) {
   # Handle custom colour palettes (vector of colours)
-  if(length(palette) > 1) {
-    if(length(palette) != ntrt) {
-      stop("palette needs to be a single string to choose a predefined palette, or ",
-           ntrt, " custom colours.")
+  if (length(palette) > 1) {
+    if (length(palette) != ntrt) {
+      stop(
+        "palette needs to be a single string to choose a predefined palette, or ",
+        ntrt,
+        " custom colours."
+      )
     }
     return(palette)
   }
@@ -183,73 +235,142 @@ autoplot.design <- function(object,
   palette <- tolower(trimws(palette))
 
   # Default viridis palette
-  if(palette == "default") {
+  if (palette == "default") {
     return(scales::viridis_pal(option = "viridis")(ntrt))
   }
 
   # colourBrewer palettes
-  brewer_palettes <- c("brbg", "piyg", "prgn", "puor", "rdbu", "rdgy",
-                       "rdylbu", "rdylgn", "spectral", "set3", "paired")
-  if(palette %in% brewer_palettes) {
+  brewer_palettes <- c(
+    "brbg",
+    "piyg",
+    "prgn",
+    "puor",
+    "rdbu",
+    "rdgy",
+    "rdylbu",
+    "rdylgn",
+    "spectral",
+    "set3",
+    "paired"
+  )
+  if (palette %in% brewer_palettes) {
     # Convert to proper case for scales::brewer_pal
-    palette_proper <- switch(palette,
-                             "brbg" = "BrBG",
-                             "piyg" = "PiYG",
-                             "prgn" = "PRGn",
-                             "puor" = "PuOr",
-                             "rdbu" = "RdBu",
-                             "rdgy" = "RdGy",
-                             "rdylbu" = "RdYlBu",
-                             "rdylgn" = "RdYlGn",
-                             "spectral" = "Spectral",
-                             "set3" = "Set3",
-                             "paired" = "Paired"
+    palette_proper <- switch(
+      palette,
+      "brbg" = "BrBG",
+      "piyg" = "PiYG",
+      "prgn" = "PRGn",
+      "puor" = "PuOr",
+      "rdbu" = "RdBu",
+      "rdgy" = "RdGy",
+      "rdylbu" = "RdYlBu",
+      "rdylgn" = "RdYlGn",
+      "spectral" = "Spectral",
+      "set3" = "Set3",
+      "paired" = "Paired"
     )
-    return(grDevices::colorRampPalette(scales::brewer_pal(palette = palette_proper)(11))(ntrt))
+    return(grDevices::colorRampPalette(scales::brewer_pal(
+      palette = palette_proper
+    )(11))(ntrt))
   }
 
   # colour blind friendly palettes (viridis family)
-  viridis_patterns <- c("colou?r([[:punct:]]|[[:space:]]?)blind", "cb", "viridis")
-  if(any(sapply(viridis_patterns, function(pattern) grepl(pattern, palette, ignore.case = TRUE)))) {
+  viridis_patterns <- c(
+    "colou?r([[:punct:]]|[[:space:]]?)blind",
+    "cb",
+    "viridis"
+  )
+  if (
+    any(sapply(viridis_patterns, function(pattern) {
+      grepl(pattern, palette, ignore.case = TRUE)
+    }))
+  ) {
     return(scales::viridis_pal(option = "viridis")(ntrt))
   }
 
   # Other viridis options
-  viridis_options <- c("magma", "inferno", "cividis", "plasma", "rocket", "mako", "turbo")
-  if(palette %in% viridis_options) {
+  viridis_options <- c(
+    "magma",
+    "inferno",
+    "cividis",
+    "plasma",
+    "rocket",
+    "mako",
+    "turbo"
+  )
+  if (palette %in% viridis_options) {
     return(scales::viridis_pal(option = palette)(ntrt))
   }
 
   # If we get here, the palette name is invalid
-  valid_options <- c("default", brewer_palettes, "colour blind", "colour blind",
-                     "cb", viridis_options)
-  stop("Invalid value for palette. Valid options are: ",
-       paste(valid_options, collapse = ", "),
-       ", or a vector of ", ntrt, " custom colours.", call. = FALSE)
+  valid_options <- c(
+    "default",
+    brewer_palettes,
+    "colour blind",
+    "colour blind",
+    "cb",
+    viridis_options
+  )
+  stop(
+    "Invalid value for palette. Valid options are: ",
+    paste(valid_options, collapse = ", "),
+    ", or a vector of ",
+    ntrt,
+    " custom colours.",
+    call. = FALSE
+  )
 }
 
 
-create_basic_plot <- function(object, row_expr, column_expr, trt_expr, rotation, size, ...) {
+create_basic_plot <- function(
+  object,
+  row_expr,
+  column_expr,
+  trt_expr,
+  rotation,
+  size,
+  ...
+) {
   # Separate buffer plots from treatment plots
   buffer_plots <- object[object[[trt_expr]] == "buffer", ]
   treatment_plots <- object[object[[trt_expr]] != "buffer", ]
 
   ggplot2::ggplot() +
-    ggplot2::geom_tile(data = object,
-                       mapping = ggplot2::aes(x = .data[[column_expr]],
-                                              y = .data[[row_expr]],
-                                              fill = .data[[trt_expr]]),
-                       colour = "black") +
+    ggplot2::geom_tile(
+      data = object,
+      mapping = ggplot2::aes(
+        x = .data[[column_expr]],
+        y = .data[[row_expr]],
+        fill = .data[[trt_expr]]
+      ),
+      colour = "black"
+    ) +
     # Only add text to non-buffer plots
-    ggplot2::geom_text(data = treatment_plots,
-                       mapping = ggplot2::aes(x = .data[[column_expr]],
-                                              y = .data[[row_expr]],
-                                              label = .data[[trt_expr]]),
-                       colour = treatment_plots$text_col, angle = rotation, size = size, ...) +
+    ggplot2::geom_text(
+      data = treatment_plots,
+      mapping = ggplot2::aes(
+        x = .data[[column_expr]],
+        y = .data[[row_expr]],
+        label = .data[[trt_expr]]
+      ),
+      colour = treatment_plots$text_col,
+      angle = rotation,
+      size = size,
+      ...
+    ) +
     ggplot2::theme_bw()
 }
 
-create_blocked_plot <- function(object, row_expr, column_expr, block_expr, trt_expr, rotation, size, ...) {
+create_blocked_plot <- function(
+  object,
+  row_expr,
+  column_expr,
+  block_expr,
+  trt_expr,
+  rotation,
+  size,
+  ...
+) {
   # Block boundary calculation
   blkdf <- calculate_block_boundaries(object, block_expr)
 
@@ -258,57 +379,91 @@ create_blocked_plot <- function(object, row_expr, column_expr, block_expr, trt_e
   treatment_plots <- object[object[[trt_expr]] != "buffer", ]
 
   ggplot2::ggplot() +
-    ggplot2::geom_tile(data = object,
-                       mapping = ggplot2::aes(x = .data[[column_expr]],
-                                              y = .data[[row_expr]],
-                                              fill = .data[[trt_expr]]),
-                       colour = "black") +
+    ggplot2::geom_tile(
+      data = object,
+      mapping = ggplot2::aes(
+        x = .data[[column_expr]],
+        y = .data[[row_expr]],
+        fill = .data[[trt_expr]]
+      ),
+      colour = "black"
+    ) +
     # Only add text to non-buffer plots
-    ggplot2::geom_text(data = treatment_plots,
-                       mapping = ggplot2::aes(x = .data[[column_expr]],
-                                              y = .data[[row_expr]],
-                                              label = .data[[trt_expr]]),
-                       colour = treatment_plots$text_col, angle = rotation, size = size, ...) +
-    ggplot2::geom_rect(data = blkdf,
-                       mapping = ggplot2::aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
-                       linewidth = 1.8, colour = "black", fill = NA) +
-    ggplot2::geom_rect(data = blkdf,
-                       mapping = ggplot2::aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
-                       linewidth = 0.6, colour = "white", fill = NA) +
+    ggplot2::geom_text(
+      data = treatment_plots,
+      mapping = ggplot2::aes(
+        x = .data[[column_expr]],
+        y = .data[[row_expr]],
+        label = .data[[trt_expr]]
+      ),
+      colour = treatment_plots$text_col,
+      angle = rotation,
+      size = size,
+      ...
+    ) +
+    ggplot2::geom_rect(
+      data = blkdf,
+      mapping = ggplot2::aes(
+        xmin = xmin,
+        xmax = xmax,
+        ymin = ymin,
+        ymax = ymax
+      ),
+      linewidth = 1.8,
+      colour = "black",
+      fill = NA
+    ) +
+    ggplot2::geom_rect(
+      data = blkdf,
+      mapping = ggplot2::aes(
+        xmin = xmin,
+        xmax = xmax,
+        ymin = ymin,
+        ymax = ymax
+      ),
+      linewidth = 0.6,
+      colour = "white",
+      fill = NA
+    ) +
     ggplot2::theme_bw()
 }
 
 apply_axis_styling <- function(plot, margin, object, row_expr, column_expr) {
   # Determine if row and column are numeric/integer or factor/character
-  is_row_numeric <- is.numeric(object[[row_expr]]) || is.integer(object[[row_expr]])
-  is_col_numeric <- is.numeric(object[[column_expr]]) || is.integer(object[[column_expr]])
+  is_row_numeric <- is.numeric(object[[row_expr]]) ||
+    is.integer(object[[row_expr]])
+  is_col_numeric <- is.numeric(object[[column_expr]]) ||
+    is.integer(object[[column_expr]])
 
   # Set expand parameter based on margin setting
-  expand_param <- if(margin) ggplot2::waiver() else c(0, 0)
+  expand_param <- if (margin) ggplot2::waiver() else c(0, 0)
 
   # Apply x-axis scale
-  if(is_col_numeric) {
-    plot <- plot + ggplot2::scale_x_continuous(
-      expand = expand_param,
-      breaks = seq(1, max(as_numeric_factor(object[[column_expr]])), 1)
-    )
+  if (is_col_numeric) {
+    plot <- plot +
+      ggplot2::scale_x_continuous(
+        expand = expand_param,
+        breaks = seq(1, max(as_numeric_factor(object[[column_expr]])), 1)
+      )
   } else {
     plot <- plot + ggplot2::scale_x_discrete(expand = expand_param)
   }
 
   # Apply y-axis scale
-  if(is_row_numeric) {
-    plot <- plot + ggplot2::scale_y_continuous(
-      expand = expand_param,
-      trans = scales::reverse_trans(),
-      breaks = seq(1, max(as_numeric_factor(object[[row_expr]])), 1)
-    )
+  if (is_row_numeric) {
+    plot <- plot +
+      ggplot2::scale_y_continuous(
+        expand = expand_param,
+        trans = scales::reverse_trans(),
+        breaks = seq(1, max(as_numeric_factor(object[[row_expr]])), 1)
+      )
   } else {
     # For discrete y-axis, reverse the factor levels instead of using reverse_trans
-    plot <- plot + ggplot2::scale_y_discrete(
-      expand = expand_param,
-      limits = rev(levels(factor(object[[row_expr]])))
-    )
+    plot <- plot +
+      ggplot2::scale_y_discrete(
+        expand = expand_param,
+        limits = rev(levels(factor(object[[row_expr]])))
+      )
   }
 
   return(plot)
@@ -317,7 +472,10 @@ apply_axis_styling <- function(plot, margin, object, row_expr, column_expr) {
 calculate_block_boundaries <- function(object, block_expr) {
   blkdf <- data.frame(
     block = sort(unique(object[[block_expr]])),
-    xmin = 0, xmax = 0, ymin = 0, ymax = 0
+    xmin = 0,
+    xmax = 0,
+    ymin = 0,
+    ymax = 0
   )
 
   for (i in 1:nrow(blkdf)) {
@@ -350,7 +508,11 @@ calculate_block_boundaries <- function(object, block_expr) {
   # Convert vector of colours to RGB matrix (columns = colours)
   rgb_vals <- grDevices::col2rgb(colour)
   # Calculate luminance for each colour
-  luminance <- (0.299 * rgb_vals[1, ] + 0.587 * rgb_vals[2, ] + 0.114 * rgb_vals[3, ]) / 255
+  luminance <- (0.299 *
+    rgb_vals[1, ] +
+    0.587 * rgb_vals[2, ] +
+    0.114 * rgb_vals[3, ]) /
+    255
   return(luminance > 0.5)
 }
 
@@ -399,17 +561,22 @@ plot_progress <- function(result) {
 
   p1 <- ggplot2::ggplot(df, ggplot2::aes(x = iteration, y = score)) +
     ggplot2::geom_line() +
-    ggplot2::labs(title = "Objective Score Over Iterations",
-                  x = "Iteration", y = "Score") +
+    ggplot2::labs(
+      title = "Objective Score Over Iterations",
+      x = "Iteration",
+      y = "Score"
+    ) +
     ggplot2::theme_minimal()
 
   p2 <- ggplot2::ggplot(df, ggplot2::aes(x = iteration, y = temperature)) +
     ggplot2::geom_line() +
-    ggplot2::labs(title = "Temperature Over Iterations",
-                  x = "Iteration", y = "Temperature") +
+    ggplot2::labs(
+      title = "Temperature Over Iterations",
+      x = "Iteration",
+      y = "Temperature"
+    ) +
     ggplot2::theme_minimal()
 
   print(p1)
   print(p2)
 }
-

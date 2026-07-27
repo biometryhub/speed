@@ -59,7 +59,7 @@ objective_function_piepho(design_df, "treatment", c("row", "col"), pair_mapping 
 \references{
 Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of distribution
 of treatment replications in row-column designs. Biometrical journal. Biometrische Zeitschrift, 60(6),
-1172–1189. \url{https://doi.org/10.1002/bimj.201800013}
+1172-1189. \url{https://doi.org/10.1002/bimj.201800013}
 }
 \seealso{
 \code{\link[=objective_function]{objective_function()}}, \code{\link[=create_pair_mapping]{create_pair_mapping()}}
