@@ -165,8 +165,23 @@ You can customise the objective function and optimisation parameters to suit spe
 
 If you use `speed` in your research, please cite:
 
-```{r citation, echo=FALSE, results="hold", comment=""}
-citation("speed")
+```{r citation, echo=FALSE, results="hold", comment="", warning=FALSE}
+# CRAN populates the publication date automatically, so DESCRIPTION
+# deliberately has no Date field. Without one, citation() can't determine a
+# year and warns, printing "(????)". To render a tidy citation here, copy the
+# installed DESCRIPTION into a temporary library with the current date added
+# and cite from there, leaving the committed DESCRIPTION untouched.
+local({
+  tmp_lib <- file.path(tempdir(), "cite_lib")
+  pkg_dir <- file.path(tmp_lib, "speed")
+  dir.create(pkg_dir, recursive = TRUE, showWarnings = FALSE)
+  desc <- readLines(system.file("DESCRIPTION", package = "speed"))
+  writeLines(
+    c(desc, paste0("Date: ", Sys.Date())),
+    file.path(pkg_dir, "DESCRIPTION")
+  )
+  citation("speed", lib.loc = tmp_lib)
+})
 ```
 
 ## License
