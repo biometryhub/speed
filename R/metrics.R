@@ -177,7 +177,23 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #' Objective Function with Metric from Piepho
 #'
 #' @description
-#' Create an objective function including even distribution and neighbor balance introduced by Piepho 2018.
+#' An objective function combining the even distribution (ED) and neighbour balance (NB) criteria of
+#'   Piepho et al. (2018, 2021).
+#'
+#' @details
+#' The score is `nb$var + ed$inv_total_mst + self_adj_weight * nb$self_adjacencies`, and is minimised.
+#'   See [calculate_ed] for the ED component and [calculate_nb] for the NB component.
+#'
+#'   The self-adjacency term stands in for the binarity requirement of the source papers, which reject
+#'   outright any design placing an item next to itself. For a binary design the term is exactly 0, so
+#'   it changes nothing; it only penalises designs the papers would consider inadmissible.
+#'
+#'   This corresponds to the second of the two design strategies proposed by Piepho et al. (2018), which
+#'   *"directly optimizes ED and NB, while simultaneously seeking to minimize the loss in row-column
+#'   efficiency"* (Section 3.2). The first half of that is what this function does. It does **not**
+#'   address the efficiency half: the average efficiency factor is not considered anywhere in the score,
+#'   so a design that improves ED and NB may do so at a cost in efficiency that goes unmeasured. Use
+#'   [calculate_efficiency_factor] to check it for a returned design.
 #'
 #' @inheritParams objective_function_signature
 #' @inheritParams objective_function
@@ -185,6 +201,11 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #' @inheritParams calculate_ed
 #' @param design A data frame representing the spatial information of the design
 #' @param current_score_obj A named list containing the current score
+#' @param nb_directions Adjacency directions used for the neighbour balance component, passed to
+#'   [calculate_nb] as `directions`. Defaults to `"auto"`, which picks the direction from the shape of
+#'   the layout following Piepho et al. (2021); see [calculate_nb] for the rule.
+#' @param self_adj_weight Weight applied to the number of same-item adjacencies (default: 1). Use 0 to
+#'   score ED and NB alone.
 #'
 #' @examples
 #' design_df <- initialise_design_df(
@@ -197,16 +218,21 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #' objective_function_piepho(design_df, "treatment", c("row", "col"), pair_mapping = pair_mapping)
 #' # usage in speed, speed(..., obj_function = objective_function_piepho, pair_mapping = pair_mapping)
 #'
-#' @return A function which returns a named list of numeric values with one required name `score` representing
-#'   the score of the design (lower is better) with a signature `function(design_df, swap, spatial_cols, ...)`.
-#'   See signature
-#'   details in [objective_function_signature].
+#' @return A named list with the required element `score`, the score of the design (lower is better),
+#'   alongside the `ed` and `nb` components it was built from. The `ed` element is fed back as
+#'   `current_score_obj` on the next call so that MST lengths need only be recomputed for the items that
+#'   moved; see [objective_function_signature] for the full contract.
 #'
-#' @references Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of distribution
-#'   of treatment replications in row-column designs. Biometrical journal. Biometrische Zeitschrift, 60(6),
+#' @references Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of
+#'   distribution of treatment replications in row-column designs. Biometrical Journal, 60(6),
 #'   1172-1189. <https://doi.org/10.1002/bimj.201800013>
 #'
-#' @seealso [objective_function()], [create_pair_mapping()]
+#'   Piepho, H. P., Williams, E. R., & Michel, V. (2021). Generating row-column field experimental
+#'   designs with good neighbour balance and even distribution of treatment replications. Journal of
+#'   Agronomy and Crop Science, 207, 745-753. <https://doi.org/10.1111/jac.12463>
+#'
+#' @seealso [objective_function()], [calculate_ed()], [calculate_nb()], [create_pair_mapping()],
+#'   [calculate_efficiency_factor()]
 #'
 #' @export
 # fmt: skip
@@ -218,6 +244,8 @@ objective_function_piepho <- function(design,
                                       pair_mapping = NULL,
                                       row_column = "row",
                                       col_column = "col",
+                                      nb_directions = "auto",
+                                      self_adj_weight = 1,
                                       ...) {
   design_matrix <- matrix(
     design[[swap]],
@@ -226,26 +254,16 @@ objective_function_piepho <- function(design,
   )
 
   ed <- calculate_ed(design_matrix, current_score_obj$ed, swapped_items)
-  # sum(1/) or 1/sum
-  ed_score <- if (!is.null(ed$total_mst) && is.finite(ed$total_mst) && ed$total_mst > 0) {
-    ed$inv_total_mst
-  } else {
-    0
-  }
-  nb <- calculate_nb(design_matrix, pair_mapping)
-  nb_score <- nb$var
+  ed_score <- if (is.finite(ed$inv_total_mst)) ed$inv_total_mst else 0
 
-  design[[swap]] <- as.factor(design_matrix)
-  # bal_score <- calculate_balance_score(design, swap, spatial_cols)
-  # adj_score <- calculate_adjacency_score(design, swap, row_column, col_column)
+  nb <- calculate_nb(design_matrix, pair_mapping, directions = nb_directions)
 
   return(list(
-    score = round(nb_score + ed_score,
-                  # + bal_score + adj_score,
-                  10),
+    score = round(
+      nb$var + ed_score + self_adj_weight * nb$self_adjacencies,
+      10
+    ),
     ed = ed,
-    # bal = bal_score,
-    # adj = adj_score,
     nb = nb
   ))
 }
@@ -253,122 +271,236 @@ objective_function_piepho <- function(design,
 #' Neighbour Balance Calculation
 #'
 #' @description
-#' A metric that counts the occurrence of the same adjacent pairs. Only horizontal and vertical pairs are
-#'   counted.
+#' A metric describing the neighbour balance (NB) of a design: how evenly the direct adjacencies of the
+#'   design are spread over the distinct pairs of items.
+#'
+#' @details
+#' Following Piepho et al. (2018), Section 3.2(c), neighbour balance is assessed from `n_h`, the number
+#'   of item *pairs* having `h` adjacencies. Two properties of that definition matter in practice:
+#'
+#'   * The tabulation covers **every** distinct pair of items, so a pair that is never adjacent
+#'     contributes a count of 0. Dropping such pairs would let a design improve its score by making
+#'     pairs disappear rather than by balancing them.
+#'   * Self-pairs (an item adjacent to itself) are **not** part of `n_h`; the source papers exclude
+#'     such designs by requiring the design to be binary. Self-adjacencies are still counted here and
+#'     reported as `self_adjacencies` so that they can be penalised separately.
+#'
+#'   Complete NB means every pair is adjacent equally often, and partial NB means the counts take only
+#'   two values differing by one. Both `var` and `s2` measure departure from that ideal, and both are
+#'   quantities to *minimise*. For binary designs they are equivalent up to a positive affine
+#'   transformation, because the total number of adjacencies is then fixed by the layout.
 #'
 #' @param design_matrix A matrix representing the design
-#' @param pair_mapping A named vector of pairs generated from [create_pair_mapping]
+#' @param pair_mapping A named vector of pairs generated from [create_pair_mapping]. Generated from
+#'   `design_matrix` when not supplied.
+#' @param directions Adjacency directions to count: `"row"` for horizontal neighbours within a row,
+#'   `"col"` for vertical neighbours within a column, or both. Defaults to `"auto"`, which picks the
+#'   direction from the shape of the layout following Piepho et al. (2021), Section 2: rows when there
+#'   are more columns than rows - the usual field case, where plots are long and thin down the column,
+#'   so that only the long boundaries between plots in a row are shared - columns when there are more
+#'   rows than columns, and both when the layout is square and neither orientation is privileged.
+#'   Resolvability and latinization also enter that rule in the source paper, but `speed` does not model
+#'   those, so pass the directions explicitly for a resolvable design.
+#'
+#' @importFrom stats var
 #'
 #' @examples
 #' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
 #' calculate_nb(design_matrix)
 #'
+#' # count adjacencies along rows only, as in Piepho et al. (2018)
+#' calculate_nb(design_matrix, directions = "row")
+#'
 #' @return Named list containing:
 #' \itemize{
-#'   \item nb - Table of pairs of items and their number of occurrence
-#'   \item max_nb - The highest number of occurrence
-#'   \item max_pairs - Vector of pairs of items with the highest number of occurrence
+#'   \item nb - Named integer vector of counts for every distinct pair of items, including pairs that
+#'     are never adjacent (count 0)
+#'   \item max_nb - The highest number of occurrences
+#'   \item max_pairs - Vector of pairs of items with the highest number of occurrences
+#'   \item var - Variance of `nb`; 0 when the design is completely neighbour balanced
+#'   \item s2 - The NB score of Piepho et al. (2018), Table 2: `sum(n * (n - 1) / 2)` over pairs
+#'   \item self_adjacencies - Number of adjacencies between plots holding the same item, excluded
+#'     from `nb`
 #' }
 #'
-#' @seealso [objective_function_piepho()]
+#' @references Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of
+#'   distribution of treatment replications in row-column designs. Biometrical Journal, 60(6),
+#'   1172-1189. <https://doi.org/10.1002/bimj.201800013>
+#'
+#'   Piepho, H. P., Williams, E. R., & Michel, V. (2021). Generating row-column field experimental
+#'   designs with good neighbour balance and even distribution of treatment replications. Journal of
+#'   Agronomy and Crop Science, 207, 745-753. <https://doi.org/10.1111/jac.12463>
+#'
+#' @seealso [objective_function_piepho()], [create_pair_mapping()]
 #'
 #' @export
-calculate_nb <- function(design_matrix, pair_mapping = NULL) {
-  if (is.null(pair_mapping)) {
-    return(.calculate_nb(design_matrix))
+calculate_nb <- function(
+  design_matrix,
+  pair_mapping = NULL,
+  directions = "auto"
+) {
+  if (identical(directions, "auto")) {
+    n_rows <- nrow(design_matrix)
+    n_cols <- ncol(design_matrix)
+    directions <- if (n_cols > n_rows) {
+      "row"
+    } else if (n_rows > n_cols) {
+      "col"
+    } else {
+      c("row", "col")
+    }
+  } else {
+    directions <- match.arg(directions, c("row", "col"), several.ok = TRUE)
   }
 
-  lefts <- design_matrix[, -ncol(design_matrix)]
-  rights <- design_matrix[, -1]
-  tops <- design_matrix[-nrow(design_matrix), ]
-  bottoms <- design_matrix[-1, ]
-  lr_pairs <- paste(lefts, rights, sep = ",")
-  tb_pairs <- paste(tops, bottoms, sep = ",")
+  if (is.null(pair_mapping)) {
+    pair_mapping <- create_pair_mapping(as.vector(design_matrix))
+  }
 
-  pairs <- c(lr_pairs, tb_pairs)
+  # Plots holding no item (e.g. buffers, empty plots) form no pair at all
+  paste_adjacent <- function(a, b) {
+    keep <- !is.na(a) & !is.na(b)
+    paste(a[keep], b[keep], sep = ",")
+  }
+
+  pairs <- character(0)
+  if ("row" %in% directions && ncol(design_matrix) > 1) {
+    pairs <- c(
+      pairs,
+      paste_adjacent(
+        design_matrix[, -ncol(design_matrix)],
+        design_matrix[, -1]
+      )
+    )
+  }
+  if ("col" %in% directions && nrow(design_matrix) > 1) {
+    pairs <- c(
+      pairs,
+      paste_adjacent(
+        design_matrix[-nrow(design_matrix), ],
+        design_matrix[-1, ]
+      )
+    )
+  }
+
+  # Canonicalise every adjacency to the sorted "<lower>,<higher>" form
   is_sorted <- pairs %in% pair_mapping
-  sorted_pairs <- c(pairs[is_sorted], pair_mapping[pairs[!is_sorted]])
+  pairs[!is_sorted] <- pair_mapping[pairs[!is_sorted]]
+  if (anyNA(pairs)) {
+    stop(
+      "`pair_mapping` does not cover every item present in the design. ",
+      "Regenerate it with create_pair_mapping().",
+      call. = FALSE
+    )
+  }
 
-  nb <- table(sorted_pairs)
+  universe <- attr(pair_mapping, "pairs")
+  is_self <- pairs %in% attr(pair_mapping, "self_pairs")
+
+  # Every distinct pair starts at zero, so pairs that never adjoin still count
+  nb <- setNames(integer(length(universe)), universe)
+  observed <- table(pairs[!is_self])
+  nb[names(observed)] <- as.integer(observed)
+
   max_nb <- max(nb)
-  max_pairs <- names(nb[nb == max_nb])
   return(list(
     nb = nb,
     max_nb = max_nb,
-    max_pairs = max_pairs,
-    var = var(nb)
+    max_pairs = names(nb)[nb == max_nb],
+    # var() of a single pair is NA; such a design is trivially balanced
+    var = if (length(nb) > 1L) var(nb) else 0,
+    s2 = sum(nb * (nb - 1) / 2),
+    self_adjacencies = sum(is_self)
   ))
 }
 
-#' Neighbor Balance Calculation without Pair Mapping
+#' Mean MST Edge Length by Prim's Algorithm
 #'
 #' @description
-#' A metric that counts the occurrence of the same adjacent pairs. Only horizontal and vertical pairs are
-#'   counted.
+#' Compute the mean edge length of the minimum spanning tree of a distance matrix directly.
 #'
-#' @inheritParams calculate_nb
+#' @details
+#' Preferred over `igraph` for the small point sets a single item's replications form. `igraph`'s graph
+#'   construction dominates its runtime at that size, making it roughly 10-30x slower than this loop for
+#'   2 to 10 points, with the crossover around 20-25 points. This implementation is also correct for
+#'   coincident points, which `igraph::graph_from_adjacency_matrix()` is not - it reads a weight of 0 as
+#'   an absent edge, so two plots at the same position would silently drop out of the tree.
 #'
-#' @return Named list containing:
-#' \itemize{
-#'   \item nb - Named list of pairs of items and their number of occurrence
-#'   \item max_nb - The highest number of occurrence
-#'   \item max_pairs - Vector of pairs of items with the highest number of occurrence
-#' }
+#' @param d A symmetric matrix of pairwise distances.
+#'
+#' @return The total tree length divided by its `n - 1` edges.
 #'
 #' @keywords internal
-.calculate_nb <- function(design_matrix) {
-  n_rows <- dim(design_matrix)[1]
-  n_cols <- dim(design_matrix)[2]
-  # env is faster than list
-  nb <- new.env()
+.mst_mean_prim <- function(d) {
+  n <- nrow(d)
+  visited <- rep(FALSE, n)
+  visited[1] <- TRUE
+  mst_len <- 0
 
-  for (row_ in 1:n_rows) {
-    for (col_ in 1:n_cols) {
-      node <- design_matrix[row_, col_]
-      if (row_ < n_rows) {
-        bottom <- design_matrix[row_ + 1, col_]
-        if (node < bottom) {
-          pair_str <- paste0(node, ",", bottom)
-        } else {
-          pair_str <- paste0(bottom, ",", node)
+  for (i in 2:n) {
+    min_edge <- Inf
+    for (u in which(visited)) {
+      for (v in which(!visited)) {
+        if (d[u, v] < min_edge) {
+          min_edge <- d[u, v]
+          v_min <- v
         }
-
-        env_add_one(nb, pair_str)
-      }
-
-      if (col_ < n_cols) {
-        right <- design_matrix[row_, col_ + 1]
-        if (node < right) {
-          pair_str <- paste0(node, ",", right)
-        } else {
-          pair_str <- paste0(right, ",", node)
-        }
-
-        env_add_one(nb, pair_str)
       }
     }
+    mst_len <- mst_len + min_edge
+    visited[v_min] <- TRUE
   }
 
-  nb <- as.list(nb)
-  nb_values <- unlist(nb)
-  max_nb <- max(nb_values)
-  max_pairs <- names(nb[nb == max_nb])
-  return(list(
-    nb = nb,
-    max_nb = max_nb,
-    max_pairs = max_pairs,
-    var = var(nb_values)
-  ))
+  return(mst_len / (n - 1))
+}
+
+#' Mean MST Edge Length via igraph
+#'
+#' @description
+#' Compute the mean edge length of the minimum spanning tree of a distance matrix using `igraph`.
+#'
+#' @details
+#' Faster than `.mst_mean_prim` only for larger point sets. Note that a distance of exactly 0 is read as
+#'   an absent edge by `igraph::graph_from_adjacency_matrix()`, so this must not be used where points may
+#'   coincide.
+#'
+#' @inheritParams .mst_mean_prim
+#'
+#' @return The total tree length divided by its `n - 1` edges.
+#'
+#' @keywords internal
+.mst_mean_igraph <- function(d) {
+  g <- igraph::graph_from_adjacency_matrix(
+    d,
+    mode = "undirected",
+    weighted = TRUE,
+    diag = FALSE
+  )
+  return(mean(igraph::E(igraph::mst(g))$weight))
 }
 
 #' Even Distribution Calculation
 #'
 #' @description
-#' A metric that represents the even distribution of each item with their minimum spanning tree (mst).
+#' A metric that represents the even distribution (ED) of each item, measured by the minimum spanning
+#'   tree (MST) connecting all replications of that item.
+#'
+#' @details
+#' Following Piepho et al. (2018), Section 3.2(b), `MST_i` is the **arithmetic mean** length of the
+#'   edges of the minimum spanning tree connecting the replications of item `i`, using Euclidean
+#'   distance in row and column numbers. The mean (rather than the total) is what makes the measure
+#'   comparable across items with different numbers of replications, since a tree over `r` replications
+#'   has `r - 1` edges. Items with fewer than two replications are given an `MST_i` of 0 and are
+#'   excluded from `inv_total_mst`.
+#'
+#'   Larger `MST_i` means the replications of item `i` are more evenly spread, so `inv_total_mst` is
+#'   the quantity to *minimise*.
 #'
 #' @inheritParams calculate_nb
 #' @param current_ed Named list of the current ed calculation
 #' @param swapped_items The items that had just been swapped
+#'
+#' @importFrom stats dist
 #'
 #' @examples
 #' design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
@@ -376,10 +508,14 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #'
 #' @return Named list containing:
 #' \itemize{
-#'   \item msts - Named numeric vector of each treatment's MST length
-#'   \item total_mst - Sum of MST lengths across treatments
-#'   \item inv_total_mst - Sum of inverse MST lengths across treatments (excluding zeros)
+#'   \item msts - Named numeric vector of each item's `MST_i` (mean MST edge length)
+#'   \item total_mst - Sum of `MST_i` across items
+#'   \item inv_total_mst - Sum of `1 / MST_i` across items (excluding items with `MST_i` of 0)
 #' }
+#'
+#' @references Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of
+#'   distribution of treatment replications in row-column designs. Biometrical Journal, 60(6),
+#'   1172-1189. <https://doi.org/10.1002/bimj.201800013>
 #'
 #' @seealso [objective_function_piepho()]
 #'
@@ -416,6 +552,8 @@ calculate_ed <- function(
     recompute <- intersect(names(trt_groups), as.character(swapped_items))
   }
 
+  has_igraph <- requireNamespace("igraph", quietly = TRUE)
+
   for (trt in recompute) {
     xy <- as.matrix(trt_groups[[trt]])
     n <- nrow(xy)
@@ -426,38 +564,12 @@ calculate_ed <- function(
     }
 
     d <- as.matrix(dist(xy, method = "euclidean"))
-
-    if (requireNamespace("igraph", quietly = TRUE)) {
-      g <- igraph::graph_from_adjacency_matrix(
-        d,
-        mode = "undirected",
-        weighted = TRUE,
-        diag = FALSE
-      )
-      mst_g <- igraph::mst(g)
-      msts[trt] <- sum(igraph::E(mst_g)$weight)
-      next
+    # Below ~20 points igraph's graph construction costs more than the whole tree
+    msts[trt] <- if (n > 20 && has_igraph) {
+      .mst_mean_igraph(d)
+    } else {
+      .mst_mean_prim(d)
     }
-
-    visited <- rep(FALSE, n)
-    visited[1] <- TRUE
-    mst_len <- 0
-
-    for (i in 2:n) {
-      min_edge <- Inf
-      for (u in which(visited)) {
-        for (v in which(!visited)) {
-          if (d[u, v] < min_edge) {
-            min_edge <- d[u, v]
-            v_min <- v
-          }
-        }
-      }
-      mst_len <- mst_len + min_edge
-      visited[v_min] <- TRUE
-    }
-
-    msts[trt] <- mst_len
   }
 
   return(list(
@@ -551,48 +663,6 @@ get_edges <- function(vertices) {
   return(edges)
 }
 
-#' Even Distribution Calculation for 3 Replications
-#'
-#' @description
-#' A metric that represents the even distribution of items with 3 replications with their minimum spanning tree
-#'   (mst).
-#'
-#' @param edges A list of vectors of edge weights
-#'
-#' @importFrom utils modifyList
-#'
-#' @return Named list containing:
-#' \itemize{
-#'   \item msts - Named list of pairs of items and their mst
-#'   \item min_mst - The lowest mst
-#'   \item min_items - Pairs of items with the lowest mst
-#' }
-#'
-#' @seealso [get_edges()]
-#'
-#' @keywords internal
-.calculate_ed_3_reps <- function(edges, current_ed = NULL) {
-  # pick 2 shortest connections for 3 reps
-  ed <- lapply(
-    edges,
-    function(weights) {
-      sum(weights) - max(weights)
-    }
-  )
-
-  if (!is.null(current_ed)) {
-    ed <- modifyList(current_ed$`3`$msts, ed)
-  }
-
-  min_mst <- min(unlist(ed))
-  min_items <- names(ed[ed == min_mst])
-  return(list(
-    msts = ed,
-    min_mst = min_mst,
-    min_items = min_items
-  ))
-}
-
 #' Create Pair Mapping
 #'
 #' @description
@@ -600,7 +670,14 @@ get_edges <- function(vertices) {
 #'
 #' @param items Vector of items for the design
 #'
+#' @details
+#' The returned mapping carries two attributes used by [calculate_nb]: `"pairs"`, the distinct item
+#'   pairs in sorted form, and `"self_pairs"`, the self-pairs. Together these define the full set of
+#'   pairs over which neighbour balance is tabulated, which is what allows pairs that never occur as
+#'   neighbours to be counted as zero rather than silently omitted.
+#'
 #' @importFrom stats setNames
+#' @importFrom utils combn
 #'
 #' @examples
 #' treatments <- c(rep(1:10, 4), rep(11:16, 3), rep(17:27, 2))
@@ -634,15 +711,15 @@ create_pair_mapping <- function(items) {
 
   identical_pairs <- paste(items, items, sep = ",")
   pairs <- paste(combinations[1, ], combinations[2, ], sep = ",")
-  pairs_r <- sapply(
-    pairs,
-    function(k) paste(rev(strsplit(k, ",")[[1]]), collapse = ",")
-  )
+  # Built from the combinations, not by splitting on ",", so labels may contain commas
+  pairs_r <- paste(combinations[2, ], combinations[1, ], sep = ",")
 
   pair_mapping <- setNames(
     c(pairs, identical_pairs),
     c(pairs_r, identical_pairs)
   )
+  attr(pair_mapping, "pairs") <- pairs
+  attr(pair_mapping, "self_pairs") <- identical_pairs
   return(pair_mapping)
 }
 

@@ -4,7 +4,7 @@
 \alias{calculate_ed}
 \title{Even Distribution Calculation}
 \usage{
-calculate_ed(design_matrix)
+calculate_ed(design_matrix, current_ed = NULL, swapped_items = NULL)
 }
 \arguments{
 \item{design_matrix}{A matrix representing the design}
@@ -16,21 +16,35 @@ calculate_ed(design_matrix)
 \value{
 Named list containing:
 \itemize{
-\item \if{html}{\out{<number of replications>}} - Named list containing:
-\itemize{
-\item msts - Named list of items and their mst
-\item min_mst - The lowest mst
-\item min_items - Pairs of items with the lowest mst
-}
+\item msts - Named numeric vector of each item's \code{MST_i} (mean MST edge length)
+\item total_mst - Sum of \code{MST_i} across items
+\item inv_total_mst - Sum of \code{1 / MST_i} across items (excluding items with \code{MST_i} of 0)
 }
 }
 \description{
-A metric that represents the even distribution of each item with their minimum spanning tree (mst).
+A metric that represents the even distribution (ED) of each item, measured by the minimum spanning
+tree (MST) connecting all replications of that item.
+}
+\details{
+Following Piepho et al. (2018), Section 3.2(b), \code{MST_i} is the \strong{arithmetic mean} length of the
+edges of the minimum spanning tree connecting the replications of item \code{i}, using Euclidean
+distance in row and column numbers. The mean (rather than the total) is what makes the measure
+comparable across items with different numbers of replications, since a tree over \code{r} replications
+has -1 edges. Items with fewer than two replications are given an \code{MST_i} of 0 and are
+excluded from \code{inv_total_mst}.
+
+Larger \code{MST_i} means the replications of item \code{i} are more evenly spread, so \code{inv_total_mst} is
+the quantity to \emph{minimise}.
 }
 \examples{
 design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
 calculate_ed(design_matrix)
 
+}
+\references{
+Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of
+distribution of treatment replications in row-column designs. Biometrical Journal, 60(6),
+1172-1189. \url{https://doi.org/10.1002/bimj.201800013}
 }
 \seealso{
 \code{\link[=objective_function_piepho]{objective_function_piepho()}}

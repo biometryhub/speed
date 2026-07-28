@@ -13,6 +13,8 @@ objective_function_piepho(
   pair_mapping = NULL,
   row_column = "row",
   col_column = "col",
+  nb_directions = "auto",
+  self_adj_weight = 1,
   ...
 )
 }
@@ -27,22 +29,46 @@ objective_function_piepho(
 
 \item{swapped_items}{The items that had just been swapped}
 
-\item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
+\item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}. Generated from
+\code{design_matrix} when not supplied.}
 
 \item{row_column}{Name of column representing the row of the design (default: "row")}
 
 \item{col_column}{Name of column representing the column of the design (default: "col")}
 
+\item{nb_directions}{Adjacency directions used for the neighbour balance component, passed to
+\link{calculate_nb} as \code{directions}. Defaults to \code{"auto"}, which picks the direction from the shape of
+the layout following Piepho et al. (2021); see \link{calculate_nb} for the rule.}
+
+\item{self_adj_weight}{Weight applied to the number of same-item adjacencies (default: 1). Use 0 to
+score ED and NB alone.}
+
 \item{...}{Extra parameters passed from \link{speed}}
 }
 \value{
-A function which returns a named list of numeric values with one required name \code{score} representing
-the score of the design (lower is better) with a signature \verb{function(design_df, swap, spatial_cols, ...)}.
-See signature
-details in \link{objective_function_signature}.
+A named list with the required element \code{score}, the score of the design (lower is better),
+alongside the \code{ed} and \code{nb} components it was built from. The \code{ed} element is fed back as
+\code{current_score_obj} on the next call so that MST lengths need only be recomputed for the items that
+moved; see \link{objective_function_signature} for the full contract.
 }
 \description{
-Create an objective function including even distribution and neighbor balance introduced by Piepho 2018.
+An objective function combining the even distribution (ED) and neighbour balance (NB) criteria of
+Piepho et al. (2018, 2021).
+}
+\details{
+The score is \code{nb$var + ed$inv_total_mst + self_adj_weight * nb$self_adjacencies}, and is minimised.
+See \link{calculate_ed} for the ED component and \link{calculate_nb} for the NB component.
+
+The self-adjacency term stands in for the binarity requirement of the source papers, which reject
+outright any design placing an item next to itself. For a binary design the term is exactly 0, so
+it changes nothing; it only penalises designs the papers would consider inadmissible.
+
+This corresponds to the second of the two design strategies proposed by Piepho et al. (2018), which
+\emph{"directly optimizes ED and NB, while simultaneously seeking to minimize the loss in row-column
+efficiency"} (Section 3.2). The first half of that is what this function does. It does \strong{not}
+address the efficiency half: the average efficiency factor is not considered anywhere in the score,
+so a design that improves ED and NB may do so at a cost in efficiency that goes unmeasured. Use
+\link{calculate_efficiency_factor} to check it for a returned design.
 }
 \examples{
 design_df <- initialise_design_df(
@@ -57,10 +83,15 @@ objective_function_piepho(design_df, "treatment", c("row", "col"), pair_mapping 
 
 }
 \references{
-Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of distribution
-of treatment replications in row-column designs. Biometrical journal. Biometrische Zeitschrift, 60(6),
+Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of
+distribution of treatment replications in row-column designs. Biometrical Journal, 60(6),
 1172-1189. \url{https://doi.org/10.1002/bimj.201800013}
+
+Piepho, H. P., Williams, E. R., & Michel, V. (2021). Generating row-column field experimental
+designs with good neighbour balance and even distribution of treatment replications. Journal of
+Agronomy and Crop Science, 207, 745-753. \url{https://doi.org/10.1111/jac.12463}
 }
 \seealso{
-\code{\link[=objective_function]{objective_function()}}, \code{\link[=create_pair_mapping]{create_pair_mapping()}}
+\code{\link[=objective_function]{objective_function()}}, \code{\link[=calculate_ed]{calculate_ed()}}, \code{\link[=calculate_nb]{calculate_nb()}}, \code{\link[=create_pair_mapping]{create_pair_mapping()}},
+\code{\link[=calculate_efficiency_factor]{calculate_efficiency_factor()}}
 }

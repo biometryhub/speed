@@ -1,3 +1,34 @@
+# speed 0.0.10
+
+## Major Changes
+
+- `objective_function_piepho()`, `calculate_ed()` and `calculate_nb()` now implement the ED and NB criteria as
+  defined by Piepho et al. (2018, 2021), verified against the published statistics for Figure 1 of the 2018
+  paper. Scores are not comparable with earlier versions.
+- Neighbour balance is now counted along rows for designs with more columns than rows, and along columns when
+  there are more rows, following Piepho et al. (2021); previously both directions were always counted. Override
+  with `directions` in `calculate_nb()` or `nb_directions` in `objective_function_piepho()`.
+- `calculate_nb()` additionally returns Piepho's `s2` neighbour balance score and a `self_adjacencies` count;
+  `objective_function_piepho()` gains `self_adj_weight` to penalise the latter.
+- `calculate_ed()` is substantially faster: minimum spanning trees over fewer than 20 points are computed
+  directly rather than via `igraph`, taking one iteration of `objective_function_piepho()` on a 25-treatment
+  design from roughly 18 ms to 1 ms.
+
+## Bug Fixes
+
+- `calculate_ed()` no longer fails with `object 'trt_groups' not found`, which had made every call to it and to
+  `objective_function_piepho()` error.
+- `calculate_ed()` now reports `MST_i` as the mean rather than the total edge length of the minimum spanning
+  tree, so that it is comparable across treatments with different numbers of replications.
+- `calculate_nb()` now counts treatment pairs that never occur as neighbours, and excludes self-adjacencies from
+  the neighbour balance variance. Previously a design could improve its score by making pairs disappear rather
+  than by balancing them.
+- `calculate_nb()` no longer returns `NA` for `var` on a two-treatment design, generates a `pair_mapping` when
+  none is supplied, and ignores adjacencies involving plots with no treatment.
+- Minimum spanning trees are now correct when two plots holding the same item share a position; `igraph` reads a
+  distance of 0 as an absent edge.
+- The neighbour generators no longer report empty strings as swapped items when a swap has to be skipped.
+
 # speed 0.0.9
 
 ## Major Changes
@@ -64,7 +95,7 @@
 
 ## Major Changes
 
-- Optimisation parameters were changed from options to arguments to enable better reproducibility of designs (#65
+- Optimisation parameters were changed from options to arguments to enable better reproducibility of designs (#65)
 - Enabled one stage MET designs
 - Added contributing guide and code of conduct (#59)
 

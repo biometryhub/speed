@@ -34,6 +34,12 @@ Named vector of item pairs as a character separated by \code{","}:
 \description{
 Create an item pair mapping for \link{calculate_nb}.
 }
+\details{
+The returned mapping carries two attributes used by \link{calculate_nb}: \code{"pairs"}, the distinct item
+pairs in sorted form, and \code{"self_pairs"}, the self-pairs. Together these define the full set of
+pairs over which neighbour balance is tabulated, which is what allows pairs that never occur as
+neighbours to be counted as zero rather than silently omitted.
+}
 \examples{
 treatments <- c(rep(1:10, 4), rep(11:16, 3), rep(17:27, 2))
 create_pair_mapping(treatments)

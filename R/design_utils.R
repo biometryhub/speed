@@ -85,7 +85,9 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
     }
   }
 
-  return(list(design = new_design, swapped_items = swapped_items))
+  # Trim to the swaps actually made; skipped ones would leave "" entries that
+  # look like item names to an objective function
+  return(list(design = new_design, swapped_items = swapped_items[seq_len(swapped_idx - 1)]))
 }
 
 #' Generate neighbour for sequential or hierarchical designs
@@ -142,7 +144,8 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
     }
   }
 
-  return(list(design = new_design, swapped_items = swapped_items[1:(swapped_idx - 1)]))
+  # seq_len, not 1:(swapped_idx - 1), which gives c(1, 0) when nothing was swapped
+  return(list(design = new_design, swapped_items = swapped_items[seq_len(swapped_idx - 1)]))
 }
 
 #' Infer 'row' and 'col' with Patterns

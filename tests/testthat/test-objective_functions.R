@@ -276,14 +276,10 @@ test_that("objective_function_piepho works with basic design", {
   )
 
   expect_type(result, "list")
-  expect_named(result, c("score", "ed",
-                         # "bal", "adj",
-                         "nb"))
+  expect_named(result, c("score", "ed", "nb"))
   expect_type(result$score, "double")
   expect_length(result$score, 1)
   expect_type(result$ed, "list")
-  expect_type(result$bal, "double")
-  expect_type(result$adj, "double")
   expect_type(result$nb, "list")
 })
 
@@ -389,9 +385,7 @@ test_that("objective_function_piepho handles incremental calculation with curren
   )
 
   expect_type(incremental_result, "list")
-  expect_named(incremental_result, c("score", "ed",
-                                     # "bal", "adj",
-                                     "nb"))
+  expect_named(incremental_result, c("score", "ed", "nb"))
 
   # Test that incremental calculation works differently from full calculation
   # The incremental result should have the same overall structure but potentially different values
@@ -421,9 +415,7 @@ test_that("objective_function_piepho works without pair_mapping", {
 
   result <- objective_function_piepho(design_df, "treatment", c("row", "col"))
   expect_type(result, "list")
-  expect_named(result, c("score", "ed",
-                         # "bal", "adj",
-                         "nb"))
+  expect_named(result, c("score", "ed", "nb"))
 })
 
 test_that("objective_function_piepho handles different spatial column configurations", {
@@ -504,9 +496,7 @@ test_that("objective_function_piepho uses custom row and column names", {
     col_column = "Column"
   )
   expect_type(result, "list")
-  expect_named(result, c("score", "ed",
-                         # "bal", "adj",
-                         "nb"))
+  expect_named(result, c("score", "ed", "nb"))
 })
 
 test_that("objective_function_piepho score is properly rounded to 10 decimal places", {
@@ -556,9 +546,7 @@ test_that("objective_function_piepho handles designs with missing values", {
     pair_mapping = pair_mapping
   )
   expect_type(result, "list")
-  expect_named(result, c("score", "ed",
-                         # "bal", "adj",
-                         "nb"))
+  expect_named(result, c("score", "ed", "nb"))
 })
 
 test_that("objective_function_piepho errors on single treatment design", {
@@ -588,24 +576,25 @@ test_that("objective_function_piepho individual components are reasonable", {
 
   # Check individual components are sensible
   expect_true(is.finite(result$score))
-  expect_true(is.finite(result$bal))
-  expect_true(is.finite(result$adj))
-  expect_gte(result$adj, 0) # Adjacency score should be non-negative
-  expect_gte(result$bal, 0) # Balance score should be non-negative
+  expect_gte(result$score, 0)
 
   # Check nb component structure
-  expect_named(result$nb, c("nb", "max_nb", "max_pairs", "var"))
+  expect_named(
+    result$nb,
+    c("nb", "max_nb", "max_pairs", "var", "s2", "self_adjacencies")
+  )
   expect_true(is.finite(result$nb$max_nb))
   expect_true(is.finite(result$nb$var))
   expect_gte(result$nb$var, 0) # Variance should be non-negative
+  expect_gte(result$nb$s2, 0)
+  expect_gte(result$nb$self_adjacencies, 0)
 
   # Check ed component structure
   expect_type(result$ed, "list")
-  for (ed_rep in result$ed) {
-    expect_named(ed_rep, c("msts", "min_mst", "min_items"))
-    expect_true(is.finite(ed_rep$min_mst))
-    expect_gte(ed_rep$min_mst, 0) # MST should be non-negative
-  }
+  expect_named(result$ed, c("msts", "total_mst", "inv_total_mst"))
+  expect_true(all(is.finite(result$ed$msts)))
+  expect_true(all(result$ed$msts >= 0)) # MST lengths are non-negative
+  expect_true(is.finite(result$ed$inv_total_mst))
 })
 
 test_that("objective_function_piepho handles extra parameters via ...", {
@@ -630,9 +619,7 @@ test_that("objective_function_piepho handles extra parameters via ...", {
   })
 
   expect_type(result, "list")
-  expect_named(result, c("score", "ed",
-                         # "bal", "adj",
-                         "nb"))
+  expect_named(result, c("score", "ed", "nb"))
 })
 
 test_that("objective_function_factorial works", {

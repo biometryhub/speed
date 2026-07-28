@@ -4,30 +4,74 @@
 \alias{calculate_nb}
 \title{Neighbour Balance Calculation}
 \usage{
-calculate_nb(design_matrix, pair_mapping = NULL)
+calculate_nb(design_matrix, pair_mapping = NULL, directions = "auto")
 }
 \arguments{
 \item{design_matrix}{A matrix representing the design}
 
-\item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
+\item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}. Generated from
+\code{design_matrix} when not supplied.}
+
+\item{directions}{Adjacency directions to count: \code{"row"} for horizontal neighbours within a row,
+\code{"col"} for vertical neighbours within a column, or both. Defaults to \code{"auto"}, which picks the
+direction from the shape of the layout following Piepho et al. (2021), Section 2: rows when there
+are more columns than rows - the usual field case, where plots are long and thin down the column,
+so that only the long boundaries between plots in a row are shared - columns when there are more
+rows than columns, and both when the layout is square and neither orientation is privileged.
+Resolvability and latinization also enter that rule in the source paper, but \code{speed} does not model
+those, so pass the directions explicitly for a resolvable design.}
 }
 \value{
 Named list containing:
 \itemize{
-\item nb - Table of pairs of items and their number of occurrence
-\item max_nb - The highest number of occurrence
-\item max_pairs - Vector of pairs of items with the highest number of occurrence
+\item nb - Named integer vector of counts for every distinct pair of items, including pairs that
+are never adjacent (count 0)
+\item max_nb - The highest number of occurrences
+\item max_pairs - Vector of pairs of items with the highest number of occurrences
+\item var - Variance of \code{nb}; 0 when the design is completely neighbour balanced
+\item s2 - The NB score of Piepho et al. (2018), Table 2: \code{sum(n * (n - 1) / 2)} over pairs
+\item self_adjacencies - Number of adjacencies between plots holding the same item, excluded
+from \code{nb}
 }
 }
 \description{
-A metric that counts the occurrence of the same adjacent pairs. Only horizontal and vertical pairs are
-counted.
+A metric describing the neighbour balance (NB) of a design: how evenly the direct adjacencies of the
+design are spread over the distinct pairs of items.
+}
+\details{
+Following Piepho et al. (2018), Section 3.2(c), neighbour balance is assessed from \code{n_h}, the number
+of item \emph{pairs} having \code{h} adjacencies. Two properties of that definition matter in practice:
+\itemize{
+\item The tabulation covers \strong{every} distinct pair of items, so a pair that is never adjacent
+contributes a count of 0. Dropping such pairs would let a design improve its score by making
+pairs disappear rather than by balancing them.
+\item Self-pairs (an item adjacent to itself) are \strong{not} part of \code{n_h}; the source papers exclude
+such designs by requiring the design to be binary. Self-adjacencies are still counted here and
+reported as \code{self_adjacencies} so that they can be penalised separately.
+}
+
+Complete NB means every pair is adjacent equally often, and partial NB means the counts take only
+two values differing by one. Both \code{var} and \code{s2} measure departure from that ideal, and both are
+quantities to \emph{minimise}. For binary designs they are equivalent up to a positive affine
+transformation, because the total number of adjacencies is then fixed by the layout.
 }
 \examples{
 design_matrix <- matrix(c(1, 2, 2, 1, 3, 3, 1, 3, 3), nrow = 3, ncol = 3)
 calculate_nb(design_matrix)
 
+# count adjacencies along rows only, as in Piepho et al. (2018)
+calculate_nb(design_matrix, directions = "row")
+
+}
+\references{
+Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of
+distribution of treatment replications in row-column designs. Biometrical Journal, 60(6),
+1172-1189. \url{https://doi.org/10.1002/bimj.201800013}
+
+Piepho, H. P., Williams, E. R., & Michel, V. (2021). Generating row-column field experimental
+designs with good neighbour balance and even distribution of treatment replications. Journal of
+Agronomy and Crop Science, 207, 745-753. \url{https://doi.org/10.1111/jac.12463}
 }
 \seealso{
-\code{\link[=objective_function_piepho]{objective_function_piepho()}}
+\code{\link[=objective_function_piepho]{objective_function_piepho()}}, \code{\link[=create_pair_mapping]{create_pair_mapping()}}
 }
