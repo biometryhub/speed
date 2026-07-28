@@ -21,16 +21,26 @@ A-efficiency factor (a row--column model metric and the heaviest to
 compute). Returns \code{NA} with a reason when its assumptions are not met
 (columns named \code{row} and \code{col}, and at least 3 treatments).}
 
-\item{connectedness}{\code{NULL} (default) checks whether treatments are estimable
-(connected), but skips the check for very large designs where the model fit
-would be expensive; \code{TRUE} forces it regardless of size; \code{FALSE} skips it.
-The check fits \verb{lm(~ <spatial factors + block> + treatment)} and looks for
-aliased treatment contrasts.}
+\item{connectedness}{\code{NULL} (default) checks whether the design is
+\emph{connected}: whether every pairwise treatment difference is \emph{estimable}
+(statistically distinguishable) once row, column and any block effects are
+accounted for. A disconnected design confounds some treatment comparisons
+with the layout itself, no matter how much data you collect. Uses
+whichever spatial factors the design was actually optimised with (e.g. row
+and column, and a block or site factor if present) - not just literal
+\code{row}/\code{col} columns. Skips the check for very large designs where the
+model fit would be expensive; \code{TRUE} forces it regardless of size; \code{FALSE}
+skips it.}
 
 \item{concurrence}{\code{NULL} (default) computes within-block treatment
-concurrences only when an \emph{incomplete} block factor is present (they are
-uninformative for complete blocks such as RCBD/split-plot); \code{TRUE} forces
-them even for complete blocks, \code{FALSE} skips them.}
+\emph{concurrence} - how many blocks each pair of treatments shares, reported
+as \verb{lambda min-max} (e.g. \verb{lambda 2-3} means the least-shared pair of
+treatments appears together in 2 blocks and the most-shared pair in 3;
+equal lambda across all pairs indicates a balanced incomplete-block
+design). Only computed when an \emph{incomplete} block factor is present -
+concurrences are uninformative for complete blocks such as RCBD/split-plot,
+where every pair always shares every block; \code{TRUE} forces them even for
+complete blocks, \code{FALSE} skips them.}
 
 \item{neighbour}{\code{NULL} (default) reports neighbour-balance diagnostics when
 the design was optimised with \code{objective_function_piepho}; override with

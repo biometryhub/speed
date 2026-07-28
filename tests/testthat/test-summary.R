@@ -195,6 +195,23 @@ test_that("buffers are excluded from summary() and print() entirely", {
   expect_false(any(grepl("buffer", capture_output(print(rb)), ignore.case = TRUE)))
 })
 
+test_that("neighbour balance is unaffected by buffers (KNOWN_ISSUES.md #1a)", {
+  # add_buffers("edge") shifts row/col by 1; .neighbour_balance() must use the
+  # (offset-invariant) layout$nrow/ncol rather than max(row)/max(col), or it
+  # reshapes the treatment grid with the wrong dimensions.
+  d <- data.frame(row = rep(1:4, times = 3), col = rep(1:3, each = 4),
+                  treatment = rep(LETTERS[1:3], 4))
+  r  <- speed(d, swap = "treatment", swap_within = "1", spatial_factors = ~ row + col,
+              obj_function = objective_function_piepho, iterations = 100, seed = 1,
+              quiet = TRUE)
+  rb <- add_buffers(r, "edge")
+
+  nb_unbuffered <- summary(r)$per_level[[1]]$evaluation$neighbour
+  expect_no_warning(nb_buffered <- summary(rb)$per_level[[1]]$evaluation$neighbour)
+  expect_true(nb_buffered$available)
+  expect_equal(nb_buffered, nb_unbuffered)
+})
+
 # --- Phase 4: evaluation metrics ------------------------------------------
 
 block_design <- function(seed = 7) {

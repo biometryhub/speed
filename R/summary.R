@@ -14,15 +14,25 @@
 #'   A-efficiency factor (a row--column model metric and the heaviest to
 #'   compute). Returns `NA` with a reason when its assumptions are not met
 #'   (columns named `row` and `col`, and at least 3 treatments).
-#' @param connectedness `NULL` (default) checks whether treatments are estimable
-#'   (connected), but skips the check for very large designs where the model fit
-#'   would be expensive; `TRUE` forces it regardless of size; `FALSE` skips it.
-#'   The check fits `lm(~ <spatial factors + block> + treatment)` and looks for
-#'   aliased treatment contrasts.
+#' @param connectedness `NULL` (default) checks whether the design is
+#'   *connected*: whether every pairwise treatment difference is *estimable*
+#'   (statistically distinguishable) once row, column and any block effects are
+#'   accounted for. A disconnected design confounds some treatment comparisons
+#'   with the layout itself, no matter how much data you collect. Uses
+#'   whichever spatial factors the design was actually optimised with (e.g. row
+#'   and column, and a block or site factor if present) - not just literal
+#'   `row`/`col` columns. Skips the check for very large designs where the
+#'   model fit would be expensive; `TRUE` forces it regardless of size; `FALSE`
+#'   skips it.
 #' @param concurrence `NULL` (default) computes within-block treatment
-#'   concurrences only when an *incomplete* block factor is present (they are
-#'   uninformative for complete blocks such as RCBD/split-plot); `TRUE` forces
-#'   them even for complete blocks, `FALSE` skips them.
+#'   *concurrence* - how many blocks each pair of treatments shares, reported
+#'   as `lambda min-max` (e.g. `lambda 2-3` means the least-shared pair of
+#'   treatments appears together in 2 blocks and the most-shared pair in 3;
+#'   equal lambda across all pairs indicates a balanced incomplete-block
+#'   design). Only computed when an *incomplete* block factor is present -
+#'   concurrences are uninformative for complete blocks such as RCBD/split-plot,
+#'   where every pair always shares every block; `TRUE` forces them even for
+#'   complete blocks, `FALSE` skips them.
 #' @param neighbour `NULL` (default) reports neighbour-balance diagnostics when
 #'   the design was optimised with `objective_function_piepho`; override with
 #'   `TRUE`/`FALSE`.
@@ -59,26 +69,19 @@ summary.design <- function(object,
     stop("This design has no `metadata`; it may predate the summary() method. ",
          "Re-run speed() to produce a summarisable design.", call. = FALSE)
   }
-  # Exclude buffer plots (add_buffers() appends rows with the treatment columns
-  # set to "buffer"). Buffers are a practical convenience for laying the design
-  # out in the field, not part of the statistical design, so they take no part
-  # in the summary and are not reported. The stored score components are
-  # unaffected: they were captured during optimisation, before any buffers.
+  # Buffers (from add_buffers()) are a field-layout convenience, not part of
+  # the statistical design, so they're excluded before any computation.
   df <- .drop_buffer_rows(object$design_df, meta)
   hierarchical <- is.list(object$treatments)
   rc <- meta$row_column %||% "row"
   cc <- meta$col_column %||% "col"
   levels <- meta$levels %||% names(meta$per_level)
 
-  # Resolve evaluation toggles. concurrence auto-on only when an *incomplete*
-  # block factor exists (it is uninformative for complete blocks); neighbour
-  # auto-on when any level used the neighbour-balance objective. The block
-  # factor itself is resolved per level below (each level may have different
-  # spatial factors, so a block column meaningful to one level need not be
-  # meaningful to another).
+  # neighbour auto-on if any level used the neighbour-balance objective; the
+  # block factor is resolved per level below since levels may differ.
   want_neighbour <- if (is.null(neighbour)) {
     any(vapply(meta$per_level,
-               function(p) identical(p$obj_function, objective_function_piepho),
+               function(p) return(identical(p$obj_function, objective_function_piepho)),
                logical(1)))
   } else {
     isTRUE(neighbour)
@@ -113,13 +116,11 @@ summary.design <- function(object,
       distribution = table(counts)
     )
 
-    sf_levels <- vapply(sf, function(s) length(unique(df[[s]])), integer(1))
+    sf_levels <- vapply(sf, function(s) return(length(unique(df[[s]]))), integer(1))
     names(sf_levels) <- sf
 
-    # Score components captured during the run (see speed_hierarchical): a named
-    # numeric vector of the additive pieces that sum to the final score, faithful
-    # to the objective and arguments actually used. NULL for custom objectives
-    # that do not return `components`.
+    # Score components captured during the run (see speed_hierarchical); NULL
+    # for custom objectives that don't return one.
     trace   <- if (hierarchical) object$scores[[lv]] else object$scores
     initial <- if (length(trace)) trace[[1]] else NA_real_
     final   <- pm$final_score %||% NA_real_
@@ -127,7 +128,7 @@ summary.design <- function(object,
     run     <- if (hierarchical) length(object$scores[[lv]]) else object$iterations_run
     stopped <- if (hierarchical) isTRUE(object$stopped_early[[lv]]) else isTRUE(object$stopped_early)
 
-    # --- Evaluation metrics (Phase 4) ---
+    # --- Evaluation metrics ---
     evaluation <- list(
       replicate_span = .replicate_spans(df, swap, rc, cc),
       connectedness  = if (isFALSE(connectedness)) {
@@ -149,14 +150,16 @@ summary.design <- function(object,
       } else {
         list(available = FALSE, reason = "not requested (set efficiency = TRUE)")
       },
-      neighbour = if (want_neighbour) {
-        .neighbour_balance(df, swap, rc, cc)
+      neighbour = if (want_neighbour && has_grid) {
+        .neighbour_balance(df, swap, layout$nrow, layout$ncol)
+      } else if (want_neighbour) {
+        list(available = FALSE, reason = "no row/column factors")
       } else {
         NULL
       }
     )
 
-    list(
+    return(list(
       swap            = swap,
       n_treatments    = length(trts),
       treatments      = trts,
@@ -176,16 +179,16 @@ summary.design <- function(object,
         iterations_run       = run,
         stopped_early        = stopped
       )
-    )
+    ))
   })
   names(per_level) <- levels
 
   # Flags.
-  hit_cap <- vapply(per_level, function(p) !p$optim$stopped_early, logical(1))
-  unequal <- vapply(per_level, function(p) !p$replication$equal, logical(1))
+  hit_cap <- vapply(per_level, function(p) return(!p$optim$stopped_early), logical(1))
+  unequal <- vapply(per_level, function(p) return(!p$replication$equal), logical(1))
   disconnected <- vapply(per_level, function(p) {
     cn <- p$evaluation$connectedness
-    isTRUE(cn$available) && isTRUE(!cn$connected)
+    return(isTRUE(cn$available) && isTRUE(!cn$connected))
   }, logical(1))
   flags <- list(
     hit_iteration_cap   = names(hit_cap)[hit_cap],
@@ -193,7 +196,7 @@ summary.design <- function(object,
     disconnected        = names(disconnected)[disconnected]
   )
 
-  structure(
+  return(structure(
     list(
       hierarchical = hierarchical,
       layout       = layout,
@@ -205,7 +208,7 @@ summary.design <- function(object,
       call         = meta$call
     ),
     class = "summary.design"
-  )
+  ))
 }
 
 #' Identify a known objective function by name
@@ -227,7 +230,7 @@ summary.design <- function(object,
   for (nm in names(known)) {
     if (identical(fn, known[[nm]])) return(nm)
   }
-  "custom"
+  return("custom")
 }
 
 #' Print method for design summaries
@@ -240,11 +243,11 @@ summary.design <- function(object,
 #' @export
 print.summary.design <- function(x, ...) {
   pad <- 14
-  lab <- function(s) formatC(s, width = -pad)
+  lab <- function(s) return(formatC(s, width = -pad))
   indent <- strrep(" ", pad)
-  fmt_int <- function(n) format(n, big.mark = ",", scientific = FALSE, trim = TRUE)
-  fmt_num <- function(n) format(round(n, 4), big.mark = ",", trim = TRUE)
-  section <- function(title) cat("\n", title, "\n", strrep("-", nchar(title)), "\n", sep = "")
+  fmt_int <- function(n) return(format(n, big.mark = ",", scientific = FALSE, trim = TRUE))
+  fmt_num <- function(n) return(format(round(n, 4), big.mark = ",", trim = TRUE))
+  section <- function(title) return(cat("\n", title, "\n", strrep("-", nchar(title)), "\n", sep = ""))
 
   cat("Design Summary\n")
   cat("==============\n")
@@ -291,8 +294,7 @@ print.summary.design <- function(x, ...) {
   # --- Optimisation ---
   section("Optimisation")
   cat(lab("Seed:"), x$seed, "\n", sep = "")
-  # The overall score is the sum of per-level scores; only meaningful to show
-  # separately when there is more than one level.
+  # Only meaningful to show the total separately when there's more than one level.
   if (x$hierarchical) cat(lab("Total score:"), fmt_num(x$score), "\n", sep = "")
   for (lv in x$levels) .print_level_optim(x, lv, lab, indent, fmt_int, fmt_num)
 
@@ -300,7 +302,7 @@ print.summary.design <- function(x, ...) {
   section("Evaluation")
   for (lv in x$levels) .print_level_evaluation(x, lv, lab, fmt_num)
 
-  invisible(x)
+  return(invisible(x))
 }
 
 #' Print one level's evaluation block (connectedness, concurrence, spans, ...)
@@ -367,6 +369,7 @@ print.summary.design <- function(x, ...) {
                 fmt_num(nb$nb_var), nb$max_pair_count),
         "\n", sep = "")
   }
+  return(invisible(NULL))
 }
 
 #' Print one level's structure block (treatments, replication, spatial factors)
@@ -392,13 +395,8 @@ print.summary.design <- function(x, ...) {
     cat(lab("Spatial:"),
         paste(sprintf("%s (%d)", names(sf), sf), collapse = ", "), "\n", sep = "")
   }
+  return(invisible(NULL))
 }
-
-# ---------------------------------------------------------------------------
-# Phase 4 evaluation helpers (base R, no new dependencies). Each returns a list
-# with an `available` flag; when FALSE it carries a `reason` string so the
-# printer can show a one-line note instead of a value.
-# ---------------------------------------------------------------------------
 
 #' Drop buffer plots from a design data frame
 #'
@@ -413,16 +411,14 @@ print.summary.design <- function(x, ...) {
 #' @return `df` with any buffer rows removed.
 #' @keywords internal
 .drop_buffer_rows <- function(df, meta) {
-  if (is.null(meta) || is.null(meta$per_level)) return(df)
-  swap_cols <- unique(vapply(meta$per_level, function(p) p$swap, character(1)))
-  swap_cols <- swap_cols[swap_cols %in% names(df)]
-  if (!length(swap_cols)) return(df)
+  if (is.null(meta$per_level)) return(df)
+  swap_cols <- unique(vapply(meta$per_level, function(p) return(p$swap), character(1)))
   buffer_rows <- logical(nrow(df))
   for (s in swap_cols) buffer_rows <- buffer_rows | as.character(df[[s]]) == "buffer"
   if (!any(buffer_rows)) return(df)
   df <- df[!buffer_rows, , drop = FALSE]
   for (s in swap_cols) if (is.factor(df[[s]])) df[[s]] <- droplevels(df[[s]])
-  df
+  return(df)
 }
 
 #' Replicate spatial spans
@@ -442,7 +438,8 @@ print.summary.design <- function(x, ...) {
     return(list(available = FALSE, reason = "no row/column factors"))
   }
   span1 <- function(x) {
-    if (length(x) < 2) NA_real_ else min(stats::dist(x, "manhattan")) + 1
+    if (length(x) < 2) return(NA_real_)
+    return(min(stats::dist(x, "manhattan")) + 1)
   }
   rows <- as_numeric_factor(df[[rc]])
   cols <- as_numeric_factor(df[[cc]])
@@ -450,14 +447,14 @@ print.summary.design <- function(x, ...) {
   row_spans <- tapply(rows, trt, span1)
   col_spans <- tapply(cols, trt, span1)
   has_reps <- !is.na(row_spans)
-  list(
+  return(list(
     available    = TRUE,
     row_spans    = row_spans,
     col_spans    = col_spans,
     min_row_span = if (any(has_reps)) min(row_spans, na.rm = TRUE) else NA_real_,
     min_col_span = if (any(has_reps)) min(col_spans, na.rm = TRUE) else NA_real_,
     n_replicated = sum(has_reps)
-  )
+  ))
 }
 
 #' Detect a block-type factor for one level of a design
@@ -481,7 +478,7 @@ print.summary.design <- function(x, ...) {
   if (length(block_like)) return(block_like[[1]])
   if (length(cand)) return(cand[[1]])
   if ("block" %in% names(df)) return("block")
-  NULL
+  return(NULL)
 }
 
 #' Design connectedness (base R, no lme4)
@@ -516,7 +513,7 @@ print.summary.design <- function(x, ...) {
   }
   # Guard against expensive fits: the dense model matrix has ~p columns and the
   # QR is O(n * p^2). Skip (unless forced) when that is large enough to be slow.
-  p <- 1 + sum(vapply(nuisance, function(f) length(unique(df[[f]])) - 1L, integer(1))) +
+  p <- 1 + sum(vapply(nuisance, function(f) return(length(unique(df[[f]])) - 1L), integer(1))) +
     (n_trt - 1)
   if (!force && as.double(nrow(df)) * p^2 > 1e9) {
     return(list(available = FALSE,
@@ -529,7 +526,7 @@ print.summary.design <- function(x, ...) {
   co <- stats::coef(fit)
   n_aliased <- sum(is.na(co) & startsWith(names(co), swap))
   model <- paste(nuisance, collapse = " + ")
-  list(
+  return(list(
     available = TRUE, method = sprintf("model (%s)", model),
     connected = n_aliased == 0, n_aliased = n_aliased,
     message = if (n_aliased == 0) {
@@ -537,7 +534,7 @@ print.summary.design <- function(x, ...) {
     } else {
       sprintf("%d treatment contrast(s) not estimable given %s", n_aliased, model)
     }
-  )
+  ))
 }
 
 #' Treatment concurrences within blocks
@@ -563,7 +560,7 @@ print.summary.design <- function(x, ...) {
   }
   C <- M %*% t(M)
   lambda <- C[upper.tri(C)]
-  list(
+  return(list(
     available       = TRUE,
     block           = block,
     complete        = complete,
@@ -571,7 +568,7 @@ print.summary.design <- function(x, ...) {
     lambda_max      = max(lambda),
     lambda_constant = length(unique(lambda)) == 1,
     n_zero_pairs    = sum(lambda == 0)
-  )
+  ))
 }
 
 #' A-efficiency factor (opt-in wrapper)
@@ -592,32 +589,30 @@ print.summary.design <- function(x, ...) {
   ef <- tryCatch(
     eval(bquote(calculate_efficiency_factor(df, .(as.name(swap)),
                                             row_column = rc, col_column = cc))),
-    error = function(e) NULL
+    error = function(e) return(NULL)
   )
   if (is.null(ef) || !is.finite(ef)) {
     return(list(available = FALSE, reason = "could not be computed for this design"))
   }
-  list(available = TRUE, value = ef)
+  return(list(available = TRUE, value = ef))
 }
 
 #' Neighbour-balance diagnostics
 #'
 #' Builds the treatment grid and reports the variance of adjacent-pair counts
 #' (the quantity `objective_function_piepho` minimises via `nb_score`) and the
-#' most frequent adjacent pair count.
+#' most frequent adjacent pair count. Takes `nrow`/`ncol` from the caller's
+#' `layout` (counted via `length(unique(...))`) rather than deriving them from
+#' `max(row)`/`max(col)`: buffer plots (`add_buffers()`) can shift row/col
+#' numbering so it no longer starts at 1, which would otherwise reshape the
+#' grid with the wrong dimensions. Assumes `rc`/`cc` are present in `df`;
+#' callers should check `has_grid` first (see `summary.design()`).
 #'
 #' @keywords internal
-.neighbour_balance <- function(df, swap, rc, cc) {
-  if (!all(c(rc, cc) %in% names(df))) {
-    return(list(available = FALSE, reason = "no row/column factors"))
-  }
-  dm <- matrix(
-    df[[swap]],
-    nrow = max(as_numeric_factor(df[[rc]]), na.rm = TRUE),
-    ncol = max(as_numeric_factor(df[[cc]]), na.rm = TRUE)
-  )
+.neighbour_balance <- function(df, swap, nrow, ncol) {
+  dm <- matrix(df[[swap]], nrow = nrow, ncol = ncol)
   nb <- calculate_nb(dm)
-  list(available = TRUE, nb_var = nb$var, max_pair_count = nb$max_nb)
+  return(list(available = TRUE, nb_var = nb$var, max_pair_count = nb$max_nb))
 }
 
 #' Print one level's optimisation block (objective, score components, schedule)
@@ -634,8 +629,8 @@ print.summary.design <- function(x, ...) {
       sprintf("%s  (initial %s -> final %s)",
               fmt_num(s$final), fmt_num(s$initial), fmt_num(s$final)),
       "\n", sep = "")
-  # Faithful additive decomposition of the score, when the objective exposes one
-  # (the components sum to the final score). Custom objectives may omit it.
+  # Additive decomposition of the score, when the objective exposes one (custom
+  # objectives may omit it).
   comp <- s$components
   if (!is.null(comp) && length(comp)) {
     w <- max(nchar(names(comp)))
@@ -649,4 +644,5 @@ print.summary.design <- function(x, ...) {
   cat(lab("Temperature:"),
       sprintf("start %s, cooling %s", fmt_num(o$start_temp), fmt_num(o$cooling_rate)),
       "\n", sep = "")
+  return(invisible(NULL))
 }

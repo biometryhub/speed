@@ -4,11 +4,16 @@
 \alias{.neighbour_balance}
 \title{Neighbour-balance diagnostics}
 \usage{
-.neighbour_balance(df, swap, rc, cc)
+.neighbour_balance(df, swap, nrow, ncol)
 }
 \description{
 Builds the treatment grid and reports the variance of adjacent-pair counts
 (the quantity \code{objective_function_piepho} minimises via \code{nb_score}) and the
-most frequent adjacent pair count.
+most frequent adjacent pair count. Takes \code{nrow}/\code{ncol} from the caller's
+\code{layout} (counted via \code{length(unique(...))}) rather than deriving them from
+\code{max(row)}/\code{max(col)}: buffer plots (\code{add_buffers()}) can shift row/col
+numbering so it no longer starts at 1, which would otherwise reshape the
+grid with the wrong dimensions. Assumes \code{rc}/\code{cc} are present in \code{df};
+callers should check \code{has_grid} first (see \code{summary.design()}).
 }
 \keyword{internal}

@@ -232,9 +232,8 @@ speed <- function(data,
          row_column = row_column, col_column = col_column),
     dots
   ))
-  # Attach the captured call here rather than threading it through `do.call()`:
-  # a language object passed via `do.call(quote = FALSE)` would be evaluated,
-  # re-invoking speed() recursively.
+  # Set here, not passed through do.call(): do.call would evaluate a language
+  # object argument, re-invoking speed() recursively.
   design$metadata$call <- call
   design$design_df[[dummy_group]] <- NULL
   design$design_df <- to_types(design$design_df, factored$input_types)
@@ -376,10 +375,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     bal_weight <- optimise_params$bal_weight
     spatial_cols <- all.vars(opt$spatial_factors)
 
-    # treatments and score for each level. Capture the full objective return
-    # (not just the score) so the additive score components - computed with the
-    # exact arguments used during optimisation, including any ring args - are
-    # available to summary() for a faithful decomposition.
+    # Capture the full objective return, not just the score, so summary() can
+    # report faithful score components.
     treatments[[level]] <- stringi::stri_sort(unique(as.vector(best_design[[opt$swap]])), numeric = TRUE)
     score_obj <- opt$obj_function(best_design, opt$swap, spatial_cols, adj_weight = adj_weight,
                                   bal_weight = bal_weight, ...)
@@ -400,8 +397,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   }
 
   .dots <- list(...)
-  # `call` is attached by speed() after this returns (see the comment there) -
-  # not set here, since this function has no meaningful call to record.
+  # `call` is attached by speed() after this returns, not here.
   metadata <- list(
     levels     = hierarchy_levels,
     row_column = .dots$row_column %||% "row",
