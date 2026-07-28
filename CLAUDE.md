@@ -135,3 +135,4 @@ lists keyed by level name - `print.design` and downstream code branch on `is.lis
 - The `dummy_<timestamp>` column inside `speed()` is a temporary level used to represent "no `swap_within`
   boundary" (`"1"` / `"none"`); it is added before the SA loop and removed before returning.
 - Inline code comments should be concise, briefly explaining the necessary details, not extensive minutiae.
+- Functions should have an explicit return statement as the final line of each function, including functions encapsulated within other functions.
