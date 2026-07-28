@@ -247,9 +247,9 @@ print.summary.design <- function(x, ...) {
   indent <- strrep(" ", pad)
   fmt_int <- function(n) return(format(n, big.mark = ",", scientific = FALSE, trim = TRUE))
   fmt_num <- function(n) return(format(round(n, 4), big.mark = ",", trim = TRUE))
-  section <- function(title) return(cat("\n", title, "\n", strrep("-", nchar(title)), "\n", sep = ""))
+  section <- function(title) return(cat("\n", crayon::bold(title), "\n", strrep("-", nchar(title)), "\n", sep = ""))
 
-  cat("Design Summary\n")
+  cat(crayon::bold("Design Summary"), "\n", sep = "")
   cat("==============\n")
 
   # --- Flags (only when something is worth flagging) ---
@@ -638,8 +638,15 @@ print.summary.design <- function(x, ...) {
       cat(indent, formatC(nm, width = -(w + 2)), fmt_num(comp[[nm]]), "\n", sep = "")
     }
   }
-  iter <- sprintf("%s / %s", fmt_int(o$iterations_run), fmt_int(o$iterations_requested))
-  iter <- paste0(iter, if (o$stopped_early) " (stopped early)" else " (ran to cap)")
+  # Whether the run converged (stopped early) or hit the iteration cap is the
+  # single most useful signal here, so it's colour-highlighted either way.
+  stop_reason <- if (o$stopped_early) {
+    crayon::green("(stopped early)")
+  } else {
+    crayon::bold(crayon::magenta("(ran to cap)"))
+  }
+  iter <- paste(sprintf("%s / %s", fmt_int(o$iterations_run), fmt_int(o$iterations_requested)),
+               stop_reason)
   cat(lab("Iterations:"), iter, "\n", sep = "")
   cat(lab("Temperature:"),
       sprintf("start %s, cooling %s", fmt_num(o$start_temp), fmt_num(o$cooling_rate)),
