@@ -4,7 +4,8 @@
 
 - Added a `summary()` method for `"design"` objects, reporting structure and replication, a
   decomposed optimisation score, and design-quality diagnostics (connectedness, concurrence,
-  replicate spans, opt-in efficiency, and neighbour balance).
+  replicate spans, opt-in efficiency, and neighbour balance). Section headings and the
+  convergence status are coloured (via `crayon`) in interactive/colour-capable terminals.
 
 ## Minor Changes
 

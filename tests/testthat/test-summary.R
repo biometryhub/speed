@@ -157,6 +157,34 @@ test_that("print.summary.design returns the object invisibly", {
   expect_identical(print(s), s)
 })
 
+test_that("print.summary.design colours section headings and convergence status", {
+  s <- summary(simple_design(iterations = 5000))  # enough to stop early
+
+  # Colour is off by default in non-interactive test runs; strip it either way
+  # so the plain-text content is unaffected regardless of terminal support.
+  out_plain <- capture_output(print(s))
+  expect_match(out_plain, "Structure")
+  expect_match(out_plain, "stopped early")
+
+  # testthat's reproducible-output setup forces `cli.num_colors = 1`, which
+  # crayon checks ahead of `crayon.enabled` - override both to actually force
+  # colour on for this test.
+  withr::with_options(list(crayon.enabled = TRUE, cli.num_colors = 8), {
+    out <- capture_output(print(s))
+  })
+  expect_match(out, "\033\\[1mStructure\033\\[22m")
+  expect_match(out, "\033\\[32m\\(stopped early\\)\033\\[39m")
+
+  cap <- summary(prep_design())  # 50 iterations, no early stop -> hits the cap
+  # testthat's reproducible-output setup forces `cli.num_colors = 1`, which
+  # crayon checks ahead of `crayon.enabled` - override both to actually force
+  # colour on for this test.
+  withr::with_options(list(crayon.enabled = TRUE, cli.num_colors = 8), {
+    out_cap <- capture_output(print(cap))
+  })
+  expect_match(out_cap, "\033\\[1m\033\\[35m\\(ran to cap\\)\033\\[39m\033\\[22m")
+})
+
 test_that(".objective_name maps known objectives and falls back to custom", {
   expect_equal(.objective_name(objective_function), "objective_function")
   expect_equal(.objective_name(objective_function_factorial),
