@@ -137,7 +137,13 @@ test_that("create_buffers works with speed optimised designs", {
   )
 
   # Run speed optimisation with few iterations
-  result <- speed(df, swap = "treatment", iterations = 100, quiet = TRUE, seed = 42)
+  result <- speed(
+    df,
+    swap = "treatment",
+    iterations = 100,
+    quiet = TRUE,
+    seed = 42
+  )
 
   # Add edge buffers to optimised design
   buffered_design <- add_buffers(result, type = "edge")
@@ -149,7 +155,9 @@ test_that("create_buffers works with speed optimised designs", {
 
   # Check that original treatments are preserved
   original_treatments <- sort(unique(result$design_df$treatment))
-  buffered_treatments <- sort(unique(buffered_design$design$treatment[buffered_design$design$treatment != "buffer"]))
+  buffered_treatments <- sort(unique(buffered_design$design$treatment[
+    buffered_design$design$treatment != "buffer"
+  ]))
   expect_equal(original_treatments, buffered_treatments)
 })
 
@@ -161,7 +169,13 @@ test_that("add_buffers preserves optimisation results", {
   )
 
   # Run speed optimisation
-  result <- speed(df, swap = "treatment", iterations = 50, quiet = TRUE, seed = 123)
+  result <- speed(
+    df,
+    swap = "treatment",
+    iterations = 50,
+    quiet = TRUE,
+    seed = 123
+  )
 
   # Store original score and seed
   original_score <- result$score
@@ -184,7 +198,13 @@ test_that("autoplot renders speed optimised design with edge buffers", {
   )
 
   # Run speed optimisation
-  result <- speed(df, swap = "treatment", iterations = 100, quiet = TRUE, seed = 42)
+  result <- speed(
+    df,
+    swap = "treatment",
+    iterations = 100,
+    quiet = TRUE,
+    seed = 42
+  )
 
   # Add edge buffers
   buffered_result <- add_buffers(result, type = "edge")
@@ -208,7 +228,13 @@ test_that("autoplot renders speed optimised design with row buffers", {
     treatment = rep(LETTERS[1:3], 3)
   )
 
-  result <- speed(df, swap = "treatment", iterations = 100, quiet = TRUE, seed = 42)
+  result <- speed(
+    df,
+    swap = "treatment",
+    iterations = 100,
+    quiet = TRUE,
+    seed = 42
+  )
   buffered_result <- add_buffers(result, type = "row")
 
   p <- autoplot(buffered_result)
@@ -226,7 +252,13 @@ test_that("autoplot renders speed optimised design with column buffers", {
     treatment = rep(LETTERS[1:3], 3)
   )
 
-  result <- speed(df, swap = "treatment", iterations = 100, quiet = TRUE, seed = 42)
+  result <- speed(
+    df,
+    swap = "treatment",
+    iterations = 100,
+    quiet = TRUE,
+    seed = 42
+  )
   buffered_result <- add_buffers(result, type = "column")
 
   p <- autoplot(buffered_result)
@@ -245,8 +277,14 @@ test_that("autoplot renders blocked design with buffers", {
     block = rep(1:3, each = 4)
   )
 
-  result <- speed(df, swap = "treatment", swap_within = "block",
-                  iterations = 100, quiet = TRUE, seed = 42)
+  result <- speed(
+    df,
+    swap = "treatment",
+    swap_within = "block",
+    iterations = 100,
+    quiet = TRUE,
+    seed = 42
+  )
 
   buffered_result <- add_buffers(result, type = "edge")
 
@@ -265,7 +303,13 @@ test_that("buffers work with different palette options", {
     treatment = rep(LETTERS[1:3], 3)
   )
 
-  result <- speed(df, swap = "treatment", iterations = 50, quiet = TRUE, seed = 42)
+  result <- speed(
+    df,
+    swap = "treatment",
+    iterations = 50,
+    quiet = TRUE,
+    seed = 42
+  )
   buffered_result <- add_buffers(result, type = "edge")
 
   # Test with colour blind palette
@@ -290,7 +334,13 @@ test_that("buffers render correctly with margin parameter", {
     treatment = rep(LETTERS[1:3], 3)
   )
 
-  result <- speed(df, swap = "treatment", iterations = 50, quiet = TRUE, seed = 42)
+  result <- speed(
+    df,
+    swap = "treatment",
+    iterations = 50,
+    quiet = TRUE,
+    seed = 42
+  )
   buffered_result <- add_buffers(result, type = "edge")
 
   # Without margin
@@ -312,13 +362,21 @@ test_that("create_buffers maintains treatment positions correctly", {
     treatment = c("A", "B", "C", "D")
   )
 
-  result <- speed(df, swap = "treatment", iterations = 50, quiet = TRUE, seed = 42)
+  result <- speed(
+    df,
+    swap = "treatment",
+    iterations = 50,
+    quiet = TRUE,
+    seed = 42
+  )
 
   # Add edge buffers
   result_buffered <- add_buffers(result, type = "edge")
 
   # Extract non-buffer treatments
-  non_buffers <- result_buffered$design[result_buffered$design$treatment != "buffer", ]
+  non_buffers <- result_buffered$design[
+    result_buffered$design$treatment != "buffer",
+  ]
 
   # Check that we have the same number of treatments
   expect_equal(nrow(non_buffers), nrow(result$design_df))
@@ -334,7 +392,13 @@ test_that("multiple buffer types can be visualized", {
     treatment = rep(LETTERS[1:3], 3)
   )
 
-  result <- speed(df, swap = "treatment", iterations = 50, quiet = TRUE, seed = 42)
+  result <- speed(
+    df,
+    swap = "treatment",
+    iterations = 50,
+    quiet = TRUE,
+    seed = 42
+  )
 
   # Test different buffer types
   buffer_types <- c("edge", "row", "column", "double row", "double column")
@@ -360,7 +424,13 @@ test_that("buffers work with legend display", {
     treatment = rep(LETTERS[1:3], 3)
   )
 
-  result <- speed(df, swap = "treatment", iterations = 50, quiet = TRUE, seed = 42)
+  result <- speed(
+    df,
+    swap = "treatment",
+    iterations = 50,
+    quiet = TRUE,
+    seed = 42
+  )
   buffered_result <- add_buffers(result, type = "edge")
 
   p_legend <- autoplot(buffered_result, legend = TRUE)
@@ -378,7 +448,13 @@ test_that("buffers work with rotation and size parameters", {
     treatment = rep(LETTERS[1:3], 3)
   )
 
-  result <- speed(df, swap = "treatment", iterations = 50, quiet = TRUE, seed = 42)
+  result <- speed(
+    df,
+    swap = "treatment",
+    iterations = 50,
+    quiet = TRUE,
+    seed = 42
+  )
   buffered_result <- add_buffers(result, type = "edge")
 
   # Test with rotation
@@ -398,12 +474,14 @@ test_that("hierarchical designs can have buffers added", {
     subplot_treatment = rep(letters[1:4], 6)
   )
 
-  result <- speed(df_split,
-                  swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
-                  swap_within = list(wp = "block", sp = "wholeplot"),
-                  iterations = 50,
-                  quiet = TRUE,
-                  seed = 42)
+  result <- speed(
+    df_split,
+    swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+    swap_within = list(wp = "block", sp = "wholeplot"),
+    iterations = 50,
+    quiet = TRUE,
+    seed = 42
+  )
 
   # Add buffers to hierarchical design
   buffered_result <- add_buffers(result, type = "edge")
@@ -414,7 +492,11 @@ test_that("hierarchical designs can have buffers added", {
   # Test plotting
   expect_no_error({
     p_wp <- autoplot(buffered_result, treatments = "wholeplot_treatment")
-    p_sp <- autoplot(buffered_result, treatments = "subplot_treatment", block = "wholeplot")
+    p_sp <- autoplot(
+      buffered_result,
+      treatments = "subplot_treatment",
+      block = "wholeplot"
+    )
   })
 })
 
@@ -425,7 +507,13 @@ test_that("buffers are displayed as white in plots", {
     treatment = rep(c("A", "B", "C"), 3)
   )
 
-  result <- speed(df, swap = "treatment", iterations = 50, quiet = TRUE, seed = 42)
+  result <- speed(
+    df,
+    swap = "treatment",
+    iterations = 50,
+    quiet = TRUE,
+    seed = 42
+  )
   buffered_result <- add_buffers(result, type = "edge")
 
   p <- autoplot(buffered_result)
@@ -483,11 +571,14 @@ test_that("buffers work correctly with early stopping", {
     treatment = rep(LETTERS[1:3], 3)
   )
 
-  result <- speed(df, swap = "treatment",
-                  iterations = 10000,
-                  early_stop_iterations = 50,
-                  quiet = TRUE,
-                  seed = 42)
+  result <- speed(
+    df,
+    swap = "treatment",
+    iterations = 10000,
+    early_stop_iterations = 50,
+    quiet = TRUE,
+    seed = 42
+  )
 
   # Add buffers to early-stopped design
   buffered_result <- add_buffers(result, type = "edge")
@@ -549,7 +640,7 @@ test_that("create_buffers handles design without treatment column", {
   df <- data.frame(
     row = rep(1:2, each = 2),
     col = rep(1:2, times = 2),
-    variety = rep(c("V1", "V2"), 2)  # Not named "treatment"
+    variety = rep(c("V1", "V2"), 2) # Not named "treatment"
   )
 
   # Call create_buffers without specifying treatment_cols
@@ -560,14 +651,22 @@ test_that("create_buffers handles design without treatment column", {
   expect_gt(nrow(result), nrow(df))
 
   # But variety column should have NAs for buffer plots (not "buffer")
-  buffer_rows <- result[result$row == 1 | result$row == max(result$row) | 
-                        result$col == 1 | result$col == max(result$col), ]
+  buffer_rows <- result[
+    result$row == 1 |
+      result$row == max(result$row) |
+      result$col == 1 |
+      result$col == max(result$col),
+  ]
   expect_true(all(is.na(buffer_rows$variety)))
 
   # Now test with explicit treatment_cols parameter
-  result2 <- create_buffers(df, type = "edge", blocks = FALSE, treatment_cols = "variety")
+  result2 <- create_buffers(
+    df,
+    type = "edge",
+    blocks = FALSE,
+    treatment_cols = "variety"
+  )
 
   # Should have "buffer" in the variety column
   expect_true("buffer" %in% result2$variety)
 })
-

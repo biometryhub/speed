@@ -400,9 +400,10 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
 #'
 #' @export
 calculate_ed <- function(
-    design_matrix,
-    current_ed = NULL,
-    swapped_items = NULL) {
+  design_matrix,
+  current_ed = NULL,
+  swapped_items = NULL
+) {
   if (!is.null(swapped_items)) {
     design_matrix[!(design_matrix %in% swapped_items)] <- NA
     msts <- lapply(current_ed, function(ed_by_rep) ed_by_rep$msts)

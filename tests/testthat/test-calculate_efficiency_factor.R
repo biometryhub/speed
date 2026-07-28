@@ -155,7 +155,7 @@ test_that("calculate_efficiency_factor handles designs with high treatment-space
   df_design_confounded <- data.frame(
     row = rep(1:8, each = 1),
     col = rep(1, times = 8),
-    treatment = c("A", "A", "A", "A", "B", "B", "B", "B")  # Single column, treatments in blocks
+    treatment = c("A", "A", "A", "A", "B", "B", "B", "B") # Single column, treatments in blocks
   )
 
   # This single-column design with blocked treatments should be numerically challenging
@@ -178,8 +178,18 @@ test_that("calculate_efficiency_factor uses pseudoinverse for matrices with high
     col = rep(1:2, times = 6),
     treatment = c(
       # Create patterns that introduce dependencies but not perfect singularity
-      "A", "B", "B", "A", "C", "A",
-      "B", "C", "A", "C", "B", "C"
+      "A",
+      "B",
+      "B",
+      "A",
+      "C",
+      "A",
+      "B",
+      "C",
+      "A",
+      "C",
+      "B",
+      "C"
     )
   )
 

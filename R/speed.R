@@ -219,6 +219,10 @@ speed <- function(data,
     }
   }
 
+  # `swap_all` exchanges whole label sets, which only preserves replication when
+  # the sets are the same size
+  .verify_swap_all_replication(data, optimise, dummy_group)
+
   dots <- list(...)
   .reject_optim_params_in_dots(dots)
   dots <- .prep_dots(dots, optimise, data)
@@ -465,7 +469,14 @@ print.design <- function(x, ...) {
     # Hierarchical design - show each level with its name
     cat("Treatments:\n")
     for (level_name in names(x$treatments)) {
-      cat("  ", level_name, ": ", paste(x$treatments[[level_name]], collapse = ", "), "\n", sep = "")
+      cat(
+        "  ",
+        level_name,
+        ": ",
+        paste(x$treatments[[level_name]], collapse = ", "),
+        "\n",
+        sep = ""
+      )
     }
   } else {
     # Simple design - show treatments as before
@@ -487,12 +498,16 @@ print.design <- function(x, ...) {
 #' @keywords internal
 .reject_optim_params_in_dots <- function(dots) {
   forbidden <- intersect(names(dots), c("adj_weight", "bal_weight"))
-  if (length(forbidden) == 0) return(invisible(NULL))
+  if (length(forbidden) == 0) {
+    return(invisible(NULL))
+  }
   stop(
-    "Argument(s) ", paste(sprintf("`%s`", forbidden), collapse = ", "),
+    "Argument(s) ",
+    paste(sprintf("`%s`", forbidden), collapse = ", "),
     " must be passed via `optim_params()`, not directly to `speed()`. ",
     "For example: `optimise_params = optim_params(",
-    paste0(forbidden[1], " = ..."), ")`.",
+    paste0(forbidden[1], " = ..."),
+    ")`.",
     call. = FALSE
   )
 }
@@ -506,7 +521,9 @@ print.design <- function(x, ...) {
 #' @return `dots`, with `relationship` replaced by the prepped form when present.
 #' @keywords internal
 .prep_dots <- function(dots, optimise, data) {
-  if (is.null(dots$relationship)) return(dots)
+  if (is.null(dots$relationship)) {
+    return(dots)
+  }
   swap_cols <- unique(vapply(optimise, function(o) o$swap, character(1)))
   treatments <- unlist(lapply(swap_cols, function(s) as.character(data[[s]])))
   dots$relationship <- prep_relationship(dots$relationship, treatments)
