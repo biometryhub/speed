@@ -398,7 +398,10 @@ test_that("objective_function_piepho handles incremental calculation with curren
   expect_true(is.finite(incremental_result$score))
   expect_named(incremental_result$ed, c("msts", "total_mst", "inv_total_mst"))
   expect_type(incremental_result$ed$msts, "double")
-  expect_true(setequal(names(incremental_result$ed$msts), names(full_result$ed$msts)))
+  expect_true(setequal(
+    names(incremental_result$ed$msts),
+    names(full_result$ed$msts)
+  ))
 })
 
 test_that("objective_function_piepho works without pair_mapping", {

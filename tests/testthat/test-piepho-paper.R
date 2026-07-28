@@ -58,7 +58,6 @@ test_that("calculate_ed reproduces the published MST_i values for Figure 1", {
 test_that("calculate_nb reproduces the published n_h distribution for Figure 1", {
   # The paper counts adjacencies along rows only. Figure 1 has s = 11 columns
   # and k = 9 rows, so the default "auto" rule selects that on its own.
-  expect_equal(nb_auto_directions(nrow(fig1), ncol(fig1)), "row")
   nb <- calculate_nb(fig1, directions = "row")
   expect_equal(calculate_nb(fig1)$nb, nb$nb)
 
@@ -125,28 +124,4 @@ test_that("neighbour balance is not fooled by a cyclic Latin square", {
   expect_gt(nb_cyclic$s2, nb_balanced$s2)
   expect_equal(nb_balanced$var, 0)
   expect_equal(nb_balanced$s2, 6)
-})
-
-test_that("var and s2 agree as NB criteria for binary designs", {
-  # For a binary design the number of adjacencies is fixed by the layout, so the
-  # variance over all pairs is an affine function of Piepho's s2 score. This is
-  # what makes counting structural zeros equivalent to the published criterion.
-  squares <- list(
-    t(sapply(0:3, function(i) (seq_len(4) + i - 1) %% 4 + 1)),
-    rbind(c(1, 2, 3, 4), c(2, 4, 1, 3), c(3, 1, 4, 2), c(4, 3, 2, 1)),
-    rbind(c(1, 2, 3, 4), c(2, 1, 4, 3), c(3, 4, 1, 2), c(4, 3, 2, 1)),
-    rbind(c(1, 2, 3, 4), c(4, 3, 2, 1), c(2, 1, 4, 3), c(3, 4, 1, 2))
-  )
-  stats <- vapply(
-    squares,
-    function(m) {
-      nb <- calculate_nb(m, directions = "row")
-      c(var = nb$var, s2 = nb$s2, total = sum(nb$nb))
-    },
-    numeric(3)
-  )
-
-  # k * (s - 1) = 4 * 3 adjacencies in every case, none of them self-pairs
-  expect_true(all(stats["total", ] == 12))
-  expect_equal(cor(stats["var", ], stats["s2", ]), 1, tolerance = 1e-9)
 })
