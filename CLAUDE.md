@@ -193,3 +193,6 @@ branch on `is.list(x$treatments)`.
   returning.
 - Inline code comments should be concise, briefly explaining the
   necessary details, not extensive minutiae.
+- Functions should have an explicit return statement as the final line
+  of each function, including functions encapsulated within other
+  functions.
