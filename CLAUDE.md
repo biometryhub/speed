@@ -64,7 +64,12 @@ Code formatting is handled by [Air](https://posit-dev.github.io/air/) -
 see `air.toml` (80-col, 2-space indent). Per `CONTRIBUTING.md`, do
 **not** restyle code that is unrelated to your PR.
 
-User-facing changes should add a bullet to the top of `NEWS.md`.
+User-facing changes should add a bullet to the top of `NEWS.md`. NEWS
+entries should be kept concise, with just a short 1-2 sentence summary
+of the changes, not paragraphs of explanation. If a change is related to
+a GitHub issue, it can be referenced just by number in parentheses
+e.g. (#1), but do not reference GitHub issues unless it’s certain that
+they are related.
 
 ## Architecture
 
@@ -186,3 +191,5 @@ branch on `is.list(x$treatments)`.
   a temporary level used to represent “no `swap_within` boundary” (`"1"`
   / `"none"`); it is added before the SA loop and removed before
   returning.
+- Inline code comments should be concise, briefly explaining the
+  necessary details, not extensive minutiae.
