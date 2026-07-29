@@ -464,7 +464,10 @@ test_that("replicate spans are labelled with the resolved grid columns", {
     quiet = TRUE
   )
   out <- capture_output(print(summary(r)))
-  expect_match(out, "Repl\\. span:\\s+worst-case \\d+ \\(range\\), \\d+ \\(plot\\)")
+  expect_match(
+    out,
+    "Repl\\. span:\\s+worst-case \\d+ \\(range\\), \\d+ \\(plot\\)"
+  )
 })
 
 test_that("connectedness uses the model path for grid designs", {
@@ -785,4 +788,209 @@ test_that("the Evaluation section prints expected metrics", {
     concurrence = TRUE
   )))
   expect_match(out_forced, "Concurrence:\\s+min \\d+, max \\d+")
+})
+
+test_that("concurrence = FALSE skips the check even when a block factor exists", {
+  # Distinct from the "no block factor" skip: the block is present, the user
+  # opted out.
+  cc <- summary(block_design(), concurrence = FALSE)$per_level[[
+    1
+  ]]$evaluation$concurrence
+
+  expect_false(cc$available)
+  expect_equal(cc$reason, "not requested (concurrence = FALSE)")
+  expect_match(
+    capture_output(print(summary(block_design(), concurrence = FALSE))),
+    "Concurrence:\\s+not requested \\(concurrence = FALSE\\)"
+  )
+})
+
+test_that("every opted-out metric prints its reason rather than a value", {
+  s <- summary(
+    block_design(),
+    connectedness = FALSE,
+    concurrence = FALSE,
+    neighbour = FALSE
+  )
+  out <- capture_output(print(s))
+
+  expect_match(out, "Connected:\\s+not requested \\(connectedness = FALSE\\)")
+  expect_match(out, "Neighbour:\\s+not requested \\(neighbour = FALSE\\)")
+})
+
+test_that("an opted-in efficiency factor is printed with its value", {
+  out <- capture_output(print(summary(simple_design(), efficiency = TRUE)))
+  expect_match(
+    out,
+    "Efficiency:\\s+[0-9.]+ \\(A-efficiency, row-column model\\)"
+  )
+})
+
+test_that("a fully unreplicated design reports no replicate spans", {
+  # 12 treatments on 12 plots: spans are available but there is nothing to
+  # measure, which is distinct from spans being unavailable.
+  d <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = LETTERS[1:12]
+  )
+  r <- speed(
+    d,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 50,
+    seed = 1,
+    quiet = TRUE
+  )
+  rs <- summary(r)$per_level[[1]]$evaluation$replicate_span
+
+  expect_true(rs$available)
+  expect_equal(rs$n_replicated, 0)
+  expect_true(is.na(rs$min_row_span))
+  expect_true(is.na(rs$min_col_span))
+  expect_match(
+    capture_output(print(summary(r))),
+    "Repl\\. span:\\s+n/a \\(no replicated treatments\\)"
+  )
+})
+
+test_that("designs without a row/column grid summarise and print without a grid", {
+  # No inferrable row/col and no grid_factors: the grid-dependent metrics report
+  # a reason, and the layout line drops the rows x cols part.
+  d <- data.frame(
+    a = rep(1:4, times = 3),
+    b = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+  expect_warning(
+    r <- speed(
+      d,
+      swap = "treatment",
+      spatial_factors = ~ a + b,
+      iterations = 50,
+      seed = 1,
+      quiet = TRUE
+    ),
+    "Cannot infer row"
+  )
+  s <- summary(r)
+
+  expect_false(s$layout$has_grid)
+  expect_true(is.na(s$layout$nrow))
+  expect_true(is.na(s$layout$ncol))
+
+  e <- s$per_level[[1]]$evaluation
+  expect_false(e$neighbour$available)
+  expect_equal(e$neighbour$reason, "no row/column factors")
+  expect_false(e$replicate_span$available)
+  expect_equal(e$replicate_span$reason, "no row/column factors")
+
+  out <- capture_output(print(s))
+  expect_match(out, "Layout:\\s+12 plots")
+  expect_no_match(out, "rows x")
+  expect_match(out, "Repl\\. span:\\s+no row/column factors")
+  expect_match(out, "Neighbour:\\s+no row/column factors")
+})
+
+test_that("the disconnected flag names the affected levels for hierarchical designs", {
+  s <- summary(split_plot_design())
+  s$flags$disconnected <- c("wp", "sp")
+
+  expect_match(capture_output(print(s)), "DISCONNECTED design \\(wp, sp\\)")
+})
+
+test_that(".drop_buffer_rows is a no-op without per-level metadata", {
+  df <- data.frame(row = 1:3, col = 1:3, treatment = c("A", "B", "C"))
+  expect_identical(.drop_buffer_rows(df, list()), df)
+})
+
+test_that("buffer removal drops the unused factor level from a factor swap column", {
+  # add_buffers() adds a "buffer" level; once the rows go, the level must go too
+  # or downstream table()/matrix() work counts a treatment that isn't there.
+  d <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = factor(rep(LETTERS[1:3], 4))
+  )
+  r <- speed(
+    d,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 50,
+    seed = 1,
+    quiet = TRUE
+  )
+  rb <- add_buffers(r, "edge")
+  expect_true(is.factor(rb$design_df$treatment))
+  expect_true("buffer" %in% levels(rb$design_df$treatment))
+
+  dropped <- .drop_buffer_rows(rb$design_df, rb$metadata)
+  expect_setequal(levels(dropped$treatment), c("A", "B", "C"))
+  expect_equal(nrow(dropped), 12)
+
+  # Replication counts come from table(), so a stray level would show up as 0.
+  s <- summary(rb)
+  expect_equal(s$per_level[[1]]$n_treatments, 3)
+  expect_true(s$per_level[[1]]$replication$equal)
+  expect_equal(s$per_level[[1]]$replication$min, 4)
+})
+
+test_that("evaluation helpers return a reason instead of erroring on unmet assumptions", {
+  no_grid <- data.frame(a = 1:3, treatment = c("A", "B", "C"))
+
+  rs <- .replicate_spans(no_grid, "treatment", "row", "col")
+  expect_false(rs$available)
+  expect_equal(rs$reason, "no row/column factors")
+
+  ef <- .efficiency_factor(no_grid, "treatment", "row", "col")
+  expect_false(ef$available)
+  expect_equal(ef$reason, "requires a row/column grid")
+
+  # A contrast needs two treatments to be a contrast.
+  one <- .design_connectedness(
+    data.frame(treatment = rep("A", 3)),
+    "treatment",
+    NULL,
+    character(0)
+  )
+  expect_false(one$available)
+  expect_equal(one$reason, "needs >= 2 treatments")
+
+  # Guarded against directly, even though summary() never reaches it.
+  cc <- .design_concurrence(
+    data.frame(treatment = c("A", "B")),
+    "treatment",
+    NULL
+  )
+  expect_false(cc$available)
+  expect_equal(cc$reason, "no block factor")
+})
+
+test_that(".design_connectedness is trivially connected with no nuisance factors", {
+  cn <- .design_connectedness(
+    data.frame(treatment = c("A", "B", "C")),
+    "treatment",
+    NULL,
+    character(0)
+  )
+
+  expect_true(cn$available)
+  expect_equal(cn$method, "none")
+  expect_true(cn$connected)
+  expect_equal(cn$n_aliased, 0L)
+  expect_match(cn$message, "trivially connected")
+})
+
+test_that(".efficiency_factor reports a reason when the computation fails", {
+  # A 1x1 "grid" leaves no row/column effects to fit, so
+  # calculate_efficiency_factor() errors; the wrapper must absorb that.
+  degenerate <- data.frame(
+    row = rep(1, 3),
+    col = rep(1, 3),
+    treatment = c("A", "B", "C")
+  )
+  ef <- .efficiency_factor(degenerate, "treatment", "row", "col")
+
+  expect_false(ef$available)
+  expect_equal(ef$reason, "could not be computed for this design")
 })

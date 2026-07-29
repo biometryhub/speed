@@ -645,6 +645,48 @@ test_that("objective_function_factorial works", {
   expect_equal(result$score, expected_score)
 })
 
+test_that("objective_function_factorial drops the component a zero weight switches off", {
+  treatment_a <- paste0("A", 1:8)
+  treatment_b <- paste0("B", 1:3)
+  treatments <- with(
+    expand.grid(treatment_a, treatment_b),
+    paste(Var1, Var2, sep = "-")
+  )
+  df <- initialise_design_df(treatments, 24, 3, 8, 3)
+  df <- shuffle_items(df, "treatment", "block", 112)
+
+  full <- objective_function_factorial(df, "treatment", c("row", "col"))
+
+  # A zero weight skips computing that term entirely, so its component must be
+  # exactly 0 and the score must equal the remaining component.
+  no_int <- objective_function_factorial(
+    df,
+    "treatment",
+    c("row", "col"),
+    interaction_weight = 0
+  )
+  expect_equal(no_int$components[["interaction"]], 0)
+  expect_equal(no_int$components[["main"]], full$components[["main"]])
+  expect_equal(no_int$score, no_int$components[["main"]])
+
+  no_main <- objective_function_factorial(
+    df,
+    "treatment",
+    c("row", "col"),
+    main_weight = 0
+  )
+  expect_equal(no_main$components[["main"]], 0)
+  expect_equal(
+    no_main$components[["interaction"]],
+    full$components[["interaction"]]
+  )
+  expect_equal(no_main$score, no_main$components[["interaction"]])
+
+  # Components remain a faithful decomposition in both cases.
+  expect_equal(sum(no_int$components), no_int$score)
+  expect_equal(sum(no_main$components), no_main$score)
+})
+
 test_that("objective_function_factorial falls back to objective_function with invalid separator", {
   treatment_a <- paste0("A", 1:8)
   treatment_b <- paste0("B", 1:3)
