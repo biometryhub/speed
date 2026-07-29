@@ -32,7 +32,8 @@ License: MIT + file LICENSE
 URL: https://biometryhub.github.io/speed/
 BugReports: https://github.com/biometryhub/speed/issues
 Depends: R (>= 4.1)
-Imports: 
+Imports:
+    crayon,
     farver,
     ggplot2,
     matrixStats,
