@@ -7,11 +7,6 @@
   replicate spans, opt-in efficiency, and neighbour balance). Section headings and the
   convergence status are coloured (via `crayon`) in interactive/colour-capable terminals.
 
-## Minor Changes
-
-- `speed()` results now carry a `metadata` field describing each level's swap variable, spatial
-  factors, weights and optimisation settings.
-
 # speed 0.0.9
 
 ## Major Changes
