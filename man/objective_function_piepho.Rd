@@ -38,7 +38,9 @@ objective_function_piepho(
 \value{
 A function which returns a named list of numeric values with one required name \code{score} representing
 the score of the design (lower is better) with a signature \verb{function(design_df, swap, spatial_cols, ...)}.
-See signature
+An objective may optionally return a \code{components} element: a named numeric vector of the additive pieces
+that sum to \code{score} (e.g. \code{c(adjacency = ..., balance = ...)}). When present, \code{\link[=summary.design]{summary.design()}} reports
+this as a faithful score decomposition. See signature
 details in \link{objective_function_signature}.
 }
 \description{

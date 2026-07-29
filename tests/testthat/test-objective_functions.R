@@ -21,7 +21,7 @@ test_that("objective_function works with default parameters", {
   result <- objective_function(layout_df, "treatment", c("row", "col"))
 
   expect_type(result, "list")
-  expect_named(result, "score")
+  expect_named(result, c("score", "components"))
   expect_type(result$score, "double")
   expect_length(result$score, 1)
 })
@@ -51,8 +51,8 @@ test_that("objective_function works with custom weights", {
 
   expect_type(result1, "list")
   expect_type(result2, "list")
-  expect_named(result1, "score")
-  expect_named(result2, "score")
+  expect_named(result1, c("score", "components"))
+  expect_named(result2, c("score", "components"))
 
   # Scores should be different with different weights
   expect_false(identical(result1$score, result2$score))
@@ -255,7 +255,7 @@ test_that("objective_function handles extra parameters via ...", {
   )
 
   expect_type(result, "list")
-  expect_named(result, "score")
+  expect_named(result, c("score", "components"))
 })
 
 # Tests for objective_function_piepho
@@ -276,7 +276,7 @@ test_that("objective_function_piepho works with basic design", {
   )
 
   expect_type(result, "list")
-  expect_named(result, c("score", "ed", "bal", "adj", "nb"))
+  expect_named(result, c("score", "ed", "bal", "adj", "nb", "components"))
   expect_type(result$score, "double")
   expect_length(result$score, 1)
   expect_type(result$ed, "list")
@@ -374,7 +374,10 @@ test_that("objective_function_piepho handles incremental calculation with curren
   )
 
   expect_type(incremental_result, "list")
-  expect_named(incremental_result, c("score", "ed", "bal", "adj", "nb"))
+  expect_named(
+    incremental_result,
+    c("score", "ed", "bal", "adj", "nb", "components")
+  )
 
   # Test that incremental calculation works differently from full calculation
   # The incremental result should have the same overall structure but potentially different values
@@ -402,7 +405,7 @@ test_that("objective_function_piepho works without pair_mapping", {
 
   result <- objective_function_piepho(design_df, "treatment", c("row", "col"))
   expect_type(result, "list")
-  expect_named(result, c("score", "ed", "bal", "adj", "nb"))
+  expect_named(result, c("score", "ed", "bal", "adj", "nb", "components"))
 })
 
 test_that("objective_function_piepho handles different spatial column configurations", {
@@ -481,7 +484,7 @@ test_that("objective_function_piepho uses custom row and column names", {
     col_column = "Column"
   )
   expect_type(result, "list")
-  expect_named(result, c("score", "ed", "bal", "adj", "nb"))
+  expect_named(result, c("score", "ed", "bal", "adj", "nb", "components"))
 })
 
 test_that("objective_function_piepho score is properly rounded to 10 decimal places", {
@@ -531,7 +534,7 @@ test_that("objective_function_piepho handles designs with missing values", {
     pair_mapping = pair_mapping
   )
   expect_type(result, "list")
-  expect_named(result, c("score", "ed", "bal", "adj", "nb"))
+  expect_named(result, c("score", "ed", "bal", "adj", "nb", "components"))
 })
 
 test_that("objective_function_piepho errors on single treatment design", {
@@ -603,7 +606,7 @@ test_that("objective_function_piepho handles extra parameters via ...", {
   })
 
   expect_type(result, "list")
-  expect_named(result, c("score", "ed", "bal", "adj", "nb"))
+  expect_named(result, c("score", "ed", "bal", "adj", "nb", "components"))
 })
 
 test_that("objective_function_factorial works", {
@@ -637,9 +640,51 @@ test_that("objective_function_factorial works", {
   result <- objective_function_factorial(df, "treatment", c("row", "col"))
 
   expect_type(result, "list")
-  expect_named(result, "score")
+  expect_named(result, c("score", "components"))
   expect_type(result$score, "double")
   expect_equal(result$score, expected_score)
+})
+
+test_that("objective_function_factorial drops the component a zero weight switches off", {
+  treatment_a <- paste0("A", 1:8)
+  treatment_b <- paste0("B", 1:3)
+  treatments <- with(
+    expand.grid(treatment_a, treatment_b),
+    paste(Var1, Var2, sep = "-")
+  )
+  df <- initialise_design_df(treatments, 24, 3, 8, 3)
+  df <- shuffle_items(df, "treatment", "block", 112)
+
+  full <- objective_function_factorial(df, "treatment", c("row", "col"))
+
+  # A zero weight skips computing that term entirely, so its component must be
+  # exactly 0 and the score must equal the remaining component.
+  no_int <- objective_function_factorial(
+    df,
+    "treatment",
+    c("row", "col"),
+    interaction_weight = 0
+  )
+  expect_equal(no_int$components[["interaction"]], 0)
+  expect_equal(no_int$components[["main"]], full$components[["main"]])
+  expect_equal(no_int$score, no_int$components[["main"]])
+
+  no_main <- objective_function_factorial(
+    df,
+    "treatment",
+    c("row", "col"),
+    main_weight = 0
+  )
+  expect_equal(no_main$components[["main"]], 0)
+  expect_equal(
+    no_main$components[["interaction"]],
+    full$components[["interaction"]]
+  )
+  expect_equal(no_main$score, no_main$components[["interaction"]])
+
+  # Components remain a faithful decomposition in both cases.
+  expect_equal(sum(no_int$components), no_int$score)
+  expect_equal(sum(no_main$components), no_main$score)
 })
 
 test_that("objective_function_factorial falls back to objective_function with invalid separator", {

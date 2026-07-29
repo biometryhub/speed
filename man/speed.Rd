@@ -88,6 +88,12 @@ named list of score vectors (for hierarchical designs)
 named list of treatment vectors (for hierarchical designs)
 \item \strong{seed} - Random seed used for reproducibility of the design. If not set
 in the function, the seed is set to the third element of \code{.Random.seed}.
+\item \strong{metadata} - A list describing how the design was produced: the captured
+\code{call}, the ordered \code{levels}, the resolved \code{row_column} / \code{col_column}
+names, and a \code{per_level} list recording each level's swap variable,
+spatial factors, adjacency/balance weights, requested iterations, starting
+temperature, cooling rate, objective function and achieved score. Used by
+\link[=summary.design]{summary()} to recompute per-level evaluation metrics.
 }
 }
 \description{
