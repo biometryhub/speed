@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -105,7 +105,9 @@
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A function which returns a named list of numeric values with one required name <code>score</code> representing
 the score of the design (lower is better) with a signature <code>function(design_df, swap, spatial_cols, ...)</code>.
-See signature
+An objective may optionally return a <code>components</code> element: a named numeric vector of the additive pieces
+that sum to <code>score</code> (e.g. <code>c(adjacency = ..., balance = ...)</code>). When present, <code><a href="summary.design.html">summary.design()</a></code> reports
+this as a faithful score decomposition. See signature
 details in <a href="objective_functions.html">objective_function_signature</a>.</p>
     </div>
     <div class="section level2">
@@ -194,6 +196,10 @@ of treatment replications in row-column designs. Biometrical journal. Biometrisc
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nb$var</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $components</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> neighbour_balance even_distribution           balance         adjacency </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1.2000000         0.1666667         8.0000000         7.0000000 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="co"># usage in speed, speed(..., obj_function = objective_function_piepho, pair_mapping = pair_mapping)</span></span></span>
 <span class="r-in"><span></span></span>

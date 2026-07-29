@@ -135,6 +135,15 @@ A list containing:
   set in the function, the seed is set to the third element of
   `.Random.seed`.
 
+- **metadata** - A list describing how the design was produced: the
+  captured `call`, the ordered `levels`, the resolved `row_column` /
+  `col_column` names, and a `per_level` list recording each level's swap
+  variable, spatial factors, adjacency/balance weights, requested
+  iterations, starting temperature, cooling rate, objective function and
+  achieved score. Used by
+  [summary()](https://biometryhub.github.io/speed/reference/summary.design.md)
+  to recompute per-level evaluation metrics.
+
 ## Details
 
 This function provides a very general interface for producing

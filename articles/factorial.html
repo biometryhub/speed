@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +62,7 @@
       <h1>Factorial Design with speed</h1>
 
       <p class="author">Wasin Pipattungsakul</p>
-      <p class="date">2026-07-28</p>
+      <p class="date">2026-07-29</p>
 
       <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/vignettes/factorial.qmd" class="external-link"><code>vignettes/factorial.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -191,7 +191,7 @@ Seed: 112 </code></pre>
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">factorial_result</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>List of 8
+<pre><code>List of 9
  $ design_df     :Classes 'design' and 'data.frame':    72 obs. of  8 variables:
   ..$ row        : int [1:72] 1 1 1 2 2 2 3 3 3 4 ...
   ..$ col        : int [1:72] 1 2 3 1 2 3 1 2 3 1 ...
@@ -214,6 +214,27 @@ Seed: 112 </code></pre>
  $ stopped_early : logi TRUE
  $ treatments    : chr [1:24] "A1-B1" "A1-B2" "A1-B3" "A2-B1" ...
  $ seed          : num 112
+ $ metadata      :List of 5
+  ..$ levels    : chr "single treatment within block"
+  ..$ row_column: chr "row"
+  ..$ col_column: chr "col"
+  ..$ per_level :List of 1
+  .. ..$ single treatment within block:List of 11
+  .. .. ..$ swap            : chr "treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: R_GlobalEnv&gt;
+  .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
+  .. .. ..$ adj_weight      : num 1
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 2e+05
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.999
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, interaction_weight = 1, main_weight = 1,
+    factorial_separator = "-", ...)
+  .. .. ..$ final_score     : num 36.8
+  .. .. ..$ final_components: Named num [1:2] 9.43 27.39
+  .. .. .. ..- attr(*, "names")= chr [1:2] "main" "interaction"
+  ..$ call      : language speed(data = factorial_design, swap = "treatment", swap_within = "block",      spatial_factors = ~row + col, iter| __truncated__ ...
  - attr(*, "class")= chr [1:2] "design" "list"</code></pre>
 </div>
 </div>

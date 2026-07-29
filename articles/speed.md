@@ -115,19 +115,21 @@ crd_result
 
 #### Output of the Optimisation
 
-The printed output from the returned design object shows the final
-optimisation score (lower is better), the number of iterations taken to
-reach that result, if the iterations stopped early due to lack of
-improvement, the treatments present in the design, and the seed. The
-output object contains some additional components, which can be seen
-below:
+The printed output from the returned design object gives a quick
+identity check: the final optimisation score (lower is better), how many
+iterations were run and whether it stopped early, the treatments, and
+the seed. For a fuller, statistically meaningful evaluation of the
+design - layout, replication, score decomposition, connectedness and
+more - use [`summary()`](https://rdrr.io/r/base/summary.html) (see
+[Evaluating a Design](#evaluating-a-design)). The output object contains
+some additional components, which can be seen below:
 
 ``` r
 
 str(crd_result)
 ```
 
-    List of 8
+    List of 9
      $ design_df     :Classes 'design' and 'data.frame':    32 obs. of  3 variables:
       ..$ row      : int [1:32] 1 1 1 1 2 2 2 2 3 3 ...
       ..$ col      : int [1:32] 1 2 3 4 1 2 3 4 1 2 ...
@@ -145,6 +147,27 @@ str(crd_result)
      $ stopped_early : logi TRUE
      $ treatments    : chr [1:8] "T1" "T2" "T3" "T4" ...
      $ seed          : num 42
+     $ metadata      :List of 5
+      ..$ levels    : chr "single treatment within whole design"
+      ..$ row_column: chr "row"
+      ..$ col_column: chr "col"
+      ..$ per_level :List of 1
+      .. ..$ single treatment within whole design:List of 11
+      .. .. ..$ swap            : chr "treatment"
+      .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x564ffbb2b458>
+      .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
+      .. .. ..$ adj_weight      : num 1
+      .. .. ..$ bal_weight      : num 1
+      .. .. ..$ iterations      : num 10000
+      .. .. ..$ start_temp      : num 100
+      .. .. ..$ cooling_rate    : num 0.99
+      .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+        row_column = "row", col_column = "col", ...)
+      .. .. ..$ final_score     : num 2.29
+      .. .. ..$ final_components: Named num [1:2] 0 2.29
+      .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      ..$ call      : language speed(data = crd_design, swap = "treatment", seed = 42)
      - attr(*, "class")= chr [1:2] "design" "list"
 
 #### Visualise the Output
@@ -165,6 +188,132 @@ autoplot(crd_result)
 ![](speed_files/figure-html/crd-plot2-1.png)
 
 A nicely randomised[^1] and spatially optimal design!
+
+## Evaluating a Design
+
+[`print()`](https://rdrr.io/r/base/print.html) tells you *what* a design
+is; [`summary()`](https://rdrr.io/r/base/summary.html) helps you
+*evaluate and defend* it. Calling
+[`summary()`](https://rdrr.io/r/base/summary.html) on any design object
+reports a set of structural and evaluation metrics:
+
+``` r
+
+summary(crd_result)
+```
+
+    Design Summary
+    ==============
+
+    Structure
+    ---------
+    Layout:       8 rows x 4 cols (32 plots)
+    Treatments:   8
+    Replication:  4 each
+    Spatial:      row (8), col (4)
+
+    Optimisation
+    ------------
+    Seed:         42
+    Objective:    objective_function
+    Score:        2.2857  (initial 40 -> final 2.2857)
+                  adjacency  0
+                  balance    2.2857
+    Iterations:   2,730 / 10,000 (stopped early)
+    Temperature:  start 100, cooling 0.99
+
+    Evaluation
+    ----------
+    Connected:    connected - treatment estimable given row + col [model (row + col)]
+    Concurrence:  no block factor
+    Blk. spread:  no block factor
+    Repl. span:   worst-case 2 (row), 2 (col) across 8 replicated treatment(s)
+    Efficiency:   not requested (set efficiency = TRUE)
+    Self-adj.:    2 like-treatment adjacencies
+    Neighbour:    min 0, max 4 over 28 pairs (variance 1.1376), 4 never adjacent
+
+The output is organised into sections:
+
+- **Structure** – the layout, the number of treatments and their
+  replication, and the spatial factors with their numbers of levels.
+- **Optimisation** – the objective used, the final score decomposed into
+  its **adjacency** and **balance** components (each already weighted,
+  so they sum to the final score), the initial-to-final score, the
+  iterations run and the temperature schedule.
+- **Evaluation** – design-quality diagnostics:
+  - **Connectedness** – whether treatment effects are estimable. Fits
+    `lm(~ <spatial factors + block> + treatment)` and checks for aliased
+    treatment terms; the nuisance side of the model adjusts to whatever
+    the design is stratified by (row/col, and a block factor when
+    present).
+  - **Concurrence** – for *incomplete* block designs, how often pairs of
+    treatments share a block (constant concurrences indicate a balanced
+    incomplete-block design). It is skipped for complete designs such as
+    RCBD and split-plots, where it carries no information.
+  - **Replicate span** – the smallest spatial separation between
+    replicates of a treatment; small values flag replicates sitting
+    close together.
+
+Any issues – a design that ran to its iteration cap, unequal
+replication, or a disconnected design – are surfaced as **Flags** at the
+top.
+
+Some metrics are opt-in or context-dependent. The A-efficiency factor (a
+row–column model metric) is computed only when you ask for it:
+
+``` r
+
+summary(crd_result, efficiency = TRUE)
+```
+
+    Design Summary
+    ==============
+
+    Structure
+    ---------
+    Layout:       8 rows x 4 cols (32 plots)
+    Treatments:   8
+    Replication:  4 each
+    Spatial:      row (8), col (4)
+
+    Optimisation
+    ------------
+    Seed:         42
+    Objective:    objective_function
+    Score:        2.2857  (initial 40 -> final 2.2857)
+                  adjacency  0
+                  balance    2.2857
+    Iterations:   2,730 / 10,000 (stopped early)
+    Temperature:  start 100, cooling 0.99
+
+    Evaluation
+    ----------
+    Connected:    connected - treatment estimable given row + col [model (row + col)]
+    Concurrence:  no block factor
+    Blk. spread:  no block factor
+    Repl. span:   worst-case 2 (row), 2 (col) across 8 replicated treatment(s)
+    Efficiency:   0.8232 (A-efficiency, row-column model)
+    Self-adj.:    2 like-treatment adjacencies
+    Neighbour:    min 0, max 4 over 28 pairs (variance 1.1376), 4 never adjacent
+
+The returned summary is also a list, so individual metrics can be pulled
+out programmatically:
+
+``` r
+
+s <- summary(crd_result)
+s$per_level[[1]]$score
+```
+
+    $initial
+    [1] 40
+
+    $final
+    [1] 2.285714
+
+    $components
+    adjacency   balance
+     0.000000  2.285714 
 
 ## Randomised Complete Block Design (RCBD)
 
@@ -249,7 +398,7 @@ rcbd_result
 str(rcbd_result)
 ```
 
-    List of 8
+    List of 9
      $ design_df     :Classes 'design' and 'data.frame':    24 obs. of  6 variables:
       ..$ row      : int [1:24] 1 1 1 1 1 1 2 2 2 2 ...
       ..$ col      : int [1:24] 1 2 3 4 5 6 1 2 3 4 ...
@@ -270,6 +419,27 @@ str(rcbd_result)
      $ stopped_early : logi TRUE
      $ treatments    : chr [1:6] "V1" "V2" "V3" "V4" ...
      $ seed          : num 42
+     $ metadata      :List of 5
+      ..$ levels    : chr "single treatment within block"
+      ..$ row_column: chr "row"
+      ..$ col_column: chr "col"
+      ..$ per_level :List of 1
+      .. ..$ single treatment within block:List of 11
+      .. .. ..$ swap            : chr "treatment"
+      .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x564ffb2bb6a8>
+      .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
+      .. .. ..$ adj_weight      : num 1
+      .. .. ..$ bal_weight      : num 1
+      .. .. ..$ iterations      : num 10000
+      .. .. ..$ start_temp      : num 100
+      .. .. ..$ cooling_rate    : num 0.99
+      .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+        row_column = "row", col_column = "col", ...)
+      .. .. ..$ final_score     : num 1.6
+      .. .. ..$ final_components: Named num [1:2] 0 1.6
+      .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      ..$ call      : language speed(data = rcbd_design, swap = "treatment", swap_within = "block", seed = 42)
      - attr(*, "class")= chr [1:2] "design" "list"
 
 #### Visualise the Output
@@ -370,7 +540,7 @@ perfect Latin Square solution.
 str(latin_square_result)
 ```
 
-    List of 8
+    List of 9
      $ design_df     :Classes 'design' and 'data.frame':    25 obs. of  3 variables:
       ..$ row      : int [1:25] 1 1 1 1 1 2 2 2 2 2 ...
       ..$ col      : int [1:25] 1 2 3 4 5 1 2 3 4 5 ...
@@ -388,6 +558,27 @@ str(latin_square_result)
      $ stopped_early : logi TRUE
      $ treatments    : chr [1:5] "T1" "T2" "T3" "T4" ...
      $ seed          : num 42
+     $ metadata      :List of 5
+      ..$ levels    : chr "single treatment within whole design"
+      ..$ row_column: chr "row"
+      ..$ col_column: chr "col"
+      ..$ per_level :List of 1
+      .. ..$ single treatment within whole design:List of 11
+      .. .. ..$ swap            : chr "treatment"
+      .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x564ff79ab658>
+      .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
+      .. .. ..$ adj_weight      : num 1
+      .. .. ..$ bal_weight      : num 1
+      .. .. ..$ iterations      : num 10000
+      .. .. ..$ start_temp      : num 100
+      .. .. ..$ cooling_rate    : num 0.99
+      .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+        row_column = "row", col_column = "col", ...)
+      .. .. ..$ final_score     : num 0
+      .. .. ..$ final_components: Named num [1:2] 0 0
+      .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      ..$ call      : language speed(data = latin_square_design, swap = "treatment", seed = 42)
      - attr(*, "class")= chr [1:2] "design" "list"
 
 #### Visualise the Output
@@ -522,7 +713,7 @@ to assess the quality of optimisation at each hierarchy level.
 str(split_plot_result)
 ```
 
-    List of 8
+    List of 9
      $ design_df     :Classes 'design' and 'data.frame':    48 obs. of  7 variables:
       ..$ row                : int [1:48] 1 1 1 1 2 2 2 2 3 3 ...
       ..$ col                : int [1:48] 1 2 3 4 1 2 3 4 1 2 ...
@@ -551,6 +742,42 @@ str(split_plot_result)
       ..$ wp: chr [1:3] "A" "B" "C"
       ..$ sp: chr [1:4] "a" "b" "c" "d"
      $ seed          : num 42
+     $ metadata      :List of 5
+      ..$ levels    : chr [1:2] "wp" "sp"
+      ..$ row_column: chr "row"
+      ..$ col_column: chr "col"
+      ..$ per_level :List of 2
+      .. ..$ wp:List of 11
+      .. .. ..$ swap            : chr "wholeplot_treatment"
+      .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x564ff7986188>
+      .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
+      .. .. ..$ adj_weight      : num 1
+      .. .. ..$ bal_weight      : num 1
+      .. .. ..$ iterations      : num 10000
+      .. .. ..$ start_temp      : num 100
+      .. .. ..$ cooling_rate    : num 0.99
+      .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+        row_column = "row", col_column = "col", ...)
+      .. .. ..$ final_score     : num 100
+      .. .. ..$ final_components: Named num [1:2] 36 64
+      .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      .. ..$ sp:List of 11
+      .. .. ..$ swap            : chr "subplot_treatment"
+      .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x564ff7986188>
+      .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
+      .. .. ..$ adj_weight      : num 1
+      .. .. ..$ bal_weight      : num 1
+      .. .. ..$ iterations      : num 10000
+      .. .. ..$ start_temp      : num 100
+      .. .. ..$ cooling_rate    : num 0.99
+      .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+        row_column = "row", col_column = "col", ...)
+      .. .. ..$ final_score     : num 0
+      .. .. ..$ final_components: Named num [1:2] 0 0
+      .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      ..$ call      : language speed(data = split_plot_design, optimise = optimise, seed = 42)
      - attr(*, "class")= chr [1:2] "design" "list"
 
 #### Visualise the Output

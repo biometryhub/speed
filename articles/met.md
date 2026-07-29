@@ -170,7 +170,7 @@ to assess the quality of optimisation at each hierarchy level.
 str(met_result)
 ```
 
-    List of 8
+    List of 9
      $ design_df     :'data.frame': 406 obs. of  9 variables:
       ..$ row       : int [1:406] 1 1 1 1 1 1 1 1 1 1 ...
       ..$ col       : int [1:406] 1 1 1 1 1 2 2 2 2 2 ...
@@ -195,6 +195,42 @@ str(met_result)
       ..$ connectivity: chr [1:57] "1" "2" "3" "4" ...
       ..$ balance     : chr [1:57] "1" "2" "3" "4" ...
      $ seed          : num 112
+     $ metadata      :List of 5
+      ..$ levels    : chr [1:2] "connectivity" "balance"
+      ..$ row_column: chr "row"
+      ..$ col_column: chr "col"
+      ..$ per_level :List of 2
+      .. ..$ connectivity:List of 11
+      .. .. ..$ swap            : chr "treatment"
+      .. .. ..$ spatial_factors :Class 'formula'  language ~site
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv>
+      .. .. ..$ spatial_cols    : chr "site"
+      .. .. ..$ adj_weight      : num 0
+      .. .. ..$ bal_weight      : num 1
+      .. .. ..$ iterations      : num 10000
+      .. .. ..$ start_temp      : num 100
+      .. .. ..$ cooling_rate    : num 0.99
+      .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+        row_column = "row", col_column = "col", ...)
+      .. .. ..$ final_score     : num 0.77
+      .. .. ..$ final_components: Named num [1:2] 0 0.77
+      .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      .. ..$ balance     :List of 11
+      .. .. ..$ swap            : chr "treatment"
+      .. .. ..$ spatial_factors :Class 'formula'  language ~site_col + site_block
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv>
+      .. .. ..$ spatial_cols    : chr [1:2] "site_col" "site_block"
+      .. .. ..$ adj_weight      : num 0
+      .. .. ..$ bal_weight      : num 1
+      .. .. ..$ iterations      : num 10000
+      .. .. ..$ start_temp      : num 100
+      .. .. ..$ cooling_rate    : num 0.99
+      .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+        row_column = "row", col_column = "col", ...)
+      .. .. ..$ final_score     : num 7.5
+      .. .. ..$ final_components: Named num [1:2] 0 7.5
+      .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      ..$ call      : language speed(data = met_design, swap = "treatment", early_stop_iterations = 5000,      optimise = optimise, optimise_par| __truncated__ ...
      - attr(*, "class")= chr [1:2] "design" "list"
 
 No duplicated treatments along any row, column, or block.
@@ -390,7 +426,7 @@ to assess the quality of optimisation at each hierarchy level.
 str(met_result)
 ```
 
-    List of 8
+    List of 9
      $ design_df     :'data.frame': 428 obs. of  10 variables:
       ..$ row       : int [1:428] 1 1 1 1 1 1 1 1 1 1 ...
       ..$ col       : int [1:428] 1 1 1 1 1 2 2 2 2 2 ...
@@ -416,6 +452,42 @@ str(met_result)
       ..$ connectivity: chr [1:54] "1" "2" "3" "4" ...
       ..$ balance     : chr [1:54] "1" "2" "3" "4" ...
      $ seed          : num 112
+     $ metadata      :List of 5
+      ..$ levels    : chr [1:2] "connectivity" "balance"
+      ..$ row_column: chr "row"
+      ..$ col_column: chr "col"
+      ..$ per_level :List of 2
+      .. ..$ connectivity:List of 11
+      .. .. ..$ swap            : chr "treatment"
+      .. .. ..$ spatial_factors :Class 'formula'  language ~site
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv>
+      .. .. ..$ spatial_cols    : chr "site"
+      .. .. ..$ adj_weight      : num 0
+      .. .. ..$ bal_weight      : num 1
+      .. .. ..$ iterations      : num 50000
+      .. .. ..$ start_temp      : num 100
+      .. .. ..$ cooling_rate    : num 0.99
+      .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+        row_column = "row", col_column = "col", ...)
+      .. .. ..$ final_score     : num 0.632
+      .. .. ..$ final_components: Named num [1:2] 0 0.632
+      .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      .. ..$ balance     :List of 11
+      .. .. ..$ swap            : chr "treatment"
+      .. .. ..$ spatial_factors :Class 'formula'  language ~site_col + site_block
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv>
+      .. .. ..$ spatial_cols    : chr [1:2] "site_col" "site_block"
+      .. .. ..$ adj_weight      : num 0
+      .. .. ..$ bal_weight      : num 1
+      .. .. ..$ iterations      : num 50000
+      .. .. ..$ start_temp      : num 100
+      .. .. ..$ cooling_rate    : num 0.99
+      .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+        row_column = "row", col_column = "col", ...)
+      .. .. ..$ final_score     : num 6.84
+      .. .. ..$ final_components: Named num [1:2] 0 6.84
+      .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      ..$ call      : language speed(data = met_design, swap = "treatment", iterations = 50000, early_stop_iterations = 10000,      optimise = o| __truncated__ ...
      - attr(*, "class")= chr [1:2] "design" "list"
 
 No duplicated treatments along any row, column, or block.
@@ -658,7 +730,7 @@ to assess the quality of optimisation at each hierarchy level.
 str(met_result)
 ```
 
-    List of 8
+    List of 9
      $ design_df     :'data.frame': 428 obs. of  10 variables:
       ..$ row       : int [1:428] 1 1 1 1 1 1 1 1 1 1 ...
       ..$ col       : int [1:428] 1 1 1 1 1 2 2 2 2 2 ...
@@ -684,6 +756,42 @@ str(met_result)
       ..$ connectivity: chr [1:61] "1" "2" "3" "4" ...
       ..$ balance     : chr [1:61] "1" "2" "3" "4" ...
      $ seed          : num 112
+     $ metadata      :List of 5
+      ..$ levels    : chr [1:2] "connectivity" "balance"
+      ..$ row_column: chr "row"
+      ..$ col_column: chr "col"
+      ..$ per_level :List of 2
+      .. ..$ connectivity:List of 11
+      .. .. ..$ swap            : chr "treatment"
+      .. .. ..$ spatial_factors :Class 'formula'  language ~site
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv>
+      .. .. ..$ spatial_cols    : chr "site"
+      .. .. ..$ adj_weight      : num 0
+      .. .. ..$ bal_weight      : num 1
+      .. .. ..$ iterations      : num 50000
+      .. .. ..$ start_temp      : num 100
+      .. .. ..$ cooling_rate    : num 0.99
+      .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+        row_column = "row", col_column = "col", ...)
+      .. .. ..$ final_score     : num 1.89
+      .. .. ..$ final_components: Named num [1:2] 0 1.89
+      .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      .. ..$ balance     :List of 11
+      .. .. ..$ swap            : chr "treatment"
+      .. .. ..$ spatial_factors :Class 'formula'  language ~site_col + site_block
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv>
+      .. .. ..$ spatial_cols    : chr [1:2] "site_col" "site_block"
+      .. .. ..$ adj_weight      : num 0
+      .. .. ..$ bal_weight      : num 1
+      .. .. ..$ iterations      : num 50000
+      .. .. ..$ start_temp      : num 100
+      .. .. ..$ cooling_rate    : num 0.99
+      .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+        row_column = "row", col_column = "col", ...)
+      .. .. ..$ final_score     : num 6.98
+      .. .. ..$ final_components: Named num [1:2] 0 6.98
+      .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      ..$ call      : language speed(data = met_design, swap = "treatment", iterations = 50000, early_stop_iterations = 8000,      optimise = op| __truncated__ ...
      - attr(*, "class")= chr [1:2] "design" "list"
 
 No duplicated treatments along any row, column, or block.

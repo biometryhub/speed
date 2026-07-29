@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +62,7 @@
       <h1>Multi-Environment Trials with speed</h1>
 
       <p class="author">Wasin Pipattungsakul</p>
-      <p class="date">2026-07-28</p>
+      <p class="date">2026-07-29</p>
 
       <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/vignettes/met.qmd" class="external-link"><code>vignettes/met.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -227,7 +227,7 @@ Seed: 112 </code></pre>
 <div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">met_result</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>List of 8
+<pre><code>List of 9
  $ design_df     :'data.frame': 406 obs. of  9 variables:
   ..$ row       : int [1:406] 1 1 1 1 1 1 1 1 1 1 ...
   ..$ col       : int [1:406] 1 1 1 1 1 2 2 2 2 2 ...
@@ -252,6 +252,42 @@ Seed: 112 </code></pre>
   ..$ connectivity: chr [1:57] "1" "2" "3" "4" ...
   ..$ balance     : chr [1:57] "1" "2" "3" "4" ...
  $ seed          : num 112
+ $ metadata      :List of 5
+  ..$ levels    : chr [1:2] "connectivity" "balance"
+  ..$ row_column: chr "row"
+  ..$ col_column: chr "col"
+  ..$ per_level :List of 2
+  .. ..$ connectivity:List of 11
+  .. .. ..$ swap            : chr "treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~site
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: R_GlobalEnv&gt;
+  .. .. ..$ spatial_cols    : chr "site"
+  .. .. ..$ adj_weight      : num 0
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 10000
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.99
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+    row_column = "row", col_column = "col", ...)
+  .. .. ..$ final_score     : num 0.77
+  .. .. ..$ final_components: Named num [1:2] 0 0.77
+  .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+  .. ..$ balance     :List of 11
+  .. .. ..$ swap            : chr "treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~site_col + site_block
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: R_GlobalEnv&gt;
+  .. .. ..$ spatial_cols    : chr [1:2] "site_col" "site_block"
+  .. .. ..$ adj_weight      : num 0
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 10000
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.99
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+    row_column = "row", col_column = "col", ...)
+  .. .. ..$ final_score     : num 7.5
+  .. .. ..$ final_components: Named num [1:2] 0 7.5
+  .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+  ..$ call      : language speed(data = met_design, swap = "treatment", early_stop_iterations = 5000,      optimise = optimise, optimise_par| __truncated__ ...
  - attr(*, "class")= chr [1:2] "design" "list"</code></pre>
 </div>
 </div>
@@ -435,7 +471,7 @@ Seed: 112 </code></pre>
 <div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">met_result</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>List of 8
+<pre><code>List of 9
  $ design_df     :'data.frame': 428 obs. of  10 variables:
   ..$ row       : int [1:428] 1 1 1 1 1 1 1 1 1 1 ...
   ..$ col       : int [1:428] 1 1 1 1 1 2 2 2 2 2 ...
@@ -461,6 +497,42 @@ Seed: 112 </code></pre>
   ..$ connectivity: chr [1:54] "1" "2" "3" "4" ...
   ..$ balance     : chr [1:54] "1" "2" "3" "4" ...
  $ seed          : num 112
+ $ metadata      :List of 5
+  ..$ levels    : chr [1:2] "connectivity" "balance"
+  ..$ row_column: chr "row"
+  ..$ col_column: chr "col"
+  ..$ per_level :List of 2
+  .. ..$ connectivity:List of 11
+  .. .. ..$ swap            : chr "treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~site
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: R_GlobalEnv&gt;
+  .. .. ..$ spatial_cols    : chr "site"
+  .. .. ..$ adj_weight      : num 0
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 50000
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.99
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+    row_column = "row", col_column = "col", ...)
+  .. .. ..$ final_score     : num 0.632
+  .. .. ..$ final_components: Named num [1:2] 0 0.632
+  .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+  .. ..$ balance     :List of 11
+  .. .. ..$ swap            : chr "treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~site_col + site_block
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: R_GlobalEnv&gt;
+  .. .. ..$ spatial_cols    : chr [1:2] "site_col" "site_block"
+  .. .. ..$ adj_weight      : num 0
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 50000
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.99
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+    row_column = "row", col_column = "col", ...)
+  .. .. ..$ final_score     : num 6.84
+  .. .. ..$ final_components: Named num [1:2] 0 6.84
+  .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+  ..$ call      : language speed(data = met_design, swap = "treatment", iterations = 50000, early_stop_iterations = 10000,      optimise = o| __truncated__ ...
  - attr(*, "class")= chr [1:2] "design" "list"</code></pre>
 </div>
 </div>
@@ -689,7 +761,7 @@ Seed: 112 </code></pre>
 <div class="sourceCode cell-code" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">met_result</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>List of 8
+<pre><code>List of 9
  $ design_df     :'data.frame': 428 obs. of  10 variables:
   ..$ row       : int [1:428] 1 1 1 1 1 1 1 1 1 1 ...
   ..$ col       : int [1:428] 1 1 1 1 1 2 2 2 2 2 ...
@@ -715,6 +787,42 @@ Seed: 112 </code></pre>
   ..$ connectivity: chr [1:61] "1" "2" "3" "4" ...
   ..$ balance     : chr [1:61] "1" "2" "3" "4" ...
  $ seed          : num 112
+ $ metadata      :List of 5
+  ..$ levels    : chr [1:2] "connectivity" "balance"
+  ..$ row_column: chr "row"
+  ..$ col_column: chr "col"
+  ..$ per_level :List of 2
+  .. ..$ connectivity:List of 11
+  .. .. ..$ swap            : chr "treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~site
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: R_GlobalEnv&gt;
+  .. .. ..$ spatial_cols    : chr "site"
+  .. .. ..$ adj_weight      : num 0
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 50000
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.99
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+    row_column = "row", col_column = "col", ...)
+  .. .. ..$ final_score     : num 1.89
+  .. .. ..$ final_components: Named num [1:2] 0 1.89
+  .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+  .. ..$ balance     :List of 11
+  .. .. ..$ swap            : chr "treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~site_col + site_block
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: R_GlobalEnv&gt;
+  .. .. ..$ spatial_cols    : chr [1:2] "site_col" "site_block"
+  .. .. ..$ adj_weight      : num 0
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 50000
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.99
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+    row_column = "row", col_column = "col", ...)
+  .. .. ..$ final_score     : num 6.98
+  .. .. ..$ final_components: Named num [1:2] 0 6.98
+  .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+  ..$ call      : language speed(data = met_design, swap = "treatment", iterations = 50000, early_stop_iterations = 8000,      optimise = op| __truncated__ ...
  - attr(*, "class")= chr [1:2] "design" "list"</code></pre>
 </div>
 </div>

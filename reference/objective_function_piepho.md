@@ -64,7 +64,11 @@ objective_function_piepho(
 A function which returns a named list of numeric values with one
 required name `score` representing the score of the design (lower is
 better) with a signature `function(design_df, swap, spatial_cols, ...)`.
-See signature details in
+An objective may optionally return a `components` element: a named
+numeric vector of the additive pieces that sum to `score` (e.g.
+`c(adjacency = ..., balance = ...)`). When present,
+[`summary.design()`](https://biometryhub.github.io/speed/reference/summary.design.md)
+reports this as a faithful score decomposition. See signature details in
 [objective_function_signature](https://biometryhub.github.io/speed/reference/objective_functions.md).
 
 ## References
@@ -155,6 +159,10 @@ objective_function_piepho(design_df, "treatment", c("row", "col"), pair_mapping 
 #> $nb$var
 #> [1] 1.2
 #> 
+#> 
+#> $components
+#> neighbour_balance even_distribution           balance         adjacency 
+#>         1.2000000         0.1666667         8.0000000         7.0000000 
 #> 
 # usage in speed, speed(..., obj_function = objective_function_piepho, pair_mapping = pair_mapping)
 ```

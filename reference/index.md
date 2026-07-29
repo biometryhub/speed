@@ -35,12 +35,16 @@ Functions that calculate values for the objective functions
   : Calculate Efficiency Factor according Piepho
 - [`calculate_nb()`](https://biometryhub.github.io/speed/reference/calculate_nb.md)
   : Neighbour Balance Calculation
+- [`create_pair_mapping()`](https://biometryhub.github.io/speed/reference/create_pair_mapping.md)
+  : Create Pair Mapping
 - [`get_edges()`](https://biometryhub.github.io/speed/reference/get_edges.md)
   : Get Weighted Edges
 - [`get_vertices()`](https://biometryhub.github.io/speed/reference/get_vertices.md)
   : Get Vertices of Each Item
+- [`prep_relationship()`](https://biometryhub.github.io/speed/reference/prep_relationship.md)
+  : Validate and Flatten a Relationship Matrix for Lookup
 
-## Plotting
+## Output
 
 Functions for checking designs.
 
@@ -50,13 +54,15 @@ Functions for checking designs.
   : Plot Optimization Progress
 - [`print(`*`<design>`*`)`](https://biometryhub.github.io/speed/reference/print.design.md)
   : Print method for speed design objects
+- [`summary(`*`<design>`*`)`](https://biometryhub.github.io/speed/reference/summary.design.md)
+  : Summarise a speed design
+- [`print(`*`<summary.design>`*`)`](https://biometryhub.github.io/speed/reference/print.summary.design.md)
+  : Print method for design summaries
 
 ## Helper Functions
 
 Utility functions to initialize objects.
 
-- [`create_pair_mapping()`](https://biometryhub.github.io/speed/reference/create_pair_mapping.md)
-  : Create Pair Mapping
 - [`initialise_design_df()`](https://biometryhub.github.io/speed/reference/initialise_design_df.md)
   [`initialize_design_df()`](https://biometryhub.github.io/speed/reference/initialise_design_df.md)
   : Initialise Design Data Frame
@@ -64,8 +70,6 @@ Utility functions to initialize objects.
   : Initialise a Split-Plot Design Data Frame
 - [`add_buffers()`](https://biometryhub.github.io/speed/reference/add_buffers.md)
   : Add buffers to an existing design
-- [`prep_relationship()`](https://biometryhub.github.io/speed/reference/prep_relationship.md)
-  : Validate and Flatten a Relationship Matrix for Lookup
 
 ## Advanced options
 

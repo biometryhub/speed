@@ -70,4 +70,8 @@ objective_function(layout_df, "treatment", c("row", "col"))
 #> $score
 #> [1] 15
 #> 
+#> $components
+#> adjacency   balance 
+#>         6         9 
+#> 
 ```
