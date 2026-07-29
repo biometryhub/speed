@@ -7,8 +7,15 @@ simple_design <- function(iterations = 200, seed = 42) {
     col = rep(1:3, each = 4),
     treatment = rep(LETTERS[1:3], 4)
   )
-  speed(d, swap = "treatment", swap_within = "1", spatial_factors = ~ row + col,
-        iterations = iterations, seed = seed, quiet = TRUE)
+  speed(
+    d,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = iterations,
+    seed = seed,
+    quiet = TRUE
+  )
 }
 
 split_plot_design <- function(seed = 42) {
@@ -19,11 +26,15 @@ split_plot_design <- function(seed = 42) {
     subplot_treatment = rep(letters[1:4], 6),
     block = rep(1:2, each = 12)
   )
-  speed(d,
-        swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
-        swap_within = list(wp = "block", sp = "wholeplot_treatment"),
-        spatial_factors = ~ row + col,
-        iterations = list(wp = 100, sp = 100), seed = seed, quiet = TRUE)
+  speed(
+    d,
+    swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+    swap_within = list(wp = "block", sp = "wholeplot_treatment"),
+    spatial_factors = ~ row + col,
+    iterations = list(wp = 100, sp = 100),
+    seed = seed,
+    quiet = TRUE
+  )
 }
 
 prep_design <- function(seed = 1) {
@@ -32,8 +43,14 @@ prep_design <- function(seed = 1) {
     col = rep(1:4, times = 4),
     treatment = c(LETTERS[1:8], rep(c("chk1", "chk2"), 4))
   )
-  speed(d, swap = "treatment", spatial_factors = ~ row + col,
-        iterations = 50, seed = seed, quiet = TRUE)
+  speed(
+    d,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 50,
+    seed = seed,
+    quiet = TRUE
+  )
 }
 
 test_that("summary.design returns a summary.design with the expected shape", {
@@ -41,8 +58,19 @@ test_that("summary.design returns a summary.design with the expected shape", {
 
   expect_s3_class(s, "summary.design")
   expect_false(s$hierarchical)
-  expect_named(s, c("hierarchical", "layout", "levels", "per_level", "score",
-                    "seed", "flags", "call"))
+  expect_named(
+    s,
+    c(
+      "hierarchical",
+      "layout",
+      "levels",
+      "per_level",
+      "score",
+      "seed",
+      "flags",
+      "call"
+    )
+  )
 
   # Layout
   expect_equal(s$layout$n_plots, 12)
@@ -76,27 +104,56 @@ test_that("summary score components are programmatically accessible", {
 })
 
 test_that("score components are faithful for non-default objectives (piepho)", {
-  d <- data.frame(row = rep(1:5, each = 5), col = rep(1:5, times = 5),
-                  treatment = rep(LETTERS[1:5], 5))
-  r <- speed(d, swap = "treatment", spatial_factors = ~ row + col,
-             obj_function = objective_function_piepho, iterations = 500, seed = 1,
-             quiet = TRUE)
+  d <- data.frame(
+    row = rep(1:5, each = 5),
+    col = rep(1:5, times = 5),
+    treatment = rep(LETTERS[1:5], 5)
+  )
+  r <- speed(
+    d,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    obj_function = objective_function_piepho,
+    iterations = 500,
+    seed = 1,
+    quiet = TRUE
+  )
   sc <- summary(r)$per_level[[1]]$score
   # Piepho exposes four additive components that sum to its score - the bug this
   # fixes was the old adjacency+balance recompute not matching the piepho score.
-  expect_named(sc$components,
-               c("neighbour_balance", "even_distribution", "balance", "adjacency"))
+  expect_named(
+    sc$components,
+    c("neighbour_balance", "even_distribution", "balance", "adjacency")
+  )
   expect_equal(sum(sc$components), sc$final)
 })
 
 test_that("custom objectives without components degrade gracefully", {
-  custom <- function(layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1, ...) {
+  custom <- function(
+    layout_df,
+    swap,
+    spatial_cols,
+    adj_weight = 1,
+    bal_weight = 1,
+    ...
+  ) {
     list(score = calculate_balance_score(layout_df, swap, spatial_cols))
   }
-  d <- data.frame(row = rep(1:4, times = 3), col = rep(1:3, each = 4),
-                  treatment = rep(LETTERS[1:3], 4))
-  r <- speed(d, swap = "treatment", swap_within = "1", spatial_factors = ~ row + col,
-             obj_function = custom, iterations = 100, seed = 1, quiet = TRUE)
+  d <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+  r <- speed(
+    d,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    obj_function = custom,
+    iterations = 100,
+    seed = 1,
+    quiet = TRUE
+  )
   sc <- summary(r)$per_level[[1]]$score
   expect_null(sc$components)
   # Still prints without error (no decomposition shown).
@@ -122,8 +179,8 @@ test_that("flags fire for unequal replication and hitting the iteration cap", {
 
   expect_true(s$flags$unequal_replication)
   expect_false(s$per_level[[1]]$replication$equal)
-  expect_equal(s$per_level[[1]]$replication$min, 1)  # single-rep entries
-  expect_equal(s$per_level[[1]]$replication$max, 4)  # checks
+  expect_equal(s$per_level[[1]]$replication$min, 1) # single-rep entries
+  expect_equal(s$per_level[[1]]$replication$max, 4) # checks
   # 50 iterations with no early stop -> hit the cap.
   expect_true(length(s$flags$hit_iteration_cap) >= 1)
 })
@@ -149,7 +206,7 @@ test_that("print.summary.design shows per-level blocks and a total for hierarchi
   expect_match(out, "\\[wp\\]")
   expect_match(out, "\\[sp\\]")
   expect_match(out, "Total score:")
-  expect_match(out, "Plots/trt:")  # hierarchical replication label
+  expect_match(out, "Plots/trt:") # hierarchical replication label
 })
 
 test_that("print.summary.design returns the object invisibly", {
@@ -158,7 +215,7 @@ test_that("print.summary.design returns the object invisibly", {
 })
 
 test_that("print.summary.design colours section headings and convergence status", {
-  s <- summary(simple_design(iterations = 5000))  # enough to stop early
+  s <- summary(simple_design(iterations = 5000)) # enough to stop early
 
   # Colour is off by default in non-interactive test runs; strip it either way
   # so the plain-text content is unaffected regardless of terminal support.
@@ -175,22 +232,29 @@ test_that("print.summary.design colours section headings and convergence status"
   expect_match(out, "\033\\[1mStructure\033\\[22m")
   expect_match(out, "\033\\[32m\\(stopped early\\)\033\\[39m")
 
-  cap <- summary(prep_design())  # 50 iterations, no early stop -> hits the cap
+  cap <- summary(prep_design()) # 50 iterations, no early stop -> hits the cap
   # testthat's reproducible-output setup forces `cli.num_colors = 1`, which
   # crayon checks ahead of `crayon.enabled` - override both to actually force
   # colour on for this test.
   withr::with_options(list(crayon.enabled = TRUE, cli.num_colors = 8), {
     out_cap <- capture_output(print(cap))
   })
-  expect_match(out_cap, "\033\\[1m\033\\[35m\\(ran to cap\\)\033\\[39m\033\\[22m")
+  expect_match(
+    out_cap,
+    "\033\\[1m\033\\[35m\\(ran to cap\\)\033\\[39m\033\\[22m"
+  )
 })
 
 test_that(".objective_name maps known objectives and falls back to custom", {
   expect_equal(.objective_name(objective_function), "objective_function")
-  expect_equal(.objective_name(objective_function_factorial),
-               "objective_function_factorial")
-  expect_equal(.objective_name(objective_function_piepho),
-               "objective_function_piepho")
+  expect_equal(
+    .objective_name(objective_function_factorial),
+    "objective_function_factorial"
+  )
+  expect_equal(
+    .objective_name(objective_function_piepho),
+    "objective_function_piepho"
+  )
   expect_equal(.objective_name(function(...) NULL), "custom")
   expect_equal(.objective_name("not a function"), "unknown")
 })
@@ -202,7 +266,7 @@ test_that("summary errors clearly when metadata is absent", {
 })
 
 test_that("buffers are excluded from summary() and print() entirely", {
-  r  <- simple_design()
+  r <- simple_design()
   rb <- add_buffers(r, "edge")
   # The buffered design carries extra "buffer" rows...
   expect_gt(nrow(rb$design_df), nrow(r$design_df))
@@ -219,23 +283,43 @@ test_that("buffers are excluded from summary() and print() entirely", {
 
   # Buffers are never mentioned, and there is no buffer-count field.
   expect_false("n_buffers" %in% names(s$layout))
-  expect_false(any(grepl("buffer", capture_output(print(s)), ignore.case = TRUE)))
-  expect_false(any(grepl("buffer", capture_output(print(rb)), ignore.case = TRUE)))
+  expect_false(any(grepl(
+    "buffer",
+    capture_output(print(s)),
+    ignore.case = TRUE
+  )))
+  expect_false(any(grepl(
+    "buffer",
+    capture_output(print(rb)),
+    ignore.case = TRUE
+  )))
 })
 
 test_that("neighbour balance is unaffected by buffers (KNOWN_ISSUES.md #1a)", {
   # add_buffers("edge") shifts row/col by 1; .neighbour_balance() must use the
   # (offset-invariant) layout$nrow/ncol rather than max(row)/max(col), or it
   # reshapes the treatment grid with the wrong dimensions.
-  d <- data.frame(row = rep(1:4, times = 3), col = rep(1:3, each = 4),
-                  treatment = rep(LETTERS[1:3], 4))
-  r  <- speed(d, swap = "treatment", swap_within = "1", spatial_factors = ~ row + col,
-              obj_function = objective_function_piepho, iterations = 100, seed = 1,
-              quiet = TRUE)
+  d <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+  r <- speed(
+    d,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    obj_function = objective_function_piepho,
+    iterations = 100,
+    seed = 1,
+    quiet = TRUE
+  )
   rb <- add_buffers(r, "edge")
 
   nb_unbuffered <- summary(r)$per_level[[1]]$evaluation$neighbour
-  expect_no_warning(nb_buffered <- summary(rb)$per_level[[1]]$evaluation$neighbour)
+  expect_no_warning(
+    nb_buffered <- summary(rb)$per_level[[1]]$evaluation$neighbour
+  )
   expect_true(nb_buffered$available)
   expect_equal(nb_buffered, nb_unbuffered)
 })
@@ -249,10 +333,108 @@ block_design <- function(seed = 7) {
     block = rep(1:4, each = 6),
     treatment = rep(LETTERS[1:6], 4)
   )
-  speed(d, swap = "treatment", swap_within = "block",
-        spatial_factors = ~ row + col + block, iterations = 300, seed = seed,
-        quiet = TRUE)
+  speed(
+    d,
+    swap = "treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col + block,
+    iterations = 300,
+    seed = seed,
+    quiet = TRUE
+  )
 }
+
+test_that("block spread reports how many blocks each treatment reaches", {
+  # Complete blocks: concurrence is skipped as uninformative, but block spread
+  # still confirms every treatment reaches every block - that is why it is not
+  # gated on the `concurrence` argument.
+  s <- summary(block_design())
+  bs <- s$per_level[[1]]$evaluation$block_spread
+
+  expect_named(
+    bs,
+    c(
+      "available",
+      "block",
+      "n_blocks",
+      "min_blocks",
+      "max_blocks",
+      "n_within_block_reps"
+    )
+  )
+  expect_true(bs$available)
+  expect_equal(bs$block, "block")
+  expect_equal(bs$n_blocks, 4)
+  expect_equal(bs$min_blocks, 4) # 6 treatments x 4 complete blocks
+  expect_equal(bs$max_blocks, 4)
+  expect_equal(bs$n_within_block_reps, 0)
+
+  expect_false(s$per_level[[1]]$evaluation$concurrence$available)
+  out <- capture_output(print(s))
+  expect_match(out, "Blk\\. spread:\\s+each treatment in 4 of 4 blocks")
+})
+
+test_that("block spread detects treatments replicated within a block", {
+  # Each treatment appears twice in each of 2 blocks.
+  d <- data.frame(
+    row = rep(1:4, each = 3),
+    col = rep(1:3, times = 4),
+    block = rep(1:2, each = 6),
+    treatment = rep(rep(LETTERS[1:3], each = 2), 2)
+  )
+  r <- speed(
+    d,
+    swap = "treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col + block,
+    iterations = 300,
+    seed = 2,
+    quiet = TRUE
+  )
+  bs <- summary(r)$per_level[[1]]$evaluation$block_spread
+
+  expect_equal(bs$n_blocks, 2)
+  expect_equal(bs$min_blocks, 2)
+  expect_equal(bs$n_within_block_reps, 3) # all three treatments doubled up
+  expect_match(
+    capture_output(print(summary(r))),
+    "Blk\\. spread:.*3 replicated within a block"
+  )
+})
+
+test_that("block spread reports a reason when there is no block factor", {
+  bs <- summary(simple_design())$per_level[[1]]$evaluation$block_spread
+  expect_false(bs$available)
+  expect_equal(bs$reason, "no block factor")
+})
+
+test_that("block spread reports unequal reach across incomplete blocks", {
+  # 3 blocks of 2; A is in every block, B and C in one each.
+  d <- data.frame(
+    row = rep(1:3, each = 2),
+    col = rep(1:2, times = 3),
+    block = rep(1:3, each = 2),
+    treatment = c("A", "B", "A", "C", "A", "B")
+  )
+  r <- speed(
+    d,
+    swap = "treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col + block,
+    iterations = 100,
+    seed = 1,
+    quiet = TRUE
+  )
+  bs <- summary(r)$per_level[[1]]$evaluation$block_spread
+
+  expect_equal(bs$n_blocks, 3)
+  expect_equal(bs$min_blocks, 1) # C reaches only one block
+  expect_equal(bs$max_blocks, 3) # A reaches all three
+  expect_match(
+    capture_output(print(summary(r))),
+    "Blk\\. spread:\\s+treatments in 1-3 of 3 blocks"
+  )
+})
 
 test_that("replicate spans are computed per level", {
   rs <- summary(simple_design())$per_level[[1]]$evaluation$replicate_span
@@ -264,6 +446,27 @@ test_that("replicate spans are computed per level", {
   expect_gte(rs$min_row_span, 2)
 })
 
+test_that("replicate spans are labelled with the resolved grid columns", {
+  # grid_factors renames the axes; the printed labels must follow rather than
+  # being hard-coded to "row"/"col".
+  d <- data.frame(
+    range = rep(1:4, times = 3),
+    plot = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+  r <- speed(
+    d,
+    swap = "treatment",
+    spatial_factors = ~ range + plot,
+    grid_factors = list(dim1 = "range", dim2 = "plot"),
+    iterations = 200,
+    seed = 1,
+    quiet = TRUE
+  )
+  out <- capture_output(print(summary(r)))
+  expect_match(out, "Repl\\. span:\\s+worst-case \\d+ \\(range\\), \\d+ \\(plot\\)")
+})
+
 test_that("connectedness uses the model path for grid designs", {
   cn <- summary(simple_design())$per_level[[1]]$evaluation$connectedness
   expect_true(cn$available)
@@ -273,23 +476,30 @@ test_that("connectedness uses the model path for grid designs", {
 
 test_that(".design_connectedness flags non-estimable treatments via the model", {
   # treatment fully confounded with row -> not estimable given row + col
-  dconf <- data.frame(row = rep(1:4, each = 3), col = rep(1:3, times = 4),
-                      treatment = rep(LETTERS[1:4], each = 3))
+  dconf <- data.frame(
+    row = rep(1:4, each = 3),
+    col = rep(1:3, times = 4),
+    treatment = rep(LETTERS[1:4], each = 3)
+  )
   cn <- .design_connectedness(dconf, "treatment", NULL, c("row", "col"))
   expect_false(cn$connected)
   expect_gt(cn$n_aliased, 0)
 
   # two variety groups that never share a block -> disconnected given block
-  dg <- data.frame(block = c(1, 1, 2, 2, 3, 3, 4, 4),
-                   treatment = c("A", "B", "A", "B", "C", "D", "C", "D"))
+  dg <- data.frame(
+    block = c(1, 1, 2, 2, 3, 3, 4, 4),
+    treatment = c("A", "B", "A", "B", "C", "D", "C", "D")
+  )
   disc <- .design_connectedness(dg, "treatment", "block", character(0))
   expect_match(disc$method, "block")
   expect_false(disc$connected)
   expect_gt(disc$n_aliased, 0)
 
   # a connected block structure
-  dg2 <- data.frame(block = c(1, 1, 2, 2, 3, 3),
-                    treatment = c("A", "B", "B", "C", "C", "A"))
+  dg2 <- data.frame(
+    block = c(1, 1, 2, 2, 3, 3),
+    treatment = c("A", "B", "B", "C", "C", "A")
+  )
   conn <- .design_connectedness(dg2, "treatment", "block", character(0))
   expect_true(conn$connected)
   expect_equal(conn$n_aliased, 0)
@@ -303,7 +513,13 @@ test_that("connectedness skips very large designs unless forced, and FALSE skips
     col = rep(1:200, times = 200),
     treatment = factor(rep(seq_len(1000), length.out = 40000))
   )
-  skipped <- .design_connectedness(big, "treatment", NULL, c("row", "col"), force = FALSE)
+  skipped <- .design_connectedness(
+    big,
+    "treatment",
+    NULL,
+    c("row", "col"),
+    force = FALSE
+  )
   expect_false(skipped$available)
   expect_match(skipped$reason, "large design")
 
@@ -312,7 +528,9 @@ test_that("connectedness skips very large designs unless forced, and FALSE skips
   expect_true(auto$available)
 
   # connectedness = FALSE skips entirely.
-  off <- summary(simple_design(), connectedness = FALSE)$per_level[[1]]$evaluation$connectedness
+  off <- summary(simple_design(), connectedness = FALSE)$per_level[[
+    1
+  ]]$evaluation$connectedness
   expect_false(off$available)
   expect_match(off$reason, "connectedness = FALSE")
 })
@@ -321,9 +539,9 @@ test_that("connectedness does not false-positive when block is collinear with ro
   # BIBD laid out one block per row: block aliases row, but treatment is fully
   # estimable. Counting aliasing only among treatment terms must keep it connected.
   bibd <- data.frame(
-    row   = rep(1:6, each = 2),
+    row = rep(1:6, each = 2),
     block = rep(1:6, each = 2),
-    col   = rep(1:2, times = 6),
+    col = rep(1:2, times = 6),
     treatment = c("A", "B", "A", "C", "A", "D", "B", "C", "B", "D", "C", "D")
   )
   cn <- .design_connectedness(bibd, "treatment", "block", c("row", "col"))
@@ -340,12 +558,14 @@ test_that("concurrence is computed for incomplete blocks, skipped for complete",
   cc <- .design_concurrence(inc, "treatment", "block")
   expect_true(cc$available)
   expect_false(cc$complete)
-  expect_true(cc$lambda_constant)   # BIBD: lambda = 1 for every pair
+  expect_true(cc$lambda_constant) # BIBD: lambda = 1 for every pair
   expect_equal(cc$lambda_max, 1)
 
   # Complete blocks (RCBD): every treatment in every block -> uninformative.
-  comp <- data.frame(block = rep(1:3, each = 4),
-                     treatment = rep(c("A", "B", "C", "D"), 3))
+  comp <- data.frame(
+    block = rep(1:3, each = 4),
+    treatment = rep(c("A", "B", "C", "D"), 3)
+  )
   cc2 <- .design_concurrence(comp, "treatment", "block")
   expect_false(cc2$available)
   expect_true(cc2$complete)
@@ -363,17 +583,25 @@ test_that("complete-block designs auto-skip concurrence in summary()", {
   expect_true(isTRUE(cc$complete))
 
   # Forcing it on computes it anyway.
-  cc_forced <- summary(block_design(), concurrence = TRUE)$per_level[[1]]$evaluation$concurrence
+  cc_forced <- summary(block_design(), concurrence = TRUE)$per_level[[
+    1
+  ]]$evaluation$concurrence
   expect_true(cc_forced$available)
 })
 
 test_that(".design_block_factor prefers a block-named factor over others", {
   df <- data.frame(row = 1, col = 1, rep = 1, block = 1, treatment = "A")
   # spatial factors listed with 'rep' before 'block' - block should still win.
-  expect_equal(.design_block_factor(df, c("row", "col", "rep", "block"), "row", "col"), "block")
+  expect_equal(
+    .design_block_factor(df, c("row", "col", "rep", "block"), "row", "col"),
+    "block"
+  )
 
   # No block-named factor: falls back to the first non-row/col spatial factor.
-  expect_equal(.design_block_factor(df, c("row", "col", "rep"), "row", "col"), "rep")
+  expect_equal(
+    .design_block_factor(df, c("row", "col", "rep"), "row", "col"),
+    "rep"
+  )
 })
 
 test_that(".design_block_factor is resolved per level, not shared across levels", {
@@ -381,8 +609,14 @@ test_that(".design_block_factor is resolved per level, not shared across levels"
   # should fall back to the literal "block" column rather than silently reusing
   # wp's resolved factor for a level it doesn't describe.
   df <- data.frame(row = 1, col = 1, block = 1, rep = 1, treatment = "A")
-  expect_equal(.design_block_factor(df, c("row", "col", "block"), "row", "col"), "block")
-  expect_equal(.design_block_factor(df, c("row", "col", "rep"), "row", "col"), "rep")
+  expect_equal(
+    .design_block_factor(df, c("row", "col", "block"), "row", "col"),
+    "block"
+  )
+  expect_equal(
+    .design_block_factor(df, c("row", "col", "rep"), "row", "col"),
+    "rep"
+  )
 })
 
 test_that("concurrence is skipped for designs without a block", {
@@ -396,40 +630,142 @@ test_that("efficiency is opt-in and guarded", {
   expect_false(off$available)
   expect_match(off$reason, "efficiency = TRUE")
 
-  on <- summary(simple_design(), efficiency = TRUE)$per_level[[1]]$evaluation$efficiency
+  on <- summary(simple_design(), efficiency = TRUE)$per_level[[
+    1
+  ]]$evaluation$efficiency
   expect_true(on$available)
   expect_true(is.finite(on$value))
 
   # Guard: < 3 treatments returns NA with a reason rather than erroring.
   two <- .efficiency_factor(
-    data.frame(row = rep(1:2, 2), col = rep(1:2, each = 2),
-               treatment = rep(c("A", "B"), 2)),
-    "treatment", "row", "col"
+    data.frame(
+      row = rep(1:2, 2),
+      col = rep(1:2, each = 2),
+      treatment = rep(c("A", "B"), 2)
+    ),
+    "treatment",
+    "row",
+    "col"
   )
   expect_false(two$available)
 })
 
-test_that("neighbour balance auto-detects the piepho objective", {
-  d <- data.frame(row = rep(1:4, times = 3), col = rep(1:3, each = 4),
-                  treatment = rep(LETTERS[1:3], 4))
-  r <- speed(d, swap = "treatment", swap_within = "1", spatial_factors = ~ row + col,
-             obj_function = objective_function_piepho, iterations = 200, seed = 42,
-             quiet = TRUE)
+test_that("neighbour balance is reported for any grid design, whatever the objective", {
+  d <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+  r <- speed(
+    d,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    obj_function = objective_function_piepho,
+    iterations = 200,
+    seed = 42,
+    quiet = TRUE
+  )
   nb <- summary(r)$per_level[[1]]$evaluation$neighbour
-  expect_false(is.null(nb))
   expect_true(nb$available)
-  expect_true(is.finite(nb$nb_var))
+  expect_true(is.finite(nb$pair_var))
 
-  # Default (objective_function) does not compute neighbour balance.
-  expect_null(summary(simple_design())$per_level[[1]]$evaluation$neighbour)
+  # Also on by default for the default objective.
+  nb_default <- summary(simple_design())$per_level[[1]]$evaluation$neighbour
+  expect_true(nb_default$available)
+
+  # Opt out with neighbour = FALSE.
+  nb_off <- summary(simple_design(), neighbour = FALSE)$per_level[[
+    1
+  ]]$evaluation$neighbour
+  expect_false(nb_off$available)
+  expect_match(nb_off$reason, "neighbour = FALSE")
+})
+
+test_that("neighbour balance separates self-adjacency from distinct-pair counts", {
+  # 3 treatments x 4 replicates each on a 4x3 grid gives 6 possible pairs:
+  # 3 self-pairs (AA, BB, CC) and 3 distinct pairs (AB, AC, BC). Self-adjacency
+  # is reported on its own because zero is the desirable outcome, whereas a
+  # distinct pair never neighbouring is an imbalance. calculate_nb()'s own table
+  # silently omits pairs it never sees rather than recording a zero, so
+  # .neighbour_balance() must fill them in for the counts to be over the full
+  # pair universe.
+  d <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+  r <- speed(
+    d,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    obj_function = objective_function_piepho,
+    iterations = 200,
+    seed = 42,
+    quiet = TRUE
+  )
+  nb <- summary(r)$per_level[[1]]$evaluation$neighbour
+
+  expect_named(
+    nb,
+    c(
+      "available",
+      "self_adjacent",
+      "n_pairs",
+      "min_pair_count",
+      "max_pair_count",
+      "pair_var",
+      "n_zero_pairs"
+    )
+  )
+  expect_equal(nb$n_pairs, 3) # AB, AC, BC - self-pairs excluded
+  expect_true(nb$min_pair_count <= nb$max_pair_count)
+  expect_true(nb$min_pair_count >= 0)
+  expect_true(nb$self_adjacent >= 0)
+
+  # Cross-check directly against create_pair_mapping()/calculate_nb() over all
+  # 6 possible pairs for this 3-treatment design.
+  dm <- matrix(r$design_df$treatment, nrow = 4, ncol = 3)
+  pm <- create_pair_mapping(r$design_df$treatment)
+  raw <- calculate_nb(dm, pm)
+  all_counts <- setNames(rep(0L, length(unique(pm))), unique(pm))
+  all_counts[names(raw$nb)] <- raw$nb
+  self <- c("A,A", "B,B", "C,C")
+  distinct <- setdiff(names(all_counts), self)
+
+  expect_equal(nb$self_adjacent, sum(all_counts[self]))
+  expect_equal(nb$min_pair_count, min(all_counts[distinct]))
+  expect_equal(nb$max_pair_count, max(all_counts[distinct]))
+  expect_equal(nb$pair_var, var(all_counts[distinct]))
+  expect_equal(nb$n_zero_pairs, sum(all_counts[distinct] == 0))
+})
+
+test_that("a non-zero self-adjacency count is highlighted in the printed output", {
+  withr::with_options(list(crayon.enabled = TRUE, cli.num_colors = 8), {
+    s <- summary(simple_design())
+    s$per_level[[1]]$evaluation$neighbour$self_adjacent <- 4L
+    out <- capture_output(print(s))
+    expect_match(
+      out,
+      "Self-adj\\.:\\s+\033\\[35m4 like-treatment adjacencies\033\\[39m"
+    )
+
+    s$per_level[[1]]$evaluation$neighbour$self_adjacent <- 0L
+    expect_match(capture_output(print(s)), "Self-adj\\.:\\s+none")
+  })
 })
 
 test_that("the disconnected flag fires and prints", {
   # Build a summary then inject a disconnected verdict to exercise the flag path.
   s <- summary(simple_design())
   s$per_level[[1]]$evaluation$connectedness <-
-    list(available = TRUE, connected = FALSE, method = "model (row + col)",
-         message = "2 aliased coefficient(s)")
+    list(
+      available = TRUE,
+      connected = FALSE,
+      method = "model (row + col)",
+      message = "2 aliased coefficient(s)"
+    )
   s$flags$disconnected <- names(s$per_level)
   out <- capture_output(print(s))
   expect_match(out, "DISCONNECTED")
@@ -440,10 +776,13 @@ test_that("the Evaluation section prints expected metrics", {
   expect_match(out, "Evaluation")
   expect_match(out, "Connected:")
   expect_match(out, "Repl. span:")
-  # Complete blocks -> concurrence shown as a skip note, no lambda.
+  # Complete blocks -> concurrence shown as a skip note, no counts.
   expect_match(out, "Concurrence:.*complete blocks")
 
-  # Forcing concurrence prints the lambda line.
-  out_forced <- capture_output(print(summary(block_design(), concurrence = TRUE)))
-  expect_match(out_forced, "Concurrence:.*lambda")
+  # Forcing concurrence prints the min/max concurrence counts.
+  out_forced <- capture_output(print(summary(
+    block_design(),
+    concurrence = TRUE
+  )))
+  expect_match(out_forced, "Concurrence:\\s+min \\d+, max \\d+")
 })

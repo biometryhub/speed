@@ -20,4 +20,12 @@ inclusively), plus the worst-case (minimum) span across replicated
 treatments. Adapted from a colleague's \code{sommario.duplicates.span.doe}. A
 small worst-case span flags replicates that sit close together.
 }
+\details{
+Measured only along the two grid axes (\code{rc}/\code{cc}, resolved from
+\code{grid_factors} by \code{\link[=infer_row_col]{infer_row_col()}}), not the design's other spatial
+factors. A span is a distance, and only the grid axes are ordered: the
+separation between block 1 and block 3 is not 2. For non-grid factors the
+equivalent question ("do a treatment's replicates land in the same block?")
+is a count, and is answered by the concurrence matrix diagonal instead.
+}
 \keyword{internal}

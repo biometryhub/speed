@@ -4,8 +4,8 @@
 
 - Added a `summary()` method for `"design"` objects, reporting structure and replication, a
   decomposed optimisation score, and design-quality diagnostics (connectedness, concurrence,
-  replicate spans, opt-in efficiency, and neighbour balance). Section headings and the
-  convergence status are coloured (via `crayon`) in interactive/colour-capable terminals.
+  replicate spans and spread across blocks, neighbour balance, and opt-in efficiency).
+  ([#73](https://github.com/biometryhub/speed/issues/73))
 
 # speed 0.0.9
 

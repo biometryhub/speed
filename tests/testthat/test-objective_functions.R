@@ -374,7 +374,10 @@ test_that("objective_function_piepho handles incremental calculation with curren
   )
 
   expect_type(incremental_result, "list")
-  expect_named(incremental_result, c("score", "ed", "bal", "adj", "nb", "components"))
+  expect_named(
+    incremental_result,
+    c("score", "ed", "bal", "adj", "nb", "components")
+  )
 
   # Test that incremental calculation works differently from full calculation
   # The incremental result should have the same overall structure but potentially different values

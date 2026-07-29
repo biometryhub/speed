@@ -669,7 +669,12 @@ create_pair_mapping <- function(items) {
 #'   21, 227-242 (2016). <https://doi.org/10.1007/s13253-015-0241-2>
 #'
 #' @export
-calculate_efficiency_factor <- function(design_df, item, row_column = "row", col_column = "col") {
+calculate_efficiency_factor <- function(
+  design_df,
+  item,
+  row_column = "row",
+  col_column = "col"
+) {
   item <- as.character(substitute(item))
 
   # Design parameters

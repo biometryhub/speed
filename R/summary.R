@@ -5,42 +5,93 @@
 #' `summary()` decomposes the optimised score and reports structural and
 #' evaluation metrics that let you interrogate and defend a design.
 #'
+#' @param object A `"design"` object returned by [speed()].
+#' @param efficiency Logical (default `FALSE`); if `TRUE`, compute the
+#'   A-efficiency factor. Returns `NA` with a reason when its assumptions are
+#'   not met (columns named `row` and `col`, and at least 3 treatments). See
+#'   Details for more information.
+#' @param connectedness `NULL` (default) checks whether the design is
+#'   connected, but skips the check for very large designs where the model fit
+#'   would be expensive; `TRUE` forces it regardless of size; `FALSE` skips it.
+#'   See Details for more information.
+#' @param concurrence `NULL` (default) computes within-block treatment
+#'   concurrence only when an *incomplete* block factor is present; `TRUE`
+#'   forces it even for complete blocks, `FALSE` skips it. See Details for more
+#'   information.
+#' @param neighbour `NULL` (default) or `TRUE` reports neighbour-balance
+#'   diagnostics whenever the design has a row/column grid; `FALSE` skips them.
+#'   See Details for more information.
+#' @param ... Unused; for S3 compatibility.
+#'
+#' @details
 #' The returned object is a list of class `"summary.design"`; it can be assigned
 #' and queried programmatically (e.g. `s <- summary(d); s$per_level[[1]]$score`).
 #' Printing it is handled by [print.summary.design()].
 #'
-#' @param object A `"design"` object returned by [speed()].
-#' @param efficiency Logical (default `FALSE`); if `TRUE`, compute the
-#'   A-efficiency factor (a row--column model metric and the heaviest to
-#'   compute). Returns `NA` with a reason when its assumptions are not met
-#'   (columns named `row` and `col`, and at least 3 treatments).
-#' @param connectedness `NULL` (default) checks whether the design is
-#'   *connected*: whether every pairwise treatment difference is *estimable*
-#'   (statistically distinguishable) once row, column and any block effects are
-#'   accounted for. A disconnected design confounds some treatment comparisons
-#'   with the layout itself, no matter how much data you collect. Uses
-#'   whichever spatial factors the design was actually optimised with (e.g. row
-#'   and column, and a block or site factor if present) - not just literal
-#'   `row`/`col` columns. Skips the check for very large designs where the
-#'   model fit would be expensive; `TRUE` forces it regardless of size; `FALSE`
-#'   skips it.
-#' @param concurrence `NULL` (default) computes within-block treatment
-#'   *concurrence* - how many blocks each pair of treatments shares, reported
-#'   as `lambda min-max` (e.g. `lambda 2-3` means the least-shared pair of
-#'   treatments appears together in 2 blocks and the most-shared pair in 3;
-#'   equal lambda across all pairs indicates a balanced incomplete-block
-#'   design). Only computed when an *incomplete* block factor is present -
-#'   concurrences are uninformative for complete blocks such as RCBD/split-plot,
-#'   where every pair always shares every block; `TRUE` forces them even for
-#'   complete blocks, `FALSE` skips them.
-#' @param neighbour `NULL` (default) reports neighbour-balance diagnostics when
-#'   the design was optimised with `objective_function_piepho`; override with
-#'   `TRUE`/`FALSE`.
-#' @param ... Unused; for S3 compatibility.
+#' What the evaluation metrics report:
 #'
-#' @returns A list of class `"summary.design"` with elements including
-#'   `hierarchical`, `layout`, `levels`, `per_level` (structure + optimisation
-#'   per level), `score`, `seed`, `flags` and the recorded `call`.
+#' - **Connectedness:** whether every pairwise treatment difference is
+#'   *estimable* (statistically distinguishable) once row, column and any block
+#'   effects are accounted for. A disconnected design is usually not desirable as
+#'   it confounds some comparisons with the layout itself, no matter how many
+#'   replicates there are. Adjusts for the design's actual input spatial factors
+#'   (row, column, and any block or site factor), not just columns literally
+#'   named `row`/`col`.
+#' - **Concurrence:** how many blocks each pair of treatments shares (`lambda`);
+#'   equal lambda across all pairs indicates a balanced incomplete-block
+#'   design. Uninformative for complete blocks such as RCBD/split-plot, where
+#'   every pair always shares every block.
+#' - **Replicate spread:** how many distinct blocks each treatment's replicates
+#'   reach, and how many treatments land more than once in a single block. The
+#'   block counterpart of replicate span: a block factor is nominal, so there is
+#'   no distance to measure along, but the number of blocks a treatment reaches
+#'   is still well defined. Reported whenever a block factor is present,
+#'   including for complete blocks (where concurrence is skipped) - there it
+#'   confirms every treatment reaches every block.
+#' - **Replicate span:** how far apart a treatment's own replicates are placed
+#'   along the two grid axes (whichever columns `grid_factors` resolved to,
+#'   reported by name). For each replicated treatment, the closest its
+#'   replicates come to each other, counted inclusively - so a span of 1 means
+#'   two replicates share a row, 2 means they are in adjacent rows, and larger
+#'   is better. The printed figure is the worst case across all replicated
+#'   treatments; the two axes are minimised independently, so they may come from
+#'   different treatments. Only the grid axes are measured: a span is a
+#'   distance, and a non-grid spatial factor such as block or site has no
+#'   ordering to measure along.
+#' - **Efficiency:** the A-efficiency factor, a row--column model metric (see
+#'   [calculate_efficiency_factor()]); the heaviest of these metrics to
+#'   compute, hence opt-in.
+#' - **Neighbour balance:** how often treatment pairs end up side by side,
+#'   using rook adjacency (left--right and up--down, not diagonal). Reported in
+#'   two parts, because they mean opposite things. *Self-adjacency* counts
+#'   treatments placed beside another plot of themselves; zero is the desirable
+#'   outcome and is what the optimiser works towards. *Pair balance* covers the
+#'   distinct treatment pairs: the min, max and variance of their adjacency
+#'   counts, and how many never end up adjacent at all. Every possible pair is
+#'   counted, so pairs that never neighbour register as zero rather than being
+#'   omitted.
+#'
+#' @returns A list of class `"summary.design"`:
+#' - **hierarchical** - `TRUE` for a multi-level (e.g. split-plot) design.
+#' - **layout** - `n_plots`, `nrow`, `ncol`, `row_column`, `col_column`, `has_grid`.
+#' - **levels** - character vector of level names (e.g. `"wp"`/`"sp"`; a single
+#'   name for a simple design).
+#' - **per_level** - one element per level (named by `levels`), each a list with:
+#'   - `swap`, `n_treatments`, `treatments`.
+#'   - `replication` - `counts`, `min`, `mean`, `max`, `equal`, `distribution`.
+#'   - `spatial_factors` - named vector of the number of levels of each spatial factor.
+#'   - `evaluation` - `replicate_span`, `connectedness`, `concurrence`,
+#'     `block_spread`, `efficiency`, `neighbour`; each a list with an
+#'     `available` flag and either its value(s) or a `reason` it wasn't
+#'     computed.
+#'   - `score` - `initial`, `final`, `components`.
+#'   - `optim` - `objective`, `start_temp`, `cooling_rate`,
+#'     `iterations_requested`, `iterations_run`, `stopped_early`.
+#' - **score** - the overall optimised score (summed across levels for a
+#'   hierarchical design).
+#' - **seed** - the seed used for reproducibility.
+#' - **flags** - `hit_iteration_cap`, `unequal_replication`, `disconnected`.
+#' - **call** - the captured `speed()` call.
 #'
 #' @seealso [print.design()], [speed()]
 #'
@@ -58,16 +109,21 @@
 #' summary(design, efficiency = TRUE)
 #'
 #' @export
-summary.design <- function(object,
-                           efficiency    = FALSE,
-                           connectedness = NULL,
-                           concurrence   = NULL,
-                           neighbour     = NULL,
-                           ...) {
+summary.design <- function(
+  object,
+  efficiency = FALSE,
+  connectedness = NULL,
+  concurrence = NULL,
+  neighbour = NULL,
+  ...
+) {
   meta <- object$metadata
   if (is.null(meta)) {
-    stop("This design has no `metadata`; it may predate the summary() method. ",
-         "Re-run speed() to produce a summarisable design.", call. = FALSE)
+    stop(
+      "This design has no `metadata`; it may predate the summary() method. ",
+      "Re-run speed() to produce a summarisable design.",
+      call. = FALSE
+    )
   }
   # Buffers (from add_buffers()) are a field-layout convenience, not part of
   # the statistical design, so they're excluded before any computation.
@@ -77,24 +133,16 @@ summary.design <- function(object,
   cc <- meta$col_column %||% "col"
   levels <- meta$levels %||% names(meta$per_level)
 
-  # neighbour auto-on if any level used the neighbour-balance objective; the
-  # block factor is resolved per level below since levels may differ.
-  want_neighbour <- if (is.null(neighbour)) {
-    any(vapply(meta$per_level,
-               function(p) return(identical(p$obj_function, objective_function_piepho)),
-               logical(1)))
-  } else {
-    isTRUE(neighbour)
-  }
+  want_neighbour <- is.null(neighbour) || isTRUE(neighbour)
 
   has_grid <- all(c(rc, cc) %in% names(df))
   layout <- list(
-    n_plots    = nrow(df),
-    nrow       = if (has_grid) length(unique(df[[rc]])) else NA_integer_,
-    ncol       = if (has_grid) length(unique(df[[cc]])) else NA_integer_,
+    n_plots = nrow(df),
+    nrow = if (has_grid) length(unique(df[[rc]])) else NA_integer_,
+    ncol = if (has_grid) length(unique(df[[cc]])) else NA_integer_,
     row_column = rc,
     col_column = cc,
-    has_grid   = has_grid
+    has_grid = has_grid
   )
 
   per_level <- lapply(levels, function(lv) {
@@ -108,34 +156,55 @@ summary.design <- function(object,
     # for a nested level it is plots-per-treatment (replication x sub-units).
     counts <- as.integer(table(df[[swap]]))
     replication <- list(
-      counts       = counts,
-      min          = min(counts),
-      mean         = mean(counts),
-      max          = max(counts),
-      equal        = length(unique(counts)) == 1,
+      counts = counts,
+      min = min(counts),
+      mean = mean(counts),
+      max = max(counts),
+      equal = length(unique(counts)) == 1,
       distribution = table(counts)
     )
 
-    sf_levels <- vapply(sf, function(s) return(length(unique(df[[s]]))), integer(1))
+    sf_levels <- vapply(
+      sf,
+      function(s) return(length(unique(df[[s]]))),
+      integer(1)
+    )
     names(sf_levels) <- sf
 
     # Score components captured during the run (see speed_hierarchical); NULL
     # for custom objectives that don't return one.
-    trace   <- if (hierarchical) object$scores[[lv]] else object$scores
+    trace <- if (hierarchical) object$scores[[lv]] else object$scores
     initial <- if (length(trace)) trace[[1]] else NA_real_
-    final   <- pm$final_score %||% NA_real_
+    final <- pm$final_score %||% NA_real_
 
-    run     <- if (hierarchical) length(object$scores[[lv]]) else object$iterations_run
-    stopped <- if (hierarchical) isTRUE(object$stopped_early[[lv]]) else isTRUE(object$stopped_early)
+    run <- if (hierarchical) {
+      length(object$scores[[lv]])
+    } else {
+      object$iterations_run
+    }
+    stopped <- if (hierarchical) {
+      isTRUE(object$stopped_early[[lv]])
+    } else {
+      isTRUE(object$stopped_early)
+    }
 
     # --- Evaluation metrics ---
     evaluation <- list(
       replicate_span = .replicate_spans(df, swap, rc, cc),
-      connectedness  = if (isFALSE(connectedness)) {
-        list(available = FALSE, reason = "not requested (connectedness = FALSE)")
+      connectedness = if (isFALSE(connectedness)) {
+        list(
+          available = FALSE,
+          reason = "not requested (connectedness = FALSE)"
+        )
       } else {
         # NULL (auto) skips very large designs; explicit TRUE forces the fit.
-        .design_connectedness(df, swap, block, sf, force = isTRUE(connectedness))
+        .design_connectedness(
+          df,
+          swap,
+          block,
+          sf,
+          force = isTRUE(connectedness)
+        )
       },
       concurrence = if (is.null(block)) {
         list(available = FALSE, reason = "no block factor")
@@ -145,67 +214,89 @@ summary.design <- function(object,
         # NULL (auto) skips complete blocks; explicit TRUE forces them too.
         .design_concurrence(df, swap, block, force = isTRUE(concurrence))
       },
+      # Not gated on `concurrence`: it answers a different question, and stays
+      # informative for complete blocks where concurrence is skipped.
+      block_spread = if (is.null(block)) {
+        list(available = FALSE, reason = "no block factor")
+      } else {
+        .block_spread(df, swap, block)
+      },
       efficiency = if (isTRUE(efficiency)) {
         .efficiency_factor(df, swap, rc, cc)
       } else {
-        list(available = FALSE, reason = "not requested (set efficiency = TRUE)")
+        list(
+          available = FALSE,
+          reason = "not requested (set efficiency = TRUE)"
+        )
       },
-      neighbour = if (want_neighbour && has_grid) {
-        .neighbour_balance(df, swap, layout$nrow, layout$ncol)
-      } else if (want_neighbour) {
+      neighbour = if (!want_neighbour) {
+        list(available = FALSE, reason = "not requested (neighbour = FALSE)")
+      } else if (!has_grid) {
         list(available = FALSE, reason = "no row/column factors")
       } else {
-        NULL
+        .neighbour_balance(df, swap, layout$nrow, layout$ncol)
       }
     )
 
     return(list(
-      swap            = swap,
-      n_treatments    = length(trts),
-      treatments      = trts,
-      replication     = replication,
+      swap = swap,
+      n_treatments = length(trts),
+      treatments = trts,
+      replication = replication,
       spatial_factors = sf_levels,
-      evaluation      = evaluation,
+      evaluation = evaluation,
       score = list(
-        initial    = initial,
-        final      = final,
+        initial = initial,
+        final = final,
         components = pm$final_components
       ),
       optim = list(
-        objective            = .objective_name(pm$obj_function),
-        start_temp           = pm$start_temp,
-        cooling_rate         = pm$cooling_rate,
+        objective = .objective_name(pm$obj_function),
+        start_temp = pm$start_temp,
+        cooling_rate = pm$cooling_rate,
         iterations_requested = pm$iterations,
-        iterations_run       = run,
-        stopped_early        = stopped
+        iterations_run = run,
+        stopped_early = stopped
       )
     ))
   })
   names(per_level) <- levels
 
   # Flags.
-  hit_cap <- vapply(per_level, function(p) return(!p$optim$stopped_early), logical(1))
-  unequal <- vapply(per_level, function(p) return(!p$replication$equal), logical(1))
-  disconnected <- vapply(per_level, function(p) {
-    cn <- p$evaluation$connectedness
-    return(isTRUE(cn$available) && isTRUE(!cn$connected))
-  }, logical(1))
+  hit_cap <- vapply(
+    per_level,
+    function(p) return(!p$optim$stopped_early),
+    logical(1)
+  )
+  unequal <- vapply(
+    per_level,
+    function(p) return(!p$replication$equal),
+    logical(1)
+  )
+  disconnected <- vapply(
+    per_level,
+    function(p) {
+      cn <- p$evaluation$connectedness
+      return(isTRUE(cn$available) && isTRUE(!cn$connected))
+    },
+    logical(1)
+  )
   flags <- list(
-    hit_iteration_cap   = names(hit_cap)[hit_cap],
+    hit_iteration_cap = names(hit_cap)[hit_cap],
     unequal_replication = any(unequal),
-    disconnected        = names(disconnected)[disconnected]
+    disconnected = names(disconnected)[disconnected]
   )
 
   return(structure(
     list(
       hierarchical = hierarchical,
-      layout       = layout,
-      levels       = levels,
-      per_level    = per_level,
-      score        = object$score,
-      seed         = object$seed,
-      flags        = flags,
-      call         = meta$call
+      layout = layout,
+      levels = levels,
+      per_level = per_level,
+      score = object$score,
+      seed = object$seed,
+      flags = flags,
+      call = meta$call
     ),
     class = "summary.design"
   ))
@@ -221,11 +312,13 @@ summary.design <- function(object,
 #' @return A length-one character string.
 #' @keywords internal
 .objective_name <- function(fn) {
-  if (!is.function(fn)) return("unknown")
+  if (!is.function(fn)) {
+    return("unknown")
+  }
   known <- list(
-    objective_function            = objective_function,
-    objective_function_factorial  = objective_function_factorial,
-    objective_function_piepho     = objective_function_piepho
+    objective_function = objective_function,
+    objective_function_factorial = objective_function_factorial,
+    objective_function_piepho = objective_function_piepho
   )
   for (nm in names(known)) {
     if (identical(fn, known[[nm]])) return(nm)
@@ -245,9 +338,22 @@ print.summary.design <- function(x, ...) {
   pad <- 14
   lab <- function(s) return(formatC(s, width = -pad))
   indent <- strrep(" ", pad)
-  fmt_int <- function(n) return(format(n, big.mark = ",", scientific = FALSE, trim = TRUE))
-  fmt_num <- function(n) return(format(round(n, 4), big.mark = ",", trim = TRUE))
-  section <- function(title) return(cat("\n", crayon::bold(title), "\n", strrep("-", nchar(title)), "\n", sep = ""))
+  fmt_int <- function(n) {
+    return(format(n, big.mark = ",", scientific = FALSE, trim = TRUE))
+  }
+  fmt_num <- function(n) {
+    return(format(round(n, 4), big.mark = ",", trim = TRUE))
+  }
+  section <- function(title) {
+    return(cat(
+      "\n",
+      crayon::bold(title),
+      "\n",
+      strrep("-", nchar(title)),
+      "\n",
+      sep = ""
+    ))
+  }
 
   cat(crayon::bold("Design Summary"), "\n", sep = "")
   cat("==============\n")
@@ -260,8 +366,10 @@ print.summary.design <- function(x, ...) {
     } else {
       ""
     }
-    flag_lines <- c(flag_lines,
-                    paste0("! Ran to iteration cap - may not have converged", where))
+    flag_lines <- c(
+      flag_lines,
+      paste0("! Ran to iteration cap - may not have converged", where)
+    )
   }
   if (length(x$flags$disconnected)) {
     where <- if (x$hierarchical) {
@@ -272,35 +380,60 @@ print.summary.design <- function(x, ...) {
     flag_lines <- c(flag_lines, paste0("! DISCONNECTED design", where))
   }
   if (isTRUE(x$flags$unequal_replication)) {
-    flag_lines <- c(flag_lines, "! Unequal replication (expected for p-rep designs)")
+    flag_lines <- c(flag_lines, "! Unequal replication")
   }
   if (length(flag_lines)) {
     section("Flags")
-    for (fl in flag_lines) cat(fl, "\n", sep = "")
+    # Every flag raised here is a warning, so all are magenta; a positive flag
+    # would be green.
+    for (fl in flag_lines) {
+      cat(crayon::magenta(fl), "\n", sep = "")
+    }
   }
 
   # --- Structure ---
   section("Structure")
   lo <- x$layout
   if (isTRUE(lo$has_grid)) {
-    cat(lab("Layout:"),
-        sprintf("%d rows x %d cols (%s plots)", lo$nrow, lo$ncol, fmt_int(lo$n_plots)),
-        "\n", sep = "")
+    cat(
+      lab("Layout:"),
+      sprintf(
+        "%d rows x %d cols (%s plots)",
+        lo$nrow,
+        lo$ncol,
+        fmt_int(lo$n_plots)
+      ),
+      "\n",
+      sep = ""
+    )
   } else {
-    cat(lab("Layout:"), sprintf("%s plots", fmt_int(lo$n_plots)), "\n", sep = "")
+    cat(
+      lab("Layout:"),
+      sprintf("%s plots", fmt_int(lo$n_plots)),
+      "\n",
+      sep = ""
+    )
   }
-  for (lv in x$levels) .print_level_structure(x, lv, lab, indent, fmt_num)
+  for (lv in x$levels) {
+    .print_level_structure(x, lv, lab, indent, fmt_num)
+  }
 
   # --- Optimisation ---
   section("Optimisation")
   cat(lab("Seed:"), x$seed, "\n", sep = "")
   # Only meaningful to show the total separately when there's more than one level.
-  if (x$hierarchical) cat(lab("Total score:"), fmt_num(x$score), "\n", sep = "")
-  for (lv in x$levels) .print_level_optim(x, lv, lab, indent, fmt_int, fmt_num)
+  if (x$hierarchical) {
+    cat(lab("Total score:"), fmt_num(x$score), "\n", sep = "")
+  }
+  for (lv in x$levels) {
+    .print_level_optim(x, lv, lab, indent, fmt_int, fmt_num)
+  }
 
   # --- Evaluation ---
   section("Evaluation")
-  for (lv in x$levels) .print_level_evaluation(x, lv, lab, fmt_num)
+  for (lv in x$levels) {
+    .print_level_evaluation(x, lv, lab, fmt_num)
+  }
 
   return(invisible(x))
 }
@@ -310,14 +443,20 @@ print.summary.design <- function(x, ...) {
 #' @keywords internal
 .print_level_evaluation <- function(x, lv, lab, fmt_num) {
   e <- x$per_level[[lv]]$evaluation
-  if (x$hierarchical) cat("\n[", lv, "]\n", sep = "")
+  if (x$hierarchical) {
+    cat("\n[", lv, "]\n", sep = "")
+  }
 
   # Connectedness
   cn <- e$connectedness
   if (isTRUE(cn$available)) {
     state <- if (isTRUE(cn$connected)) "connected" else "DISCONNECTED"
-    cat(lab("Connected:"), sprintf("%s - %s [%s]", state, cn$message, cn$method),
-        "\n", sep = "")
+    cat(
+      lab("Connected:"),
+      sprintf("%s - %s [%s]", state, cn$message, cn$method),
+      "\n",
+      sep = ""
+    )
   } else {
     cat(lab("Connected:"), cn$reason, "\n", sep = "")
   }
@@ -331,21 +470,67 @@ print.summary.design <- function(x, ...) {
     } else {
       ""
     }
-    cat(lab("Concurrence:"),
-        sprintf("lambda %d-%d%s%s [block: %s]",
-                cc$lambda_min, cc$lambda_max, constant, zero, cc$block),
-        "\n", sep = "")
+    cat(
+      lab("Concurrence:"),
+      sprintf(
+        "min %d, max %d%s%s [block: %s]",
+        cc$lambda_min,
+        cc$lambda_max,
+        constant,
+        zero,
+        cc$block
+      ),
+      "\n",
+      sep = ""
+    )
   } else {
     cat(lab("Concurrence:"), cc$reason, "\n", sep = "")
+  }
+
+  # Replicate spread across blocks
+  bs <- e$block_spread
+  if (isTRUE(bs$available)) {
+    spread <- if (bs$min_blocks == bs$max_blocks) {
+      sprintf("each treatment in %d of %d blocks", bs$min_blocks, bs$n_blocks)
+    } else {
+      sprintf(
+        "treatments in %d-%d of %d blocks",
+        bs$min_blocks,
+        bs$max_blocks,
+        bs$n_blocks
+      )
+    }
+    dup <- if (bs$n_within_block_reps > 0) {
+      sprintf(", %d replicated within a block", bs$n_within_block_reps)
+    } else {
+      ""
+    }
+    cat(
+      lab("Blk. spread:"),
+      sprintf("%s%s [block: %s]", spread, dup, bs$block),
+      "\n",
+      sep = ""
+    )
+  } else {
+    cat(lab("Blk. spread:"), bs$reason, "\n", sep = "")
   }
 
   # Replicate span
   rs <- e$replicate_span
   if (isTRUE(rs$available) && rs$n_replicated > 0) {
-    cat(lab("Repl. span:"),
-        sprintf("worst-case %s (row), %s (col) across %d replicated treatment(s)",
-                fmt_num(rs$min_row_span), fmt_num(rs$min_col_span), rs$n_replicated),
-        "\n", sep = "")
+    cat(
+      lab("Repl. span:"),
+      sprintf(
+        "worst-case %s (%s), %s (%s) across %d replicated treatment(s)",
+        fmt_num(rs$min_row_span),
+        x$layout$row_column,
+        fmt_num(rs$min_col_span),
+        x$layout$col_column,
+        rs$n_replicated
+      ),
+      "\n",
+      sep = ""
+    )
   } else if (isTRUE(rs$available)) {
     cat(lab("Repl. span:"), "n/a (no replicated treatments)\n", sep = "")
   } else {
@@ -355,19 +540,50 @@ print.summary.design <- function(x, ...) {
   # Efficiency
   ef <- e$efficiency
   if (isTRUE(ef$available)) {
-    cat(lab("Efficiency:"), fmt_num(ef$value), " (A-efficiency, row-column model)\n",
-        sep = "")
+    cat(
+      lab("Efficiency:"),
+      fmt_num(ef$value),
+      " (A-efficiency, row-column model)\n",
+      sep = ""
+    )
   } else {
     cat(lab("Efficiency:"), ef$reason, "\n", sep = "")
   }
 
-  # Neighbour balance (only when computed)
+  # Neighbour balance. Self-adjacency gets its own row: zero is the desirable
+  # outcome, so a non-zero count is highlighted the way a warning flag is.
   nb <- e$neighbour
-  if (!is.null(nb) && isTRUE(nb$available)) {
-    cat(lab("Neighbour:"),
-        sprintf("pair-count variance %s, most-repeated pair x%d",
-                fmt_num(nb$nb_var), nb$max_pair_count),
-        "\n", sep = "")
+  if (isTRUE(nb$available)) {
+    self <- if (nb$self_adjacent > 0) {
+      crayon::magenta(sprintf(
+        "%d like-treatment adjacencies",
+        nb$self_adjacent
+      ))
+    } else {
+      "none"
+    }
+    cat(lab("Self-adj.:"), self, "\n", sep = "")
+
+    zero <- if (nb$n_zero_pairs > 0) {
+      sprintf(", %d never adjacent", nb$n_zero_pairs)
+    } else {
+      ""
+    }
+    cat(
+      lab("Neighbour:"),
+      sprintf(
+        "min %d, max %d over %d pairs (variance %s)%s",
+        nb$min_pair_count,
+        nb$max_pair_count,
+        nb$n_pairs,
+        fmt_num(nb$pair_var),
+        zero
+      ),
+      "\n",
+      sep = ""
+    )
+  } else {
+    cat(lab("Neighbour:"), nb$reason, "\n", sep = "")
   }
   return(invisible(NULL))
 }
@@ -378,22 +594,32 @@ print.summary.design <- function(x, ...) {
 .print_level_structure <- function(x, lv, lab, indent, fmt_num) {
   p <- x$per_level[[lv]]
   rep <- p$replication
-  if (x$hierarchical) cat("\n[", lv, "]\n", sep = "")
+  if (x$hierarchical) {
+    cat("\n[", lv, "]\n", sep = "")
+  }
 
   rep_label <- if (x$hierarchical) "Plots/trt:" else "Replication:"
   if (rep$equal) {
     rep_str <- sprintf("%d each", rep$min)
   } else {
-    rep_str <- sprintf("min/mean/max %d / %s / %d",
-                       rep$min, fmt_num(rep$mean), rep$max)
+    rep_str <- sprintf(
+      "min/mean/max %d / %s / %d",
+      rep$min,
+      fmt_num(rep$mean),
+      rep$max
+    )
   }
 
   cat(lab("Treatments:"), p$n_treatments, "\n", sep = "")
   cat(lab(rep_label), rep_str, "\n", sep = "")
   sf <- p$spatial_factors
   if (length(sf)) {
-    cat(lab("Spatial:"),
-        paste(sprintf("%s (%d)", names(sf), sf), collapse = ", "), "\n", sep = "")
+    cat(
+      lab("Spatial:"),
+      paste(sprintf("%s (%d)", names(sf), sf), collapse = ", "),
+      "\n",
+      sep = ""
+    )
   }
   return(invisible(NULL))
 }
@@ -411,13 +637,25 @@ print.summary.design <- function(x, ...) {
 #' @return `df` with any buffer rows removed.
 #' @keywords internal
 .drop_buffer_rows <- function(df, meta) {
-  if (is.null(meta$per_level)) return(df)
-  swap_cols <- unique(vapply(meta$per_level, function(p) return(p$swap), character(1)))
+  if (is.null(meta$per_level)) {
+    return(df)
+  }
+  swap_cols <- unique(vapply(
+    meta$per_level,
+    function(p) return(p$swap),
+    character(1)
+  ))
   buffer_rows <- logical(nrow(df))
-  for (s in swap_cols) buffer_rows <- buffer_rows | as.character(df[[s]]) == "buffer"
-  if (!any(buffer_rows)) return(df)
+  for (s in swap_cols) {
+    buffer_rows <- buffer_rows | as.character(df[[s]]) == "buffer"
+  }
+  if (!any(buffer_rows)) {
+    return(df)
+  }
   df <- df[!buffer_rows, , drop = FALSE]
-  for (s in swap_cols) if (is.factor(df[[s]])) df[[s]] <- droplevels(df[[s]])
+  for (s in swap_cols) {
+    if (is.factor(df[[s]])) df[[s]] <- droplevels(df[[s]])
+  }
   return(df)
 }
 
@@ -429,6 +667,13 @@ print.summary.design <- function(x, ...) {
 #' treatments. Adapted from a colleague's `sommario.duplicates.span.doe`. A
 #' small worst-case span flags replicates that sit close together.
 #'
+#' Measured only along the two grid axes (`rc`/`cc`, resolved from
+#' `grid_factors` by [infer_row_col()]), not the design's other spatial
+#' factors. A span is a distance, and only the grid axes are ordered: the
+#' separation between block 1 and block 3 is not 2. For non-grid factors the
+#' equivalent question ("do a treatment's replicates land in the same block?")
+#' is a count, and is answered by the concurrence matrix diagonal instead.
+#'
 #' @param df Design data frame.
 #' @param swap Treatment column name.
 #' @param rc,cc Row and column column names.
@@ -438,21 +683,31 @@ print.summary.design <- function(x, ...) {
     return(list(available = FALSE, reason = "no row/column factors"))
   }
   span1 <- function(x) {
-    if (length(x) < 2) return(NA_real_)
+    if (length(x) < 2) {
+      return(NA_real_)
+    }
     return(min(stats::dist(x, "manhattan")) + 1)
   }
   rows <- as_numeric_factor(df[[rc]])
   cols <- as_numeric_factor(df[[cc]])
-  trt  <- df[[swap]]
+  trt <- df[[swap]]
   row_spans <- tapply(rows, trt, span1)
   col_spans <- tapply(cols, trt, span1)
   has_reps <- !is.na(row_spans)
   return(list(
-    available    = TRUE,
-    row_spans    = row_spans,
-    col_spans    = col_spans,
-    min_row_span = if (any(has_reps)) min(row_spans, na.rm = TRUE) else NA_real_,
-    min_col_span = if (any(has_reps)) min(col_spans, na.rm = TRUE) else NA_real_,
+    available = TRUE,
+    row_spans = row_spans,
+    col_spans = col_spans,
+    min_row_span = if (any(has_reps)) {
+      min(row_spans, na.rm = TRUE)
+    } else {
+      NA_real_
+    },
+    min_col_span = if (any(has_reps)) {
+      min(col_spans, na.rm = TRUE)
+    } else {
+      NA_real_
+    },
     n_replicated = sum(has_reps)
   ))
 }
@@ -475,9 +730,15 @@ print.summary.design <- function(x, ...) {
   cand <- setdiff(spatial_cols, c(rc, cc))
   cand <- cand[cand %in% names(df)]
   block_like <- cand[grepl("block", cand, ignore.case = TRUE)]
-  if (length(block_like)) return(block_like[[1]])
-  if (length(cand)) return(cand[[1]])
-  if ("block" %in% names(df)) return("block")
+  if (length(block_like)) {
+    return(block_like[[1]])
+  }
+  if (length(cand)) {
+    return(cand[[1]])
+  }
+  if ("block" %in% names(df)) {
+    return("block")
+  }
   return(NULL)
 }
 
@@ -499,40 +760,65 @@ print.summary.design <- function(x, ...) {
 #' @param force Fit the model even for very large designs (where it is skipped
 #'   by default because the dense `lm` fit is expensive).
 #' @keywords internal
-.design_connectedness <- function(df, swap, block, spatial_cols, force = FALSE) {
+.design_connectedness <- function(
+  df,
+  swap,
+  block,
+  spatial_cols,
+  force = FALSE
+) {
   n_trt <- length(unique(df[[swap]]))
   if (n_trt < 2) {
     return(list(available = FALSE, reason = "needs >= 2 treatments"))
   }
-  nuisance <- setdiff(intersect(unique(c(spatial_cols, block)), names(df)), swap)
+  nuisance <- setdiff(
+    intersect(unique(c(spatial_cols, block)), names(df)),
+    swap
+  )
   if (length(nuisance) == 0) {
     return(list(
-      available = TRUE, method = "none", connected = TRUE, n_aliased = 0L,
+      available = TRUE,
+      method = "none",
+      connected = TRUE,
+      n_aliased = 0L,
       message = "no blocking structure (trivially connected)"
     ))
   }
   # Guard against expensive fits: the dense model matrix has ~p columns and the
   # QR is O(n * p^2). Skip (unless forced) when that is large enough to be slow.
-  p <- 1 + sum(vapply(nuisance, function(f) return(length(unique(df[[f]])) - 1L), integer(1))) +
+  p <- 1 +
+    sum(vapply(
+      nuisance,
+      function(f) return(length(unique(df[[f]])) - 1L),
+      integer(1)
+    )) +
     (n_trt - 1)
   if (!force && as.double(nrow(df)) * p^2 > 1e9) {
-    return(list(available = FALSE,
-                reason = "large design - set connectedness = TRUE to compute"))
+    return(list(
+      available = FALSE,
+      reason = "large design - set connectedness = TRUE to compute"
+    ))
   }
   d <- df[, c(nuisance, swap)]
   d[] <- lapply(d, factor)
-  d[["..y.."]] <- 0  # dummy response; estimability is a rank property
+  d[["..y.."]] <- 0 # dummy response; estimability is a rank property
   fit <- stats::lm(stats::reformulate(c(nuisance, swap), "..y.."), data = d)
   co <- stats::coef(fit)
   n_aliased <- sum(is.na(co) & startsWith(names(co), swap))
   model <- paste(nuisance, collapse = " + ")
   return(list(
-    available = TRUE, method = sprintf("model (%s)", model),
-    connected = n_aliased == 0, n_aliased = n_aliased,
+    available = TRUE,
+    method = sprintf("model (%s)", model),
+    connected = n_aliased == 0,
+    n_aliased = n_aliased,
     message = if (n_aliased == 0) {
       sprintf("treatment estimable given %s", model)
     } else {
-      sprintf("%d treatment contrast(s) not estimable given %s", n_aliased, model)
+      sprintf(
+        "%d treatment contrast(s) not estimable given %s",
+        n_aliased,
+        model
+      )
     }
   ))
 }
@@ -551,23 +837,57 @@ print.summary.design <- function(x, ...) {
 #' @param force Compute even when blocks are complete.
 #' @keywords internal
 .design_concurrence <- function(df, swap, block, force = FALSE) {
-  if (is.null(block)) return(list(available = FALSE, reason = "no block factor"))
+  if (is.null(block)) {
+    return(list(available = FALSE, reason = "no block factor"))
+  }
   M <- table(df[[swap]], df[[block]])
-  complete <- !any(M == 0)  # every treatment present in every block
+  complete <- !any(M == 0) # every treatment present in every block
   if (complete && !force) {
-    return(list(available = FALSE, complete = TRUE,
-                reason = "complete blocks - not informative"))
+    return(list(
+      available = FALSE,
+      complete = TRUE,
+      reason = "complete blocks - not informative"
+    ))
   }
   C <- M %*% t(M)
   lambda <- C[upper.tri(C)]
   return(list(
-    available       = TRUE,
-    block           = block,
-    complete        = complete,
-    lambda_min      = min(lambda),
-    lambda_max      = max(lambda),
+    available = TRUE,
+    block = block,
+    complete = complete,
+    lambda_min = min(lambda),
+    lambda_max = max(lambda),
     lambda_constant = length(unique(lambda)) == 1,
-    n_zero_pairs    = sum(lambda == 0)
+    n_zero_pairs = sum(lambda == 0)
+  ))
+}
+
+#' Replicate spread across blocks
+#'
+#' How many distinct blocks each treatment's replicates are spread over, and how
+#' many treatments land more than once in a single block. This is the block
+#' equivalent of `.replicate_spans()`: a block factor is nominal, so there is no
+#' distance to measure along, but "how many different blocks do a treatment's
+#' replicates reach" is still well defined. It reads the same treatment-by-block
+#' incidence `M` as [.design_concurrence()] - the per-treatment figures come
+#' from `M`'s rows, where concurrence uses the off-diagonals of `M M'`.
+#'
+#' Computed whenever a block factor is present, independent of the `concurrence`
+#' argument: unlike concurrence it remains informative for complete blocks,
+#' where it confirms every treatment reaches every block.
+#'
+#' @param block Block factor column name.
+#' @keywords internal
+.block_spread <- function(df, swap, block) {
+  M <- table(df[[swap]], df[[block]])
+  occupied <- rowSums(M > 0) # distinct blocks reached by each treatment
+  return(list(
+    available = TRUE,
+    block = block,
+    n_blocks = ncol(M),
+    min_blocks = min(occupied),
+    max_blocks = max(occupied),
+    n_within_block_reps = sum(apply(M, 1, max) > 1)
   ))
 }
 
@@ -587,32 +907,68 @@ print.summary.design <- function(x, ...) {
     return(list(available = FALSE, reason = "requires >= 3 treatments"))
   }
   ef <- tryCatch(
-    eval(bquote(calculate_efficiency_factor(df, .(as.name(swap)),
-                                            row_column = rc, col_column = cc))),
+    eval(bquote(calculate_efficiency_factor(
+      df,
+      .(as.name(swap)),
+      row_column = rc,
+      col_column = cc
+    ))),
     error = function(e) return(NULL)
   )
   if (is.null(ef) || !is.finite(ef)) {
-    return(list(available = FALSE, reason = "could not be computed for this design"))
+    return(list(
+      available = FALSE,
+      reason = "could not be computed for this design"
+    ))
   }
   return(list(available = TRUE, value = ef))
 }
 
 #' Neighbour-balance diagnostics
 #'
-#' Builds the treatment grid and reports the variance of adjacent-pair counts
-#' (the quantity `objective_function_piepho` minimises via `nb_score`) and the
-#' most frequent adjacent pair count. Takes `nrow`/`ncol` from the caller's
-#' `layout` (counted via `length(unique(...))`) rather than deriving them from
-#' `max(row)`/`max(col)`: buffer plots (`add_buffers()`) can shift row/col
-#' numbering so it no longer starts at 1, which would otherwise reshape the
-#' grid with the wrong dimensions. Assumes `rc`/`cc` are present in `df`;
-#' callers should check `has_grid` first (see `summary.design()`).
+#' Builds the treatment grid and counts how often each treatment pair ends up
+#' adjacent (rook adjacency only), via
+#' [create_pair_mapping()]/[calculate_nb()]. Pairs never observed as neighbours
+#' are filled in as zero - `calculate_nb()`'s own table omits them rather than
+#' recording a zero.
+#'
+#' Self-pairs (a treatment beside another plot of itself) are reported
+#' separately from distinct treatment pairs, because they mean opposite things:
+#' zero self-adjacency is the desirable outcome the optimiser works towards,
+#' whereas a distinct pair that never neighbours is an imbalance. Lumping them
+#' together hides self-adjacency behind the same `min 0` as the harmless case.
+#'
+#' Takes `nrow`/`ncol` from the caller's `layout` (counted via
+#' `length(unique(...))`) rather than deriving them from `max(row)`/`max(col)`:
+#' buffer plots (`add_buffers()`) can shift row/col numbering so it no longer
+#' starts at 1, which would otherwise reshape the grid with the wrong
+#' dimensions. Assumes `rc`/`cc` are present in `df`; callers should check
+#' `has_grid` first (see `summary.design()`).
 #'
 #' @keywords internal
 .neighbour_balance <- function(df, swap, nrow, ncol) {
   dm <- matrix(df[[swap]], nrow = nrow, ncol = ncol)
-  nb <- calculate_nb(dm)
-  return(list(available = TRUE, nb_var = nb$var, max_pair_count = nb$max_nb))
+  pair_mapping <- create_pair_mapping(df[[swap]])
+  nb <- calculate_nb(dm, pair_mapping)
+
+  all_pairs <- unique(pair_mapping)
+  counts <- setNames(rep(0L, length(all_pairs)), all_pairs)
+  counts[names(nb$nb)] <- nb$nb
+
+  # create_pair_mapping() keys are "trt1,trt2"; a self-pair repeats the level.
+  parts <- strsplit(names(counts), ",", fixed = TRUE)
+  is_self <- vapply(parts, function(p) return(p[[1]] == p[[2]]), logical(1))
+  pairs <- counts[!is_self]
+
+  return(list(
+    available = TRUE,
+    self_adjacent = sum(counts[is_self]),
+    n_pairs = length(pairs),
+    min_pair_count = min(pairs),
+    max_pair_count = max(pairs),
+    pair_var = stats::var(pairs),
+    n_zero_pairs = sum(pairs == 0)
+  ))
 }
 
 #' Print one level's optimisation block (objective, score components, schedule)
@@ -622,20 +978,35 @@ print.summary.design <- function(x, ...) {
   p <- x$per_level[[lv]]
   s <- p$score
   o <- p$optim
-  if (x$hierarchical) cat("\n[", lv, "]\n", sep = "")
+  if (x$hierarchical) {
+    cat("\n[", lv, "]\n", sep = "")
+  }
 
   cat(lab("Objective:"), o$objective, "\n", sep = "")
-  cat(lab("Score:"),
-      sprintf("%s  (initial %s -> final %s)",
-              fmt_num(s$final), fmt_num(s$initial), fmt_num(s$final)),
-      "\n", sep = "")
+  cat(
+    lab("Score:"),
+    sprintf(
+      "%s  (initial %s -> final %s)",
+      fmt_num(s$final),
+      fmt_num(s$initial),
+      fmt_num(s$final)
+    ),
+    "\n",
+    sep = ""
+  )
   # Additive decomposition of the score, when the objective exposes one (custom
   # objectives may omit it).
   comp <- s$components
   if (!is.null(comp) && length(comp)) {
     w <- max(nchar(names(comp)))
     for (nm in names(comp)) {
-      cat(indent, formatC(nm, width = -(w + 2)), fmt_num(comp[[nm]]), "\n", sep = "")
+      cat(
+        indent,
+        formatC(nm, width = -(w + 2)),
+        fmt_num(comp[[nm]]),
+        "\n",
+        sep = ""
+      )
     }
   }
   # Whether the run converged (stopped early) or hit the iteration cap is the
@@ -645,11 +1016,24 @@ print.summary.design <- function(x, ...) {
   } else {
     crayon::bold(crayon::magenta("(ran to cap)"))
   }
-  iter <- paste(sprintf("%s / %s", fmt_int(o$iterations_run), fmt_int(o$iterations_requested)),
-               stop_reason)
+  iter <- paste(
+    sprintf(
+      "%s / %s",
+      fmt_int(o$iterations_run),
+      fmt_int(o$iterations_requested)
+    ),
+    stop_reason
+  )
   cat(lab("Iterations:"), iter, "\n", sep = "")
-  cat(lab("Temperature:"),
-      sprintf("start %s, cooling %s", fmt_num(o$start_temp), fmt_num(o$cooling_rate)),
-      "\n", sep = "")
+  cat(
+    lab("Temperature:"),
+    sprintf(
+      "start %s, cooling %s",
+      fmt_num(o$start_temp),
+      fmt_num(o$cooling_rate)
+    ),
+    "\n",
+    sep = ""
+  )
   return(invisible(NULL))
 }

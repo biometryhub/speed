@@ -7,13 +7,24 @@
 .neighbour_balance(df, swap, nrow, ncol)
 }
 \description{
-Builds the treatment grid and reports the variance of adjacent-pair counts
-(the quantity \code{objective_function_piepho} minimises via \code{nb_score}) and the
-most frequent adjacent pair count. Takes \code{nrow}/\code{ncol} from the caller's
-\code{layout} (counted via \code{length(unique(...))}) rather than deriving them from
-\code{max(row)}/\code{max(col)}: buffer plots (\code{add_buffers()}) can shift row/col
-numbering so it no longer starts at 1, which would otherwise reshape the
-grid with the wrong dimensions. Assumes \code{rc}/\code{cc} are present in \code{df};
-callers should check \code{has_grid} first (see \code{summary.design()}).
+Builds the treatment grid and counts how often each treatment pair ends up
+adjacent (rook adjacency only), via
+\code{\link[=create_pair_mapping]{create_pair_mapping()}}/\code{\link[=calculate_nb]{calculate_nb()}}. Pairs never observed as neighbours
+are filled in as zero - \code{calculate_nb()}'s own table omits them rather than
+recording a zero.
+}
+\details{
+Self-pairs (a treatment beside another plot of itself) are reported
+separately from distinct treatment pairs, because they mean opposite things:
+zero self-adjacency is the desirable outcome the optimiser works towards,
+whereas a distinct pair that never neighbours is an imbalance. Lumping them
+together hides self-adjacency behind the same \verb{min 0} as the harmless case.
+
+Takes \code{nrow}/\code{ncol} from the caller's \code{layout} (counted via
+\code{length(unique(...))}) rather than deriving them from \code{max(row)}/\code{max(col)}:
+buffer plots (\code{add_buffers()}) can shift row/col numbering so it no longer
+starts at 1, which would otherwise reshape the grid with the wrong
+dimensions. Assumes \code{rc}/\code{cc} are present in \code{df}; callers should check
+\code{has_grid} first (see \code{summary.design()}).
 }
 \keyword{internal}

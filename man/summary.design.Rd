@@ -17,41 +17,52 @@
 \item{object}{A \code{"design"} object returned by \code{\link[=speed]{speed()}}.}
 
 \item{efficiency}{Logical (default \code{FALSE}); if \code{TRUE}, compute the
-A-efficiency factor (a row--column model metric and the heaviest to
-compute). Returns \code{NA} with a reason when its assumptions are not met
-(columns named \code{row} and \code{col}, and at least 3 treatments).}
+A-efficiency factor. Returns \code{NA} with a reason when its assumptions are
+not met (columns named \code{row} and \code{col}, and at least 3 treatments). See
+Details for more information.}
 
 \item{connectedness}{\code{NULL} (default) checks whether the design is
-\emph{connected}: whether every pairwise treatment difference is \emph{estimable}
-(statistically distinguishable) once row, column and any block effects are
-accounted for. A disconnected design confounds some treatment comparisons
-with the layout itself, no matter how much data you collect. Uses
-whichever spatial factors the design was actually optimised with (e.g. row
-and column, and a block or site factor if present) - not just literal
-\code{row}/\code{col} columns. Skips the check for very large designs where the
-model fit would be expensive; \code{TRUE} forces it regardless of size; \code{FALSE}
-skips it.}
+connected, but skips the check for very large designs where the model fit
+would be expensive; \code{TRUE} forces it regardless of size; \code{FALSE} skips it.
+See Details for more information.}
 
 \item{concurrence}{\code{NULL} (default) computes within-block treatment
-\emph{concurrence} - how many blocks each pair of treatments shares, reported
-as \verb{lambda min-max} (e.g. \verb{lambda 2-3} means the least-shared pair of
-treatments appears together in 2 blocks and the most-shared pair in 3;
-equal lambda across all pairs indicates a balanced incomplete-block
-design). Only computed when an \emph{incomplete} block factor is present -
-concurrences are uninformative for complete blocks such as RCBD/split-plot,
-where every pair always shares every block; \code{TRUE} forces them even for
-complete blocks, \code{FALSE} skips them.}
+concurrence only when an \emph{incomplete} block factor is present; \code{TRUE}
+forces it even for complete blocks, \code{FALSE} skips it. See Details for more
+information.}
 
-\item{neighbour}{\code{NULL} (default) reports neighbour-balance diagnostics when
-the design was optimised with \code{objective_function_piepho}; override with
-\code{TRUE}/\code{FALSE}.}
+\item{neighbour}{\code{NULL} (default) or \code{TRUE} reports neighbour-balance
+diagnostics whenever the design has a row/column grid; \code{FALSE} skips them.
+See Details for more information.}
 
 \item{...}{Unused; for S3 compatibility.}
 }
 \value{
-A list of class \code{"summary.design"} with elements including
-\code{hierarchical}, \code{layout}, \code{levels}, \code{per_level} (structure + optimisation
-per level), \code{score}, \code{seed}, \code{flags} and the recorded \code{call}.
+A list of class \code{"summary.design"}:
+\itemize{
+\item \strong{hierarchical} - \code{TRUE} for a multi-level (e.g. split-plot) design.
+\item \strong{layout} - \code{n_plots}, \code{nrow}, \code{ncol}, \code{row_column}, \code{col_column}, \code{has_grid}.
+\item \strong{levels} - character vector of level names (e.g. \code{"wp"}/\code{"sp"}; a single
+name for a simple design).
+\item \strong{per_level} - one element per level (named by \code{levels}), each a list with:
+\itemize{
+\item \code{swap}, \code{n_treatments}, \code{treatments}.
+\item \code{replication} - \code{counts}, \code{min}, \code{mean}, \code{max}, \code{equal}, \code{distribution}.
+\item \code{spatial_factors} - named vector of the number of levels of each spatial factor.
+\item \code{evaluation} - \code{replicate_span}, \code{connectedness}, \code{concurrence},
+\code{block_spread}, \code{efficiency}, \code{neighbour}; each a list with an
+\code{available} flag and either its value(s) or a \code{reason} it wasn't
+computed.
+\item \code{score} - \code{initial}, \code{final}, \code{components}.
+\item \code{optim} - \code{objective}, \code{start_temp}, \code{cooling_rate},
+\code{iterations_requested}, \code{iterations_run}, \code{stopped_early}.
+}
+\item \strong{score} - the overall optimised score (summed across levels for a
+hierarchical design).
+\item \strong{seed} - the seed used for reproducibility.
+\item \strong{flags} - \code{hit_iteration_cap}, \code{unequal_replication}, \code{disconnected}.
+\item \strong{call} - the captured \code{speed()} call.
+}
 }
 \description{
 Produces a richer, statistically meaningful evaluation of a design than
@@ -63,6 +74,50 @@ evaluation metrics that let you interrogate and defend a design.
 The returned object is a list of class \code{"summary.design"}; it can be assigned
 and queried programmatically (e.g. \verb{s <- summary(d); s$per_level[[1]]$score}).
 Printing it is handled by \code{\link[=print.summary.design]{print.summary.design()}}.
+
+What the evaluation metrics report:
+\itemize{
+\item \strong{Connectedness:} whether every pairwise treatment difference is
+\emph{estimable} (statistically distinguishable) once row, column and any block
+effects are accounted for. A disconnected design is usually not desirable as
+it confounds some comparisons with the layout itself, no matter how many
+replicates there are. Adjusts for the design's actual input spatial factors
+(row, column, and any block or site factor), not just columns literally
+named \code{row}/\code{col}.
+\item \strong{Concurrence:} how many blocks each pair of treatments shares (\code{lambda});
+equal lambda across all pairs indicates a balanced incomplete-block
+design. Uninformative for complete blocks such as RCBD/split-plot, where
+every pair always shares every block.
+\item \strong{Replicate spread:} how many distinct blocks each treatment's replicates
+reach, and how many treatments land more than once in a single block. The
+block counterpart of replicate span: a block factor is nominal, so there is
+no distance to measure along, but the number of blocks a treatment reaches
+is still well defined. Reported whenever a block factor is present,
+including for complete blocks (where concurrence is skipped) - there it
+confirms every treatment reaches every block.
+\item \strong{Replicate span:} how far apart a treatment's own replicates are placed
+along the two grid axes (whichever columns \code{grid_factors} resolved to,
+reported by name). For each replicated treatment, the closest its
+replicates come to each other, counted inclusively - so a span of 1 means
+two replicates share a row, 2 means they are in adjacent rows, and larger
+is better. The printed figure is the worst case across all replicated
+treatments; the two axes are minimised independently, so they may come from
+different treatments. Only the grid axes are measured: a span is a
+distance, and a non-grid spatial factor such as block or site has no
+ordering to measure along.
+\item \strong{Efficiency:} the A-efficiency factor, a row--column model metric (see
+\code{\link[=calculate_efficiency_factor]{calculate_efficiency_factor()}}); the heaviest of these metrics to
+compute, hence opt-in.
+\item \strong{Neighbour balance:} how often treatment pairs end up side by side,
+using rook adjacency (left--right and up--down, not diagonal). Reported in
+two parts, because they mean opposite things. \emph{Self-adjacency} counts
+treatments placed beside another plot of themselves; zero is the desirable
+outcome and is what the optimiser works towards. \emph{Pair balance} covers the
+distinct treatment pairs: the min, max and variance of their adjacency
+counts, and how many never end up adjacent at all. Every possible pair is
+counted, so pairs that never neighbour register as zero rather than being
+omitted.
+}
 }
 \examples{
 df <- data.frame(
