@@ -14,8 +14,9 @@ inst/doc
 
 Rplots.pdf
 *.local.json
-.DS_Store
-Thumbs.db
+
+*\.RData
+*\.rds
 *\.txt
 *\.xlsx
-*\.csv
+**/*.quarto_ipynb

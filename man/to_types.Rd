@@ -15,6 +15,10 @@ to_types(df, types)
 A data frame with new types
 }
 \description{
-Convert Data Frame Data to Provided Types
+Columns are converted via \verb{as.<type>()}. Factors are routed through
+\code{\link[=as.character]{as.character()}} first, because \code{as.numeric()} and friends applied to a
+factor return its integer level codes rather than its labels - the labels are
+what hold the original values. Columns whose target type is \code{factor} are left
+as-is, since re-factoring would re-sort the levels.
 }
 \keyword{internal}

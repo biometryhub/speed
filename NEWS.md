@@ -1,9 +1,30 @@
+# speed 0.0.10
+
+## Major Changes
+
+- Added a `summary()` method for `"design"` objects, reporting structure and replication, a
+  decomposed optimisation score, and design-quality diagnostics (connectedness, concurrence,
+  replicate spans and spread across blocks, neighbour balance, and opt-in efficiency).
+  ([#73](https://github.com/biometryhub/speed/issues/73))
+- Added `calculate_pair_incidence()` to return a symmetric treatment × treatment matrix of neighbour-pair counts.
+- Added `calculate_position_incidence()` to return treatment × row/column position count matrices.
+
 # speed 0.0.9
 
 ## Major Changes
 
-- Added `calculate_pair_incidence()` to return a symmetric treatment × treatment matrix of neighbour-pair counts.
-- Added `calculate_position_incidence()` to return treatment × row/column position count matrices.
+- Deprecated the `splits` argument of `initialise_design_df()` in favor of `initialise_split_design_df()`.
+  Passing `splits` now warns with the equivalent suggested call.
+
+## Bug Fixes
+
+- `speed()` now errors when `swap_all = TRUE` is used on a design with unequal within-group
+  replication, instead of silently swapping treatments with different replication counts.
+- `speed()` no longer returns numeric/integer columns (e.g. `treatment`, `row`, `col`) as their
+  internal factor level codes instead of their original values.
+- `speed()` no longer emits a "Setting row names on a tibble is deprecated" warning when passed a tibble.
+- `speed()` now accepts designs with `vctrs`-backed multi-class columns (e.g. from the `edibble`
+  package) instead of erroring; such columns are now returned as `character`.
 
 # speed 0.0.8
 

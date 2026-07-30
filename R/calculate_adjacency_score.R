@@ -129,11 +129,13 @@ prep_relationship <- function(relationship, treatments = NULL) {
 #'   each cell holds its weighted matching-neighbour count.
 #'
 #' @keywords internal
-adjacency_score_vec <- function(design_matrix,
-                                dists = c(1, 2),
-                                weights = c(1, 2),
-                                ring_type = c("manhattan", "chebyshev"),
-                                relationship = NULL) {
+adjacency_score_vec <- function(
+  design_matrix,
+  dists = c(1, 2),
+  weights = c(1, 2),
+  ring_type = c("manhattan", "chebyshev"),
+  relationship = NULL
+) {
   ring_type <- match.arg(ring_type)
   stopifnot(length(dists) == length(weights))
   nr <- nrow(design_matrix)
@@ -162,7 +164,8 @@ adjacency_score_vec <- function(design_matrix,
   } else {
     orig_idx <- match(as.character(design_matrix), relationship$row_levels)
     shifted_idx <- match(as.character(shifted_stack), relationship$col_levels)
-    flat_idx <- rep(orig_idx, n_offsets) + relationship$n_row * (shifted_idx - 1L)
+    flat_idx <- rep(orig_idx, n_offsets) +
+      relationship$n_row * (shifted_idx - 1L)
     pair_values <- relationship$flat[flat_idx]
     pair_values[is.na(pair_values)] <- 0
     dim(pair_values) <- c(nr, nc, n_offsets)
@@ -237,14 +240,16 @@ adjacency_score_vec <- function(design_matrix,
 #' @seealso [adjacency_score_vec()]
 #'
 #' @export
-calculate_adjacency_score <- function(layout_df,
-                                      swap,
-                                      row_column = "row",
-                                      col_column = "col",
-                                      ring_dists = 1,
-                                      ring_weights = 1,
-                                      ring_type = c("manhattan", "chebyshev"),
-                                      relationship = NULL) {
+calculate_adjacency_score <- function(
+  layout_df,
+  swap,
+  row_column = "row",
+  col_column = "col",
+  ring_dists = 1,
+  ring_weights = 1,
+  ring_type = c("manhattan", "chebyshev"),
+  relationship = NULL
+) {
   ring_type <- match.arg(ring_type)
 
   design_matrix <- build_design_matrix(

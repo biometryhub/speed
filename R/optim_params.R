@@ -28,14 +28,16 @@
 #' @seealso [speed()] for examples
 #'
 #' @export
-optim_params <- function(swap_count = 1,
-                         swap_all_blocks = FALSE,
-                         adaptive_swaps = FALSE,
-                         start_temp = 100,
-                         cooling_rate = 0.99,
-                         random_initialisation = 0,
-                         adj_weight = 1,
-                         bal_weight = 1) {
+optim_params <- function(
+  swap_count = 1,
+  swap_all_blocks = FALSE,
+  adaptive_swaps = FALSE,
+  start_temp = 100,
+  cooling_rate = 0.99,
+  random_initialisation = 0,
+  adj_weight = 1,
+  bal_weight = 1
+) {
   params <- list(
     swap_count = swap_count,
     swap_all_blocks = swap_all_blocks,

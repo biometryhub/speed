@@ -155,7 +155,7 @@ test_that("calculate_efficiency_factor handles designs with high treatment-space
   df_design_confounded <- data.frame(
     row = rep(1:8, each = 1),
     col = rep(1, times = 8),
-    treatment = c("A", "A", "A", "A", "B", "B", "B", "B")  # Single column, treatments in blocks
+    treatment = c("A", "A", "A", "A", "B", "B", "B", "B") # Single column, treatments in blocks
   )
 
   # This single-column design with blocked treatments should be numerically challenging
@@ -178,8 +178,18 @@ test_that("calculate_efficiency_factor uses pseudoinverse for matrices with high
     col = rep(1:2, times = 6),
     treatment = c(
       # Create patterns that introduce dependencies but not perfect singularity
-      "A", "B", "B", "A", "C", "A",
-      "B", "C", "A", "C", "B", "C"
+      "A",
+      "B",
+      "B",
+      "A",
+      "C",
+      "A",
+      "B",
+      "C",
+      "A",
+      "C",
+      "B",
+      "C"
     )
   )
 
@@ -192,4 +202,38 @@ test_that("calculate_efficiency_factor uses pseudoinverse for matrices with high
   expect_type(result, "double")
   expect_true(is.finite(result))
   expect_gt(result, 0)
+})
+
+test_that("calculate_efficiency_factor honours custom row/col column names", {
+  df <- initialise_design_df(
+    c(
+      "a",
+      "b",
+      "d",
+      "c",
+      "e",
+      "a",
+      "f",
+      "b",
+      "c",
+      "f",
+      "e",
+      "d"
+    ),
+    3,
+    4
+  )
+  base <- calculate_efficiency_factor(df, "treatment")
+
+  # Same design, grid columns renamed - must give the same efficiency.
+  df2 <- df
+  names(df2)[names(df2) == "row"] <- "Row"
+  names(df2)[names(df2) == "col"] <- "Column"
+  custom <- calculate_efficiency_factor(
+    df2,
+    "treatment",
+    row_column = "Row",
+    col_column = "Column"
+  )
+  expect_equal(custom, base)
 })

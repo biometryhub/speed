@@ -1,7 +1,7 @@
 Type: Package
 Package: speed
 Title: Generate Spatially Efficient Experimental Designs
-Version: 0.0.9
+Version: 0.0.10
 Authors@R: 
     c(person(given = "Sam",
              family = "Rogers",
@@ -32,17 +32,20 @@ License: MIT + file LICENSE
 URL: https://biometryhub.github.io/speed/
 BugReports: https://github.com/biometryhub/speed/issues
 Depends: R (>= 4.1)
-Imports: 
+Imports:
+    crayon,
     farver,
     ggplot2,
     matrixStats,
     rlang,
     scales,
     stringi
-Suggests: 
+Suggests:
     igraph,
+    knitr,
     patchwork,
     quarto,
+    tibble,
     testthat (>= 3.0.0),
     vdiffr,
     withr
