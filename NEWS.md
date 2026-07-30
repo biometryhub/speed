@@ -1,3 +1,12 @@
+# speed 0.0.10
+
+## Major Changes
+
+- Added a `summary()` method for `"design"` objects, reporting structure and replication, a
+  decomposed optimisation score, and design-quality diagnostics (connectedness, concurrence,
+  replicate spans and spread across blocks, neighbour balance, and opt-in efficiency).
+  ([#73](https://github.com/biometryhub/speed/issues/73))
+
 # speed 0.0.9
 
 ## Major Changes
@@ -7,26 +16,13 @@
 
 ## Bug Fixes
 
-- `speed()` now errors when `swap_all = TRUE` is used on a design whose treatments are unequally replicated
-  within a swap group, instead of silently changing the replication. Such a swap exchanges every plot of one
-  treatment with every plot of another, so when the two treatments occupy different numbers of plots they
-  exchange replication counts and the returned design is not a rearrangement of the input. Designs with equal
-  within-group replication, which is what `swap_all` is intended for, are unaffected.
-- `swap_all = TRUE` now also holds replication fixed *during* the search. The check above runs on the input,
-  but in a hierarchical design whose levels have grouping columns that cut across each other, a swap at one
-  level can leave a later level's groups unequally replicated part way through the search. Swaps are now
-  restricted to treatments that are equally replicated within the group at the time of the swap, so the
-  search no longer explores designs that are not rearrangements of the input. Designs whose groups stay
-  equally replicated, including every single-level design, are unaffected and produce identical results for
-  the same seed.
-- `speed()` no longer returns numeric and integer columns as their factor level codes; a `treatment` column of
-  `c(10, 100, 30, 9)` was previously returned as `c(2, 4, 3, 1)`. Numeric `row` and `col` values other than
-  `1:n` were affected in the same way.
-- `speed()` no longer emits a "Setting row names on a tibble is deprecated" warning when passed a tibble;
-  row labels are now only reset for base data frames.
-- `speed()` now accepts designs with `vctrs`-backed columns that report a multi-class `class()` (such as the
-  tables produced by the `edibble` package). Previously these failed with
-  "first argument has length > 1" when restoring column types; such columns are now restored as `character`.
+- `speed()` now errors when `swap_all = TRUE` is used on a design with unequal within-group
+  replication, instead of silently swapping treatments with different replication counts.
+- `speed()` no longer returns numeric/integer columns (e.g. `treatment`, `row`, `col`) as their
+  internal factor level codes instead of their original values.
+- `speed()` no longer emits a "Setting row names on a tibble is deprecated" warning when passed a tibble.
+- `speed()` now accepts designs with `vctrs`-backed multi-class columns (e.g. from the `edibble`
+  package) instead of erroring; such columns are now returned as `character`.
 
 # speed 0.0.8
 

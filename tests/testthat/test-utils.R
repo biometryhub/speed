@@ -42,13 +42,11 @@ test_that("pseudo_inverse works with rectangular matrices", {
 
   # Check that A * A_inv * A = A (approximately)
   expect_equal(
-    
     rect_matrix %*% result %*% rect_matrix,
-   
+
     rect_matrix,
-   
+
     tolerance = 1e-10
-  
   )
 })
 
