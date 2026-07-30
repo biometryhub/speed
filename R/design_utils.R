@@ -115,6 +115,11 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
     group_data <- new_design[group_filter & !is.na(new_design[[swap]]), ]
     group_treatments <- unique(group_data[[swap]])
 
+    # Plots per treatment, in `group_treatments` order. Exchanging two equally
+    # replicated treatments leaves these counts unchanged, so one pass covers every
+    # swap made in this group below.
+    group_counts <- tabulate(match(group_data[[swap]], group_treatments), length(group_treatments))
+
     if (nrow(group_data) >= 2) {
       for (i in 1:swap_count) {
         # Only proceed if there are at least 2 different treatments
@@ -123,9 +128,34 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
           next
         }
 
+        # Treatments can only be exchanged with others of the same replication,
+        # otherwise the swap changes the replication of the design.
+        # `.verify_swap_all_replication()` rejects unequal replication in the input, but
+        # an earlier level whose `swap_within` groups cut across this one can unbalance a
+        # group mid-search, so the pool is restricted here too.
+        eligible <- group_treatments
+        if (length(unique(group_counts)) > 1) {
+          replications <- table(group_counts)
+          replications <- replications[replications >= 2]
+
+          # Nothing in this group can be exchanged without changing replication
+          if (length(replications) == 0) {
+            next
+          }
+
+          # Weighted by the pairs each replication offers, so the pair below is still
+          # drawn uniformly from every exchangeable pair in the group
+          chosen <- if (length(replications) == 1) {
+            names(replications)
+          } else {
+            sample(names(replications), 1, prob = choose(as.integer(replications), 2))
+          }
+          eligible <- group_treatments[group_counts == as.integer(chosen)]
+        }
+
         # Select two different treatments
         # Use sample with replace=FALSE to ensure they're different
-        swap_pair <- sample(group_treatments, 2, replace = FALSE)
+        swap_pair <- sample(eligible, 2, replace = FALSE)
 
         # Find all plots with these treatments in this group
         plots_1 <- which(group_filter & new_design[[swap]] == swap_pair[1])

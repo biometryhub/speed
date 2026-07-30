@@ -12,6 +12,13 @@
   treatment with every plot of another, so when the two treatments occupy different numbers of plots they
   exchange replication counts and the returned design is not a rearrangement of the input. Designs with equal
   within-group replication, which is what `swap_all` is intended for, are unaffected.
+- `swap_all = TRUE` now also holds replication fixed *during* the search. The check above runs on the input,
+  but in a hierarchical design whose levels have grouping columns that cut across each other, a swap at one
+  level can leave a later level's groups unequally replicated part way through the search. Swaps are now
+  restricted to treatments that are equally replicated within the group at the time of the swap, so the
+  search no longer explores designs that are not rearrangements of the input. Designs whose groups stay
+  equally replicated, including every single-level design, are unaffected and produce identical results for
+  the same seed.
 - `speed()` no longer returns numeric and integer columns as their factor level codes; a `treatment` column of
   `c(10, 100, 30, 9)` was previously returned as `c(2, 4, 3, 1)`. Numeric `row` and `col` values other than
   `1:n` were affected in the same way.
