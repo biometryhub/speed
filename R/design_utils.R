@@ -863,3 +863,86 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
 #' @rdname initialise_design_df
 #' @export
 initialize_design_df <- initialise_design_df
+
+#' Build a Spatial Design Matrix from a Data Frame
+#'
+#' @description
+#' Places each treatment value at the grid position given by its `row_column`
+#' and `col_column` coordinates, returning a character matrix of dimensions
+#' `max(row)` by `max(col)`. Cells with no corresponding row in `df` are `NA`.
+#'
+#' Unlike filling via `matrix(..., byrow = )`, this reads the coordinates rather
+#' than assuming an ordering, so it is correct for any row ordering of `df` and
+#' for factor coordinate columns whose level order is not numeric.
+#'
+#' Coordinates are used as-is, never renumbered: a gap in the coordinates is a
+#' real gap in the field (a missing plot, or a buffer that was removed), so
+#' collapsing it would make non-adjacent plots into neighbours. Callers must
+#' therefore cope with `NA` cells.
+#'
+#' @param df A data frame with columns named by `swap`, `row_column`,
+#'   `col_column`.
+#' @param swap Column name of the treatment variable.
+#' @param row_column Column name of the row position variable (default `"row"`).
+#' @param col_column Column name of the column position variable
+#'   (default `"col"`).
+#'
+#' @return A character matrix of dimensions `max(row)` by `max(col)`.
+#'
+#' @keywords internal
+build_design_matrix <- function(
+  df,
+  swap,
+  row_column = "row",
+  col_column = "col"
+) {
+  rows <- as_numeric_factor(df[[row_column]])
+  cols <- as_numeric_factor(df[[col_column]])
+
+  if (anyNA(rows) || anyNA(cols)) {
+    stop(
+      "Cannot place the design on a grid: `",
+      row_column,
+      "` and `",
+      col_column,
+      "` must be numeric, or coercible to numeric.",
+      call. = FALSE
+    )
+  }
+  # Used directly as matrix indices, so they must be positive whole numbers.
+  if (
+    any(rows < 1 | cols < 1) ||
+      any(rows != trunc(rows) | cols != trunc(cols))
+  ) {
+    stop(
+      "`",
+      row_column,
+      "` and `",
+      col_column,
+      "` must be positive whole numbers to index a grid.",
+      call. = FALSE
+    )
+  }
+  idx <- cbind(rows, cols)
+  # Duplicated coordinates would silently overwrite each other. Multi-site
+  # designs reuse row/col per site, so they must be split before scoring.
+  if (anyDuplicated(idx)) {
+    stop(
+      "Duplicate (",
+      row_column,
+      ", ",
+      col_column,
+      ") coordinates: the design cannot be placed on a single grid. ",
+      "Split multi-site designs by site first.",
+      call. = FALSE
+    )
+  }
+
+  design_matrix <- matrix(
+    NA_character_,
+    nrow = max(rows),
+    ncol = max(cols)
+  )
+  design_matrix[idx] <- as.character(df[[swap]])
+  return(design_matrix)
+}

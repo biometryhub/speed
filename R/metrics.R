@@ -231,10 +231,11 @@ objective_function_piepho <- function(design,
                                       row_column = "row",
                                       col_column = "col",
                                       ...) {
-  design_matrix <- matrix(
-    design[[swap]],
-    nrow = max(as_numeric_factor(design[[row_column]]), na.rm = TRUE),
-    ncol = max(as_numeric_factor(design[[col_column]]), na.rm = TRUE)
+  design_matrix <- build_design_matrix(
+    design,
+    swap,
+    row_column = row_column,
+    col_column = col_column
   )
 
   ed <- calculate_ed(design_matrix, current_score_obj$ed, swapped_items)
@@ -243,7 +244,11 @@ objective_function_piepho <- function(design,
   nb <- calculate_nb(design_matrix, pair_mapping)
   nb_score <- nb$var
 
-  design[[swap]] <- as.factor(design_matrix)
+  # Coerce for calculate_balance_score()'s table(). Deliberately NOT
+  # as.factor(design_matrix): flattening the grid is column-major, which only
+  # matches `design` when the data frame happens to be in column-major order,
+  # and would otherwise scramble the treatments against their coordinates.
+  design[[swap]] <- as.factor(design[[swap]])
   bal_score <- calculate_balance_score(design, swap, spatial_cols)
   adj_score <- calculate_adjacency_score(design, swap, row_column, col_column)
 
@@ -337,26 +342,35 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
   for (row_ in 1:n_rows) {
     for (col_ in 1:n_cols) {
       node <- design_matrix[row_, col_]
+      # Empty cells (a missing plot, or a removed buffer) have no pairs to
+      # contribute; the pair_mapping path in calculate_nb() drops them too.
+      if (is.na(node)) {
+        next
+      }
       if (row_ < n_rows) {
         bottom <- design_matrix[row_ + 1, col_]
-        if (node < bottom) {
-          pair_str <- paste0(node, ",", bottom)
-        } else {
-          pair_str <- paste0(bottom, ",", node)
-        }
+        if (!is.na(bottom)) {
+          if (node < bottom) {
+            pair_str <- paste0(node, ",", bottom)
+          } else {
+            pair_str <- paste0(bottom, ",", node)
+          }
 
-        env_add_one(nb, pair_str)
+          env_add_one(nb, pair_str)
+        }
       }
 
       if (col_ < n_cols) {
         right <- design_matrix[row_, col_ + 1]
-        if (node < right) {
-          pair_str <- paste0(node, ",", right)
-        } else {
-          pair_str <- paste0(right, ",", node)
-        }
+        if (!is.na(right)) {
+          if (node < right) {
+            pair_str <- paste0(node, ",", right)
+          } else {
+            pair_str <- paste0(right, ",", node)
+          }
 
-        env_add_one(nb, pair_str)
+          env_add_one(nb, pair_str)
+        }
       }
     }
   }
