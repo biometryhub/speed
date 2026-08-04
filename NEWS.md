@@ -7,6 +7,17 @@
   replicate spans and spread across blocks, neighbour balance, and opt-in efficiency).
   ([#73](https://github.com/biometryhub/speed/issues/73))
 
+## Bug Fixes
+
+- `objective_function_piepho()` now builds the design grid from the `row`/`col` coordinates rather
+  than the data frame's row order, and no longer overwrites the treatment column with a flattened
+  grid. All four score components are computed on the actual layout, and the score no longer depends
+  on how the input rows are ordered. Designs generated with this objective should be regenerated.
+- `calculate_adjacency_score()` is now correct for any row ordering of its input, including the
+  column-major output of `initialise_design_df()`.
+- `calculate_nb()` no longer errors on designs with missing plots when `pair_mapping` is not
+  supplied.
+
 # speed 0.0.9
 
 ## Major Changes
