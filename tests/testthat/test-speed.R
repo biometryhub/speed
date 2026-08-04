@@ -63,10 +63,12 @@ test_that("speed returns correct output structure", {
   expect_equal(nrow(result$design_df), 20)
   expect_equal(ncol(result$design_df), 3)
   expect_equal(result$score, 1)
-  expect_equal(length(result$scores), 1000)
-  expect_equal(length(result$temperatures), 1000)
-  expect_equal(result$iterations_run, 1000)
-  expect_equal(result$stopped_early, FALSE)
+  # This starting layout already scores the lowest 5x4 with 4 treatments admits
+  # (0 adjacency, 1 balance), so the run stops without iterating.
+  expect_equal(length(result$scores), 1)
+  expect_equal(length(result$temperatures), 1)
+  expect_equal(result$iterations_run, 1)
+  expect_equal(result$stopped_early, TRUE)
   expect_equal(result$treatments, c("A", "B", "C", "D"))
 
   vdiffr::expect_doppelganger("speed_small", autoplot(result))
@@ -538,10 +540,11 @@ test_that("speed runs with random initialisation", {
   expect_equal(nrow(result_random$design_df), 20)
   expect_equal(ncol(result_random$design_df), 3)
   expect_equal(result_random$score, 1)
-  expect_equal(length(result_random$scores), 1000)
-  expect_equal(length(result_random$temperatures), 1000)
-  expect_equal(result_random$iterations_run, 1000)
-  expect_equal(result_random$stopped_early, FALSE)
+  # Stops as soon as the score reaches the lowest this layout admits
+  expect_equal(length(result_random$scores), result_random$iterations_run)
+  expect_equal(length(result_random$temperatures), result_random$iterations_run)
+  expect_lt(result_random$iterations_run, 1000)
+  expect_equal(result_random$stopped_early, TRUE)
   expect_equal(result_random$treatments, c("A", "B", "C", "D"))
 
   expect_false(isTRUE(all.equal(
@@ -1741,11 +1744,12 @@ test_that("speed produces different results when seed=NULL across different runs
 
 # Test progress output for simple designs
 test_that("speed prints progress output when quiet=FALSE for simple designs", {
-  # Sample data for testing
+  # Unequal replication keeps the lowest possible score out of reach, so the run
+  # reaches the iterations that trigger progress output
   test_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
-    treatment = rep(LETTERS[1:3], 4)
+    treatment = c(rep("A", 6), rep("B", 3), rep("C", 3))
   )
 
   # Capture output with quiet=FALSE and enough iterations to trigger progress output
@@ -1774,11 +1778,12 @@ test_that("speed prints progress output when quiet=FALSE for simple designs", {
 
 # Test early stopping output for simple designs
 test_that("speed prints early stopping message when quiet=FALSE for simple designs", {
-  # Sample data that will likely converge quickly (already optimal)
+  # Unequal replication puts the lowest possible score out of reach, so the run
+  # stops on lack of improvement rather than on reaching it
   test_data <- data.frame(
     row = rep(1:3, times = 4),
     col = rep(1:4, each = 3),
-    treatment = LETTERS[1:4] # Already well-distributed
+    treatment = c(rep("A", 6), rep("B", 3), rep("C", 3))
   )
 
   # Capture output with early stopping likely to occur
@@ -1951,11 +1956,12 @@ test_that("speed produces no output when quiet=TRUE for hierarchical designs", {
 
 # Test progress output frequency (every 1000 iterations)
 test_that("speed prints progress output at correct intervals", {
-  # Sample data for testing
+  # Unequal replication keeps the lowest possible score out of reach, so the run
+  # goes the distance instead of stopping on it
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
-    treatment = rep(LETTERS[1:4], 5)
+    treatment = c(rep("A", 8), rep("B", 4), rep("C", 4), rep("D", 4))
   )
 
   # Capture output with enough iterations to trigger multiple progress outputs
@@ -1967,6 +1973,7 @@ test_that("speed prints progress output at correct intervals", {
         swap_within = "1",
         spatial_factors = ~ row + col,
         iterations = 3500, # Should trigger output at 1000, 2000, 3000
+        early_stop_iterations = 3500,
         seed = 42,
         quiet = FALSE
       )

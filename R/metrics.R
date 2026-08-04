@@ -184,6 +184,96 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
   return(sum(score))
 }
 
+#' Smallest Achievable Balance Score
+#'
+#' @description
+#' Lower bound on [calculate_balance_score()] for any arrangement of `swap`.
+#' Each level of a spatial factor holds a fixed number of plots, and the
+#' variance of the treatment counts within it is smallest when those plots are
+#' split as evenly as possible across the `t` treatments. For a level of `n`
+#' plots, writing the remainder `n %% t` as `rem`, that minimum has the closed
+#' form `rem * (t - rem) / (t * (t - 1))`.
+#'
+#' Levels are bounded independently and treatment replication totals are
+#' ignored, so the bound is loose (never wrong) when replication is unequal.
+#'
+#' @inheritParams objective_function_signature
+#'
+#' @return A single non-negative numeric value.
+#'
+#' @seealso [calculate_balance_score()]
+#'
+#' @keywords internal
+.balance_score_min <- function(layout_df, swap, spatial_cols) {
+  mins <- vapply(
+    spatial_cols,
+    function(el) {
+      # Same table the scorer builds, so `t` and the level sizes agree with it
+      counts <- table(layout_df[[el]], layout_df[[swap]])
+      n_treatments <- ncol(counts)
+      if (n_treatments < 2) {
+        return(0)
+      }
+
+      remainders <- rowSums(counts) %% n_treatments
+      return(sum(
+        remainders *
+          (n_treatments - remainders) /
+          (n_treatments * (n_treatments - 1))
+      ))
+    },
+    numeric(1)
+  )
+  return(sum(mins))
+}
+
+#' Smallest Achievable Score for the Default Objective
+#'
+#' @description
+#' Lower bound on the score [objective_function()] can return for any
+#' arrangement of `swap` in this layout: zero for the adjacency component plus
+#' [.balance_score_min()] for the balance component. Because it is a bound
+#' rather than an attained value it is always safe as an early-stop target - an
+#' unattainable bound is simply never reached, leaving the run unchanged.
+#'
+#' Returns `NA_real_` when no bound can be derived: a non-default objective, a
+#' `relationship` matrix (whose entries may be negative, so zero is no longer an
+#' adjacency floor), a negative weight (which inverts the direction of
+#' optimisation), or `NA` treatments (which swaps can move between spatial
+#' levels, changing the level sizes the bound is built from).
+#'
+#' @inheritParams objective_function_signature
+#' @inheritParams objective_function
+#' @param obj_function The objective function used for this level.
+#' @param relationship Prepped relationship lookup for this run, or `NULL`.
+#'
+#' @return A single numeric lower bound, or `NA_real_` when none can be derived.
+#'
+#' @seealso [objective_function()], [.balance_score_min()]
+#'
+#' @keywords internal
+# fmt: skip
+.optimal_score <- function(layout_df,
+                           swap,
+                           spatial_cols,
+                           obj_function,
+                           adj_weight = 1,
+                           bal_weight = 1,
+                           relationship = NULL) {
+  is_boundable <- identical(obj_function, objective_function) &&
+    is.null(relationship) &&
+    adj_weight >= 0 && bal_weight >= 0 &&
+    !anyNA(layout_df[[swap]])
+  if (!is_boundable) {
+    return(NA_real_)
+  }
+
+  bal_min <- .balance_score_min(layout_df, swap, spatial_cols)
+  # Adjacency is bounded by 0; round as `objective_function()` does so the two
+  # are comparable.
+  return(round(bal_weight * bal_min, 10))
+}
+
 #' Objective Function with Metric from Piepho
 #'
 #' @description

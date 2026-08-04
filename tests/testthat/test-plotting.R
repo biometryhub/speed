@@ -498,11 +498,12 @@ test_that("plot_progress executes without errors", {
 })
 
 test_that("plot_progress handles simple design optimization results", {
-  # Sample data for testing
+  # Unequal replication keeps the lowest possible score out of reach, so the run
+  # uses every iteration asked for
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
-    treatment = rep(LETTERS[1:4], 5)
+    treatment = c(rep("A", 8), rep("B", 4), rep("C", 4), rep("D", 4))
   )
 
   result <- speed(
@@ -531,11 +532,12 @@ test_that("plot_progress handles simple design optimization results", {
 })
 
 test_that("plot_progress handles different iteration lengths", {
-  # Test with short optimization
+  # Test with short optimization; unequal replication keeps the lowest possible
+  # score out of reach so both runs use every iteration asked for
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
-    treatment = rep(LETTERS[1:4], 5)
+    treatment = c(rep("A", 8), rep("B", 4), rep("C", 4), rep("D", 4))
   )
 
   short_result <- speed(
@@ -715,11 +717,12 @@ test_that("plot_progress error handling for invalid inputs", {
 })
 
 test_that("plot_progress generates expected plot elements", {
-  # Sample data for testing
+  # Unequal replication keeps the lowest possible score out of reach, so the run
+  # uses every iteration asked for
   test_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
-    treatment = rep(LETTERS[1:3], 4)
+    treatment = c(rep("A", 6), rep("B", 3), rep("C", 3))
   )
 
   result <- speed(

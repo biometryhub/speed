@@ -270,9 +270,8 @@
       row and col are used as row and column, respectively.
     Output
       Optimising level: single treatment within whole design 
-      Level: single treatment within whole design Iteration: 1000 Score: 1 Best: 1 Since Improvement: 1000 
-      Level: single treatment within whole design Iteration: 2000 Score: 1 Best: 1 Since Improvement: 2000 
-      Early stopping at iteration 2000 for level single treatment within whole design 
+      Level: single treatment within whole design Iteration: 1000 Score: 5 Best: 5 Since Improvement: 664 
+      Level: single treatment within whole design Iteration: 2000 Score: 5 Best: 5 Since Improvement: 1664 
 
 # speed prints progress output when quiet=FALSE for hierarchical designs
 
@@ -286,5 +285,5 @@
       Optimising level: wp 
       Level: wp Iteration: 1000 Score: 22 Best: 22 Since Improvement: 480 
       Optimising level: sp 
-      Level: sp Iteration: 1000 Score: 1.333333 Best: 1.333333 Since Improvement: 14 
+      Optimal score reached at iteration 987 for level sp 
 

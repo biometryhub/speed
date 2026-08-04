@@ -69,7 +69,9 @@ with names matching \code{swap}.}
 
 \item{early_stop_iterations}{Number of iterations without improvement before
 early stopping (default: 2000). For hierarchical designs, can be a named
-list with names matching \code{swap}.}
+list with names matching \code{swap}. Optimisation also stops as soon as a level
+reaches the lowest score its layout allows, which is only derivable for the
+default \code{\link[=objective_function]{objective_function()}}; see \link[=summary.design]{summary()}.}
 
 \item{quiet}{Logical; if TRUE, suppresses progress messages (default: FALSE)}
 

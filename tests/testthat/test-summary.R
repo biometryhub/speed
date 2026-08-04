@@ -94,7 +94,7 @@ test_that("summary score components are programmatically accessible", {
   s <- summary(simple_design())
   sc <- s$per_level[[1]]$score
 
-  expect_named(sc, c("initial", "final", "components"))
+  expect_named(sc, c("initial", "final", "optimal", "components"))
   # The default objective decomposes into adjacency + balance.
   expect_named(sc$components, c("adjacency", "balance"))
   # The components sum to the final score (faithful decomposition).

@@ -2,6 +2,10 @@
 
 ## Major Changes
 
+- `speed()` now stops as soon as a design reaches the lowest score its layout allows, rather than
+  waiting out `early_stop_iterations`. This applies only to the default `objective_function()`, and
+  `summary()` reports the lowest achievable score alongside the achieved one.
+
 - Added a `summary()` method for `"design"` objects, reporting structure and replication, a
   decomposed optimisation score, and design-quality diagnostics (connectedness, concurrence,
   replicate spans and spread across blocks, neighbour balance, and opt-in efficiency).
