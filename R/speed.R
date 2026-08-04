@@ -29,7 +29,7 @@
 #' @param early_stop_iterations Number of iterations without improvement before
 #'   early stopping (default: 2000). For hierarchical designs, can be a named
 #'   list with names matching `swap`. Optimisation also stops as soon as a level
-#'   reaches the lowest score its layout allows, which is only derivable for the
+#'   reaches the lowest score its layout allows, which is only applicable for the
 #'   default [objective_function()]; see [summary()][summary.design()].
 #' @param obj_function Objective function used to calculate score (lower is
 #'   better) (default: [objective_function()]). For hierarchical designs, can
@@ -254,7 +254,6 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     seed <- .GlobalEnv$.Random.seed[3]
   }
 
-  .dots <- list(...)
   hierarchy_levels <- names(optimise)
   layout_df <- random_initialise(data, optimise, seed, ...)
 
@@ -292,8 +291,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
     # Lower bound on the score for this level; `NA` when none can be derived
     optimal_score <- .optimal_score(current_design, opt$swap, spatial_cols, opt$obj_function,
-                                    adj_weight = adj_weight, bal_weight = bal_weight,
-                                    relationship = .dots$relationship)
+                                    adj_weight = adj_weight, bal_weight = bal_weight, ...)
     all_optimal_scores[[level]] <- optimal_score
 
     best_score_obj <- current_score_obj
@@ -308,9 +306,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       scores[iter] <- current_score
       temperatures[iter] <- temp
 
-      # Nothing left to gain once the score reaches its lower bound. Checked at
-      # the top so an already-optimal starting design stops without iterating.
-      if (.is_optimal(best_score, optimal_score)) {
+      # break once optimal
+      if (!is.na(optimal_score) && best_score <= optimal_score + 1e-9) {
         if (!quiet) cat("Optimal score reached at iteration", iter, "for level", level, "\n")
         scores <- scores[1:iter]
         temperatures <- temperatures[1:iter]
@@ -416,6 +413,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     )
   }
 
+  .dots <- list(...)
   # `call` is attached by speed() after this returns, not here.
   metadata <- list(
     levels     = hierarchy_levels,
@@ -501,20 +499,6 @@ print.design <- function(x, ...) {
   cat("Seed:", x$seed, "\n\n")
 
   return(invisible(x))
-}
-
-#' Has a score reached the objective's lower bound?
-#'
-#' Compares with a tolerance because [objective_function()] rounds its score;
-#' distinct achievable scores are orders of magnitude further apart than this.
-#' Always `FALSE` for an `NA` bound, i.e. when none could be derived.
-#'
-#' @param score A score achieved by the optimiser.
-#' @param optimal_score A lower bound from [.optimal_score()], possibly `NA`.
-#' @return A single logical.
-#' @keywords internal
-.is_optimal <- function(score, optimal_score) {
-  return(!is.na(optimal_score) && score <= optimal_score + 1e-9)
 }
 
 #' Reject `...` arguments that must travel through [optim_params()].

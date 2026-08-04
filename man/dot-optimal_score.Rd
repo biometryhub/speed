@@ -11,7 +11,7 @@
   obj_function,
   adj_weight = 1,
   bal_weight = 1,
-  relationship = NULL
+  ...
 )
 }
 \arguments{
@@ -27,23 +27,23 @@
 
 \item{bal_weight}{Weight for balance score (default: 1)}
 
-\item{relationship}{Prepped relationship lookup for this run, or \code{NULL}.}
+\item{...}{Extra arguments for the objective function, as passed to \code{\link[=speed]{speed()}}.
+\code{relationship} and \code{ring_weights} are read from here.}
 }
 \value{
-A single numeric lower bound, or \code{NA_real_} when none can be derived.
+A single numeric lower bound, or \code{NA_real_} when cannot be derived.
 }
 \description{
 Lower bound on the score \code{\link[=objective_function]{objective_function()}} can return for any
-arrangement of \code{swap} in this layout: zero for the adjacency component plus
-\code{\link[=.balance_score_min]{.balance_score_min()}} for the balance component. Because it is a bound
-rather than an attained value it is always safe as an early-stop target - an
-unattainable bound is simply never reached, leaving the run unchanged.
+arrangement of \code{swap} in this layout: zero for the adjacency component (for
+simplicity and non zero are mostly impractical) plus \code{\link[=.balance_score_min]{.balance_score_min()}}
+for the balance component. Because it is a bound rather than an attained
+value it is always safe as an early-stop target - an unattainable bound is
+simply never reached, leaving the run unchanged.
 
 Returns \code{NA_real_} when no bound can be derived: a non-default objective, a
-\code{relationship} matrix (whose entries may be negative, so zero is no longer an
-adjacency floor), a negative weight (which inverts the direction of
-optimisation), or \code{NA} treatments (which swaps can move between spatial
-levels, changing the level sizes the bound is built from).
+\code{relationship} matrix or any negative weights, \code{adj_weight}, \code{bal_weight},
+\code{ring_weights}.
 }
 \seealso{
 \code{\link[=objective_function]{objective_function()}}, \code{\link[=.balance_score_min]{.balance_score_min()}}

@@ -1014,7 +1014,7 @@ print.summary.design <- function(x, ...) {
   # Smallest score this layout admits, when the objective allows one to be
   # derived; reaching it means the design cannot be improved on.
   if (!is.na(s$optimal %||% NA_real_)) {
-    reached <- if (.is_optimal(s$final, s$optimal)) {
+    reached <- if (s$final <= s$optimal + 1e-9) {
       crayon::green("(reached)")
     } else {
       "(not reached)"
