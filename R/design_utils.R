@@ -896,8 +896,9 @@ build_design_matrix <- function(
   row_column = "row",
   col_column = "col"
 ) {
-  rows <- as_numeric_factor(df[[row_column]])
-  cols <- as_numeric_factor(df[[col_column]])
+  # Coercion of non-numeric labels warns; the check below reports it properly.
+  rows <- suppressWarnings(as_numeric_factor(df[[row_column]]))
+  cols <- suppressWarnings(as_numeric_factor(df[[col_column]]))
 
   if (anyNA(rows) || anyNA(cols)) {
     stop(
