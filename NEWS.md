@@ -2,9 +2,8 @@
 
 ## Major Changes
 
-- `speed()` now stops as soon as a design reaches the lowest score its layout allows, rather than
-  waiting out `early_stop_iterations`. This applies only to the default `objective_function()`, and
-  `summary()` reports the lowest achievable score alongside the achieved one.
+- `speed()` now stops as soon as a design reaches the lowest score its layout allows, applicable only to the
+  default `objective_function()`. `summary()` now reports the lower bound score alongside the achieved one.
 
 # speed 0.0.10
 
