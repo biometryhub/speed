@@ -34,12 +34,11 @@
 A single numeric lower bound, or \code{NA_real_} when cannot be derived.
 }
 \description{
-Lower bound on the score \code{\link[=objective_function]{objective_function()}} can return for any
-arrangement of \code{swap} in this layout: zero for the adjacency component (for
-simplicity and non zero are mostly impractical) plus \code{\link[=.balance_score_min]{.balance_score_min()}}
-for the balance component. Because it is a bound rather than an attained
-value it is always safe as an early-stop target - an unattainable bound is
-simply never reached, leaving the run unchanged.
+Lower bound of \code{\link[=objective_function]{objective_function()}} for any arrangement of \code{swap} in this
+layout: the adjacency component is zero (for simplicity and non zero are
+mostly impractical) and the balance component is \code{\link[=.balance_score_min]{.balance_score_min()}}.
+Because it is a bound rather than an attained value, an unattainable bound
+is simply never reached, leaving the run unchanged.
 
 Returns \code{NA_real_} when no bound can be derived: a non-default objective, a
 \code{relationship} matrix or any negative weights, \code{adj_weight}, \code{bal_weight},

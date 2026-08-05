@@ -53,8 +53,7 @@ name for a simple design).
 \code{block_spread}, \code{efficiency}, \code{neighbour}; each a list with an
 \code{available} flag and either its value(s) or a \code{reason} it wasn't
 computed.
-\item \code{score} - \code{initial}, \code{final}, \code{optimal} (the smallest score achievable
-for this layout, or \code{NA} when no bound can be derived), \code{components}.
+\item \code{score} - \code{initial}, \code{final}, \code{optimal} (\code{NA} when not applicable), \code{components}.
 \item \code{optim} - \code{objective}, \code{start_temp}, \code{cooling_rate},
 \code{iterations_requested}, \code{iterations_run}, \code{stopped_early}.
 }

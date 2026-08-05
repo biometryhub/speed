@@ -194,9 +194,6 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #' plots, the remainder, `rem` is `n %% t`, that minimum has the closed
 #' form `rem * (t - rem) / (t * (t - 1))`.
 #'
-#' Levels are bounded independently and treatment replication totals are
-#' ignored, so the bound is loose (never wrong) when replication is unequal.
-#'
 #' @inheritParams objective_function_signature
 #'
 #' @return A single non-negative numeric value.
@@ -229,12 +226,11 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #' Smallest Achievable Score for the Default Objective
 #'
 #' @description
-#' Lower bound on the score [objective_function()] can return for any
-#' arrangement of `swap` in this layout: zero for the adjacency component (for
-#' simplicity and non zero are mostly impractical) plus [.balance_score_min()]
-#' for the balance component. Because it is a bound rather than an attained
-#' value it is always safe as an early-stop target - an unattainable bound is
-#' simply never reached, leaving the run unchanged.
+#' Lower bound of [objective_function()] for any arrangement of `swap` in this
+#' layout: the adjacency component is zero (for simplicity and non zero are
+#' mostly impractical) and the balance component is [.balance_score_min()].
+#' Because it is a bound rather than an attained value, an unattainable bound
+#' is simply never reached, leaving the run unchanged.
 #'
 #' Returns `NA_real_` when no bound can be derived: a non-default objective, a
 #' `relationship` matrix or any negative weights, `adj_weight`, `bal_weight`,

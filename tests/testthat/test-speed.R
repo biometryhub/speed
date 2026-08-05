@@ -138,6 +138,148 @@ test_that("speed stops early when no improvement", {
   expect_lt(result$iterations_run, 100)
 })
 
+test_that("speed stops without iterating on an already-optimal design", {
+  #      [,1] [,2] [,3] [,4]
+  # [1,] "A"  "B"  "C"  "D"
+  # [2,] "B"  "C"  "D"  "A"
+  # [3,] "C"  "D"  "A"  "B"
+  # [4,] "D"  "A"  "B"  "C"
+  # [5,] "A"  "B"  "C"  "D"
+  test_data <- expand.grid(row = 1:5, col = 1:4)
+  test_data$treatment <- LETTERS[1:4]
+
+  expect_message(
+    output <- capture_output(
+      result <- speed(
+        data = test_data,
+        swap = "treatment",
+        spatial_factors = ~ row + col,
+        iterations = 5000,
+        seed = 42,
+        quiet = FALSE
+      )
+    ),
+    "row and col are used as row and column, respectively"
+  )
+
+  expect_match(output, "Optimal score reached at iteration 1 for")
+  expect_equal(result$score, 1)
+  expect_equal(result$iterations_run, 1)
+  expect_true(result$stopped_early)
+  # The design is returned untouched, only re-sorted by row then column
+  sorted <- test_data[order(test_data$row, test_data$col), ]
+  expect_equal(result$design_df$treatment, sorted$treatment)
+})
+
+test_that("speed stops as soon as the optimal score is reached mid-run", {
+  test_data <- expand.grid(row = 1:4, col = 1:5)
+  test_data$treatment <- LETTERS[1:4]
+
+  expect_message(
+    output <- capture_output(
+      result <- speed(
+        data = test_data,
+        swap = "treatment",
+        spatial_factors = ~ row + col,
+        iterations = 5000,
+        seed = 42,
+        quiet = FALSE
+      )
+    ),
+    "row and col are used as row and column, respectively"
+  )
+
+  # The 4 rows of 5 plots over 4 treatments leave a balance floor of 1
+  expect_match(output, "Optimal score reached at iteration")
+  expect_equal(result$score, 1)
+  expect_gt(result$iterations_run, 1)
+  expect_lt(result$iterations_run, 5000)
+  expect_true(result$stopped_early)
+})
+
+test_that("speed keeps running when the optimal score is out of reach", {
+  # having high rep for 1 treatment makes optimal score out of reach
+  test_data <- expand.grid(row = 1:3, col = 1:4)
+  test_data$treatment <- c(rep("A", 6), rep("B", 3), rep("C", 3))
+
+  expect_message(
+    output <- capture_output(
+      result <- speed(
+        data = test_data,
+        swap = "treatment",
+        spatial_factors = ~ row + col,
+        iterations = 500,
+        early_stop_iterations = 500,
+        seed = 42,
+        quiet = FALSE
+      )
+    ),
+    "row and col are used as row and column, respectively"
+  )
+
+  expect_no_match(output, "Optimal score reached")
+  expect_gt(result$score, result$metadata$per_level[[1]]$optimal_score)
+  expect_equal(result$iterations_run, 500)
+})
+
+test_that("speed does not stop on the optimal score for custom objectives", {
+  custom_objective <- function(layout_df, swap, spatial_cols, ...) {
+    return(list(
+      score = calculate_balance_score(layout_df, swap, spatial_cols)
+    ))
+  }
+
+  test_data <- expand.grid(row = 1:5, col = 1:4)
+  test_data$treatment <- LETTERS[1:4]
+
+  expect_message(
+    output <- capture_output(
+      result <- speed(
+        data = test_data,
+        swap = "treatment",
+        spatial_factors = ~ row + col,
+        obj_function = custom_objective,
+        iterations = 200,
+        early_stop_iterations = 200,
+        seed = 42,
+        quiet = FALSE
+      )
+    ),
+    "row and col are used as row and column, respectively"
+  )
+
+  expect_no_match(output, "Optimal score reached")
+  expect_true(is.na(result$metadata$per_level[[1]]$optimal_score))
+  expect_equal(result$iterations_run, 200)
+})
+
+test_that("speed does not stop on the optimal score (NA) for negative weights", {
+  test_data <- expand.grid(row = 1:5, col = 1:4)
+  test_data$treatment <- LETTERS[1:4]
+
+  expect_message(
+    output <- capture_output(
+      result <- speed(
+        data = test_data,
+        swap = "treatment",
+        spatial_factors = ~ row + col,
+        ring_dists = c(1, 2),
+        ring_weights = c(1, -1),
+        optimise_params = optim_params(bal_weight = 20),
+        iterations = 4000,
+        seed = 7,
+        quiet = FALSE
+      )
+    ),
+    "row and col are used as row and column, respectively"
+  )
+
+  expect_no_match(output, "Optimal score reached")
+  expect_true(is.na(result$metadata$per_level[[1]]$optimal_score))
+  expect_gt(result$iterations_run, 1)
+  expect_lt(result$score, 20)
+})
+
 # Test 6: Check reproducibility with seed
 test_that("speed produces reproducible results with seed", {
   # Sample data for testing

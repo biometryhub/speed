@@ -23,9 +23,6 @@ variance of the treatment counts within it is smallest when those plots are
 split as evenly as possible across the \code{t} treatments. For a level of \code{n}
 plots, the remainder, \code{rem} is \code{n \%\% t}, that minimum has the closed
 form \code{rem * (t - rem) / (t * (t - 1))}.
-
-Levels are bounded independently and treatment replication totals are
-ignored, so the bound is loose (never wrong) when replication is unequal.
 }
 \seealso{
 \code{\link[=calculate_balance_score]{calculate_balance_score()}}

@@ -84,8 +84,7 @@
 #'     `block_spread`, `efficiency`, `neighbour`; each a list with an
 #'     `available` flag and either its value(s) or a `reason` it wasn't
 #'     computed.
-#'   - `score` - `initial`, `final`, `optimal` (the smallest score achievable
-#'     for this layout, or `NA` when no bound can be derived), `components`.
+#'   - `score` - `initial`, `final`, `optimal` (`NA` when not applicable), `components`.
 #'   - `optim` - `objective`, `start_temp`, `cooling_rate`,
 #'     `iterations_requested`, `iterations_run`, `stopped_early`.
 #' - **score** - the overall optimised score (summed across levels for a
@@ -1011,8 +1010,7 @@ print.summary.design <- function(x, ...) {
       )
     }
   }
-  # Smallest score this layout admits, when the objective allows one to be
-  # derived; reaching it means the design cannot be improved on.
+
   if (!is.na(s$optimal %||% NA_real_)) {
     reached <- if (s$final <= s$optimal + 1e-9) {
       crayon::green("(reached)")
