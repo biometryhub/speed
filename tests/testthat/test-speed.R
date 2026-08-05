@@ -63,8 +63,7 @@ test_that("speed returns correct output structure", {
   expect_equal(nrow(result$design_df), 20)
   expect_equal(ncol(result$design_df), 3)
   expect_equal(result$score, 1)
-  # This starting layout already scores the lowest 5x4 with 4 treatments admits
-  # (0 adjacency, 1 balance), so the run stops without iterating.
+  # starting layout already optimal
   expect_equal(length(result$scores), 1)
   expect_equal(length(result$temperatures), 1)
   expect_equal(result$iterations_run, 1)
@@ -200,7 +199,7 @@ test_that("speed stops as soon as the optimal score is reached mid-run", {
 test_that("speed keeps running when the optimal score is out of reach", {
   # having high rep for 1 treatment makes optimal score out of reach
   test_data <- expand.grid(row = 1:3, col = 1:4)
-  test_data$treatment <- c(rep("A", 6), rep("B", 3), rep("C", 3))
+  test_data$treatment <- c(rep("A", 6), rep(c("B", "C"), 3))
 
   expect_message(
     output <- capture_output(
@@ -1886,12 +1885,11 @@ test_that("speed produces different results when seed=NULL across different runs
 
 # Test progress output for simple designs
 test_that("speed prints progress output when quiet=FALSE for simple designs", {
-  # Unequal replication keeps the lowest possible score out of reach, so the run
-  # reaches the iterations that trigger progress output
+  # having high rep for 1 treatment makes optimal score out of reach
   test_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
-    treatment = c(rep("A", 6), rep("B", 3), rep("C", 3))
+    treatment = c(rep("A", 6), rep(c("B", "C"), 3))
   )
 
   # Capture output with quiet=FALSE and enough iterations to trigger progress output
@@ -1920,12 +1918,11 @@ test_that("speed prints progress output when quiet=FALSE for simple designs", {
 
 # Test early stopping output for simple designs
 test_that("speed prints early stopping message when quiet=FALSE for simple designs", {
-  # Unequal replication puts the lowest possible score out of reach, so the run
-  # stops on lack of improvement rather than on reaching it
+  # having high rep for 1 treatment makes optimal score out of reach
   test_data <- data.frame(
     row = rep(1:3, times = 4),
     col = rep(1:4, each = 3),
-    treatment = c(rep("A", 6), rep("B", 3), rep("C", 3))
+    treatment = c(rep("A", 6), rep(c("B", "C"), 3))
   )
 
   # Capture output with early stopping likely to occur
@@ -2098,12 +2095,11 @@ test_that("speed produces no output when quiet=TRUE for hierarchical designs", {
 
 # Test progress output frequency (every 1000 iterations)
 test_that("speed prints progress output at correct intervals", {
-  # Unequal replication keeps the lowest possible score out of reach, so the run
-  # goes the distance instead of stopping on it
+  # having high rep for 1 treatment makes optimal score out of reach
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
-    treatment = c(rep("A", 8), rep("B", 4), rep("C", 4), rep("D", 4))
+    treatment = c(rep(LETTERS[1:3], 4), rep("D", 8))
   )
 
   # Capture output with enough iterations to trigger multiple progress outputs
