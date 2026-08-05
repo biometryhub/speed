@@ -230,7 +230,7 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #' layout: the adjacency component is zero (for simplicity and non zero are
 #' mostly impractical) and the balance component is [.balance_score_min()].
 #' Because it is a bound rather than an attained value, an unattainable bound
-#' is simply never reached, leaving the run unchanged.
+#' is never reached, leaving the run unchanged.
 #'
 #' Returns `NA_real_` when no bound can be derived: a non-default objective, a
 #' `relationship` matrix or any negative weights, `adj_weight`, `bal_weight`,

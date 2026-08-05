@@ -38,7 +38,7 @@ Lower bound of \code{\link[=objective_function]{objective_function()}} for any a
 layout: the adjacency component is zero (for simplicity and non zero are
 mostly impractical) and the balance component is \code{\link[=.balance_score_min]{.balance_score_min()}}.
 Because it is a bound rather than an attained value, an unattainable bound
-is simply never reached, leaving the run unchanged.
+is never reached, leaving the run unchanged.
 
 Returns \code{NA_real_} when no bound can be derived: a non-default objective, a
 \code{relationship} matrix or any negative weights, \code{adj_weight}, \code{bal_weight},
