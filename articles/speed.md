@@ -155,7 +155,7 @@ str(crd_result)
       .. ..$ single treatment within whole design:List of 11
       .. .. ..$ swap            : chr "treatment"
       .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x564ffbb2b458>
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x558841712d88>
       .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
       .. .. ..$ adj_weight      : num 1
       .. .. ..$ bal_weight      : num 1
@@ -427,7 +427,7 @@ str(rcbd_result)
       .. ..$ single treatment within block:List of 11
       .. .. ..$ swap            : chr "treatment"
       .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x564ffb2bb6a8>
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x558840ea2898>
       .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
       .. .. ..$ adj_weight      : num 1
       .. .. ..$ bal_weight      : num 1
@@ -566,7 +566,7 @@ str(latin_square_result)
       .. ..$ single treatment within whole design:List of 11
       .. .. ..$ swap            : chr "treatment"
       .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x564ff79ab658>
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55883d579420>
       .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
       .. .. ..$ adj_weight      : num 1
       .. .. ..$ bal_weight      : num 1
@@ -750,7 +750,7 @@ str(split_plot_result)
       .. ..$ wp:List of 11
       .. .. ..$ swap            : chr "wholeplot_treatment"
       .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x564ff7986188>
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55883d4edfa8>
       .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
       .. .. ..$ adj_weight      : num 1
       .. .. ..$ bal_weight      : num 1
@@ -765,7 +765,7 @@ str(split_plot_result)
       .. ..$ sp:List of 11
       .. .. ..$ swap            : chr "subplot_treatment"
       .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x564ff7986188>
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55883d4edfa8>
       .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
       .. .. ..$ adj_weight      : num 1
       .. .. ..$ bal_weight      : num 1
