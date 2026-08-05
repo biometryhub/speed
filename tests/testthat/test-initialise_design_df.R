@@ -329,6 +329,40 @@ test_that("initialize_design_df throws error for invalid inputs", {
     ),
     "`items` must be provided for all designs or `items` must be provided to `initialise_design_df`"
   )
+
+  expect_error(
+    initialise_design_df(items = 1:4),
+    "Either `nrows` and `ncols` or `designs` must be provided"
+  )
+
+  expect_error(
+    initialise_design_df(nrows = 2, ncols = 2),
+    "`items` must be provided when `splits` is `NULL`"
+  )
+})
+
+test_that("initialise_design_df validates each entry of `splits`", {
+  # Validation runs ahead of the deprecation warning, so these error rather than
+  # warn.
+  expect_error(
+    initialise_design_df(
+      items = paste0("T", 1:4),
+      nrows = 4,
+      ncols = 4,
+      splits = list(wp = list(nrows = 2, ncols = 2, bogus = 1))
+    ),
+    "`bogus` is an invalid argument in `splits\\$wp`"
+  )
+
+  expect_error(
+    initialise_design_df(
+      items = paste0("T", 1:4),
+      nrows = 4,
+      ncols = 4,
+      splits = list(wp = list(nrows = 2))
+    ),
+    "`nrows` and `ncols` must be provided for split `wp`"
+  )
 })
 
 test_that("initialise_design_df warns that `splits` is deprecated", {
@@ -344,5 +378,72 @@ test_that("initialise_design_df warns that `splits` is deprecated", {
       )
     ),
     "deprecated and will be removed in a future version"
+  )
+})
+
+test_that("`splits` divides an unblocked design into whole plots", {
+  # Without `block_nrows` the whole design is one parent unit, so the split
+  # units are laid out against the design's own dimensions.
+  suppressWarnings(
+    df <- initialise_design_df(
+      items = paste0("T", 1:4),
+      nrows = 4,
+      ncols = 4,
+      splits = list(wp = list(nrows = 2, ncols = 2))
+    )
+  )
+
+  expect_true("wp" %in% names(df))
+  # A 4x4 grid divided into 2x2 units gives 4 whole plots of 4 cells each.
+  expect_equal(sort(unique(df$wp)), 1:4)
+  expect_equal(unname(table(df$wp)), table(rep(1:4, each = 4)) |> unname())
+  # No items supplied for the split, so no treatment column is added for it.
+  expect_false("wp_treatment" %in% names(df))
+})
+
+test_that("a scalar `items` in a split expands to T1..Tn", {
+  suppressWarnings(
+    df <- initialise_design_df(
+      items = paste0("T", 1:4),
+      nrows = 4,
+      ncols = 4,
+      splits = list(wp = list(nrows = 2, ncols = 2, items = 4))
+    )
+  )
+
+  expect_setequal(unique(df$wp_treatment), paste0("T", 1:4))
+  # One item per whole plot, so each label covers exactly one 2x2 unit.
+  expect_equal(length(unique(paste(df$wp, df$wp_treatment))), 4)
+})
+
+test_that("split items recycle when they divide the number of units", {
+  suppressWarnings(
+    df <- initialise_design_df(
+      items = paste0("T", 1:4),
+      nrows = 4,
+      ncols = 4,
+      splits = list(wp = list(nrows = 2, ncols = 2, items = c("a", "b")))
+    )
+  )
+
+  # 2 items across 4 whole plots: recycled to a, b, a, b.
+  expect_setequal(unique(df$wp_treatment), c("a", "b"))
+  expect_equal(
+    unique(df[order(df$wp), c("wp", "wp_treatment")])$wp_treatment,
+    c("a", "b", "a", "b")
+  )
+})
+
+test_that("split items must divide the number of units", {
+  expect_error(
+    suppressWarnings(
+      initialise_design_df(
+        items = paste0("T", 1:4),
+        nrows = 4,
+        ncols = 4,
+        splits = list(wp = list(nrows = 2, ncols = 2, items = c("a", "b", "c")))
+      )
+    ),
+    "`items` for split `wp` must have length 4 \\(or divide it\\); got 3"
   )
 })

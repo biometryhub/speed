@@ -183,6 +183,10 @@ speed <- function(data,
     }
   }
 
+  # Checked for every call shape, since `infer_row_col()` below uses it whether
+  # or not `optimise` was supplied.
+  .verify_grid_factors(grid_factors)
+
   # Infer row and column columns
   inferred <- infer_row_col(data, grid_factors, quiet)
   row_column <- inferred$row

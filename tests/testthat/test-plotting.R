@@ -936,3 +936,29 @@ test_that("autoplot margin parameter works with different palettes", {
     autoplot(result, margin = TRUE, palette = "Set3")
   )
 })
+
+test_that("autoplot errors when the requested block column is absent", {
+  test_data <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 20,
+    seed = 1,
+    quiet = TRUE
+  )
+
+  # The block column is only validated when it was asked for explicitly; the
+  # default is left alone so unblocked designs still plot.
+  expect_error(
+    autoplot(result, block = "nope"),
+    "'nope' not found in row, col, treatment"
+  )
+  expect_no_error(autoplot(result))
+})

@@ -7,6 +7,12 @@
   replicate spans and spread across blocks, neighbour balance, and opt-in efficiency).
   ([#73](https://github.com/biometryhub/speed/issues/73))
 
+## Bug Fixes
+
+- `speed()` now errors with a clear message when `grid_factors` is malformed, instead of failing
+  with "missing value where TRUE/FALSE needed". Per-level grid factors point to the `optimise`
+  argument.
+
 # speed 0.0.9
 
 ## Major Changes

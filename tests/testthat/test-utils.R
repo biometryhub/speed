@@ -9,6 +9,10 @@ test_that("pseudo_inverse calculates Moore-Penrose inverse correctly", {
 
   # Check dimensions
   expect_equal(dim(A_inv), c(2, 2))
+
+  # Agrees with solve() when the matrix is invertible, which is why
+  # calculate_efficiency_factor() can use it unconditionally.
+  expect_equal(A_inv, solve(A), tolerance = 1e-10)
 })
 
 test_that("pseudo_inverse handles singular matrices", {
@@ -147,6 +151,43 @@ test_that("infer_row_col can infer row and column", {
   expect_equal(inferred$inferred, TRUE)
   expect_equal(inferred$row, "lane")
   expect_equal(inferred$col, "position")
+})
+
+test_that("infer_row_col reports the columns it inferred from name patterns", {
+  # `grid_factors` names `col`, which is absent, so both axes fall through to
+  # the name patterns - a different branch to the announcement made when
+  # `grid_factors` matches outright.
+  expect_message(
+    inferred <- infer_row_col(
+      data.frame(row = rep(1:4, each = 5), range = rep(1:4, times = 5)),
+      quiet = FALSE
+    ),
+    "row and range are used as row and column, respectively"
+  )
+
+  expect_true(inferred$inferred)
+  expect_equal(inferred$row, "row")
+  # A column named `range` is silently adopted as the design's column axis.
+  expect_equal(inferred$col, "range")
+})
+
+test_that("infer_row_col falls back to patterns when grid_factors is malformed", {
+  # Direct callers bypass `.verify_grid_factors()`, so a malformed argument must
+  # not be indexed - it used to fail with "missing value where TRUE/FALSE
+  # needed".
+  df <- data.frame(row = rep(1:4, each = 5), col = rep(1:4, times = 5))
+
+  for (bad in list(
+    NULL,
+    list(),
+    list(dim1 = "row"),
+    list(wp = list(dim1 = "row", dim2 = "col"))
+  )) {
+    inferred <- infer_row_col(df, grid_factors = bad, quiet = TRUE)
+    expect_true(inferred$inferred)
+    expect_equal(inferred$row, "row")
+    expect_equal(inferred$col, "col")
+  }
 })
 
 test_that("infer_row_col raise warning if cannot infer", {

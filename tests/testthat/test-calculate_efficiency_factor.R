@@ -107,10 +107,10 @@ test_that("calculate_efficiency_factor provides same result for mathematically i
   )
 })
 
-test_that("calculate_efficiency_factor handles near-singular matrices using pseudoinverse", {
-  # Instead of trying to create a design that naturally triggers the pseudoinverse,
-  # let's test with a design that we know works and verify the function handles
-  # both the regular and pseudoinverse cases properly
+test_that("calculate_efficiency_factor handles unbalanced designs", {
+  # The row/column inverse is always taken as a Moore-Penrose pseudoinverse, so
+  # an awkward design returns a value rather than failing on a near-singular
+  # matrix.
 
   # Use a simple but slightly unbalanced design
   df_design_test <- data.frame(
@@ -170,9 +170,8 @@ test_that("calculate_efficiency_factor handles designs with high treatment-space
   expect_gt(result, 0)
 })
 
-test_that("calculate_efficiency_factor uses pseudoinverse for matrices with high condition numbers", {
+test_that("calculate_efficiency_factor handles designs with dependencies between treatments", {
   # Create a larger design with subtle dependencies that increase condition number
-  # This creates a more realistic scenario where pseudoinverse might be needed
   df_design_dependent <- data.frame(
     row = rep(1:6, each = 2),
     col = rep(1:2, times = 6),

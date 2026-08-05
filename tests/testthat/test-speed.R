@@ -2597,3 +2597,85 @@ test_that("speed preserves non-consecutive numeric row and column values", {
   expect_setequal(result$design_df$row, c(2, 4, 6, 8))
   expect_setequal(result$design_df$col, seq(10, 50, 10))
 })
+
+test_that("speed rejects a malformed grid_factors with an actionable message", {
+  test_data <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+
+  expect_error(
+    speed(
+      test_data,
+      swap = "treatment",
+      grid_factors = list(dim1 = "row"),
+      quiet = TRUE
+    ),
+    "`grid_factors` must be a list with `dim1` and `dim2`"
+  )
+
+  expect_error(
+    speed(test_data, swap = "treatment", grid_factors = "row", quiet = TRUE),
+    "`grid_factors` must be a list with `dim1` and `dim2`"
+  )
+})
+
+test_that("speed points at `optimise` for per-level grid factors", {
+  # `infer_row_col()` resolves one pair of axes for the whole design, so a
+  # per-level `grid_factors` cannot be honoured on the legacy hierarchical
+  # shape. It used to fail with "missing value where TRUE/FALSE needed".
+  test_data <- data.frame(
+    range = rep(1:6, each = 4),
+    plot = rep(1:4, times = 6),
+    wholeplot_treatment = rep(LETTERS[1:3], each = 8),
+    subplot_treatment = rep(letters[1:4], 6),
+    block = rep(1:2, each = 12)
+  )
+
+  expect_error(
+    speed(
+      test_data,
+      swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+      swap_within = list(wp = "block", sp = "wholeplot_treatment"),
+      spatial_factors = ~ range + plot,
+      grid_factors = list(
+        wp = list(dim1 = "range", dim2 = "plot"),
+        sp = list(dim1 = "range", dim2 = "plot")
+      ),
+      iterations = list(wp = 20, sp = 20),
+      seed = 1,
+      quiet = TRUE
+    ),
+    "set them per level via the `optimise` argument"
+  )
+})
+
+test_that("random_initialise returns immediately on a zero score", {
+  # A score of 0 is optimal, so the remaining random starts are skipped. Zeroing
+  # both weights makes the objective identically 0, which exercises that early
+  # return without depending on a shuffle happening to find a perfect layout.
+  test_data <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+
+  result <- speed(
+    test_data,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 10,
+    seed = 1,
+    quiet = TRUE,
+    optimise_params = optim_params(
+      random_initialisation = 3,
+      adj_weight = 0,
+      bal_weight = 0
+    )
+  )
+
+  expect_equal(result$score, 0)
+  expect_setequal(result$design_df$treatment, LETTERS[1:3])
+  expect_equal(sort(result$design_df$treatment), sort(test_data$treatment))
+})
