@@ -283,3 +283,64 @@ test_that("efficiency factor is unchanged by shuffling a real design", {
   expect_equal(ordered, shuffled)
   expect_lte(ordered, 1)
 })
+
+test_that("efficiency factor is unaffected by an offset coordinate origin", {
+  # add_buffers() displaces the real plots to make room and never undoes it, so
+  # a de-buffered design arrives with coordinates that neither start at 1 nor
+  # run consecutively. The gaps leave empty indicator columns in Z, making ZtZ
+  # singular; the kappa() check routes to pseudo_inverse() and they contribute
+  # nothing. The positional fill this replaced could not get that far - it ran
+  # its plot counter past the end of Z and errored (subscript out of bounds).
+  base <- initialise_design_df(
+    items = rep(LETTERS[1:3], 4),
+    nrows = 4,
+    ncols = 3
+  )
+  expected <- calculate_efficiency_factor(base, treatment)
+
+  # The displacement each add_buffers() type applies (R/buffers.R), reproduced
+  # here rather than by calling add_buffers(): the assertion is about the metric
+  # tolerating offset coordinates, which outlives buffers moving out of speed.
+  displaced <- list(
+    edge = transform(base, row = row + 1, col = col + 1),
+    row = transform(base, row = row * 2),
+    col = transform(base, col = col * 2),
+    `double row` = transform(base, row = (3 * row) - 1),
+    `double col` = transform(base, col = (3 * col) - 1),
+    # Stacked edge then row: rows 4, 6, 8, 10 and cols 2-4.
+    `edge + row` = transform(base, row = 2 * (row + 1), col = col + 1)
+  )
+
+  # Buffers are not part of the statistical design, so every one of these must
+  # return the unbuffered design's value.
+  for (type in names(displaced)) {
+    expect_equal(
+      calculate_efficiency_factor(displaced[[type]], treatment),
+      expected
+    )
+  }
+})
+
+test_that("efficiency factor computes on a grid with a genuine hole", {
+  # A plot missing mid-grid is a real input class - an irregular trial edge, a
+  # road - and is not a buffer, so it must be scored on the coordinates it has
+  # rather than closed up. Here Z has no empty columns, so this is a separate
+  # path from the offset case above: solve(), not pseudo_inverse().
+  full <- initialise_design_df(
+    items = rep(LETTERS[1:6], 4),
+    nrows = 4,
+    ncols = 6
+  )
+  holed <- full[!(full$row == 2 & full$col == 3), ]
+
+  expect_no_error(holed_ef <- calculate_efficiency_factor(holed, treatment))
+  expect_lte(holed_ef, 1)
+  # Both values measured at the coordinate-indexed fix and pinned here, so a
+  # silent change in either is caught.
+  expect_equal(
+    calculate_efficiency_factor(full, treatment),
+    0.7058824,
+    tolerance = 1e-6
+  )
+  expect_equal(holed_ef, 0.7008719, tolerance = 1e-6)
+})
