@@ -21,12 +21,17 @@ measured, not inferred. Resolved findings are deleted rather than annotated — 
 > `calculate_efficiency_factor()` indexes its own indicator matrices by coordinate. Full suite:
 > **1668 pass, 0 fail, 0 warn.**
 >
-> 🔴 **One live blocker: G10.** D6 has now been decided as **ranked** coordinates, and the code
-> implements **raw**. A row-buffered design currently reports neighbour counts for a layout nobody
-> will analyse. This must be settled before the branch merges, because it is a behaviour change either
-> way and the NEWS entry currently describes the raw behaviour.
+> ✅ **G10 is withdrawn, not fixed.** It said `build_design_matrix()` must **rank** its coordinates to
+> satisfy D6. That was the wrong lever: ranking is nothing more than the inverse of the displacement
+> `add_buffers()` applies, and inverting it downstream by inference also collapses genuine holes. D6's
+> *rationale* stands; its mechanism moved to `feature/buffers`, which undoes the displacement where it
+> is created. `build_design_matrix()` stays **raw** — see D6 and A5.
 >
-> ⬜ **Deferred, each its own PR: G8, G9.** Neither is an ordering bug.
+> 📦 **`feature/buffers` merges into this branch** (branched off `f5d68f5`). It carries the coordinate
+> restoration that makes raw correct, plus the `add_buffers()` deprecation. See A2.1 — nothing here
+> should be actioned without reading it, because two items in this file are already done there.
+>
+> ⬜ **Deferred, each its own PR: G8, G9, and the S3 class collision (A3.1).** None is an ordering bug.
 
 ---
 
@@ -64,83 +69,97 @@ All correct: buffers are not part of the statistical design, so the value should
 design's, and it does. `#1b` recorded this as uncomputable, and `.efficiency_factor()`'s `tryCatch` no
 longer has a known failure to absorb.
 
+Note the buffered rows of this table become moot once `add_buffers()` leaves speed (D6), but the holed-grid
+row does not — a genuine missing plot is a real input class, and it is the reason `#1b` can be closed on
+its merits rather than by removing the feature that exposed it.
+
 ---
 
 ## A2. Decisions
 
-### 🔷 D6. Do buffers break adjacency? — **decided: ranked coordinates** (2026-08-06)
+### 🔷 D6. Do buffers break adjacency? — **settled: buffers never reach the metrics** (2026-08-06)
 
-**Decision: rank the coordinates, ignoring buffers.** Plots either side of a buffer **are** neighbours.
+**Answer: a buffered design must score exactly as the same design unbuffered.** Plots either side of a
+buffer **are** neighbours.
 
-**Rationale (Sam, 2026-08-06):** when a buffered trial is *analysed*, the buffer plots are excluded and
-the model is fitted on the remaining plots, which treats them as a contiguous grid — adjacent even
-where they are physically separated. The design metrics should describe the layout the analysis will
-actually see, not the physical field. Matching the analysis is the point of the metric.
+**Rationale (Sam):** when a buffered trial is *analysed*, the buffer plots are excluded and the model is
+fitted on the remaining plots, which treats them as a contiguous grid — adjacent even where they are
+physically separated. A design metric should describe the layout the analysis will see, not the physical
+field.
+
+**Mechanism — decided twice, and the second answer is the one to keep.** The question was originally
+framed as raw-vs-ranked coordinates inside `build_design_matrix()`, and answered "ranked". That framing
+was wrong. `add_buffers()` displaces the real plots' coordinates to make room (`row + 1` for `"edge"`,
+`row * 2` for `"row"`, `3 * row - 1` for `"double row"`, …) and never undoes it. Ranking is *exactly the
+inverse of that displacement* — verified for all five buffer types, ranking the de-buffered coordinates
+restores the original `1..n` precisely. So ranking was never a statistical position on buffers; it was
+an undo, applied by inference, in the wrong place.
+
+Inferring it downstream also cannot tell a buffer from a real hole, so it collapses genuine physical
+gaps — a road, an irregular trial edge — for no benefit.
+
+**So: the displacement is undone where it is created.** `add_buffers()` records what it did in
+`metadata$buffer`, and `.drop_buffer_rows()` inverts it before any metric runs (`feature/buffers`, A2.1).
+`build_design_matrix()` keeps **raw** coordinates. That satisfies D6 *and* preserves real gaps —
+strictly better than ranking, which bought the first at the cost of the second.
+
+Measured on a 4×3 design with the restoration in place: `"edge"`, `"row"`, `"col"`, `"double row"` and
+`"double col"`, and stacked combinations, all reproduce the unbuffered design's neighbour balance,
+replicate span and efficiency exactly.
+
+**Longer term this stops being speed's problem at all.** `add_buffers()` is deprecated as of 0.0.10 and
+moving to \pkg{biometryassist} (see `BUFFERS-HANDOFF.md`). Once it is gone, speed never creates a
+displacement, so the restoration goes too and raw coordinates are simply correct with nothing to undo.
 
 This also settles S3 in `REVIEW-NOTES-SUMMARY.md`: `main`'s `length(unique(...))` behaviour was the
-right *behaviour*, and the only real defect there was that the choice had never been stated. It is now
-stated here.
+right *behaviour*; the defect was that the choice had never been stated.
 
-**Cost, accepted:** ranking cannot distinguish a buffer from a genuine hole, so a real physical gap — a
-road, an irregular trial edge — is also collapsed, and two plots either side of it are counted as
-neighbours. A design with a partial hole (one missing plot mid-row) still produces a sparse grid after
-ranking, so G4's `NA` tolerance stays necessary.
+G4's `NA` tolerance stays necessary regardless — a design with a genuine partial hole still produces a
+sparse grid under raw coordinates.
 
-Rejected alternative — **raw coordinates**, gaps preserved. Agronomically the more literal reading, and
-what is implemented today, but it describes a layout no analysis uses. See G10.
+### A2.1 What arrives when `feature/buffers` merges
+
+Branched off `f5d68f5`, so it applies cleanly. Two items below are already done there — **do not action
+them again**:
+
+| From `feature/buffers` | Effect here |
+|---|---|
+| `metadata$buffer` transform record in `add_buffers()`, inverted by `.drop_buffer_rows()` / `.restore_buffer_coords()` | makes D6 true without touching `build_design_matrix()` |
+| `test-summary.R` buffer test rewritten | **fixes the stale comment at [test-summary.R:304](tests/testthat/test-summary.R#L304)**, which still claims a `"row"` buffer should change the counts. Now asserts every buffer type and stacked combinations match the unbuffered design |
+| `add_buffers()` deprecation warning + `## Deprecations` NEWS section | buffers are leaving speed; `BUFFERS-HANDOFF.md` specifies the biometryassist side |
+| `.warn_if_buffers()` in `calculate_adjacency_score()`, `calculate_balance_score()`, `calculate_efficiency_factor()` | a direct metric call on a buffered frame bypasses `.drop_buffer_rows()`, so it warns rather than silently scoring the displaced layout |
+| `helper-buffers.R` with `add_buffers_quiet()`, and 45 rewritten test call sites | keeps the deprecation warning out of tests that are about layout |
+
+One caveat carried forward: the `metadata$buffer` record is an affine `scale`/`shift` pair, which covers
+speed's buffer types but **cannot** represent biometryassist's `by =` block buffers, where gaps appear
+only at group boundaries. It would need to become a per-axis `new -> old` lookup if speed ever had to
+invert one of those. Under the handoff plan it never does.
 
 ---
 
 ## A3. Open findings
 
-### G10 🔴 `build_design_matrix()` uses raw coordinates, contradicting D6
+### A3.1 🟠 Both packages register S3 methods on class `"design"`
 
-The branch implemented D6 in the **raw** direction before it was decided, and the decision went the
-other way. Everything about reading coordinates instead of row order is correct and stays; only the
-treatment of gaps is wrong.
+Not an ordering bug and not buffer-specific, but it surfaced from this work and needs its own branch.
+speed and \pkg{biometryassist} both use `class(x) == c("design", "list")`, and speed registers methods on
+a class name it does not own. **Measured** with both loaded, calling on a **biometryassist** design:
 
-`build_design_matrix()` ([R/design_utils.R](R/design_utils.R)) places plots at `max(rows)` × `max(cols)`
-and comments that coordinates are *"deliberately not renumbered"*. `add_buffers()` never undoes its own
-offset — it does `design$row <- design$row + 1` for `"edge"` and `design$row <- 2 * design$row` for
-`"row"` ([R/buffers.R:24-47](R/buffers.R#L24-L47)) — so a de-buffered design arrives with
-non-contiguous coordinates.
+| Call | Result |
+|---|---|
+| `summary(des)` | speed's `summary.design` runs → `"This design has no metadata; ... Re-run speed()"` |
+| `print(des)` | speed's `print.design` runs → prints `"Optimised Experimental Design"`; wrong, and silent |
+| `autoplot(des)` | last package loaded wins (`Registered S3 method overwritten by ...`) |
 
-**Measured** on the 4×3 design, `add_buffers("row")` then buffer rows dropped (inner rows 2, 4, 6, 8):
+biometryassist defines neither `print.design` nor `summary.design`, so speed's capture its objects
+unopposed. `print()` is the worst of the three: no error, just plausible wrong output.
 
-| Coordinates | self-adj | pair min / max |
-|---|---|---|
-| raw (today) | 0 | **2 / 3** |
-| ranked (D6) | 0 | **5 / 6** |
-| the same design unbuffered | 0 | 5 / 6 |
-
-Ranked reproduces the unbuffered design exactly, which is the correct answer under D6 — adding buffers
-around a design does not change which of its plots neighbour each other in the analysis. Raw drops
-every row-direction adjacency, because every pair of design rows is separated by an empty row.
-
-`add_buffers("edge")` offsets without inserting gaps, so it is already correct under both conventions
-(measured: self 0, min/max 5/6, matching unbuffered).
-
-**Fix:** rank inside `build_design_matrix()` — `rows <- match(rows, sort(unique(rows)))`, likewise
-`cols`, after the existing validation and before `max()`. One function, as A4.1 originally predicted.
-Then:
-
-- `calculate_efficiency_factor()` indexes `Z` by raw coordinate too. It happens to return the right
-  value anyway (A1.1), because empty indicator columns contribute nothing, but it should rank for
-  consistency and to keep `ZtZ` non-singular rather than leaning on the `kappa()` fallback.
-- **`test-summary.R`'s buffer test comment is now wrong.** It currently asserts that `"edge"` counts
-  match the unbuffered design *"(A `row` or `block` buffer does insert a gap, and there the counts are
-  expected to differ: plots either side of a buffer are not neighbours.)"* Under D6 a `"row"` buffer
-  must **not** change the counts either. Add that as a positive assertion — it is the test that pins
-  D6.
-- **The NEWS bullet must lose its second sentence.** *"Neighbour balance is now read from the plot
-  coordinates, so plots separated by a buffer row or column are no longer counted as neighbours"*
-  describes the rejected convention.
-- Re-check the `?add_buffers` docs and the buffer vignette section for any claim that buffers separate
-  plots for scoring purposes.
-
-Whether to *also* renumber inside `add_buffers()` is now moot for metrics — ranking downstream makes it
-unnecessary — but it would still make `print()`/`autoplot()` coordinates tidier. Separate question,
-separate branch.
+**Fix:** one line at [R/speed.R:441](R/speed.R#L441) —
+`class(output) <- c("speed_design", "design", class(output))` — then rename speed's four registrations to
+`autoplot.speed_design`, `print.speed_design`, `summary.speed_design`, `print.summary.speed_design`.
+Keep `"design"` in the vector so `inherits(x, "design")` still works. This also gives the biometryassist
+adapter its discriminator (`inherits(x, "speed_design")`), replacing a `[["design_df"]]` sniff — see
+`BUFFERS-HANDOFF.md` change 5.
 
 ### G9 🟠 `initialise_design_df()` fills `items` down columns, and nothing says so
 
@@ -228,8 +247,7 @@ Statistical, not orientation. Pair it with the upper-bound work (A4).
   **415 µs/build** vs `build_design_matrix()` **1180 µs/build** — **2.84×**, about 7.6 s extra per
   10,000 iterations per level. Real but not disqualifying, and avoidable: the row/col vectors never
   change during the SA loop, only `swap` does, so the validated `cbind(rows, cols)` index can be built
-  once per level and passed in. Do it after correctness, and benchmark rather than assume. Note G10's
-  ranking is also loop-invariant and belongs in the same hoist.
+  once per level and passed in. Do it after correctness, and benchmark rather than assume.
 - **A terminology sentence for `?calculate_efficiency_factor`.** It returns `(2/r_h) / apv`, the
   **average efficiency factor** — the harmonic mean of the canonical efficiency factors, i.e.
   **A-efficiency**, the measure paired with A-optimality. Verified against an independent eigenvalue
@@ -252,8 +270,9 @@ Corrections to superseded findings have been dropped along with the findings. Th
 
 | Earlier claim | Corrected |
 |---|---|
-| **Rank** the coordinates and you destroy real physical gaps, so validate instead | **Half right, and the wrong half won.** Ranking does collapse genuine gaps — that cost stands and is recorded in D6 — but collapsing them is what the analysis does, so it is the correct behaviour for a design metric. D6 decided ranked; the raw implementation is now G10. |
-| D6 recommendation: raw coordinates everywhere, plus renumbering inside `add_buffers()` | **Overturned by D6.** Rank downstream in `build_design_matrix()`; renumbering inside `add_buffers()` becomes optional tidying, not a fix. |
+| **Rank** the coordinates and you destroy real physical gaps, so validate instead | **Right, and it survived a detour.** Briefly overruled in favour of ranking; reinstated once it was clear that ranking is only the inverse of `add_buffers()`' displacement. Undo the displacement at its source and raw coordinates preserve genuine gaps at no cost. See D6. |
+| D6 is a statistical question about whether buffers separate plots | **Not really.** It looked like one, but the only thing making a buffered design score differently was `add_buffers()` rewriting the real plots' coordinates. Verified: ranking the de-buffered coordinates restores the original `1..n` exactly, for all five buffer types. The statistical question is settled trivially — buffers must not change anything — and the rest was an implementation leak. |
+| **G10** — `build_design_matrix()` must rank its coordinates to satisfy D6 | **Withdrawn, do not implement.** Ranking in `build_design_matrix()` would infer the undo in the wrong place and collapse real holes as collateral. `feature/buffers` records the displacement in `metadata$buffer` and inverts it in `.drop_buffer_rows()` instead; `build_design_matrix()` stays raw. G10's other three sub-items are also resolved: the `test-summary.R` comment is rewritten on that branch, the NEWS sentence has already been removed here, and `calculate_efficiency_factor()` needs no change (A1.1). |
 | An efficiency factor `> 1` is a canary for the ordering bug (G7) | **Too narrow.** `> 1` signals rank deficiency however it arises. Measured: degenerate fixtures where treatment is confounded with row — which is what `initialise_design_df(rep(LETTERS[1:k], m), ...)` produces, see G9 — return values `> 1` in **row-major** order too, on `main`. It is a canary for "something is wrong", not for ordering specifically. |
 | G8 is harmless for equireplicate designs | **Stands, re-verified.** Earlier doubt came from degenerate fixtures (G9), not from G8. |
 | `KNOWN_ISSUES` #1b: `calculate_efficiency_factor()` cannot compute post-buffer (G6) | **No longer true** — resolved incidentally by the G7 coordinate fix. Measured in A1.1. |
