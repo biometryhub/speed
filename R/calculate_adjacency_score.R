@@ -137,6 +137,11 @@ adjacency_score_vec <- function(
   relationship = NULL
 ) {
   ring_type <- match.arg(ring_type)
+  # A single weight applies to every ring, so the scalar default stays usable
+  # with a multi-ring `dists`. Any other length mismatch is still an error.
+  if (length(weights) == 1L) {
+    weights <- rep(weights, length(dists))
+  }
   stopifnot(length(dists) == length(weights))
   nr <- nrow(design_matrix)
   nc <- ncol(design_matrix)

@@ -4,7 +4,10 @@
 \alias{.neighbour_balance}
 \title{Neighbour-balance diagnostics}
 \usage{
-.neighbour_balance(df, swap, nrow, ncol)
+.neighbour_balance(df, swap, rc, cc)
+}
+\arguments{
+\item{rc, cc}{Row and column column names.}
 }
 \description{
 Builds the treatment grid and counts how often each treatment pair ends up
@@ -20,11 +23,17 @@ zero self-adjacency is the desirable outcome the optimiser works towards,
 whereas a distinct pair that never neighbours is an imbalance. Lumping them
 together hides self-adjacency behind the same \verb{min 0} as the harmless case.
 
-Takes \code{nrow}/\code{ncol} from the caller's \code{layout} (counted via
-\code{length(unique(...))}) rather than deriving them from \code{max(row)}/\code{max(col)}:
-buffer plots (\code{add_buffers()}) can shift row/col numbering so it no longer
-starts at 1, which would otherwise reshape the grid with the wrong
-dimensions. Assumes \code{rc}/\code{cc} are present in \code{df}; callers should check
-\code{has_grid} first (see \code{summary.design()}).
+The grid is built by \code{\link[=build_design_matrix]{build_design_matrix()}}, which places each plot at its
+own \code{rc}/\code{cc} coordinates. Reshaping the treatment column with \code{matrix()}
+instead would assume the data frame's row order matches the fill order, which
+is false for any non-square design (\code{speed()} sorts row-major; \code{matrix()}
+fills column-major) and produced adjacency counts for a layout that wasn't
+the design.
+
+Coordinates are read as-is, so a design whose plots are separated by a buffer
+row or column (\code{add_buffers()} offsets and scales them) keeps that separation:
+plots either side of a buffer are not counted as neighbours. Assumes \code{rc}/\code{cc}
+are present in \code{df}; callers should check \code{has_grid} first (see
+\code{summary.design()}).
 }
 \keyword{internal}

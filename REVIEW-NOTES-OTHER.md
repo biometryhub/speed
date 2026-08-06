@@ -13,22 +13,23 @@ correctness work in any of these notes.
 | `REVIEW-NOTES-PR91.md` | PR #91 `info-objective` |
 | **this file** | grid construction / core metrics |
 
-**Last verified:** 2026-08-06, R 4.6.1, `pkgload::load_all()`. `bugfix/grid-orientation` at `ef9bf17`,
-`feature/incidence` at `1536991`. All numbers measured, not inferred.
+**Last verified:** 2026-08-06, R 4.6.1, `pkgload::load_all()`. All numbers measured, not inferred.
 
-> ✅ **Status: G1–G4 implemented on `bugfix/grid-orientation`.** `build_design_matrix()` is written
-> fresh off `main` (validated coordinates, no renumbering, duplicate-coordinate guard), wired into
-> `calculate_adjacency_score()` and `objective_function_piepho()` **including the G2 write-back fix**,
-> with `.calculate_nb()` made NA-tolerant. Two new test files pin the behaviour. The findings below are
-> kept as the rationale for the change and as review material.
+> ✅ **Everything in scope for this branch is implemented.** `build_design_matrix()` is written fresh
+> off `main` (validated coordinates, no renumbering, duplicate-coordinate guard) and wired into all
+> four grid-construction sites — `calculate_adjacency_score()`, `objective_function_piepho()`
+> (**including the G2 write-back fix**), `calculate_efficiency_factor()`'s `Z` (G7) and
+> `.neighbour_balance()` (S1). `.calculate_nb()` is NA-tolerant (G4) and a scalar `ring_weights`
+> recycles across every `ring_dist` (G5). **Full suite: 1668 pass, 0 fail, 0 warn.**
 >
-> ⬜ **Still open: G5, G6, G7, G8, and the `.neighbour_balance()` call site (S1).** G7 and S1 are new
-> to this revision and are the same bug class as G1 — two further grid-construction sites that were
-> missed because neither `R/summary.R` nor `calculate_efficiency_factor()` was in the original diff.
-> Both are in scope here; G6 and G8 are not.
+> The findings below are kept as the rationale for the change and as review material.
 >
-> `feature/incidence` still carries its own earlier copy of this work, which must be stripped —
-> in that state it is a **regression**, not a fix (G2).
+> ⬜ **Still open, each its own PR: G6, G8, G9.** None is an ordering bug. **G9 is new** — the
+> `initialise_design_df()` fill order, found because it is what made the paper-comparison test fail
+> once G7 was fixed. It is worked around in the tests, not fixed in the package.
+>
+> ✅ `feature/incidence` has been stripped of its earlier copy of this work (commit `655dac1` there),
+> so the two branches no longer overlap in any file.
 
 ---
 
@@ -59,6 +60,10 @@ correctness work in any of these notes.
 - 🔵 **G8** — `calculate_efficiency_factor()`'s `Z` omits the intercept, so it projects onto a subspace
   one dimension smaller than the row + column model. Harmless for equireplicate designs, not for
   unequal replication. Statistical, not orientation — **out of scope here**.
+- 🟠 **G9** — `initialise_design_df()` assigns `items` **down columns**, undocumented, so a design
+  transcribed one grid row per line is stored transposed. The package's own paper-comparison test was
+  wrong in exactly this way and passed only because G7 cancelled it out. **Out of scope here**;
+  worked around in the tests.
 
 ## A2. Decisions
 
@@ -67,7 +72,7 @@ correctness work in any of these notes.
 *(Cross-cutting: also affects `summary()` — see S3 in `REVIEW-NOTES-SUMMARY.md`.)*
 
 Coordinate-based construction forces this into the open, and there's no implementation-neutral answer.
-`add_buffers()` shifts or scales coordinates: `type = "edge"` gives inner rows `2..n+1`;
+`add_buffers()` shifts or scales coordinates: `type = "ed*ge"` gives inner rows `2..n+1`;
 `type = "row"` gives inner rows `2, 4, 6, 8`. Once buffer rows are dropped the inner design's
 coordinates are non-contiguous. Two ways to rebuild, verified on a design with rows 1, 2, 4, 5 (a road
 where row 3 would be):
@@ -325,6 +330,42 @@ point.
 so it is self-fulfilling and passes against the bug. It must be rewritten, not just re-run — see
 `REVIEW-NOTES-SUMMARY.md`.
 
+### G9 🟠 `initialise_design_df()` fills `items` down columns, and nothing says so
+
+Found while fixing G7, because it is what made the paper-comparison test fail.
+
+`initialise_design_df()` builds its grid with `expand.grid(row = 1:nrows, col = 1:ncols)`
+([R/design_utils.R:294](R/design_utils.R#L294)), which varies `row` fastest, then assigns
+`df$treatment <- items` positionally. So `items` is read **down columns**. Nothing in `?initialise_design_df`
+says this, and the natural way to write a design out — one grid row per source line — produces a
+*different design* from the one on the page.
+
+The package's own test suite fell into it. `test-calculate_efficiency_factor.R` writes four published
+designs visually, 4 rows of 9, and asserted the paper's efficiency values. **Measured:**
+
+| Design | as written | grid actually matching the paper | paper's value |
+|---|---|---|---|
+| 1 | 0.644 | **0.834** | 0.834 |
+| 2 | 0.683 | **0.783** | 0.783 |
+| 3 | 0.540 | **0.827** | 0.827 |
+
+The test passed on `main` only because **two conventions cancelled**: `initialise_design_df()` stored
+the design column-major, and `calculate_efficiency_factor()` read it back positionally row-major
+(G7), recovering the design the author had written. Fixing G7 broke the cancellation and exposed
+both. Supplying the items column-major — `as.vector(matrix(items, nrow, ncol, byrow = TRUE))` —
+reproduces every published value exactly, which is the confirmation that the G7 fix is right and the
+storage was wrong.
+
+**Fixed in the tests** via a local `by_row()` helper, so the literals stay readable against the
+paper. **Not fixed in the package** — that is a user-facing API question and belongs on its own
+branch:
+
+- At minimum, document the fill order in `?initialise_design_df` with a worked example.
+- Better, add `byrow = FALSE` to `initialise_design_df()`, mirroring `matrix()`. Anyone transcribing
+  a published design will want `byrow = TRUE`, and today they silently get a different design.
+
+Worth checking other tests and vignettes for the same latent transposition before that lands.
+
 ### G8 🔵 `Z` omits the intercept — out of scope, recorded
 
 [R/metrics.R:694-710](R/metrics.R#L694-L710) builds `Z` from row indicators `1..R-1` and column
@@ -349,17 +390,23 @@ consumers tolerate sparse grids reproduces G4's errors.
 | A4.1 `build_design_matrix()` | ✅ done |
 | A4.2 `.calculate_nb()` NA tolerance (G4) | ✅ done |
 | A4.3a call sites — piepho + adjacency, incl. the G2 write-back fix | ✅ done |
-| A4.3b call site — `.neighbour_balance()` (S1) | ⬜ open — unblocked, folded in here |
-| A4.3c call site — `calculate_efficiency_factor()`'s `Z` (G7) | ⬜ open |
-| A4.4 `ring_weights` recycling (G5) | ⬜ open |
-| A4.5 tests | 🟡 partial — G1/G2/G4 pinned; G5, G7, S1 outstanding |
-| A4.6 NEWS | 🟡 partial — covers A4.3a only |
+| A4.3b call site — `.neighbour_balance()` (S1) | ✅ done |
+| A4.3c call site — `calculate_efficiency_factor()`'s `Z` (G7) | ✅ done |
+| A4.4 `ring_weights` recycling (G5) | ✅ done |
+| A4.5 tests | ✅ done — G1/G2/G4/G5/G7/S1 all pinned |
+| A4.6 NEWS | ✅ done |
 | G6 `calculate_efficiency_factor()` sparse lattice | ⬜ open — own PR |
 | G8 `Z` omits the intercept | ⬜ open — own PR, with the upper-bound work (A4.7) |
+| G9 `initialise_design_df()` fill order | ⬜ open — own PR; worked around in the tests |
 
-A4.3 was previously ticked ✅ while one of its three listed call sites was untouched; it is split into
-a/b/c above so the tick is accurate. `test-grid-orientation.R` currently references neither
-`calculate_efficiency_factor()` nor `.neighbour_balance()` — verified by grep, 2026-08-06.
+**Full suite: 1668 pass, 0 fail, 0 warnings** (2026-08-06). Two pre-existing tests needed changing,
+both because they asserted the behaviour being fixed:
+
+- `test-calculate_adjacency_score.R` — "rejects mismatched dists/weights" asserted that a scalar
+  `weights` against a multi-ring `dists` errors. That is precisely what G5 makes legal. Rewritten to
+  assert the scalar case now works *and* that a genuine length mismatch still errors.
+- `test-calculate_efficiency_factor.R` — the paper-comparison test, via G9. See that finding; the
+  published values reproduce exactly once the designs are stored the way they are written.
 
 **D6 was implemented as "raw coordinates"** — the recommended option. Coordinates are validated and
 used as-is, never renumbered, so a gap in the coordinates stays a gap in the grid. If you decide the
@@ -570,4 +617,6 @@ for why the order-invariance test is worth more than any number of fixed-input a
 | G1: **two** functions assume opposite orderings | **Undercount** — it is four. `calculate_efficiency_factor()` (G7) and `.neighbour_balance()` (S1) do the same thing and were outside the reviewed diff. Table in G1 corrected. |
 | G6 covers `calculate_efficiency_factor()`'s grid problem, and it "fails safely" | **Only half.** G6 is the sparse case, where it errors and the wrapper degrades cleanly. On a dense non-square grid in the wrong order it returns a wrong number silently (G7) — including values `> 1`. "Fails safely" is true of G6, not of the function. |
 | A4.3 (call sites) is ✅ done | **Two of three sites only.** `.neighbour_balance()` was listed as conditional and never done; `calculate_efficiency_factor()` was not listed at all. Split into A4.3a/b/c. |
-| S-D1 option A is blocked on `build_design_matrix()` reaching `main` | **No longer** — it is on this branch (A4.1). The `bugfix/summary-neighbour-balance` plan in `REVIEW-NOTES-SUMMARY.md` is stale; S1 folds in here. |
+| S-D1 option A is blocked on `build_design_matrix()` reaching `main` | **No longer** — it is on this branch (A4.1). The `bugfix/summary-neighbour-balance` plan in `REVIEW-NOTES-SUMMARY.md` is stale; S1 folds in here, and is now done. |
+| G7: an efficiency factor `> 1` is a canary for the ordering bug | **Too narrow.** `> 1` signals rank deficiency, whichever way it arises. Measured: degenerate fixtures where treatment is confounded with row (which is what `initialise_design_df(rep(LETTERS[1:k], m), ...)` produces — see G9) return values `> 1` in **row-major** order too, on `main`. It is a canary for "something is wrong", not specifically for ordering. |
+| G8 is "harmless for equireplicate designs" | **Stands, re-verified.** On a properly randomised equireplicate 3×8 design `calculate_efficiency_factor()` matched the harmonic mean of the canonical efficiency factors exactly (0.7040535). Earlier doubt came from degenerate fixtures (G9), not from G8. |

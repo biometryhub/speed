@@ -913,39 +913,28 @@ test_that("autoplot handles factor columns with custom column names", {
   )
 })
 
-test_that("autoplot fails with factor columns with character levels", {
-  # Sample data with factor columns that have character levels
-  # Too hard to predict plot layout with character levels
+test_that("speed reports non-numeric row/col labels clearly", {
+  # Row/col labels like "R1"/"C1" cannot index a grid. This used to surface as
+  # five coercion warnings followed by a cryptic "invalid 'nrow' value (too
+  # large or NA)" from matrix(); build_design_matrix() now names the actual
+  # problem once, with no warnings.
   test_data <- data.frame(
     row = factor(rep(paste0("R", 1:5), times = 4)),
     col = factor(rep(paste0("C", 1:4), each = 5)),
     treatment = rep(LETTERS[1:4], 5)
   )
 
-  expect_warning(
-    expect_warning(
-      expect_warning(
-        expect_warning(
-          expect_warning(
-            expect_error(
-              speed(
-                data = test_data,
-                swap = "treatment",
-                iterations = 100,
-                seed = 42,
-                quiet = TRUE
-              ),
-              "invalid 'nrow' value \\(too large or NA\\)"
-            ),
-            "NAs introduced by coercion"
-          ),
-          "no non-missing arguments to max; returning -Inf"
-        ),
-        "no non-missing arguments to max; returning -Inf"
+  expect_no_warning(
+    expect_error(
+      speed(
+        data = test_data,
+        swap = "treatment",
+        iterations = 100,
+        seed = 42,
+        quiet = TRUE
       ),
-      "NAs introduced by coercion to integer range"
-    ),
-    "NAs introduced by coercion"
+      "must be numeric, or coercible to numeric"
+    )
   )
 })
 

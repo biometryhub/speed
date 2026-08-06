@@ -234,7 +234,7 @@ summary.design <- function(
       } else if (!has_grid) {
         list(available = FALSE, reason = "no row/column factors")
       } else {
-        .neighbour_balance(df, swap, layout$nrow, layout$ncol)
+        .neighbour_balance(df, swap, rc, cc)
       }
     )
 
@@ -938,16 +938,23 @@ print.summary.design <- function(x, ...) {
 #' whereas a distinct pair that never neighbours is an imbalance. Lumping them
 #' together hides self-adjacency behind the same `min 0` as the harmless case.
 #'
-#' Takes `nrow`/`ncol` from the caller's `layout` (counted via
-#' `length(unique(...))`) rather than deriving them from `max(row)`/`max(col)`:
-#' buffer plots (`add_buffers()`) can shift row/col numbering so it no longer
-#' starts at 1, which would otherwise reshape the grid with the wrong
-#' dimensions. Assumes `rc`/`cc` are present in `df`; callers should check
-#' `has_grid` first (see `summary.design()`).
+#' The grid is built by [build_design_matrix()], which places each plot at its
+#' own `rc`/`cc` coordinates. Reshaping the treatment column with `matrix()`
+#' instead would assume the data frame's row order matches the fill order, which
+#' is false for any non-square design (`speed()` sorts row-major; `matrix()`
+#' fills column-major) and produced adjacency counts for a layout that wasn't
+#' the design.
 #'
+#' Coordinates are read as-is, so a design whose plots are separated by a buffer
+#' row or column (`add_buffers()` offsets and scales them) keeps that separation:
+#' plots either side of a buffer are not counted as neighbours. Assumes `rc`/`cc`
+#' are present in `df`; callers should check `has_grid` first (see
+#' `summary.design()`).
+#'
+#' @param rc,cc Row and column column names.
 #' @keywords internal
-.neighbour_balance <- function(df, swap, nrow, ncol) {
-  dm <- matrix(df[[swap]], nrow = nrow, ncol = ncol)
+.neighbour_balance <- function(df, swap, rc, cc) {
+  dm <- build_design_matrix(df, swap, row_column = rc, col_column = cc)
   pair_mapping <- create_pair_mapping(df[[swap]])
   nb <- calculate_nb(dm, pair_mapping)
 

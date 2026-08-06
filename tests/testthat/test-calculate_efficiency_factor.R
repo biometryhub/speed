@@ -1,6 +1,24 @@
+# The published designs below are written out visually, one grid row per source
+# line, so they can be read against the paper. `initialise_design_df()` assigns
+# `items` *down columns* - `expand.grid(row, col)` varies `row` fastest - so a
+# row-major literal has to be transposed before it is handed over, or the design
+# stored at those coordinates is not the one written here.
+#
+# This used to be invisible: `calculate_efficiency_factor()` also filled its
+# grid positionally in row-major order, so the two conventions cancelled and the
+# paper's values came back from a design the package had not actually stored.
+# Now that it reads the coordinates, the transpose has to be explicit.
+by_row <- function(items, nrows, ncols) {
+  initialise_design_df(
+    as.vector(matrix(items, nrow = nrows, ncol = ncols, byrow = TRUE)),
+    nrows,
+    ncols
+  )
+}
+
 test_that("calculate_efficiency_factor provides the same results as the paper", {
   # fmt: skip
-  df_design1 <- initialise_design_df(c(
+  df_design1 <- by_row(c(
     7, 5, 6, 9, 4, 1, 3, 2, 8,
     5, 6, 3, 1, 7, 8, 2, 4, 9,
     8, 9, 5, 6, 3, 4, 1, 7, 2,
@@ -13,7 +31,7 @@ test_that("calculate_efficiency_factor provides the same results as the paper", 
   )
 
   # fmt: skip
-  df_design2 <- initialise_design_df(c(
+  df_design2 <- by_row(c(
     8, 5, 7, 2, 4, 1, 6, 9, 3,
     1, 9, 8, 6, 3, 2, 4, 7, 5,
     7, 6, 4, 9, 5, 8, 3, 2, 1,
@@ -26,7 +44,7 @@ test_that("calculate_efficiency_factor provides the same results as the paper", 
   )
 
   # fmt: skip
-  df_design3 <- initialise_design_df(c(
+  df_design3 <- by_row(c(
     9, 8, 1, 4, 3, 7, 5, 2, 6,
     7, 5, 6, 2, 9, 1, 3, 8, 4,
     2, 4, 3, 5, 6, 8, 9, 7, 1,
@@ -39,7 +57,7 @@ test_that("calculate_efficiency_factor provides the same results as the paper", 
   )
 
   # fmt: skip
-  df_design4 <- initialise_design_df(c(
+  df_design4 <- by_row(c(
     47, 16, 43, 42, 37, 35,  1, 59, 24, 19,  4, 18, 40, 28, 51, 29, 54, 57,
     12, 25,  6, 57, 47, 32, 39, 17, 31, 50, 15,  5, 55, 51,  9, 54, 41,  3,
     23, 18, 45, 36, 49,  7,  8, 60, 41, 29,  3, 58, 26, 52,  2, 15, 28, 27,
@@ -55,14 +73,14 @@ test_that("calculate_efficiency_factor provides the same results as the paper", 
 
 test_that("calculate_efficiency_factor provides better result for an optimised design", {
   # fmt: skip
-  df_design_initial <- initialise_design_df(c(
+  df_design_initial <- by_row(c(
     1, 1, 2, 2,
     3, 3, 4, 4,
     5, 5, 6, 6
   ), 3, 4)
 
   # fmt: skip
-  df_design_optimised <- initialise_design_df(c(
+  df_design_optimised <- by_row(c(
     1, 2, 4, 3,
     5, 1, 6, 2,
     3, 6, 5, 4
@@ -76,21 +94,21 @@ test_that("calculate_efficiency_factor provides better result for an optimised d
 
 test_that("calculate_efficiency_factor provides same result for mathematically identical designs", {
   # fmt: skip
-  df_design1 <- initialise_design_df(c(
+  df_design1 <- by_row(c(
     1, 2, 4, 3,
     5, 1, 6, 2,
     3, 6, 5, 4
   ), 3, 4)
 
   # fmt: skip
-  df_design2 <- initialise_design_df(c(
+  df_design2 <- by_row(c(
     "a", "b", "d", "c",
     "e", "a", "f", "b",
     "c", "f", "e", "d"
   ), 3, 4)
 
   # fmt: skip
-  df_design3 <- initialise_design_df(c(
+  df_design3 <- by_row(c(
     "b", "a", "c", "d",
     "e", "b", "f", "a",
     "d", "f", "e", "c"

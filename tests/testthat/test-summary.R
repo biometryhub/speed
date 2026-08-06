@@ -296,9 +296,12 @@ test_that("buffers are excluded from summary() and print() entirely", {
 })
 
 test_that("neighbour balance is unaffected by buffers (KNOWN_ISSUES.md #1a)", {
-  # add_buffers("edge") shifts row/col by 1; .neighbour_balance() must use the
-  # (offset-invariant) layout$nrow/ncol rather than max(row)/max(col), or it
-  # reshapes the treatment grid with the wrong dimensions.
+  # add_buffers("edge") shifts row/col by 1. The grid is built from the
+  # coordinates, so the offset just leaves an empty leading row and column,
+  # which contribute no pairs. "edge" only offsets - it inserts no gap between
+  # the design's own plots - so the counts must match the unbuffered design
+  # exactly. (A "row" or "block" buffer does insert a gap, and there the counts
+  # are expected to differ: plots either side of a buffer are not neighbours.)
   d <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
@@ -727,21 +730,45 @@ test_that("neighbour balance separates self-adjacency from distinct-pair counts"
   expect_true(nb$min_pair_count >= 0)
   expect_true(nb$self_adjacent >= 0)
 
-  # Cross-check directly against create_pair_mapping()/calculate_nb() over all
-  # 6 possible pairs for this 3-treatment design.
-  dm <- matrix(r$design_df$treatment, nrow = 4, ncol = 3)
-  pm <- create_pair_mapping(r$design_df$treatment)
-  raw <- calculate_nb(dm, pm)
-  all_counts <- setNames(rep(0L, length(unique(pm))), unique(pm))
-  all_counts[names(raw$nb)] <- raw$nb
-  self <- c("A,A", "B,B", "C,C")
-  distinct <- setdiff(names(all_counts), self)
+  # Cross-check by walking the (row, col) coordinates directly. Deliberately
+  # NOT matrix(treatment, nrow, ncol): that is the same reshape the
+  # implementation used to perform, so an expectation built from it validated
+  # the code against a copy of its own mistake and passed against the bug.
+  coords <- r$design_df
+  rr <- as.numeric(as.character(coords$row))
+  cc <- as.numeric(as.character(coords$col))
+  trt <- as.character(coords$treatment)
+  at <- function(i, j) {
+    k <- which(rr == i & cc == j)
+    if (length(k) == 1) trt[k] else NA_character_
+  }
+  pm_levels <- sort(unique(trt))
+  counts <- list()
+  for (k in seq_along(trt)) {
+    for (nb_ij in list(c(rr[k], cc[k] + 1), c(rr[k] + 1, cc[k]))) {
+      other <- at(nb_ij[1], nb_ij[2])
+      if (!is.na(other)) {
+        key <- paste(sort(c(trt[k], other)), collapse = ",")
+        prev <- counts[[key]]
+        counts[[key]] <- if (is.null(prev)) 1L else prev + 1L
+      }
+    }
+  }
+  self_keys <- paste(pm_levels, pm_levels, sep = ",")
+  all_pairs <- combn(pm_levels, 2, function(p) paste(p, collapse = ","))
+  get <- function(k) if (is.null(counts[[k]])) 0L else counts[[k]]
+  self_total <- sum(vapply(self_keys, get, integer(1)))
+  pair_counts <- vapply(all_pairs, get, integer(1))
 
-  expect_equal(nb$self_adjacent, sum(all_counts[self]))
-  expect_equal(nb$min_pair_count, min(all_counts[distinct]))
-  expect_equal(nb$max_pair_count, max(all_counts[distinct]))
-  expect_equal(nb$pair_var, var(all_counts[distinct]))
-  expect_equal(nb$n_zero_pairs, sum(all_counts[distinct] == 0))
+  expect_equal(nb$self_adjacent, self_total)
+  expect_equal(nb$min_pair_count, min(pair_counts))
+  expect_equal(nb$max_pair_count, max(pair_counts))
+  expect_equal(nb$pair_var, var(pair_counts))
+  expect_equal(nb$n_zero_pairs, sum(pair_counts == 0))
+
+  # The design is 4x3, so a column-major reshape would disagree - which is the
+  # whole point of the coordinate-based grid.
+  expect_equal(nb$self_adjacent, calculate_adjacency_score(coords, "treatment"))
 })
 
 test_that("a non-zero self-adjacency count is highlighted in the printed output", {
@@ -993,4 +1020,34 @@ test_that(".efficiency_factor reports a reason when the computation fails", {
 
   expect_false(ef$available)
   expect_equal(ef$reason, "could not be computed for this design")
+})
+
+test_that("neighbour balance reads coordinates, not the data frame order", {
+  # A 3x8 design optimised to a genuine zero self-adjacency. A column-major
+  # reshape of a row-major frame scrambles it and invents adjacencies, so this
+  # is the regression test for that class of bug: the reported figure must
+  # agree with the objective's own adjacency score for the same design.
+  d <- speed(
+    initialise_design_df(items = rep(LETTERS[1:6], 4), nrows = 3, ncols = 8),
+    swap = "treatment",
+    iterations = 3000,
+    seed = 11,
+    quiet = TRUE
+  )
+  nb <- summary(d)$per_level[[1]]$evaluation$neighbour
+
+  expect_equal(nb$self_adjacent, 0)
+  expect_equal(
+    nb$self_adjacent,
+    calculate_adjacency_score(d$design_df, "treatment")
+  )
+
+  # Row order must not matter: the same design with its rows reversed is the
+  # same field layout, and must report the same neighbour balance.
+  reversed <- d
+  reversed$design_df <- d$design_df[rev(seq_len(nrow(d$design_df))), ]
+  expect_equal(
+    summary(reversed)$per_level[[1]]$evaluation$neighbour,
+    nb
+  )
 })

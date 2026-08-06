@@ -199,3 +199,87 @@ test_that("adjacency score ignores gaps rather than closing them", {
   )
   expect_equal(calculate_adjacency_score(df, "trt"), 2)
 })
+
+# --- ring_weights recycling --------------------------------------------------
+
+test_that("a single ring_weight applies to every ring_dist", {
+  # ring_weights defaults to the scalar 1, so the documented default was
+  # unusable with a multi-ring ring_dists: adjacency_score_vec() asserted the
+  # two were the same length.
+  df <- data.frame(
+    row = rep(1:3, each = 3),
+    col = rep(1:3, times = 3),
+    trt = c("A", "B", "C", "B", "C", "A", "C", "A", "B")
+  )
+
+  expect_no_error(
+    scalar_weight <- calculate_adjacency_score(df, "trt", ring_dists = c(1, 2))
+  )
+  expect_equal(
+    scalar_weight,
+    calculate_adjacency_score(
+      df,
+      "trt",
+      ring_dists = c(1, 2),
+      ring_weights = c(1, 1)
+    )
+  )
+})
+
+test_that("a genuine ring_weights length mismatch is still an error", {
+  df <- data.frame(
+    row = rep(1:3, each = 3),
+    col = rep(1:3, times = 3),
+    trt = c("A", "B", "C", "B", "C", "A", "C", "A", "B")
+  )
+  expect_error(
+    calculate_adjacency_score(
+      df,
+      "trt",
+      ring_dists = c(1, 2, 3),
+      ring_weights = c(1, 2)
+    )
+  )
+})
+
+# --- calculate_efficiency_factor() -------------------------------------------
+
+test_that("efficiency factor does not depend on the input row ordering", {
+  # It used to walk a plot counter through nested row/col loops, so it assumed
+  # a complete grid in row-major order and silently scored a different layout
+  # for anything else - including initialise_design_df()'s column-major output.
+  col_major <- initialise_design_df(
+    items = rep(LETTERS[1:3], 4),
+    nrows = 4,
+    ncols = 3
+  )
+  row_major <- col_major[order(col_major$row, col_major$col), ]
+  rownames(row_major) <- NULL
+
+  expect_equal(
+    calculate_efficiency_factor(col_major, treatment),
+    calculate_efficiency_factor(row_major, treatment)
+  )
+  # Row-major was already correct, so its value must be unchanged. Column-major
+  # returned 1.5 - impossible for an efficiency factor, and the symptom that
+  # made this visible.
+  expect_equal(calculate_efficiency_factor(row_major, treatment), 0.9375)
+})
+
+test_that("efficiency factor is unchanged by shuffling a real design", {
+  d <- speed(
+    initialise_design_df(items = rep(LETTERS[1:6], 4), nrows = 3, ncols = 8),
+    swap = "treatment",
+    iterations = 500,
+    seed = 11,
+    quiet = TRUE
+  )
+  ordered <- calculate_efficiency_factor(d$design_df, treatment)
+  shuffled <- calculate_efficiency_factor(
+    d$design_df[rev(seq_len(nrow(d$design_df))), ],
+    treatment
+  )
+
+  expect_equal(ordered, shuffled)
+  expect_lte(ordered, 1)
+})

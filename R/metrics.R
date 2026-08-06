@@ -694,32 +694,26 @@ calculate_efficiency_factor <- function(
   # Design parameters
   encoded_items <- as.integer(as.factor(design_df[[item]]))
   n_treatments <- length(unique(encoded_items))
-  n_rows <- max(as_numeric_factor(design_df[[row_column]]), na.rm = TRUE)
-  n_cols <- max(as_numeric_factor(design_df[[col_column]]), na.rm = TRUE)
+  rows <- as_numeric_factor(design_df[[row_column]])
+  cols <- as_numeric_factor(design_df[[col_column]])
+  n_rows <- max(rows, na.rm = TRUE)
+  n_cols <- max(cols, na.rm = TRUE)
   n_plots <- nrow(design_df)
 
   # Create design matrix X for treatments
   X <- matrix(0, nrow = n_plots, ncol = n_treatments)
-  for (i in 1:n_plots) {
-    X[i, encoded_items[i]] <- 1
-  }
+  X[cbind(seq_len(n_plots), encoded_items)] <- 1
 
-  # Create design matrix Z for rows and columns
-  # Row and col effects (excluding last row and col to avoid singularity)
+  # Create design matrix Z for rows and columns, indexed by each plot's actual
+  # coordinates. A positional fill would assume the data frame is a complete
+  # grid in row-major order and silently score a different layout otherwise.
+  # Row and col effects exclude the last row and col to avoid singularity.
   Z_row <- matrix(0, nrow = n_plots, ncol = n_rows - 1)
   Z_col <- matrix(0, nrow = n_plots, ncol = n_cols - 1)
-  plot_index <- 1
-  for (i in 1:n_rows) {
-    for (j in 1:n_cols) {
-      if (i < n_rows) {
-        Z_row[plot_index, i] <- 1
-      }
-      if (j < n_cols) {
-        Z_col[plot_index, j] <- 1
-      }
-      plot_index <- plot_index + 1
-    }
-  }
+  in_row <- which(rows < n_rows)
+  in_col <- which(cols < n_cols)
+  Z_row[cbind(in_row, rows[in_row])] <- 1
+  Z_col[cbind(in_col, cols[in_col])] <- 1
 
   # Combine row and column design matrices
   Z <- cbind(Z_row, Z_col)
