@@ -173,3 +173,112 @@ test_that("column names are reported in errors", {
     "`range` and `bed`"
   )
 })
+
+test_that("grid_index() returns the index and dimensions build_design_matrix needs", {
+  d <- initialise_design_df(rep(LETTERS[1:6], 4), 3, 8)
+  gi <- grid_index(d)
+
+  expect_named(gi, c("idx", "nrow", "ncol", "n"))
+  expect_equal(gi$nrow, 3)
+  expect_equal(gi$ncol, 8)
+  expect_equal(gi$n, nrow(d))
+  expect_equal(dim(gi$idx), c(nrow(d), 2L))
+})
+
+test_that("a supplied index gives the same grid as validating in place", {
+  # The index is the only thing hoisted out of the annealing loop, so the two
+  # paths must be indistinguishable.
+  for (dims in list(c(3, 8), c(8, 3), c(4, 4), c(2, 6))) {
+    d <- initialise_design_df(rep(LETTERS[1:4], prod(dims) / 4), dims[[1]], dims[[2]])
+    expect_equal(
+      build_design_matrix(d, "treatment", index = grid_index(d)),
+      build_design_matrix(d, "treatment"),
+      info = paste(dims, collapse = "x")
+    )
+  }
+})
+
+test_that("a supplied index survives the treatment column being reshuffled", {
+  # What the annealing loop actually does: same coordinates, different treatments.
+  d <- initialise_design_df(rep(LETTERS[1:6], 4), 3, 8)
+  gi <- grid_index(d)
+  set.seed(1)
+  d$treatment <- sample(d$treatment)
+
+  expect_equal(
+    build_design_matrix(d, "treatment", index = gi),
+    build_design_matrix(d, "treatment")
+  )
+})
+
+test_that("a supplied index is checked against the design it is used with", {
+  # A stale index would place treatments at the wrong coordinates silently.
+  d <- initialise_design_df(rep(LETTERS[1:6], 4), 3, 8)
+  gi <- grid_index(d)
+
+  expect_error(
+    build_design_matrix(d[1:10, ], "treatment", index = gi),
+    "was built for 24 plots but `df` has 10"
+  )
+})
+
+test_that("calculate_adjacency_score() accepts a pre-built index", {
+  d <- initialise_design_df(rep(LETTERS[1:6], 4), 3, 8)
+  expect_equal(
+    calculate_adjacency_score(d, "treatment", grid_index = grid_index(d)),
+    calculate_adjacency_score(d, "treatment")
+  )
+})
+
+test_that("speed() scores identically whether or not the index is hoisted", {
+  # The hoist is a performance change only; guard against it becoming a
+  # behaviour change. objective_function_piepho() builds a grid every iteration,
+  # so it is the strongest case.
+  d <- initialise_design_df(rep(LETTERS[1:6], 4), 3, 8)
+  args <- list(
+    swap = "treatment", swap_within = "1", spatial_factors = ~ row + col,
+    iterations = 200, seed = 42, quiet = TRUE
+  )
+  hoisted <- do.call(speed, c(list(d), args))
+  # Calling the objective directly takes the un-hoisted path (index = NULL).
+  direct <- objective_function(
+    hoisted$design_df, "treatment", c("row", "col")
+  )
+  expect_equal(direct$score, hoisted$score)
+
+  hoisted_p <- do.call(speed, c(list(d), args, list(obj_function = objective_function_piepho)))
+  direct_p <- objective_function_piepho(
+    hoisted_p$design_df, "treatment", c("row", "col")
+  )
+  expect_equal(direct_p$score, hoisted_p$score)
+})
+
+test_that("a design whose coordinates cannot form a grid still runs when no grid is needed", {
+  # The index is built lazily (tryCatch -> NULL) so that a design which never
+  # needs a grid is unaffected. Two sites reusing row/col have duplicate
+  # coordinates, which grid_index() rejects.
+  d <- data.frame(
+    site = rep(c("A", "B"), each = 12),
+    row = rep(rep(1:4, times = 3), 2),
+    col = rep(rep(1:3, each = 4), 2),
+    treatment = rep(rep(LETTERS[1:3], 4), 2)
+  )
+  expect_error(grid_index(d), "Duplicate")
+  expect_no_error(
+    r <- speed(
+      d, swap = "treatment", swap_within = "site",
+      spatial_factors = ~ row + col + site, iterations = 100, seed = 1,
+      quiet = TRUE, optimise_params = optim_params(adj_weight = 0)
+    )
+  )
+  expect_equal(r$score, 4)
+})
+
+test_that("grid_index() names a missing coordinate column", {
+  # A design with no grid at all reaches here from speed(); without this check
+  # the absent columns reach max() as empty vectors and give -Inf dimensions.
+  d <- data.frame(a = 1:4, b = 1:4, treatment = LETTERS[1:4])
+
+  expect_error(grid_index(d), "no `row` or `col` column")
+  expect_error(grid_index(d, "row", "b"), "no `row` column")
+})

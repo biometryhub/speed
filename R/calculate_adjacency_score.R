@@ -212,6 +212,10 @@ adjacency_score_vec <- function(
 #'   to `NULL`, which keeps the strict identity match. Pass the raw matrix
 #'   through `prep_relationship()` first; the score functions consume only
 #'   the prepped form.
+#' @param grid_index Optional pre-built index from [grid_index()], passed to
+#'   [build_design_matrix()] to skip coordinate validation. `speed()` supplies
+#'   one so the annealing loop does not revalidate every iteration; leave it
+#'   `NULL` for a one-off call.
 #'
 #' @return A non-negative numeric value: the number of like-treatment edges
 #'   in the row/column adjacency graph.
@@ -253,7 +257,8 @@ calculate_adjacency_score <- function(
   ring_dists = 1,
   ring_weights = 1,
   ring_type = c("manhattan", "chebyshev"),
-  relationship = NULL
+  relationship = NULL,
+  grid_index = NULL
 ) {
   ring_type <- match.arg(ring_type)
 
@@ -261,7 +266,8 @@ calculate_adjacency_score <- function(
     layout_df,
     swap,
     row_column = row_column,
-    col_column = col_column
+    col_column = col_column,
+    index = grid_index
   )
 
   per_cell <- adjacency_score_vec(

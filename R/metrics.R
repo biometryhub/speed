@@ -58,7 +58,13 @@ objective_function <- function(layout_df,
   ring_args <- list(...)
   ring_args <- ring_args[intersect(
     names(ring_args),
-    c("ring_dists", "ring_weights", "ring_type", "relationship")
+    c(
+      "ring_dists",
+      "ring_weights",
+      "ring_type",
+      "relationship",
+      "grid_index"
+    )
   )]
   adj_score <- ifelse(adj_weight != 0,
     do.call(
@@ -230,12 +236,14 @@ objective_function_piepho <- function(design,
                                       pair_mapping = NULL,
                                       row_column = "row",
                                       col_column = "col",
+                                      grid_index = NULL,
                                       ...) {
   design_matrix <- build_design_matrix(
     design,
     swap,
     row_column = row_column,
-    col_column = col_column
+    col_column = col_column,
+    index = grid_index
   )
 
   ed <- calculate_ed(design_matrix, current_score_obj$ed, swapped_items)
@@ -250,7 +258,13 @@ objective_function_piepho <- function(design,
   # and would otherwise scramble the treatments against their coordinates.
   design[[swap]] <- as.factor(design[[swap]])
   bal_score <- calculate_balance_score(design, swap, spatial_cols)
-  adj_score <- calculate_adjacency_score(design, swap, row_column, col_column)
+  adj_score <- calculate_adjacency_score(
+    design,
+    swap,
+    row_column,
+    col_column,
+    grid_index = grid_index
+  )
 
   return(list(
     score = round(nb_score + ed_score + bal_score + adj_score, 10),

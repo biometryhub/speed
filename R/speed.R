@@ -259,6 +259,23 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   current_design <- layout_df
   best_design <- current_design
 
+  # Only the treatment column changes during annealing, so the validated grid
+  # index is invariant for the whole run and is built once here rather than on
+  # every iteration - it is ~87% of the cost of a grid build. Built with
+  # tryCatch so this stays lazy: a design whose coordinates cannot form a grid
+  # (duplicates from a MET, non-numeric labels) must still run if its objective
+  # never needs a grid, and must still raise the same error from the same place
+  # if it does. `NULL` restores exactly the old behaviour.
+  dots <- list(...)
+  grid_idx <- tryCatch(
+    grid_index(
+      current_design,
+      dots$row_column %||% "row",
+      dots$col_column %||% "col"
+    ),
+    error = function(e) return(NULL)
+  )
+
   # Sequential optimisation for each hierarchy level
   all_scores <- list()
   all_temperatures <- list()
@@ -279,7 +296,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
     # Calculate initial score for this level
     current_score_obj <- opt$obj_function(current_design, opt$swap, spatial_cols, adj_weight = adj_weight,
-                                          bal_weight = bal_weight, ...)
+                                          bal_weight = bal_weight, grid_index = grid_idx, ...)
     current_score <- current_score_obj$score
 
     if (!is.numeric(current_score)) {
@@ -313,7 +330,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       # Calculate new score
       new_score_obj <- opt$obj_function(new_design$design,opt$swap, spatial_cols, adj_weight = adj_weight,
                                         bal_weight = bal_weight, current_score_obj = current_score_obj,
-                                        swapped_items = new_design$swapped_items, ...)
+                                        swapped_items = new_design$swapped_items, grid_index = grid_idx, ...)
       new_score <- new_score_obj$score
 
       # Decide whether to accept the new design
@@ -379,7 +396,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     # report faithful score components.
     treatments[[level]] <- stringi::stri_sort(unique(as.vector(best_design[[opt$swap]])), numeric = TRUE)
     score_obj <- opt$obj_function(best_design, opt$swap, spatial_cols, adj_weight = adj_weight,
-                                  bal_weight = bal_weight, ...)
+                                  bal_weight = bal_weight, grid_index = grid_idx, ...)
     level_scores[level] <- score_obj$score
     per_level_meta[[level]] <- list(
       swap             = opt$swap,

@@ -4,7 +4,13 @@
 \alias{build_design_matrix}
 \title{Build a Spatial Design Matrix from a Data Frame}
 \usage{
-build_design_matrix(df, swap, row_column = "row", col_column = "col")
+build_design_matrix(
+  df,
+  swap,
+  row_column = "row",
+  col_column = "col",
+  index = NULL
+)
 }
 \arguments{
 \item{df}{A data frame with columns named by \code{swap}, \code{row_column},
@@ -16,6 +22,11 @@ build_design_matrix(df, swap, row_column = "row", col_column = "col")
 
 \item{col_column}{Column name of the column position variable
 (default \code{"col"}).}
+
+\item{index}{Optional pre-built index from \code{\link[=grid_index]{grid_index()}}. Supplying one skips
+coordinate coercion and validation, which is the bulk of the work and is
+invariant during annealing. \code{speed()} builds one per run; anything calling
+this once should leave it \code{NULL}.}
 }
 \value{
 A character matrix of dimensions \code{max(row)} by \code{max(col)}.

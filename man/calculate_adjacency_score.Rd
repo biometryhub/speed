@@ -12,7 +12,8 @@ calculate_adjacency_score(
   ring_dists = 1,
   ring_weights = 1,
   ring_type = c("manhattan", "chebyshev"),
-  relationship = NULL
+  relationship = NULL,
+  grid_index = NULL
 )
 }
 \arguments{
@@ -41,6 +42,11 @@ otherwise. NA-padded cells off the design edge contribute \code{0}. Defaults
 to \code{NULL}, which keeps the strict identity match. Pass the raw matrix
 through \code{prep_relationship()} first; the score functions consume only
 the prepped form.}
+
+\item{grid_index}{Optional pre-built index from \code{\link[=grid_index]{grid_index()}}, passed to
+\code{\link[=build_design_matrix]{build_design_matrix()}} to skip coordinate validation. \code{speed()} supplies
+one so the annealing loop does not revalidate every iteration; leave it
+\code{NULL} for a one-off call.}
 }
 \value{
 A non-negative numeric value: the number of like-treatment edges
