@@ -12,7 +12,7 @@ branch made the grid contract strict, so it owns the consequences of that strict
 |---|---|
 | `REVIEW-NOTES.md` | `feature/incidence` (PR #97) — `R/incidence.R` |
 | `REVIEW-NOTES-SUMMARY.md` | the merged `summary()` work — `R/summary.R` |
-| `REVIEW-NOTES-EFFICIENCY.md` | efficiency-factor statistics — needs a new branch |
+| `REVIEW-NOTES-EFFICIENCY.md` | efficiency-factor statistics — branch `feature/a-optimality` exists |
 | `REVIEW-NOTES-PR91.md` | PR #91 `info-objective` |
 | **this file** | grid construction / core metrics |
 
@@ -24,7 +24,12 @@ and the reason `build_design_matrix()` keeps coordinates **raw** — is `KNOWN_I
 **Last verified:** 2026-08-06, R 4.6.1, `pkgload::load_all()`. All numbers measured, not inferred.
 Resolved findings and settled decisions are deleted rather than annotated — see git history and `NEWS.md`.
 
-> ✅ **G1-G12 have landed** — see A1. Full suite: **1738 pass, 0 fail, 0 warn.**
+> ✅ **The branch's original scope is closed.** The plan as committed at `b1d7adc` listed D6, D1 and
+> G1-G6, plus the hot-loop cost recorded as out of scope; all are done, the last as G11. G7, S1, A5, G11
+> and G12 were found during the work. See A1. Full suite: **1738 pass, 0 fail, 0 warn.**
+>
+> ⬜ **Deliberately still open from the original plan:** removing the row-major sort, which A4.7 recorded
+> as out of scope on purpose (`KNOWN_ISSUES.md` #4).
 >
 > 📦 **`feature/buffers` merges into this branch** (branched off `f5d68f5`), carrying the coordinate
 > restoration that makes raw coordinates correct plus the `add_buffers()` deprecation. See A2 — two items
@@ -99,7 +104,7 @@ again**:
 | From `feature/buffers` | Effect here |
 |---|---|
 | `metadata$buffer` transform record in `add_buffers()`, inverted by `.drop_buffer_rows()` / `.restore_buffer_coords()` | satisfies the `KNOWN_ISSUES.md` #1 convention without touching `build_design_matrix()` |
-| `test-summary.R` buffer test rewritten | **fixes the stale comment at [test-summary.R:304](tests/testthat/test-summary.R#L304)**, which still claims a `"row"` buffer should change the counts. Now asserts every buffer type and stacked combinations match the unbuffered design |
+| `test-summary.R` buffer test rewritten | **fixes the stale comment at [test-summary.R:299-305](tests/testthat/test-summary.R#L299-L305)**, which still claims a `"row"` buffer should change the counts — the opposite of the `KNOWN_ISSUES.md` #1 convention. Now asserts every buffer type and stacked combinations match the unbuffered design |
 | `add_buffers()` deprecation warning + `## Deprecations` NEWS section | buffers are leaving speed; the biometryassist repo's `BUFFERS-HANDOFF.md` specifies that side |
 | `.warn_if_buffers()` in `calculate_adjacency_score()`, `calculate_balance_score()`, `calculate_efficiency_factor()` | a direct metric call on a buffered frame bypasses `.drop_buffer_rows()`, so it warns rather than silently scoring the displaced layout |
 | `helper-buffers.R` with `add_buffers_quiet()`, and 45 rewritten test call sites | keeps the deprecation warning out of tests that are about layout |
@@ -109,13 +114,29 @@ speed's buffer types but **cannot** represent biometryassist's `by =` block buff
 at group boundaries. It would need to become a per-axis `new -> old` lookup if speed ever had to invert one
 of those. Under the handoff plan it never does.
 
+### A2.1 Merge order: PR #97 depends on this branch
+
+This branch exists because the grid work was extracted out of `feature/incidence` (D1 in the original
+plan). **Verified 2026-08-06** — the extraction is complete and the dependency now runs one way:
+
+- `feature/incidence` touches only `R/incidence.R`, docs and tests. It no longer carries any of
+  `R/design_utils.R`, `R/calculate_adjacency_score.R` or `R/metrics.R`, so there is nothing to conflict.
+- But `incidence.R:69` calls `build_design_matrix()`, and that function **does not exist on `main`**.
+
+So **PR #97 cannot merge until this branch does**, and `feature/incidence` has not been rebased onto it
+(`git merge-base --is-ancestor bugfix/grid-orientation feature/incidence` → false). Rebase it after this
+branch lands. It calls `build_design_matrix()` without an `index`, which is correct — incidence is a
+one-off diagnostic, not in the annealing loop — but it does re-implement its own `missing_cols` check,
+the same duplication G12 avoided by delegating to `grid_index()`'s condition classes. Worth collapsing
+when it rebases.
+
 ---
 
 ## A3. G13 🔴 There is no representation of a design occupying more than one grid, so MET is broken
 
 **One root cause, four symptoms.** `build_design_matrix()` — and `matrix()` before it — models a design as
 *a* grid. A multi-environment trial is several grids that share a treatment set and must never share an
-edge. `initialise_multiple_designs_df()` ([design_utils.R:539](R/design_utils.R#L539)) reuses `row`/`col`
+edge. `initialise_multiple_designs_df()` ([design_utils.R:520](R/design_utils.R#L520)) reuses `row`/`col`
 per site, so **every** MET design built the documented way has duplicate coordinates, and nothing anywhere
 records which column separates the grids.
 
@@ -146,8 +167,8 @@ grid is exact rather than an approximation. That makes most of the fix tractable
    Verified backwards compatible — `infer_row_col()` reads only `$dim1`/`$dim2`, and `speed()` already
    accepts the three-element list without complaint. That tolerance is itself a trap: a mistyped `by` is
    silently ignored today, so this needs validation added at the same time.
-2. **Record it.** `metadata` currently holds only `row_column` / `col_column`
-   ([speed.R:401-406](R/speed.R#L401-L406)), which is why `summary()` cannot recover the grouping on its
+2. **Record it.** `metadata` currently holds only `levels` / `row_column` / `col_column` / `per_level`
+   ([speed.R:418-423](R/speed.R#L418-L423)), which is why `summary()` cannot recover the grouping on its
    own. Add `grid_by`.
 3. **A list-of-grids primitive.** `build_design_matrices(df, swap, rc, cc, by = NULL)` returning a named
    list, length 1 when `by` is `NULL`. `build_design_matrix()` stays exactly as it is — the single-grid
