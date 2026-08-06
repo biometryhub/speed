@@ -189,7 +189,11 @@ test_that("a supplied index gives the same grid as validating in place", {
   # The index is the only thing hoisted out of the annealing loop, so the two
   # paths must be indistinguishable.
   for (dims in list(c(3, 8), c(8, 3), c(4, 4), c(2, 6))) {
-    d <- initialise_design_df(rep(LETTERS[1:4], prod(dims) / 4), dims[[1]], dims[[2]])
+    d <- initialise_design_df(
+      rep(LETTERS[1:4], prod(dims) / 4),
+      dims[[1]],
+      dims[[2]]
+    )
     expect_equal(
       build_design_matrix(d, "treatment", index = grid_index(d)),
       build_design_matrix(d, "treatment"),
@@ -236,19 +240,30 @@ test_that("speed() scores identically whether or not the index is hoisted", {
   # so it is the strongest case.
   d <- initialise_design_df(rep(LETTERS[1:6], 4), 3, 8)
   args <- list(
-    swap = "treatment", swap_within = "1", spatial_factors = ~ row + col,
-    iterations = 200, seed = 42, quiet = TRUE
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 200,
+    seed = 42,
+    quiet = TRUE
   )
   hoisted <- do.call(speed, c(list(d), args))
   # Calling the objective directly takes the un-hoisted path (index = NULL).
   direct <- objective_function(
-    hoisted$design_df, "treatment", c("row", "col")
+    hoisted$design_df,
+    "treatment",
+    c("row", "col")
   )
   expect_equal(direct$score, hoisted$score)
 
-  hoisted_p <- do.call(speed, c(list(d), args, list(obj_function = objective_function_piepho)))
+  hoisted_p <- do.call(
+    speed,
+    c(list(d), args, list(obj_function = objective_function_piepho))
+  )
   direct_p <- objective_function_piepho(
-    hoisted_p$design_df, "treatment", c("row", "col")
+    hoisted_p$design_df,
+    "treatment",
+    c("row", "col")
   )
   expect_equal(direct_p$score, hoisted_p$score)
 })
@@ -266,9 +281,14 @@ test_that("a design whose coordinates cannot form a grid still runs when no grid
   expect_error(grid_index(d), "Duplicate")
   expect_no_error(
     r <- speed(
-      d, swap = "treatment", swap_within = "site",
-      spatial_factors = ~ row + col + site, iterations = 100, seed = 1,
-      quiet = TRUE, optimise_params = optim_params(adj_weight = 0)
+      d,
+      swap = "treatment",
+      swap_within = "site",
+      spatial_factors = ~ row + col + site,
+      iterations = 100,
+      seed = 1,
+      quiet = TRUE,
+      optimise_params = optim_params(adj_weight = 0)
     )
   )
   expect_equal(r$score, 4)
