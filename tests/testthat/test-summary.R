@@ -919,6 +919,148 @@ test_that("designs without a row/column grid summarise and print without a grid"
   expect_match(out, "Neighbour:\\s+no row/column factors")
 })
 
+test_that(".single_grid accepts one grid and names what is wrong otherwise", {
+  ok <- data.frame(row = c(1, 1, 2, 2), col = c(1, 2, 1, 2), treatment = "A")
+  expect_true(.single_grid(ok, "row", "col"))
+
+  # A genuine hole (missing plot) is still a single grid - coordinates stay
+  # unique, so the metrics must not refuse it.
+  expect_true(.single_grid(ok[-2, ], "row", "col"))
+
+  # Factor coordinates whose level order is lexical are still fine.
+  lex <- data.frame(
+    row = factor(c(1, 2, 10)),
+    col = factor(c(1, 1, 1)),
+    treatment = "A"
+  )
+  expect_true(.single_grid(lex, "row", "col"))
+
+  expect_equal(.single_grid(ok, "nope", "col"), "no row/column factors")
+  expect_match(
+    .single_grid(
+      data.frame(row = c("A", "B"), col = c(1, 1)),
+      "row",
+      "col"
+    ),
+    "labels are not numeric"
+  )
+  expect_match(
+    .single_grid(data.frame(row = c(0, 1), col = c(1, 1)), "row", "col"),
+    "not positive whole numbers"
+  )
+  expect_match(
+    .single_grid(ok[c(1, 1, 2), ], "row", "col"),
+    "duplicate .row./.col. coordinates"
+  )
+})
+
+test_that("multi-site (MET) designs summarise instead of erroring", {
+  # initialise_design_df(designs = ) reuses row/col per site, so a MET design has
+  # duplicate coordinates and cannot be placed on one grid. Every grid metric is
+  # wrong for it (they pool sites that share no edge), so all must report a
+  # reason. Before this gate, summary() errored outright.
+  met <- initialise_design_df(
+    items = rep(LETTERS[1:3], 6),
+    designs = list(
+      a = list(nrows = 3, ncols = 2),
+      b = list(nrows = 3, ncols = 4)
+    )
+  )
+  expect_true(anyDuplicated(met[c("row", "col")]) > 0)
+
+  r <- speed(
+    met,
+    swap = "treatment",
+    swap_within = "site",
+    spatial_factors = ~ row + col + site,
+    optimise_params = optim_params(adj_weight = 0),
+    iterations = 50,
+    seed = 1,
+    quiet = TRUE
+  )
+  s <- expect_no_error(summary(r, efficiency = TRUE))
+
+  # No single nrow x ncol describes two grids of different shapes.
+  expect_false(s$layout$has_grid)
+  expect_match(s$layout$grid_reason, "multi-site")
+  expect_true(is.na(s$layout$nrow))
+  expect_equal(s$layout$n_plots, 18)
+
+  e <- s$per_level[[1]]$evaluation
+  for (metric in c("neighbour", "replicate_span", "efficiency")) {
+    expect_false(e[[metric]]$available, info = metric)
+    expect_match(e[[metric]]$reason, "duplicate", info = metric)
+  }
+
+  # Non-grid metrics still work - only the grid ones are withheld.
+  expect_equal(s$per_level[[1]]$n_treatments, 3)
+
+  out <- capture_output(print(s))
+  expect_match(out, "Layout:\\s+18 plots")
+  expect_no_match(out, "rows x")
+  expect_match(out, "Neighbour:\\s+duplicate")
+})
+
+test_that("efficiency is withheld rather than reported above 1 for MET designs", {
+  # calculate_efficiency_factor() does not error on duplicate coordinates, it
+  # pools the grids and returns a value above 1 - impossible for an efficiency
+  # factor. The gate exists to stop that reaching the user, not just to stop an
+  # error, so pin the underlying behaviour that makes it necessary.
+  met <- initialise_design_df(
+    items = rep(LETTERS[1:3], 6),
+    designs = list(
+      a = list(nrows = 3, ncols = 2),
+      b = list(nrows = 3, ncols = 4)
+    )
+  )
+  expect_gt(calculate_efficiency_factor(met, treatment), 1)
+  expect_false(.efficiency_factor(met, "treatment", "row", "col")$available)
+})
+
+test_that("non-numeric row/col labels are reported, not coerced silently", {
+  d <- data.frame(
+    row = rep(c("A", "B", "C"), each = 4),
+    col = rep(c("w", "x", "y", "z"), 3),
+    treatment = rep(LETTERS[1:4], 3)
+  )
+  r <- speed(
+    d,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    optimise_params = optim_params(adj_weight = 0),
+    iterations = 50,
+    seed = 1,
+    quiet = TRUE
+  )
+
+  # Previously this errored from build_design_matrix(), and .replicate_spans()
+  # leaked two "NAs introduced by coercion" warnings on the way.
+  s <- expect_no_warning(expect_no_error(summary(r)))
+
+  expect_false(s$layout$has_grid)
+  e <- s$per_level[[1]]$evaluation
+  expect_match(e$neighbour$reason, "labels are not numeric")
+  expect_match(e$replicate_span$reason, "labels are not numeric")
+})
+
+test_that("split-plot designs keep their grid metrics at every level", {
+  # The gate must not withhold metrics from a legitimate hierarchical design:
+  # a split-plot shares one grid, and both levels' plots have unique
+  # coordinates, so nothing here spans multiple grids.
+  s <- summary(split_plot_design(), efficiency = TRUE)
+
+  expect_true(s$layout$has_grid)
+  expect_true(is.na(s$layout$grid_reason))
+  expect_equal(c(s$layout$nrow, s$layout$ncol), c(6, 4))
+
+  expect_named(s$per_level, c("wp", "sp"))
+  for (lv in c("wp", "sp")) {
+    e <- s$per_level[[lv]]$evaluation
+    expect_true(e$neighbour$available, info = lv)
+    expect_true(e$replicate_span$available, info = lv)
+  }
+})
+
 test_that("the disconnected flag names the affected levels for hierarchical designs", {
   s <- summary(split_plot_design())
   s$flags$disconnected <- c("wp", "sp")
@@ -971,7 +1113,7 @@ test_that("evaluation helpers return a reason instead of erroring on unmet assum
 
   ef <- .efficiency_factor(no_grid, "treatment", "row", "col")
   expect_false(ef$available)
-  expect_equal(ef$reason, "requires a row/column grid")
+  expect_equal(ef$reason, "no row/column factors")
 
   # A contrast needs two treatments to be a contrast.
   one <- .design_connectedness(
@@ -1009,14 +1151,22 @@ test_that(".design_connectedness is trivially connected with no nuisance factors
 })
 
 test_that(".efficiency_factor reports a reason when the computation fails", {
-  # A 1x1 "grid" leaves no row/column effects to fit, so
-  # calculate_efficiency_factor() errors; the wrapper must absorb that.
-  degenerate <- data.frame(
-    row = rep(1, 3),
-    col = rep(1, 3),
-    treatment = c("A", "B", "C")
+  # The wrapper must absorb an error from the underlying metric rather than
+  # propagate it. Mocked rather than provoked with a degenerate design: the
+  # 1x1 grid that used to error here is now caught earlier by .single_grid()
+  # (three plots at one coordinate are duplicates), which would leave this
+  # backstop untested.
+  d <- data.frame(
+    row = rep(1:2, 3),
+    col = rep(1:3, each = 2),
+    treatment = rep(c("A", "B", "C"), 2)
   )
-  ef <- .efficiency_factor(degenerate, "treatment", "row", "col")
+  expect_true(.single_grid(d, "row", "col"))
+
+  local_mocked_bindings(
+    calculate_efficiency_factor = function(...) stop("cannot compute")
+  )
+  ef <- .efficiency_factor(d, "treatment", "row", "col")
 
   expect_false(ef$available)
   expect_equal(ef$reason, "could not be computed for this design")

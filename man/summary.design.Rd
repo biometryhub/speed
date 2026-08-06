@@ -41,7 +41,9 @@ See Details for more information.}
 A list of class \code{"summary.design"}:
 \itemize{
 \item \strong{hierarchical} - \code{TRUE} for a multi-level (e.g. split-plot) design.
-\item \strong{layout} - \code{n_plots}, \code{nrow}, \code{ncol}, \code{row_column}, \code{col_column}, \code{has_grid}.
+\item \strong{layout} - \code{n_plots}, \code{nrow}, \code{ncol}, \code{row_column}, \code{col_column},
+\code{has_grid} (\code{TRUE} when the design is reportable as a single grid), and
+\code{grid_reason} (why not, or \code{NA}). \code{nrow}/\code{ncol} are \code{NA} unless \code{has_grid}.
 \item \strong{levels} - character vector of level names (e.g. \code{"wp"}/\code{"sp"}; a single
 name for a simple design).
 \item \strong{per_level} - one element per level (named by \code{levels}), each a list with:

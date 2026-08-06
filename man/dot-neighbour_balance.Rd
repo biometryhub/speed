@@ -32,8 +32,10 @@ the design.
 
 Coordinates are read as-is, so a design whose plots are separated by a buffer
 row or column (\code{add_buffers()} offsets and scales them) keeps that separation:
-plots either side of a buffer are not counted as neighbours. Assumes \code{rc}/\code{cc}
-are present in \code{df}; callers should check \code{has_grid} first (see
-\code{summary.design()}).
+plots either side of a buffer are not counted as neighbours.
+
+Guarded by \code{.single_grid()}, so a design that cannot be placed on one grid is
+reported as unavailable rather than propagating \code{\link[=build_design_matrix]{build_design_matrix()}}'s
+error out of \code{summary()}.
 }
 \keyword{internal}

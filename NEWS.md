@@ -14,6 +14,9 @@
   `calculate_adjacency_score()`, `calculate_efficiency_factor()`, `objective_function_piepho()` and
   `summary()`'s neighbour balance; designs generated with `objective_function_piepho()` should be
   regenerated.
+- `summary()` no longer errors on designs that cannot be placed on a single grid, such as multi-site
+  (MET) designs or designs with non-numeric `row`/`col` labels. The affected diagnostics report why
+  they are unavailable instead, and are no longer computed from pooled grids.
 - `calculate_nb()` no longer errors on designs with missing plots when `pair_mapping` is not
   supplied.
 - `calculate_adjacency_score()` now recycles a single `ring_weights` value across every entry of

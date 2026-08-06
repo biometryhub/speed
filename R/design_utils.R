@@ -864,6 +864,25 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
 #' @export
 initialize_design_df <- initialise_design_df
 
+#' Signal a Coordinate Problem with a Classed Condition
+#'
+#' @description
+#' The message is for someone calling a metric directly; the class lets
+#' `.single_grid()` report the same problem as a short reason in a `summary()`
+#' field, without matching on message text. Conditions are only constructed on
+#' failure, so the hot path is unaffected.
+#'
+#' @param class Condition subclass naming the specific problem.
+#' @param ... Pasted together to form the message.
+#'
+#' @keywords internal
+.grid_stop <- function(class, ...) {
+  stop(structure(
+    class = c(class, "speed_grid_error", "error", "condition"),
+    list(message = paste0(...), call = NULL)
+  ))
+}
+
 #' Validate a Design's Coordinates and Build its Grid Index
 #'
 #' @description
@@ -886,23 +905,6 @@ initialize_design_df <- initialise_design_df
 #'   positions), `nrow` and `ncol` (the grid's dimensions), and `n` (the number
 #'   of plots the index was built for, used to detect a stale index).
 #'
-#' Signal a Coordinate Problem with a Classed Condition
-#'
-#' The message is for someone calling a metric directly; the class lets
-#' [.single_grid()] report the same problem as a short reason in a `summary()`
-#' field without matching on message text. Conditions are only built on failure,
-#' so the hot path is unaffected.
-#'
-#' @param class Condition subclass naming the specific problem.
-#' @param ... Pasted to form the message.
-#' @keywords internal
-.grid_stop <- function(class, ...) {
-  stop(structure(
-    class = c(class, "speed_grid_error", "error", "condition"),
-    list(message = paste0(...), call = NULL)
-  ))
-}
-
 #' @keywords internal
 grid_index <- function(df, row_column = "row", col_column = "col") {
   # Checked before coercion: absent columns would otherwise reach max() as
