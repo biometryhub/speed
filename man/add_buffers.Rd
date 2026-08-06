@@ -15,5 +15,21 @@ add_buffers(design_obj, type)
 The modified design object with buffers added
 }
 \description{
-Add buffers to an existing design
+\strong{Deprecated.} Buffers are a field-layout and presentation concern rather
+than a property of the statistical design, so they are moving out of
+\pkg{speed} and into \pkg{biometryassist}, whose implementation is more
+capable (buffers around blocks or whole-plots, and plot numbering).
+\code{add_buffers()} will be removed from \pkg{speed} in a future version; use
+\code{biometryassist::add_buffers()} once it accepts \pkg{speed} designs.
+}
+\details{
+Buffers must not change any statistical property of a design. Making room for
+them displaces the real plots' \code{row}/\code{col} coordinates, so the displacement is
+recorded and undone by \code{summary()} before anything is computed - a buffered
+design therefore reports exactly what it did before the buffers were added.
+Calling a \verb{calculate_*()} metric directly on a buffered design bypasses that
+and warns.
+}
+\seealso{
+\code{biometryassist::add_buffers()}
 }

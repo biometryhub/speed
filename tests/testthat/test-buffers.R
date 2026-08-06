@@ -146,7 +146,7 @@ test_that("create_buffers works with speed optimised designs", {
   )
 
   # Add edge buffers to optimised design
-  buffered_design <- add_buffers(result, type = "edge")
+  buffered_design <- add_buffers_quiet(result, type = "edge")
 
   # Check that buffers were added
   expect_true(inherits(buffered_design, "design"))
@@ -182,7 +182,7 @@ test_that("add_buffers preserves optimisation results", {
   original_seed <- result$seed
 
   # Add buffers
-  buffered_result <- add_buffers(result, type = "row")
+  buffered_result <- add_buffers_quiet(result, type = "row")
 
   # Check that metadata is preserved
   expect_equal(buffered_result$score, original_score)
@@ -207,7 +207,7 @@ test_that("autoplot renders speed optimised design with edge buffers", {
   )
 
   # Add edge buffers
-  buffered_result <- add_buffers(result, type = "edge")
+  buffered_result <- add_buffers_quiet(result, type = "edge")
 
   # Create plot
   p <- autoplot(buffered_result)
@@ -235,7 +235,7 @@ test_that("autoplot renders speed optimised design with row buffers", {
     quiet = TRUE,
     seed = 42
   )
-  buffered_result <- add_buffers(result, type = "row")
+  buffered_result <- add_buffers_quiet(result, type = "row")
 
   p <- autoplot(buffered_result)
   expect_s3_class(p, "ggplot")
@@ -259,7 +259,7 @@ test_that("autoplot renders speed optimised design with column buffers", {
     quiet = TRUE,
     seed = 42
   )
-  buffered_result <- add_buffers(result, type = "column")
+  buffered_result <- add_buffers_quiet(result, type = "column")
 
   p <- autoplot(buffered_result)
   expect_s3_class(p, "ggplot")
@@ -286,7 +286,7 @@ test_that("autoplot renders blocked design with buffers", {
     seed = 42
   )
 
-  buffered_result <- add_buffers(result, type = "edge")
+  buffered_result <- add_buffers_quiet(result, type = "edge")
 
   p <- autoplot(buffered_result)
   expect_s3_class(p, "ggplot")
@@ -310,7 +310,7 @@ test_that("buffers work with different palette options", {
     quiet = TRUE,
     seed = 42
   )
-  buffered_result <- add_buffers(result, type = "edge")
+  buffered_result <- add_buffers_quiet(result, type = "edge")
 
   # Test with colour blind palette
   p_cb <- autoplot(buffered_result, palette = "colour blind")
@@ -341,7 +341,7 @@ test_that("buffers render correctly with margin parameter", {
     quiet = TRUE,
     seed = 42
   )
-  buffered_result <- add_buffers(result, type = "edge")
+  buffered_result <- add_buffers_quiet(result, type = "edge")
 
   # Without margin
   p_no_margin <- autoplot(buffered_result, margin = FALSE)
@@ -371,7 +371,7 @@ test_that("create_buffers maintains treatment positions correctly", {
   )
 
   # Add edge buffers
-  result_buffered <- add_buffers(result, type = "edge")
+  result_buffered <- add_buffers_quiet(result, type = "edge")
 
   # Extract non-buffer treatments
   non_buffers <- result_buffered$design[
@@ -404,7 +404,7 @@ test_that("multiple buffer types can be visualized", {
   buffer_types <- c("edge", "row", "column", "double row", "double column")
 
   for (type in buffer_types) {
-    buffered <- add_buffers(result, type = type)
+    buffered <- add_buffers_quiet(result, type = type)
 
     expect_no_error({
       p <- autoplot(buffered)
@@ -431,7 +431,7 @@ test_that("buffers work with legend display", {
     quiet = TRUE,
     seed = 42
   )
-  buffered_result <- add_buffers(result, type = "edge")
+  buffered_result <- add_buffers_quiet(result, type = "edge")
 
   p_legend <- autoplot(buffered_result, legend = TRUE)
   expect_s3_class(p_legend, "ggplot")
@@ -455,7 +455,7 @@ test_that("buffers work with rotation and size parameters", {
     quiet = TRUE,
     seed = 42
   )
-  buffered_result <- add_buffers(result, type = "edge")
+  buffered_result <- add_buffers_quiet(result, type = "edge")
 
   # Test with rotation
   p_rotated <- autoplot(buffered_result, rotation = 45, size = 3)
@@ -484,7 +484,7 @@ test_that("hierarchical designs can have buffers added", {
   )
 
   # Add buffers to hierarchical design
-  buffered_result <- add_buffers(result, type = "edge")
+  buffered_result <- add_buffers_quiet(result, type = "edge")
 
   expect_true(inherits(buffered_result, "design"))
   expect_true("buffer" %in% buffered_result$design$subplot_treatment)
@@ -514,7 +514,7 @@ test_that("buffers are displayed as white in plots", {
     quiet = TRUE,
     seed = 42
   )
-  buffered_result <- add_buffers(result, type = "edge")
+  buffered_result <- add_buffers_quiet(result, type = "edge")
 
   p <- autoplot(buffered_result)
 
@@ -581,7 +581,7 @@ test_that("buffers work correctly with early stopping", {
   )
 
   # Add buffers to early-stopped design
-  buffered_result <- add_buffers(result, type = "edge")
+  buffered_result <- add_buffers_quiet(result, type = "edge")
 
   expect_true(inherits(buffered_result, "design"))
   expect_true("buffer" %in% buffered_result$design$treatment)
@@ -603,7 +603,7 @@ test_that("add_buffers handles design objects that are lists", {
   class(design_obj) <- c("design", "list")
 
   # Should handle the list structure correctly
-  result <- add_buffers(design_obj, type = "edge")
+  result <- add_buffers_quiet(design_obj, type = "edge")
 
   expect_true(inherits(result, "design"))
   expect_true("buffer" %in% result$design$treatment)
@@ -623,9 +623,9 @@ test_that("add_buffers works with different buffer types", {
   class(design_obj) <- "design"
 
   # Test different buffer types
-  result_edge <- add_buffers(design_obj, type = "edge")
-  result_row <- add_buffers(design_obj, type = "row")
-  result_col <- add_buffers(design_obj, type = "column")
+  result_edge <- add_buffers_quiet(design_obj, type = "edge")
+  result_row <- add_buffers_quiet(design_obj, type = "row")
+  result_col <- add_buffers_quiet(design_obj, type = "column")
 
   expect_true("buffer" %in% result_edge$design$treatment)
   expect_true("buffer" %in% result_row$design$treatment)
@@ -669,4 +669,54 @@ test_that("create_buffers handles design without treatment column", {
 
   # Should have "buffer" in the variety column
   expect_true("buffer" %in% result2$variety)
+})
+
+test_that("add_buffers() warns that it is deprecated and names its replacement", {
+  # Buffers are moving to biometryassist; see the deprecation note in
+  # ?add_buffers. Every other buffer test uses add_buffers_quiet() so this
+  # assertion is the only place the warning is pinned.
+  d <- data.frame(
+    row = rep(1:3, each = 3),
+    col = rep(1:3, times = 3),
+    treatment = rep(LETTERS[1:3], 3)
+  )
+  r <- speed(
+    d,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 50,
+    seed = 1,
+    quiet = TRUE
+  )
+
+  expect_warning(add_buffers(r, "edge"), "deprecated")
+  expect_warning(add_buffers(r, "edge"), "biometryassist::add_buffers")
+})
+
+test_that("a deprecated add_buffers() still produces a correct layout", {
+  # It stays functional for the deprecation window: biometryassist cannot yet
+  # accept speed designs, so removing it outright would leave no replacement.
+  d <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+  r <- speed(
+    d,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 100,
+    seed = 1,
+    quiet = TRUE
+  )
+  buffered <- add_buffers_quiet(r, "edge")
+
+  expect_true("buffer" %in% as.character(buffered$design_df$treatment))
+  # And still reports the unbuffered design's metrics.
+  expect_equal(
+    summary(buffered)$per_level[[1]]$evaluation$neighbour,
+    summary(r)$per_level[[1]]$evaluation$neighbour
+  )
 })

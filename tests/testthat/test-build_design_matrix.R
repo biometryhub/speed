@@ -84,7 +84,7 @@ test_that("gaps in the coordinates become NA cells, not a collapsed grid", {
 })
 
 test_that("coordinates that do not start at 1 are preserved, not shifted", {
-  # add_buffers() offsets the real design's coordinates; dropping the buffer
+  # add_buffers_quiet() offsets the real design's coordinates; dropping the buffer
   # rows leaves them starting above 1.
   df <- data.frame(
     row = c(2, 2, 3, 3),

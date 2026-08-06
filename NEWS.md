@@ -7,6 +7,13 @@
   replicate spans and spread across blocks, neighbour balance, and opt-in efficiency).
   ([#73](https://github.com/biometryhub/speed/issues/73))
 
+## Deprecations
+
+- `add_buffers()` is deprecated and will be removed in a future version. Buffers are a field-layout
+  and presentation concern rather than a property of the statistical design, so they are moving to
+  the `biometryassist` package, whose implementation also supports buffers around blocks and
+  whole-plots. Use `biometryassist::add_buffers()` once it accepts `speed` designs.
+
 ## Bug Fixes
 
 - `objective_function_piepho()` now builds the design grid from the `row`/`col` coordinates rather
@@ -25,8 +32,14 @@
   `ring_dists`, so the documented default is usable with more than one ring.
 - `summary()` no longer reports incorrect neighbour-balance figures (self-adjacency, pair minimum,
   maximum, variance and zero-count) for designs whose grid is not square. Neighbour balance is now
-  read from the plot coordinates, so plots separated by a buffer row or column are no longer counted
-  as neighbours.
+  read from the plot coordinates.
+- Buffers added by `add_buffers()` no longer affect any design metric. Making room for buffers shifts
+  or scales the real plots' `row`/`col` coordinates, which previously changed the neighbour-balance,
+  replicate-span and efficiency figures `summary()` reported; that displacement is now recorded and
+  undone before anything is computed, so a buffered design reports exactly what it did before the
+  buffers were added.
+- The `calculate_*()` metrics now warn when given a design that still contains buffer plots, rather
+  than silently scoring the displaced layout.
 
 ## Minor Changes
 

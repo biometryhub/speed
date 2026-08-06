@@ -181,12 +181,38 @@ create_buffers <- function(
 
 #' Add buffers to an existing design
 #'
+#' @description
+#' **Deprecated.** Buffers are a field-layout and presentation concern rather
+#' than a property of the statistical design, so they are moving out of
+#' \pkg{speed} and into \pkg{biometryassist}, whose implementation is more
+#' capable (buffers around blocks or whole-plots, and plot numbering).
+#' `add_buffers()` will be removed from \pkg{speed} in a future version; use
+#' `biometryassist::add_buffers()` once it accepts \pkg{speed} designs.
+#'
+#' @details
+#' Buffers must not change any statistical property of a design. Making room for
+#' them displaces the real plots' `row`/`col` coordinates, so the displacement is
+#' recorded and undone by `summary()` before anything is computed - a buffered
+#' design therefore reports exactly what it did before the buffers were added.
+#' Calling a `calculate_*()` metric directly on a buffered design bypasses that
+#' and warns.
+#'
 #' @param design_obj A design object (with class "design") from the design() function
 #' @param type The type of buffer to add
 #' @returns The modified design object with buffers added
+#'
+#' @seealso `biometryassist::add_buffers()`
+#'
 #' @export
 add_buffers <- function(design_obj, type) {
   stopifnot(inherits(design_obj, "design"))
+
+  warning(
+    "`add_buffers()` is deprecated and will be removed from speed in a future ",
+    "version.\nBuffers are a field-layout concern rather than a design ",
+    "property; use `biometryassist::add_buffers()` instead.",
+    call. = FALSE
+  )
 
   # Determine if design has blocks
   has_blocks <- any(grepl("block", tolower(names(design_obj$design_df))))

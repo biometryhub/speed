@@ -604,7 +604,7 @@ test_that("the metrics warn when handed a design containing buffers", {
     seed = 1,
     quiet = TRUE
   )
-  buffered <- add_buffers(r, "edge")$design_df
+  buffered <- add_buffers_quiet(r, "edge")$design_df
 
   expect_warning(
     calculate_adjacency_score(buffered, "treatment"),

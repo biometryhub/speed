@@ -267,7 +267,7 @@ test_that("summary errors clearly when metadata is absent", {
 
 test_that("buffers are excluded from summary() and print() entirely", {
   r <- simple_design()
-  rb <- add_buffers(r, "edge")
+  rb <- add_buffers_quiet(r, "edge")
   # The buffered design carries extra "buffer" rows...
   expect_gt(nrow(rb$design_df), nrow(r$design_df))
 
@@ -325,21 +325,21 @@ test_that("buffers do not change any evaluation metric (KNOWN_ISSUES.md #1a)", {
 
   for (type in c("edge", "row", "col", "double row", "double col")) {
     expect_no_warning(
-      ev <- summary(add_buffers(r, type), efficiency = TRUE)$per_level[[1]]$evaluation
+      ev <- summary(add_buffers_quiet(r, type), efficiency = TRUE)$per_level[[1]]$evaluation
     )
     expect_true(ev$neighbour$available, info = type)
     expect_equal(ev[metrics], baseline[metrics], info = type)
   }
 })
 
-test_that("stacked add_buffers() calls compose their coordinate displacement", {
+test_that("stacked add_buffers_quiet() calls compose their coordinate displacement", {
   r <- buffer_test_design()
   baseline <- summary(r, efficiency = TRUE)$per_level[[1]]$evaluation
   metrics <- c("neighbour", "replicate_span", "efficiency")
 
   for (types in list(c("row", "col"), c("row", "row"), c("edge", "row"))) {
     stacked <- r
-    for (type in types) stacked <- add_buffers(stacked, type)
+    for (type in types) stacked <- add_buffers_quiet(stacked, type)
     label <- paste(types, collapse = " + ")
 
     expect_equal(stacked$metadata$buffer$types, types, info = label)
@@ -348,17 +348,17 @@ test_that("stacked add_buffers() calls compose their coordinate displacement", {
   }
 
   # row then row doubles twice; edge then row is 2 * (coord + 1).
-  rr <- add_buffers(add_buffers(r, "row"), "row")
+  rr <- add_buffers_quiet(add_buffers_quiet(r, "row"), "row")
   expect_equal(rr$metadata$buffer$transform$row, c(scale = 4, shift = 0))
-  er <- add_buffers(add_buffers(r, "edge"), "row")
+  er <- add_buffers_quiet(add_buffers_quiet(r, "edge"), "row")
   expect_equal(er$metadata$buffer$transform$row, c(scale = 2, shift = 2))
 })
 
-test_that("add_buffers() leaves the plotting coordinates displaced", {
+test_that("add_buffers_quiet() leaves the plotting coordinates displaced", {
   # The displacement is what draws the field correctly, so it must survive in
   # design_df; only the metrics see it undone.
   r <- buffer_test_design()
-  rb <- add_buffers(r, "row")
+  rb <- add_buffers_quiet(r, "row")
   inner <- rb$design_df[as.character(rb$design_df$treatment) != "buffer", ]
   expect_equal(sort(unique(inner$row)), c(2, 4, 6, 8))
   expect_equal(
@@ -370,7 +370,7 @@ test_that("add_buffers() leaves the plotting coordinates displaced", {
 test_that("a design buffered before the transform was recorded still works", {
   # Back-compat: no meta$buffer means no restoration, and no error.
   r <- buffer_test_design()
-  rb <- add_buffers(r, "edge")
+  rb <- add_buffers_quiet(r, "edge")
   rb$metadata$buffer <- NULL
   expect_no_error(s <- summary(rb))
   expect_true(s$per_level[[1]]$evaluation$neighbour$available)
@@ -981,7 +981,7 @@ test_that(".drop_buffer_rows is a no-op without per-level metadata", {
 })
 
 test_that("buffer removal drops the unused factor level from a factor swap column", {
-  # add_buffers() adds a "buffer" level; once the rows go, the level must go too
+  # add_buffers_quiet() adds a "buffer" level; once the rows go, the level must go too
   # or downstream table()/matrix() work counts a treatment that isn't there.
   d <- data.frame(
     row = rep(1:4, times = 3),
@@ -996,7 +996,7 @@ test_that("buffer removal drops the unused factor level from a factor swap colum
     seed = 1,
     quiet = TRUE
   )
-  rb <- add_buffers(r, "edge")
+  rb <- add_buffers_quiet(r, "edge")
   expect_true(is.factor(rb$design_df$treatment))
   expect_true("buffer" %in% levels(rb$design_df$treatment))
 
