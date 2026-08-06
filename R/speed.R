@@ -278,6 +278,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     swap_all_blocks <- optimise_params$swap_all_blocks
     adj_weight <- optimise_params$adj_weight
     bal_weight <- optimise_params$bal_weight
+    stop_at_optimal <- optimise_params$stop_at_optimal
     spatial_cols <- all.vars(opt$spatial_factors)
 
     # Calculate initial score for this level
@@ -307,7 +308,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       temperatures[iter] <- temp
 
       # break once optimal
-      if (!is.na(optimal_score) && best_score <= optimal_score + 1e-9) {
+      if (stop_at_optimal && !is.na(optimal_score) && best_score <= optimal_score + 1e-9) {
         if (!quiet) cat("Optimal score reached at iteration", iter, "for level", level, "\n")
         scores <- scores[1:iter]
         temperatures <- temperatures[1:iter]

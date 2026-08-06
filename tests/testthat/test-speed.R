@@ -32,6 +32,7 @@ test_that("speed returns correct output structure", {
     swap = "treatment",
     spatial_factors = ~ row + col,
     iterations = 1000,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
     seed = 42,
     quiet = TRUE
   )
@@ -63,11 +64,10 @@ test_that("speed returns correct output structure", {
   expect_equal(nrow(result$design_df), 20)
   expect_equal(ncol(result$design_df), 3)
   expect_equal(result$score, 1)
-  # starting layout already optimal
-  expect_equal(length(result$scores), 1)
-  expect_equal(length(result$temperatures), 1)
-  expect_equal(result$iterations_run, 1)
-  expect_equal(result$stopped_early, TRUE)
+  expect_equal(length(result$scores), 1000)
+  expect_equal(length(result$temperatures), 1000)
+  expect_equal(result$iterations_run, 1000)
+  expect_equal(result$stopped_early, FALSE)
   expect_equal(result$treatments, c("A", "B", "C", "D"))
 
   vdiffr::expect_doppelganger("speed_small", autoplot(result))
@@ -194,6 +194,32 @@ test_that("speed stops as soon as the optimal score is reached mid-run", {
   expect_gt(result$iterations_run, 1)
   expect_lt(result$iterations_run, 5000)
   expect_true(result$stopped_early)
+})
+
+test_that("speed keeps running when stop_at_optimal is FALSE", {
+  test_data <- expand.grid(row = 1:4, col = 1:5)
+  test_data$treatment <- LETTERS[1:4]
+
+  expect_message(
+    output <- capture_output(
+      result <- speed(
+        data = test_data,
+        swap = "treatment",
+        spatial_factors = ~ row + col,
+        optimise_params = optim_params(stop_at_optimal = FALSE),
+        iterations = 500,
+        early_stop_iterations = 500,
+        seed = 42,
+        quiet = FALSE
+      )
+    ),
+    "row and col are used as row and column, respectively"
+  )
+
+  expect_no_match(output, "Optimal score reached")
+  # the bound is still reported, it just no longer stops the run
+  expect_equal(result$metadata$per_level[[1]]$optimal_score, 1)
+  expect_equal(result$iterations_run, 500)
 })
 
 test_that("speed keeps running when the optimal score is out of reach", {
@@ -640,6 +666,7 @@ test_that("speed runs with random initialisation", {
     swap = "treatment",
     spatial_factors = ~ row + col,
     iterations = 1000,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
     seed = 42,
     quiet = TRUE
   )
@@ -649,7 +676,10 @@ test_that("speed runs with random initialisation", {
     swap = "treatment",
     spatial_factors = ~ row + col,
     iterations = 1000,
-    optimise_params = optim_params(random_initialisation = TRUE),
+    optimise_params = optim_params(
+      random_initialisation = TRUE,
+      stop_at_optimal = FALSE
+    ),
     seed = 42,
     quiet = TRUE
   )
@@ -681,11 +711,10 @@ test_that("speed runs with random initialisation", {
   expect_equal(nrow(result_random$design_df), 20)
   expect_equal(ncol(result_random$design_df), 3)
   expect_equal(result_random$score, 1)
-  # Stops as soon as the score reaches the lowest this layout admits
-  expect_equal(length(result_random$scores), result_random$iterations_run)
-  expect_equal(length(result_random$temperatures), result_random$iterations_run)
-  expect_lt(result_random$iterations_run, 1000)
-  expect_equal(result_random$stopped_early, TRUE)
+  expect_equal(length(result_random$scores), 1000)
+  expect_equal(length(result_random$temperatures), 1000)
+  expect_equal(result_random$iterations_run, 1000)
+  expect_equal(result_random$stopped_early, FALSE)
   expect_equal(result_random$treatments, c("A", "B", "C", "D"))
 
   expect_false(isTRUE(all.equal(
@@ -1885,11 +1914,11 @@ test_that("speed produces different results when seed=NULL across different runs
 
 # Test progress output for simple designs
 test_that("speed prints progress output when quiet=FALSE for simple designs", {
-  # having high rep for 1 treatment makes optimal score out of reach
+  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
-    treatment = c(rep("A", 6), rep(c("B", "C"), 3))
+    treatment = rep(LETTERS[1:3], 4)
   )
 
   # Capture output with quiet=FALSE and enough iterations to trigger progress output
@@ -1900,6 +1929,7 @@ test_that("speed prints progress output when quiet=FALSE for simple designs", {
       swap_within = "1",
       spatial_factors = ~ row + col,
       iterations = 2000, # Enough to trigger progress output at 1000
+      optimise_params = optim_params(stop_at_optimal = FALSE),
       seed = 42,
       quiet = FALSE
     )
@@ -1918,11 +1948,11 @@ test_that("speed prints progress output when quiet=FALSE for simple designs", {
 
 # Test early stopping output for simple designs
 test_that("speed prints early stopping message when quiet=FALSE for simple designs", {
-  # having high rep for 1 treatment makes optimal score out of reach
+  # Sample data that will likely converge quickly (already optimal)
   test_data <- data.frame(
     row = rep(1:3, times = 4),
     col = rep(1:4, each = 3),
-    treatment = c(rep("A", 6), rep(c("B", "C"), 3))
+    treatment = LETTERS[1:4] # Already well-distributed
   )
 
   # Capture output with early stopping likely to occur
@@ -1935,6 +1965,7 @@ test_that("speed prints early stopping message when quiet=FALSE for simple desig
         spatial_factors = ~ row + col,
         iterations = 1000,
         early_stop_iterations = 10, # Low threshold for early stopping
+        optimise_params = optim_params(stop_at_optimal = FALSE),
         seed = 42,
         quiet = FALSE
       )
@@ -1969,6 +2000,7 @@ test_that("speed prints progress output when quiet=FALSE for hierarchical design
       swap_within = list(wp = "block", sp = "wholeplot_treatment"),
       spatial_factors = ~ row + col,
       iterations = list(wp = 1500, sp = 1500), # Enough to trigger progress output
+      optimise_params = optim_params(stop_at_optimal = FALSE),
       seed = 42,
       quiet = FALSE
     )
@@ -2095,11 +2127,11 @@ test_that("speed produces no output when quiet=TRUE for hierarchical designs", {
 
 # Test progress output frequency (every 1000 iterations)
 test_that("speed prints progress output at correct intervals", {
-  # having high rep for 1 treatment makes optimal score out of reach
+  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
-    treatment = c(rep(LETTERS[1:3], 4), rep("D", 8))
+    treatment = rep(LETTERS[1:4], 5)
   )
 
   # Capture output with enough iterations to trigger multiple progress outputs
@@ -2111,7 +2143,7 @@ test_that("speed prints progress output at correct intervals", {
         swap_within = "1",
         spatial_factors = ~ row + col,
         iterations = 3500, # Should trigger output at 1000, 2000, 3000
-        early_stop_iterations = 3500,
+        optimise_params = optim_params(stop_at_optimal = FALSE),
         seed = 42,
         quiet = FALSE
       )

@@ -38,7 +38,8 @@
   cooling_rate,
   random_initialisation,
   adj_weight,
-  bal_weight
+  bal_weight,
+  stop_at_optimal
 )
 
 .verify_swap_all_replication(data, optimise, dummy_group = NULL)

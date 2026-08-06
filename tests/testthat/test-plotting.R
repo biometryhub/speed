@@ -511,6 +511,7 @@ test_that("plot_progress handles simple design optimization results", {
     swap_within = "1",
     spatial_factors = ~ row + col,
     iterations = 500,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
     seed = 42,
     quiet = TRUE
   )
@@ -526,16 +527,16 @@ test_that("plot_progress handles simple design optimization results", {
   expect_true("temperatures" %in% names(result))
   expect_true(is.numeric(result$scores))
   expect_true(is.numeric(result$temperatures))
-  expect_lte(length(result$scores), 500)
-  expect_lte(length(result$temperatures), 500)
+  expect_equal(length(result$scores), 500)
+  expect_equal(length(result$temperatures), 500)
 })
 
 test_that("plot_progress handles different iteration lengths", {
-  # Unequal replication to keep the run long
+  # Test with short optimization
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
-    treatment = c(rep(LETTERS[1:3], 4), rep("D", 8))
+    treatment = rep(LETTERS[1:4], 5)
   )
 
   short_result <- speed(
@@ -544,6 +545,7 @@ test_that("plot_progress handles different iteration lengths", {
     swap_within = "1",
     spatial_factors = ~ row + col,
     iterations = 50,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
     seed = 42,
     quiet = TRUE
   )
@@ -555,6 +557,7 @@ test_that("plot_progress handles different iteration lengths", {
     swap_within = "1",
     spatial_factors = ~ row + col,
     iterations = 1000,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
     seed = 42,
     quiet = TRUE
   )
@@ -715,11 +718,11 @@ test_that("plot_progress error handling for invalid inputs", {
 })
 
 test_that("plot_progress generates expected plot elements", {
-  # Unequal replication to keep the run long
+  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
-    treatment = c(rep("A", 6), rep(c("B", "C"), 3))
+    treatment = rep(LETTERS[1:3], 4)
   )
 
   result <- speed(
@@ -728,6 +731,7 @@ test_that("plot_progress generates expected plot elements", {
     swap_within = "1",
     spatial_factors = ~ row + col,
     iterations = 100,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
     seed = 42,
     quiet = TRUE
   )
