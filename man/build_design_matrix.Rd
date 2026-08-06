@@ -36,9 +36,8 @@ Places each treatment value at the grid position given by its \code{row_column}
 and \code{col_column} coordinates, returning a character matrix of dimensions
 \code{max(row)} by \code{max(col)}. Cells with no corresponding row in \code{df} are \code{NA}.
 
-Unlike filling via \code{matrix(..., byrow = )}, this reads the coordinates rather
-than assuming an ordering, so it is correct for any row ordering of \code{df} and
-for factor coordinate columns whose level order is not numeric.
+Each plot's position comes from its own coordinates, so the row ordering of
+\code{df} is irrelevant, as is the level order of factor coordinate columns.
 
 Coordinates are used as-is, never renumbered: a gap in the coordinates is a
 real gap in the field (a missing plot, or a buffer that was removed), so

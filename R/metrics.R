@@ -252,11 +252,8 @@ objective_function_piepho <- function(design,
   nb <- calculate_nb(design_matrix, pair_mapping)
   nb_score <- nb$var
 
-  # Coerce for calculate_balance_score()'s table(). Deliberately NOT
-  # as.factor(design_matrix): flattening the grid is column-major, which only
-  # matches `design` when the data frame happens to be in column-major order,
-  # and would otherwise scramble the treatments against their coordinates.
-  design[[swap]] <- as.factor(design[[swap]])
+  # Balance and adjacency read `design` directly: the treatment column and the
+  # coordinates must stay aligned, so neither takes a flattened `design_matrix`.
   bal_score <- calculate_balance_score(design, swap, spatial_cols)
   adj_score <- calculate_adjacency_score(
     design,
@@ -357,7 +354,7 @@ calculate_nb <- function(design_matrix, pair_mapping = NULL) {
     for (col_ in 1:n_cols) {
       node <- design_matrix[row_, col_]
       # Empty cells (a missing plot, or a removed buffer) have no pairs to
-      # contribute; the pair_mapping path in calculate_nb() drops them too.
+      # contribute, matching the pair_mapping path.
       if (is.na(node)) {
         next
       }
@@ -718,10 +715,9 @@ calculate_efficiency_factor <- function(
   X <- matrix(0, nrow = n_plots, ncol = n_treatments)
   X[cbind(seq_len(n_plots), encoded_items)] <- 1
 
-  # Create design matrix Z for rows and columns, indexed by each plot's actual
-  # coordinates. A positional fill would assume the data frame is a complete
-  # grid in row-major order and silently score a different layout otherwise.
-  # Row and col effects exclude the last row and col to avoid singularity.
+  # Create design matrix Z for rows and columns, indexed by each plot's own
+  # coordinates so the row ordering of `design_df` does not matter. Row and col
+  # effects exclude the last row and col to avoid singularity.
   Z_row <- matrix(0, nrow = n_plots, ncol = n_rows - 1)
   Z_col <- matrix(0, nrow = n_plots, ncol = n_cols - 1)
   in_row <- which(rows < n_rows)

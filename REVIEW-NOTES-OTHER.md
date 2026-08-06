@@ -26,7 +26,7 @@ Resolved findings and settled decisions are deleted rather than annotated — se
 
 > ✅ **The branch's original scope is closed.** The plan as committed at `b1d7adc` listed D6, D1 and
 > G1-G6, plus the hot-loop cost recorded as out of scope; all are done, the last as G11. G7, S1, A5, G11
-> and G12 were found during the work. See A1. Full suite: **1738 pass, 0 fail, 0 warn.**
+> and G12 were found during the work. See A1. Full suite: **1739 pass, 0 fail, 0 warn.**
 >
 > ⬜ **Deliberately still open from the original plan:** removing the row-major sort, which A4.7 recorded
 > as out of scope on purpose (`KNOWN_ISSUES.md` #4).
@@ -43,6 +43,11 @@ Resolved findings and settled decisions are deleted rather than annotated — se
 > 🔶 **D7 is the one open statistical question** and it blocks the last part of G13: what a grid metric
 > should report per site versus pooled. Adjacency and neighbour balance are settled (they sum exactly);
 > efficiency and piepho's ED are not. See A4.
+>
+> 🟠 **G14 — `summary()` reports an efficiency factor above 1 for a rank-deficient *single* grid.** Measured
+> 1.61 on an ordinary unreplicated 12-entry 4×3 trial, identical on `main`. **No D7 decision needed** — a
+> single grid has no pooling question — but it is fixed by the same rank gate as D7 recommendation 2, so
+> build that gate once. Pre-existing, not branch-introduced. See A5.
 
 ---
 
@@ -62,7 +67,7 @@ One-line inventory for the PR description. Full write-ups are in git history.
 | **S1** `.neighbour_balance()` reported self-adjacencies that didn't exist (6 where the truth was 0) | reads coordinates; the 4×3 fixture returns the hand-derived truth (self 0, pair min/max 5/6) |
 | **A5** lexical factor levels (`1, 10, 11, 2, …`) defeated the row-major sort, so grid metrics scored a layout that wasn't the design | coordinate construction is immune; the sort is no longer load-bearing (`KNOWN_ISSUES.md` #4) |
 | **G11** coordinate validation ran on every iteration, making grid construction 16× the `matrix()` reshape it replaced | validation split into `grid_index()`, hoisted once per `speed()` run and built lazily so a design that cannot be gridded still optimises if its objective never needs a grid; build back to parity — see A1.1 |
-| **G12** `summary()` died outright on any design that couldn't be gridded — MET, or non-numeric `row`/`col` labels | `.single_grid()` maps `grid_index()`'s condition classes to a reason and gates `.neighbour_balance()`, `.efficiency_factor()` and `.replicate_spans()`; `has_grid` now means "reportable as one grid", so `layout` stops claiming an `nrow` × `ncol` holding fewer plots than the design |
+| **G12** `summary()` died outright on any design that couldn't be gridded — MET, or non-numeric `row`/`col` labels | `summary.design()` calls `grid_index()` once and keeps either the index or the condition's `reason` as `grid`, which it passes to `.neighbour_balance()`, `.efficiency_factor()` and `.replicate_spans()`; each reports the reason instead of computing. `has_grid` now means "reportable as one grid", so `layout` no longer describes a MET as a single grid. `nrow`/`ncol` count *occupied* rows and columns (settled, Sam), so on a design with gaps they are deliberately fewer than the coordinates span — documented in `?summary.design` |
 
 ### A1.1 G11 measurements
 
@@ -85,14 +90,11 @@ performance change only:
 | `objective_function`, 120 plots, 5000 iters | 2.46 s | **2.17 s** | −12% |
 | `objective_function_piepho`, 120 plots, 1000 iters | 1.64 s | **1.47 s** | −10% |
 
-Parity, not the below-parity figure first predicted: the `as.character()` coercion of the swap column stays
-per-iteration and is what remains of the cost. It is not hoistable the way validation was — the swap column
-is the one thing annealing mutates, so each call re-does the level lookup and allocates a fresh length-`n`
-character vector. Parity is therefore the floor for a rebuild-per-iteration grid, and it is accepted:
-carrying a mutable grid across iterations instead was considered and **ruled out** (Sam, 2026-08-06) — it
-needs a contract change to the objective-function signature and is capped at under 3% of a run, since the
-build is ~15 µs of a ~570 µs iteration while `adjacency_score_vec()` is O(n × offsets) per iteration
-however the grid arrives.
+What remains of the cost is the per-iteration `as.character()` coercion of the swap column, which is not
+hoistable the way validation was: the swap column is the one thing annealing mutates. Parity is therefore the
+floor for a rebuild-per-iteration grid, and it is accepted. Carrying a mutable grid across iterations instead
+was **ruled out** (Sam, 2026-08-06): it needs a contract change to the objective-function signature and is
+capped at under 3% of a run, since the build is ~15 µs of a ~570 µs iteration.
 
 ---
 
@@ -182,11 +184,12 @@ grid is exact rather than an approximation. That makes most of the fix tractable
    than guessed.
 5. **Efficiency and ED are not summable** — see D7. `calculate_efficiency_factor()` needs to refuse a
    multi-grid frame rather than return `1.855529`; G12 withholds it inside `summary()`, but a direct call
-   still doesn't.
-6. **Then relax G12's gate.** `.single_grid()` is deliberately the *only* place `summary()` decides a
-   design isn't griddable, so once the metrics take a grouping factor, MET designs stop reaching it and it
-   covers only genuinely un-griddable input. The split-plot test added with G12 guards against the gate
-   over-reaching in the meantime.
+   still doesn't. Note the gate is specifically on *duplicate coordinates*: it does **not** catch a
+   rank-deficient single grid, which `summary()` still reports — see A5.
+6. **Then relax G12's gate.** The single `grid_index()` call in `summary.design()` is deliberately the
+   *only* place `summary()` decides a design isn't griddable, so once the metrics take a grouping factor,
+   MET designs stop reaching it and it covers only genuinely un-griddable input. The split-plot test added
+   with G12 guards against the gate over-reaching in the meantime.
 
 Scope check: items 1-4 are mechanical given the summability result. Item 5 needs D7 first, and can stay
 gated to "unavailable" in the meantime so MET adjacency and neighbour balance land without waiting on it.
@@ -253,12 +256,88 @@ paper's definition assumes a single trial. Whatever is decided, the same answer 
 `efficiency` entry and to `.neighbour_balance()`, so the two never disagree about what a MET design's
 diagnostics mean.
 
+**The rank gate in recommendation 2 is needed whether or not D7 is settled.** A value `> 1` signals rank
+deficiency **however it arises** — a MET site with `r = 1` (above), a single grid that exhausts its residual
+degrees of freedom, or one where treatment is aliased with row despite having residual df to spare
+(`KNOWN_ISSUES.md` #3). The last two are single-grid designs that `summary()` reports today: see A5. So build
+the gate as a rank test on *one* information matrix rather than inside the MET path, and D7 recommendation 2
+and G14 are covered by one implementation.
+
 ---
 
-## A5. Corrections bearing on open items
+## A5. G14 🟠 `summary()` reports an efficiency factor above 1 for a rank-deficient single grid
 
-| Earlier claim | Corrected |
-|---|---|
-| An efficiency factor `> 1` is a canary for the ordering bug (G7) | **Too narrow.** `> 1` signals rank deficiency however it arises. Measured: degenerate fixtures where treatment is confounded with row — which is what `initialise_design_df(rep(LETTERS[1:k], m), ...)` produces, see `KNOWN_ISSUES.md` #3 — return values `> 1` in **row-major** order too, on `main`; so does a MET site with `r = 1` (D7). It is a canary for "something is wrong", not for ordering specifically. |
-| MET only needs a gate in `summary()`; the grid code itself is fine | **Wrong, and too narrow twice over.** The gate (G12) only stops `summary()` crashing — it does not make MET work, which is the actual requirement. And two silent wrong answers survive any amount of gating: `calculate_efficiency_factor()` returns **1.855529** on a MET frame because duplicate coordinates pool rather than error, and a MET design laid side by side in one grid has *no* duplicate coordinates yet still counts **10 phantom cross-site edges** (60 vs 50). Validation cannot catch either. |
-| `main`'s MET behaviour was "garbage, with a warning" | **Quantified:** the `matrix()` reshape built 50 cells from 80 plots, **silently discarding 30**, with one `data length differs from size of matrix` warning. Worth stating precisely because it is why this branch's hard error is an improvement even though it is not the fix. |
+**No decision needed — this one does not ride on D7.** D7 is open because a *multi-grid* design has a real
+statistical question (per site, pooled, or nested). A single grid has no such question: an A-efficiency
+factor is bounded above by 1, so a value above it is wrong under any reading. What G14 shares with D7 is the
+**fix**, not the decision — see the closing paragraph of A4.
+
+**Pre-existing, and this branch changed neither the values nor the reporting.** Measured 2026-08-06 on both
+`bugfix/grid-orientation` and a clean `main` worktree. Residual df is `n − 1 − (k−1) − (r−1) − (c−1)`:
+
+| Design | plots | residual df | value | surfaced by | `main` |
+|---|---|---|---|---|---|
+| 1×6 grid, 3 treatments | 6 | −2 | **1.5** | `summary()` | **1.5** |
+| 6×1 grid, 3 treatments | 6 | −2 | **1.5** | `summary()` | **1.5** |
+| 4×3 grid, 12 entries unreplicated | 12 | −5 | **1.61** | `summary()` | **1.61** |
+| 3×4 grid, 3 treatments confounded with row | 12 | **+4** | **1.5** | `.efficiency_factor()` | — |
+| 2×3 grid, 3 treatments | 6 | 0 | 0.75 | `summary()` | — |
+| 2×6 grid, 3 treatments | 12 | 3 | 0.75 | `summary()` | — |
+
+**There are two independent routes to a value above 1, so residual df is not a sufficient test.** Rows 1-3
+exhaust the residual degrees of freedom. Row 4 has *four* residual df and still returns 1.5, because
+`rep(LETTERS[1:3], length.out = 12)` over `expand.grid(row = 1:3, col = 1:4)` puts each treatment in exactly
+one row — treatment is aliased with the row effect, so eliminating the row space eliminates the treatment
+contrasts with it (`KNOWN_ISSUES.md` #3). **The gate must therefore test the rank of the information matrix,
+not count degrees of freedom.** The last two rows are included because they are the boundary a gate must not
+reject: residual df 0 is still estimable.
+
+Reachability differs between the two routes. Rows 1-3 come straight out of `summary()`. Row 4 is reported by
+`.efficiency_factor()` when handed such a frame, but `speed()` breaks the confounding within a single
+iteration (measured: still confounded `FALSE`, `summary()` then reports 0.4891), so a design that has been
+through `speed()` does not normally surface it. Route 1 is the one users hit.
+
+**Why G12's gate does not catch either.** `has_grid` is `TRUE` throughout: the coordinates are unique, so
+`grid_index()` is satisfied and there is nothing for `.efficiency_factor()` to refuse. G12 gates on *can this
+be one grid*, a coordinate property; this is a *rank* property of the model fitted on that grid. Different
+question, so no amount of coordinate validation reaches it. The `< 3 treatments` guard already in
+`.efficiency_factor()` is the only rank-adjacent check today, and it is far too weak.
+
+**Why it matters more than the MET case.** The 4×3-with-12-unreplicated-entries row is not a pathological
+fixture — it is an ordinary early-generation trial, and it is the *same shape* D7 measures at 1.833 per site
+inside a MET. So the impossible value is reachable from a completely routine single-site call, not only from
+the MET path everyone already knows is broken.
+
+**Fix.** Gate `calculate_efficiency_factor()` (or `.efficiency_factor()`) on the treatment information matrix
+having rank `k − 1` after eliminating the row and column space, and report unavailable with a reason when it
+does not. A rank test covers both routes above; a residual-df test covers only the first. This is exactly D7
+recommendation 2's check applied to a single grid, which is why A4 now says to build it as a property of one
+information matrix rather than inside the MET path. Landing it here first is the cheaper order: G14 needs no
+grouping column and no D7 answer, and D7 recommendation 2 then inherits the gate instead of introducing it.
+
+Two details for whoever implements it. The exact spot is
+[metrics.R:749](R/metrics.R#L749) — `V <- pseudo_inverse(A_RC)`, applied to the treatment information matrix
+**unconditionally**, with no rank check. (Contrast [metrics.R:733-740](R/metrics.R#L733-L740), where the
+nuisance space `ZtZ` *is* guarded by a `kappa()` test before choosing `pseudo_inverse()` over `solve()`.) So
+the test is `rank(A_RC) == k − 1`, placed before line 749; sanity-checking the number that comes out is the
+wrong shape. Second, clamping or `NA`-ing anything above 1 would also be wrong: it hides the confounded case
+(row 4) behind a plausible value instead of reporting that the design cannot support the estimate.
+
+**Not in scope for this branch** — it is pre-existing, it is not caused by coordinate construction, and
+`REVIEW-NOTES-EFFICIENCY.md` owns the efficiency statistics (branch `feature/a-optimality` exists). Recorded
+here because G13 item 5 and D7 both assume the only bad efficiency value is the MET one, and that is not
+true.
+
+### A5.1 Also found while probing — belongs in `REVIEW-NOTES-SUMMARY.md`
+
+`summary()` **errors outright** on a single-row or single-column design:
+
+```
+summary(<1x6 design>, efficiency = TRUE)
+#> Error: contrasts can be applied only to factors with 2 or more levels
+```
+
+Thrown from `.design_connectedness()` via `model.matrix()`, because a spatial factor with one level has no
+contrasts. Unrelated to the grid work — this branch does not touch `.design_connectedness()` — and it is why
+the table above passes `connectedness = FALSE`. Noted so it is not lost; it needs the same treatment as G12,
+i.e. report unavailable with a reason rather than propagating the error.

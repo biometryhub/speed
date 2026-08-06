@@ -1,6 +1,6 @@
-# Regression tests for the grid-orientation fix. Every expected value here is
-# derived from the (row, col) coordinates by hand, never by reshaping the
-# treatment column -- reshaping is the bug these tests exist to catch.
+# Grid metrics must describe the layout the coordinates define, whatever order
+# the data frame is in. Every expected value here is derived from the (row, col)
+# coordinates by hand, never by reshaping the treatment column.
 
 # --- calculate_adjacency_score() composability -------------------------------
 
@@ -24,8 +24,8 @@ test_that("adjacency score is the same for either input ordering", {
 })
 
 test_that("calculate_adjacency_score() composes with initialise_design_df()", {
-  # initialise_design_df() emits column-major data. A byrow = TRUE fill scored
-  # this layout as 6 when the correct answer is 0.
+  # initialise_design_df() emits column-major data, and no treatment neighbours
+  # itself in this layout, so the score is 0.
   #   col 1  col 2  col 3
   # row 1: a      c      b
   # row 2: b      a      c
@@ -118,9 +118,8 @@ test_that("piepho components match hand-derived values on a non-square grid", {
 })
 
 test_that("piepho does not overwrite the treatment column it was given", {
-  # The objective used to write a column-major flatten of the grid back into
-  # `design`, which permuted the treatments against their coordinates before
-  # the balance and adjacency components were computed.
+  # Balance and adjacency must come out identical to computing them on `design`
+  # directly, i.e. the treatments stay aligned with their coordinates.
   df <- initialise_design_df(
     items = rep(LETTERS[1:4], 6),
     nrows = 4,
@@ -245,9 +244,8 @@ test_that("a genuine ring_weights length mismatch is still an error", {
 # --- calculate_efficiency_factor() -------------------------------------------
 
 test_that("efficiency factor does not depend on the input row ordering", {
-  # It used to walk a plot counter through nested row/col loops, so it assumed
-  # a complete grid in row-major order and silently scored a different layout
-  # for anything else - including initialise_design_df()'s column-major output.
+  # initialise_design_df() emits column-major data, so this is the ordering a
+  # caller is most likely to arrive with.
   col_major <- initialise_design_df(
     items = rep(LETTERS[1:3], 4),
     nrows = 4,
@@ -260,9 +258,8 @@ test_that("efficiency factor does not depend on the input row ordering", {
     calculate_efficiency_factor(col_major, treatment),
     calculate_efficiency_factor(row_major, treatment)
   )
-  # Row-major was already correct, so its value must be unchanged. Column-major
-  # returned 1.5 - impossible for an efficiency factor, and the symptom that
-  # made this visible.
+  # Pinned so the shared value cannot drift: an efficiency factor is bounded
+  # above by 1, and a value over it means a rank-deficient information matrix.
   expect_equal(calculate_efficiency_factor(row_major, treatment), 0.9375)
 })
 
@@ -289,8 +286,7 @@ test_that("efficiency factor is unaffected by an offset coordinate origin", {
   # a de-buffered design arrives with coordinates that neither start at 1 nor
   # run consecutively. The gaps leave empty indicator columns in Z, making ZtZ
   # singular; the kappa() check routes to pseudo_inverse() and they contribute
-  # nothing. The positional fill this replaced could not get that far - it ran
-  # its plot counter past the end of Z and errored (subscript out of bounds).
+  # nothing, so the value is unchanged.
   base <- initialise_design_df(
     items = rep(LETTERS[1:3], 4),
     nrows = 4,

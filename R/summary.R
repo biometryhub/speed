@@ -75,7 +75,10 @@
 #' - **hierarchical** - `TRUE` for a multi-level (e.g. split-plot) design.
 #' - **layout** - `n_plots`, `nrow`, `ncol`, `row_column`, `col_column`,
 #'   `has_grid` (`TRUE` when the design is reportable as a single grid), and
-#'   `grid_reason` (why not, or `NA`). `nrow`/`ncol` are `NA` unless `has_grid`.
+#'   `grid_reason` (why not, or `NA`). `nrow`/`ncol` count the rows and columns
+#'   the design *occupies*, so a design with a gap in its coordinates (a missing
+#'   plot, or a removed buffer) reports fewer than the coordinates span. Both are
+#'   `NA` unless `has_grid`.
 #' - **levels** - character vector of level names (e.g. `"wp"`/`"sp"`; a single
 #'   name for a simple design).
 #' - **per_level** - one element per level (named by `levels`), each a list with:
@@ -137,12 +140,18 @@ summary.design <- function(
 
   want_neighbour <- is.null(neighbour) || isTRUE(neighbour)
 
-  # `has_grid` means "reportable as one grid", not merely "row/col columns
-  # exist". A design with duplicate coordinates spans several grids of possibly
-  # different shapes, so no single `nrow` x `ncol` describes it - reporting one
-  # would claim a layout that holds fewer plots than the design has.
-  grid_ok <- .single_grid(df, rc, cc)
-  has_grid <- isTRUE(grid_ok)
+  # The one coordinate validation for the whole summary: `grid` is either a
+  # `grid_index()` list or the reason there isn't one, and every grid metric
+  # below takes it rather than re-deriving it once per level.
+  #
+  # `has_grid` therefore means "reportable as one grid", not merely "row/col
+  # columns exist": a design with duplicate coordinates spans several grids of
+  # possibly different shapes, so no single `nrow` x `ncol` describes it.
+  grid <- tryCatch(
+    grid_index(df, row_column = rc, col_column = cc),
+    speed_grid_error = function(e) return(e$reason)
+  )
+  has_grid <- !is.character(grid)
   layout <- list(
     n_plots = nrow(df),
     nrow = if (has_grid) length(unique(df[[rc]])) else NA_integer_,
@@ -150,7 +159,7 @@ summary.design <- function(
     row_column = rc,
     col_column = cc,
     has_grid = has_grid,
-    grid_reason = if (has_grid) NA_character_ else grid_ok
+    grid_reason = if (has_grid) NA_character_ else grid
   )
 
   per_level <- lapply(levels, function(lv) {
@@ -198,7 +207,7 @@ summary.design <- function(
 
     # --- Evaluation metrics ---
     evaluation <- list(
-      replicate_span = .replicate_spans(df, swap, rc, cc),
+      replicate_span = .replicate_spans(df, swap, rc, cc, grid),
       connectedness = if (isFALSE(connectedness)) {
         list(
           available = FALSE,
@@ -230,19 +239,19 @@ summary.design <- function(
         .block_spread(df, swap, block)
       },
       efficiency = if (isTRUE(efficiency)) {
-        .efficiency_factor(df, swap, rc, cc)
+        .efficiency_factor(df, swap, rc, cc, grid)
       } else {
         list(
           available = FALSE,
           reason = "not requested (set efficiency = TRUE)"
         )
       },
-      # Each grid metric checks its own preconditions via .single_grid(), so a
-      # design that cannot be gridded reports a reason rather than erroring.
+      # A design that cannot be gridded reports `grid`'s reason rather than
+      # erroring.
       neighbour = if (!want_neighbour) {
         list(available = FALSE, reason = "not requested (neighbour = FALSE)")
       } else {
-        .neighbour_balance(df, swap, rc, cc)
+        .neighbour_balance(df, swap, rc, cc, grid)
       }
     )
 
@@ -685,13 +694,13 @@ print.summary.design <- function(x, ...) {
 #' @param df Design data frame.
 #' @param swap Treatment column name.
 #' @param rc,cc Row and column column names.
+#' @param grid A [grid_index()] list, or a character reason there is no grid.
 #' @keywords internal
-.replicate_spans <- function(df, swap, rc, cc) {
+.replicate_spans <- function(df, swap, rc, cc, grid) {
   # Spans are distances within one grid; across grids they are meaningless
   # (two sites' row 3 are not one plot apart), so refuse rather than pool.
-  ok <- .single_grid(df, rc, cc)
-  if (!isTRUE(ok)) {
-    return(list(available = FALSE, reason = ok))
+  if (is.character(grid)) {
+    return(list(available = FALSE, reason = grid))
   }
   span1 <- function(x) {
     if (length(x) < 2) {
@@ -720,64 +729,6 @@ print.summary.design <- function(x, ...) {
       NA_real_
     },
     n_replicated = sum(has_reps)
-  ))
-}
-
-#' Can This Design Be Placed on a Single Grid?
-#'
-#' @description
-#' Predicate form of [grid_index()], for the diagnostics that need a grid.
-#' Returns `TRUE`, or a short reason, so a summary can report one metric as
-#' unavailable instead of failing outright.
-#'
-#' Delegates rather than repeating the coordinate rules, so the two cannot
-#' drift: [grid_index()] stays the only place that decides what a valid grid is,
-#' and signals which rule failed by condition class. Reasons here are phrased for
-#' a summary field, where `grid_index()`'s messages - written for someone calling
-#' a metric directly - would read as instructions.
-#'
-#' Duplicate coordinates usually mean the design occupies more than one grid: a
-#' multi-environment trial reuses `row`/`col` per site. Every grid metric is
-#' wrong for those, not merely uncomputable, because they pool sites that share
-#' no edge. Reporting them as unavailable is the honest answer until the metrics
-#' can take a grouping factor.
-#'
-#' @param df Design data frame.
-#' @param rc,cc Row and column column names.
-#'
-#' @returns `TRUE`, or a length-1 character reason.
-#'
-#' @keywords internal
-.single_grid <- function(df, rc, cc) {
-  return(tryCatch(
-    {
-      grid_index(df, row_column = rc, col_column = cc)
-      TRUE
-    },
-    speed_grid_error = function(e) {
-      # Stated as a fact rather than an interpretation: duplicate coordinates
-      # are usually a multi-site design, but a malformed one looks the same.
-      return(switch(
-        class(e)[[1]],
-        speed_grid_missing = "no row/column factors",
-        speed_grid_nonnumeric = sprintf(
-          "`%s`/`%s` labels are not numeric",
-          rc,
-          cc
-        ),
-        speed_grid_notinteger = sprintf(
-          "`%s`/`%s` are not positive whole numbers",
-          rc,
-          cc
-        ),
-        speed_grid_duplicate = sprintf(
-          "duplicate `%s`/`%s` coordinates (e.g. a multi-site design)",
-          rc,
-          cc
-        ),
-        conditionMessage(e)
-      ))
-    }
   ))
 }
 
@@ -967,14 +918,14 @@ print.summary.design <- function(x, ...) {
 #' reason rather than erroring when its assumptions are not met.
 #'
 #' @param rc,cc Row and column column names.
+#' @param grid A [grid_index()] list, or a character reason there is no grid.
 #' @keywords internal
-.efficiency_factor <- function(df, swap, rc, cc) {
+.efficiency_factor <- function(df, swap, rc, cc, grid) {
   # Not just a guard against erroring: on duplicate coordinates
   # calculate_efficiency_factor() pools the grids and silently returns a value
   # above 1, which is impossible for an efficiency factor.
-  ok <- .single_grid(df, rc, cc)
-  if (!isTRUE(ok)) {
-    return(list(available = FALSE, reason = ok))
+  if (is.character(grid)) {
+    return(list(available = FALSE, reason = grid))
   }
   if (length(unique(df[[swap]])) < 3) {
     return(list(available = FALSE, reason = "requires >= 3 treatments"))
@@ -1011,29 +962,30 @@ print.summary.design <- function(x, ...) {
 #' whereas a distinct pair that never neighbours is an imbalance. Lumping them
 #' together hides self-adjacency behind the same `min 0` as the harmless case.
 #'
-#' The grid is built by [build_design_matrix()], which places each plot at its
-#' own `rc`/`cc` coordinates. Reshaping the treatment column with `matrix()`
-#' instead would assume the data frame's row order matches the fill order, which
-#' is false for any non-square design (`speed()` sorts row-major; `matrix()`
-#' fills column-major) and produced adjacency counts for a layout that wasn't
-#' the design.
+#' The grid comes from [build_design_matrix()], which places each plot at its own
+#' `rc`/`cc` coordinates, so the counts describe the layout whatever order `df`
+#' is in. Coordinates are read as-is, so plots separated by a buffer row or
+#' column (`add_buffers()` offsets and scales them) keep that separation and are
+#' not counted as neighbours.
 #'
-#' Coordinates are read as-is, so a design whose plots are separated by a buffer
-#' row or column (`add_buffers()` offsets and scales them) keeps that separation:
-#' plots either side of a buffer are not counted as neighbours.
-#'
-#' Guarded by `.single_grid()`, so a design that cannot be placed on one grid is
-#' reported as unavailable rather than propagating [build_design_matrix()]'s
-#' error out of `summary()`.
+#' A design that cannot be placed on one grid is reported as unavailable rather
+#' than propagating [grid_index()]'s error out of `summary()`.
 #'
 #' @param rc,cc Row and column column names.
+#' @param grid A [grid_index()] list, reused as the [build_design_matrix()]
+#'   index, or a character reason there is no grid.
 #' @keywords internal
-.neighbour_balance <- function(df, swap, rc, cc) {
-  ok <- .single_grid(df, rc, cc)
-  if (!isTRUE(ok)) {
-    return(list(available = FALSE, reason = ok))
+.neighbour_balance <- function(df, swap, rc, cc, grid) {
+  if (is.character(grid)) {
+    return(list(available = FALSE, reason = grid))
   }
-  dm <- build_design_matrix(df, swap, row_column = rc, col_column = cc)
+  dm <- build_design_matrix(
+    df,
+    swap,
+    row_column = rc,
+    col_column = cc,
+    index = grid
+  )
   pair_mapping <- create_pair_mapping(df[[swap]])
   nb <- calculate_nb(dm, pair_mapping)
 

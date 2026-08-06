@@ -1,6 +1,16 @@
 # Tests for summary.design / print.summary.design (Phase 3: Structure +
 # Optimisation + flags). Evaluation metrics are covered separately.
 
+# The `grid` argument the evaluation helpers take: a grid_index() list, or the
+# reason there is no grid. summary.design() builds it inline, once per call;
+# tests calling a helper directly need the same value.
+grid_or_reason <- function(df, rc = "row", cc = "col") {
+  return(tryCatch(
+    grid_index(df, row_column = rc, col_column = cc),
+    speed_grid_error = function(e) return(e$reason)
+  ))
+}
+
 simple_design <- function(iterations = 200, seed = 42) {
   d <- data.frame(
     row = rep(1:4, times = 3),
@@ -119,8 +129,7 @@ test_that("score components are faithful for non-default objectives (piepho)", {
     quiet = TRUE
   )
   sc <- summary(r)$per_level[[1]]$score
-  # Piepho exposes four additive components that sum to its score - the bug this
-  # fixes was the old adjacency+balance recompute not matching the piepho score.
+  # Piepho exposes four additive components, which must sum to its score.
   expect_named(
     sc$components,
     c("neighbour_balance", "even_distribution", "balance", "adjacency")
@@ -643,16 +652,12 @@ test_that("efficiency is opt-in and guarded", {
   expect_true(is.finite(on$value))
 
   # Guard: < 3 treatments returns NA with a reason rather than erroring.
-  two <- .efficiency_factor(
-    data.frame(
-      row = rep(1:2, 2),
-      col = rep(1:2, each = 2),
-      treatment = rep(c("A", "B"), 2)
-    ),
-    "treatment",
-    "row",
-    "col"
+  d2 <- data.frame(
+    row = rep(1:2, 2),
+    col = rep(1:2, each = 2),
+    treatment = rep(c("A", "B"), 2)
   )
+  two <- .efficiency_factor(d2, "treatment", "row", "col", grid_or_reason(d2))
   expect_false(two$available)
 })
 
@@ -730,10 +735,9 @@ test_that("neighbour balance separates self-adjacency from distinct-pair counts"
   expect_true(nb$min_pair_count >= 0)
   expect_true(nb$self_adjacent >= 0)
 
-  # Cross-check by walking the (row, col) coordinates directly. Deliberately
-  # NOT matrix(treatment, nrow, ncol): that is the same reshape the
-  # implementation used to perform, so an expectation built from it validated
-  # the code against a copy of its own mistake and passed against the bug.
+  # Cross-check by walking the (row, col) coordinates directly. Deliberately NOT
+  # matrix(treatment, nrow, ncol): reshaping is what the implementation must
+  # avoid, so an expectation built that way would only confirm itself.
   coords <- r$design_df
   rr <- as.numeric(as.character(coords$row))
   cc <- as.numeric(as.character(coords$col))
@@ -919,13 +923,15 @@ test_that("designs without a row/column grid summarise and print without a grid"
   expect_match(out, "Neighbour:\\s+no row/column factors")
 })
 
-test_that(".single_grid accepts one grid and names what is wrong otherwise", {
+test_that("grid_index() conditions carry the reason summary() reports", {
+  # summary() reports `reason` in place of a metric it cannot compute, so every
+  # condition class must supply one.
   ok <- data.frame(row = c(1, 1, 2, 2), col = c(1, 2, 1, 2), treatment = "A")
-  expect_true(.single_grid(ok, "row", "col"))
+  expect_false(is.character(grid_or_reason(ok)))
 
   # A genuine hole (missing plot) is still a single grid - coordinates stay
   # unique, so the metrics must not refuse it.
-  expect_true(.single_grid(ok[-2, ], "row", "col"))
+  expect_false(is.character(grid_or_reason(ok[-2, ])))
 
   # Factor coordinates whose level order is lexical are still fine.
   lex <- data.frame(
@@ -933,23 +939,19 @@ test_that(".single_grid accepts one grid and names what is wrong otherwise", {
     col = factor(c(1, 1, 1)),
     treatment = "A"
   )
-  expect_true(.single_grid(lex, "row", "col"))
+  expect_false(is.character(grid_or_reason(lex)))
 
-  expect_equal(.single_grid(ok, "nope", "col"), "no row/column factors")
+  expect_equal(grid_or_reason(ok, "nope"), "no row/column factors")
   expect_match(
-    .single_grid(
-      data.frame(row = c("A", "B"), col = c(1, 1)),
-      "row",
-      "col"
-    ),
+    grid_or_reason(data.frame(row = c("A", "B"), col = c(1, 1))),
     "labels are not numeric"
   )
   expect_match(
-    .single_grid(data.frame(row = c(0, 1), col = c(1, 1)), "row", "col"),
+    grid_or_reason(data.frame(row = c(0, 1), col = c(1, 1))),
     "not positive whole numbers"
   )
   expect_match(
-    .single_grid(ok[c(1, 1, 2), ], "row", "col"),
+    grid_or_reason(ok[c(1, 1, 2), ]),
     "duplicate .row./.col. coordinates"
   )
 })
@@ -1014,7 +1016,15 @@ test_that("efficiency is withheld rather than reported above 1 for MET designs",
     )
   )
   expect_gt(calculate_efficiency_factor(met, treatment), 1)
-  expect_false(.efficiency_factor(met, "treatment", "row", "col")$available)
+  gate <- .efficiency_factor(
+    met,
+    "treatment",
+    "row",
+    "col",
+    grid_or_reason(met)
+  )
+  expect_false(gate$available)
+  expect_match(gate$reason, "duplicate")
 })
 
 test_that("non-numeric row/col labels are reported, not coerced silently", {
@@ -1107,11 +1117,12 @@ test_that("buffer removal drops the unused factor level from a factor swap colum
 test_that("evaluation helpers return a reason instead of erroring on unmet assumptions", {
   no_grid <- data.frame(a = 1:3, treatment = c("A", "B", "C"))
 
-  rs <- .replicate_spans(no_grid, "treatment", "row", "col")
+  ng <- grid_or_reason(no_grid)
+  rs <- .replicate_spans(no_grid, "treatment", "row", "col", ng)
   expect_false(rs$available)
   expect_equal(rs$reason, "no row/column factors")
 
-  ef <- .efficiency_factor(no_grid, "treatment", "row", "col")
+  ef <- .efficiency_factor(no_grid, "treatment", "row", "col", ng)
   expect_false(ef$available)
   expect_equal(ef$reason, "no row/column factors")
 
@@ -1152,21 +1163,22 @@ test_that(".design_connectedness is trivially connected with no nuisance factors
 
 test_that(".efficiency_factor reports a reason when the computation fails", {
   # The wrapper must absorb an error from the underlying metric rather than
-  # propagate it. Mocked rather than provoked with a degenerate design: the
-  # 1x1 grid that used to error here is now caught earlier by .single_grid()
-  # (three plots at one coordinate are duplicates), which would leave this
+  # propagate it. Mocked rather than provoked with a degenerate design, because a
+  # design degenerate enough to fail the metric (e.g. a 1x1 grid, three plots
+  # sharing one coordinate) is rejected by grid_index() first, leaving this
   # backstop untested.
   d <- data.frame(
     row = rep(1:2, 3),
     col = rep(1:3, each = 2),
     treatment = rep(c("A", "B", "C"), 2)
   )
-  expect_true(.single_grid(d, "row", "col"))
+  grid <- grid_or_reason(d)
+  expect_false(is.character(grid))
 
   local_mocked_bindings(
     calculate_efficiency_factor = function(...) stop("cannot compute")
   )
-  ef <- .efficiency_factor(d, "treatment", "row", "col")
+  ef <- .efficiency_factor(d, "treatment", "row", "col", grid)
 
   expect_false(ef$available)
   expect_equal(ef$reason, "could not be computed for this design")

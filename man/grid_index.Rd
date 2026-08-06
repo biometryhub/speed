@@ -25,9 +25,7 @@ everything \code{\link[=build_design_matrix]{build_design_matrix()}} needs to pl
 two-column matrix index and the grid's dimensions.
 
 Split out from \code{\link[=build_design_matrix]{build_design_matrix()}} because it is the expensive half and
-the \emph{invariant} half. During annealing only the treatment column changes -
-the coordinates never do - so the index can be built once per \code{speed()} run
-and reused for every iteration. Measured on a 700-plot design, validation and
-coercion are ~87\% of the cost of a grid build.
+the \emph{invariant} half: during annealing only the treatment column changes, so
+the index can be built once per \code{speed()} run and reused every iteration.
 }
 \keyword{internal}

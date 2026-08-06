@@ -4,17 +4,19 @@
 \alias{.grid_stop}
 \title{Signal a Coordinate Problem with a Classed Condition}
 \usage{
-.grid_stop(class, ...)
+.grid_stop(class, reason, ...)
 }
 \arguments{
 \item{class}{Condition subclass naming the specific problem.}
 
+\item{reason}{Short phrase for a \code{summary()} field.}
+
 \item{...}{Pasted together to form the message.}
 }
 \description{
-The message is for someone calling a metric directly; the class lets
-\code{.single_grid()} report the same problem as a short reason in a \code{summary()}
-field, without matching on message text. Conditions are only constructed on
-failure, so the hot path is unaffected.
+Carries two phrasings of the same problem: \code{message}, for someone calling a
+metric directly, and \code{reason}, a fragment \code{summary()} reports in place of a
+metric it cannot compute. Both are defined at the throw site so they cannot
+drift, and the class lets callers dispatch without matching on message text.
 }
 \keyword{internal}

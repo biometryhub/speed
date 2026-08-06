@@ -260,12 +260,10 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   best_design <- current_design
 
   # Only the treatment column changes during annealing, so the validated grid
-  # index is invariant for the whole run and is built once here rather than on
-  # every iteration - it is ~87% of the cost of a grid build. Built with
-  # tryCatch so this stays lazy: a design whose coordinates cannot form a grid
-  # (duplicates from a MET, non-numeric labels) must still run if its objective
-  # never needs a grid, and must still raise the same error from the same place
-  # if it does. `NULL` restores exactly the old behaviour.
+  # index is invariant for the whole run and is built once here rather than every
+  # iteration. `NULL` on failure keeps this lazy: a design whose coordinates
+  # cannot form a grid still runs if its objective never needs one, and still
+  # errors from build_design_matrix() if it does.
   dots <- list(...)
   grid_idx <- tryCatch(
     grid_index(

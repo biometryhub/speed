@@ -867,19 +867,20 @@ initialize_design_df <- initialise_design_df
 #' Signal a Coordinate Problem with a Classed Condition
 #'
 #' @description
-#' The message is for someone calling a metric directly; the class lets
-#' `.single_grid()` report the same problem as a short reason in a `summary()`
-#' field, without matching on message text. Conditions are only constructed on
-#' failure, so the hot path is unaffected.
+#' Carries two phrasings of the same problem: `message`, for someone calling a
+#' metric directly, and `reason`, a fragment `summary()` reports in place of a
+#' metric it cannot compute. Both are defined at the throw site so they cannot
+#' drift, and the class lets callers dispatch without matching on message text.
 #'
 #' @param class Condition subclass naming the specific problem.
+#' @param reason Short phrase for a `summary()` field.
 #' @param ... Pasted together to form the message.
 #'
 #' @keywords internal
-.grid_stop <- function(class, ...) {
+.grid_stop <- function(class, reason, ...) {
   stop(structure(
     class = c(class, "speed_grid_error", "error", "condition"),
-    list(message = paste0(...), call = NULL)
+    list(message = paste0(...), reason = reason, call = NULL)
   ))
 }
 
@@ -891,10 +892,8 @@ initialize_design_df <- initialise_design_df
 #' two-column matrix index and the grid's dimensions.
 #'
 #' Split out from [build_design_matrix()] because it is the expensive half and
-#' the *invariant* half. During annealing only the treatment column changes -
-#' the coordinates never do - so the index can be built once per `speed()` run
-#' and reused for every iteration. Measured on a 700-plot design, validation and
-#' coercion are ~87% of the cost of a grid build.
+#' the *invariant* half: during annealing only the treatment column changes, so
+#' the index can be built once per `speed()` run and reused every iteration.
 #'
 #' @param df A data frame with columns named by `row_column` and `col_column`.
 #' @param row_column Column name of the row position variable (default `"row"`).
@@ -914,6 +913,7 @@ grid_index <- function(df, row_column = "row", col_column = "col") {
   if (length(missing_cols)) {
     .grid_stop(
       "speed_grid_missing",
+      "no row/column factors",
       "Cannot place the design on a grid: no ",
       paste0("`", missing_cols, "`", collapse = " or "),
       " column."
@@ -926,6 +926,7 @@ grid_index <- function(df, row_column = "row", col_column = "col") {
   if (anyNA(rows) || anyNA(cols)) {
     .grid_stop(
       "speed_grid_nonnumeric",
+      sprintf("`%s`/`%s` labels are not numeric", row_column, col_column),
       "Cannot place the design on a grid: `",
       row_column,
       "` and `",
@@ -940,6 +941,11 @@ grid_index <- function(df, row_column = "row", col_column = "col") {
   ) {
     .grid_stop(
       "speed_grid_notinteger",
+      sprintf(
+        "`%s`/`%s` are not positive whole numbers",
+        row_column,
+        col_column
+      ),
       "`",
       row_column,
       "` and `",
@@ -953,6 +959,11 @@ grid_index <- function(df, row_column = "row", col_column = "col") {
   if (anyDuplicated(idx)) {
     .grid_stop(
       "speed_grid_duplicate",
+      sprintf(
+        "duplicate `%s`/`%s` coordinates (e.g. a multi-site design)",
+        row_column,
+        col_column
+      ),
       "Duplicate (",
       row_column,
       ", ",
@@ -977,9 +988,8 @@ grid_index <- function(df, row_column = "row", col_column = "col") {
 #' and `col_column` coordinates, returning a character matrix of dimensions
 #' `max(row)` by `max(col)`. Cells with no corresponding row in `df` are `NA`.
 #'
-#' Unlike filling via `matrix(..., byrow = )`, this reads the coordinates rather
-#' than assuming an ordering, so it is correct for any row ordering of `df` and
-#' for factor coordinate columns whose level order is not numeric.
+#' Each plot's position comes from its own coordinates, so the row ordering of
+#' `df` is irrelevant, as is the level order of factor coordinate columns.
 #'
 #' Coordinates are used as-is, never renumbered: a gap in the coordinates is a
 #' real gap in the field (a missing plot, or a buffer that was removed), so
@@ -1010,8 +1020,9 @@ build_design_matrix <- function(
   if (is.null(index)) {
     index <- grid_index(df, row_column, col_column)
   } else if (!identical(index$n, nrow(df))) {
-    # A stale index would place treatments at the wrong coordinates silently,
-    # so the one cheap consistency check is worth keeping.
+    # Catches an index built for a different design only when the plot count
+    # differs; a same-length index with different coordinates is not detectable
+    # here, so callers still own keeping the two in step.
     stop(
       "`index` was built for ",
       index$n,

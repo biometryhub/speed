@@ -3,11 +3,6 @@
 # `items` *down columns* - `expand.grid(row, col)` varies `row` fastest - so a
 # row-major literal has to be transposed before it is handed over, or the design
 # stored at those coordinates is not the one written here.
-#
-# This used to be invisible: `calculate_efficiency_factor()` also filled its
-# grid positionally in row-major order, so the two conventions cancelled and the
-# paper's values came back from a design the package had not actually stored.
-# Now that it reads the coordinates, the transpose has to be explicit.
 by_row <- function(items, nrows, ncols) {
   initialise_design_df(
     as.vector(matrix(items, nrow = nrows, ncol = ncols, byrow = TRUE)),

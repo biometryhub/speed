@@ -4,7 +4,7 @@
 \alias{.replicate_spans}
 \title{Replicate spatial spans}
 \usage{
-.replicate_spans(df, swap, rc, cc)
+.replicate_spans(df, swap, rc, cc, grid)
 }
 \arguments{
 \item{df}{Design data frame.}
@@ -12,6 +12,8 @@
 \item{swap}{Treatment column name.}
 
 \item{rc, cc}{Row and column column names.}
+
+\item{grid}{A \code{\link[=grid_index]{grid_index()}} list, or a character reason there is no grid.}
 }
 \description{
 For each treatment, the minimum Manhattan separation between its replicate
