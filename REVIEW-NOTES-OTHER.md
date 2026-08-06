@@ -248,6 +248,12 @@ sparse design violates. `summary()`'s `.efficiency_factor()` wrapper catches the
 `available = FALSE`, so it fails safely rather than fabricating a number (see S4 in
 `REVIEW-NOTES-SUMMARY.md`).
 
+**Why a buffered design violates it:** `add_buffers()` (R/buffers.R) shifts or scales the real
+design's coordinates — `type = "edge"` does `design$row <- design$row + 1` before appending the buffer
+rows, `type = "row"` doubles them. Stripping the buffer rows back out does not undo the offset, so the
+remaining plots no longer occupy a contiguous 1-indexed lattice and `n_rows * n_cols` exceeds
+`n_plots`. Fixing it at the source, inside `add_buffers()`, is the direction recorded in D6.
+
 Making it handle a sparse plot set is a bigger job than the other items here — the row/col indicator
 matrices assume a complete lattice. **Keep it separable**; possibly its own small PR.
 
