@@ -10,17 +10,21 @@
 |---|---|
 | **this file** | `feature/incidence` (PR #97) — `R/incidence.R` |
 | `REVIEW-NOTES-SUMMARY.md` | the merged `summary()` work — `R/summary.R` |
-| `REVIEW-NOTES-OTHER.md` | grid construction / core metrics bugs, and PR #91 |
+| `REVIEW-NOTES-OTHER.md` | grid construction / core metrics — `bugfix/grid-orientation` |
+| `REVIEW-NOTES-PR91.md` | PR #91 `info-objective` |
 
-**Last verified:** 2026-08-04, R 4.6.1, `pkgload::load_all()`. Branch at `1536991` (current `main`
-`a36d302` merged in). All numbers measured, not inferred. Full suite: 1667 pass, 0 fail.
+**Last verified:** 2026-08-06, R 4.6.1, `pkgload::load_all()`. All numbers measured, not inferred.
 
-> ⚠️ **This branch is currently ~75% not-this-feature.** It touches four `R/` files, and only
-> `R/incidence.R` is the incidence feature. The other three — `R/design_utils.R`
-> (`build_design_matrix()`), `R/calculate_adjacency_score.R`, `R/metrics.R` — are the grid-construction
-> workstream, and **in their current state they make `objective_function_piepho()` worse, not better**.
-> That work and its blocking bug are written up in `REVIEW-NOTES-OTHER.md` Part A. Extracting it (D1
-> there) is the recommended first move, and it is a hard blocker on merging this branch as it stands.
+> ✅ **The grid-construction work has been moved off this branch.** `R/design_utils.R`,
+> `R/calculate_adjacency_score.R` and `R/metrics.R` are back to `main`'s versions, and
+> `man/build_design_matrix.Rd` is removed. The branch's diff is now just `R/incidence.R`, its two test
+> files, and docs. That work — including a blocking bug the earlier version carried — now lives on
+> **`bugfix/grid-orientation`**; see `REVIEW-NOTES-OTHER.md`.
+>
+> ⚠️ **Consequence: this branch does not load on its own until that one merges.** `R/incidence.R`
+> calls `build_design_matrix()`, which no longer exists here. That is the intended sequencing — the
+> grid branch merges to `main` first, then `main` merges cleanly into this one with no conflicts in
+> those three files.
 
 ---
 
@@ -58,9 +62,9 @@
 
 | Was | Now |
 |---|---|
-| `build_design_matrix()`, the piepho + adjacency refactor, sparse-grid/NA work, `ring_weights` | `REVIEW-NOTES-OTHER.md` Part A (G1–G6, D6) |
+| `build_design_matrix()`, the piepho + adjacency refactor, sparse-grid/NA work, `ring_weights` | `REVIEW-NOTES-OTHER.md` (G1–G8, D6) — **code moved to `bugfix/grid-orientation`** |
 | `.neighbour_balance()` being wrong, the tautological summary test | `REVIEW-NOTES-SUMMARY.md` (S1–S4) |
-| PR #91 review | `REVIEW-NOTES-OTHER.md` Part B |
+| PR #91 review | `REVIEW-NOTES-PR91.md` |
 
 ---
 
@@ -330,8 +334,9 @@ all-pairs-`= 4` expectation is right. The gaps map onto the findings above:
 
 ## 4. Plan
 
-**Depends on:** `REVIEW-NOTES-OTHER.md` Part A landing first (D1 there), if you extract the grid work.
-Answer D6 too — it determines what I2's buffer handling should report.
+**Depends on:** `bugfix/grid-orientation` landing on `main` first — `R/incidence.R` calls
+`build_design_matrix()`, which now lives only there. Answer D6 too (in `REVIEW-NOTES-OTHER.md`); it
+determines what I2's buffer handling should report.
 
 ```sh
 # after bugfix/grid-orientation merges to main
@@ -372,4 +377,4 @@ git rebase main          # or start clean: git checkout -b feature/incidence-v2 
 | Naming/semantic collision with PR #91's `calc_incidence_matrix()` / `calc_concurrence_matrix()` | **Superseded.** #91 demoted both to `@keywords internal`, so there is no competing public API. I-D2 is now a clarity call, not a conflict. |
 | `calculate_position_incidence()` is redundant against PR #91 | **Superseded.** #91 no longer exports an incidence matrix. It's still a thin `table()` wrapper — see I-D1, a different argument for the same conclusion. |
 | `calculate_nb()` and `calculate_pair_incidence()` disagree on `NA` | **Wrong for the `pair_mapping` path** — NA pairs drop cleanly in both. The no-mapping path errors instead (I5). |
-| `build_design_matrix()` and the piepho/adjacency orientation fix | **Moved** to `REVIEW-NOTES-OTHER.md` Part A. Not this feature, and it carries a blocking regression. |
+| `build_design_matrix()` and the piepho/adjacency orientation fix | **Moved.** Notes in `REVIEW-NOTES-OTHER.md`, code on `bugfix/grid-orientation` (rewritten there with coordinate validation, a duplicate-coordinate guard and the piepho write-back fix the version on this branch lacked). |
