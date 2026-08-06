@@ -56,8 +56,8 @@ measured, not inferred. Resolved findings are deleted rather than annotated — 
 > See A1.1.
 >
 > ⬜ **Moved out, each needing its own branch:** the A-efficiency upper bound and the missing intercept
-> (`REVIEW-NOTES-EFFICIENCY.md`); the S3 class collision, the `initialise_design_df()` fill order, the
-> redundant row-major sort and the incremental-grid-mutation option (`KNOWN_ISSUES.md` #2, #3, #4, #6).
+> (`REVIEW-NOTES-EFFICIENCY.md`); the S3 class collision, the `initialise_design_df()` fill order and
+> the redundant row-major sort (`KNOWN_ISSUES.md` #2, #3, #4).
 
 ---
 
@@ -116,9 +116,11 @@ prediction that hoisting would land *below* `matrix()` did not hold — it lands
 That coercion is *not* hoistable the way validation was: the swap column is the one thing annealing
 mutates, so each call re-does the level lookup and allocates a fresh length-`n` character vector. The
 below-parity figure came from a micro-benchmark that pre-coerced the column outside the timing loop, which
-only holds if nothing is being optimised. Removing that last cost means carrying a mutable grid across
-iterations — recorded as `KNOWN_ISSUES.md` #6, deliberately not bundled here because it changes the
-objective-function contract this work stayed additive to.
+only holds if nothing is being optimised. Parity is therefore the floor for a rebuild-per-iteration grid,
+and it is accepted: the only way past it is to carry a mutable grid across iterations, which was
+considered and **ruled out** (Sam, 2026-08-06). It would need a contract change to the objective-function
+signature, and it is capped at under 3% of a run — the grid build is ~15 µs of a ~570 µs iteration, while
+`adjacency_score_vec()` is O(n × offsets) per iteration however the grid arrives.
 
 `grid_index()` also gained a missing-column check, found by this work: a design with no grid columns
 reached `max()` with empty vectors and produced `-Inf` dimensions plus two warnings.
