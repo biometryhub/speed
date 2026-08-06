@@ -9,31 +9,20 @@
 
 ## Bug Fixes
 
-- `objective_function_piepho()` now builds the design grid from the `row`/`col` coordinates rather
-  than the data frame's row order, and no longer overwrites the treatment column with a flattened
-  grid. All four score components are computed on the actual layout, and the score no longer depends
-  on how the input rows are ordered. Designs generated with this objective should be regenerated.
-- `calculate_adjacency_score()` is now correct for any row ordering of its input, including the
-  column-major output of `initialise_design_df()`.
+- Design metrics are now built from each plot's `row`/`col` coordinates rather than the order of the
+  rows in the data frame, so they describe the actual layout. This corrects
+  `calculate_adjacency_score()`, `calculate_efficiency_factor()`, `objective_function_piepho()` and
+  `summary()`'s neighbour balance; designs generated with `objective_function_piepho()` should be
+  regenerated.
 - `calculate_nb()` no longer errors on designs with missing plots when `pair_mapping` is not
   supplied.
-- `calculate_efficiency_factor()` now builds its row and column indicators from the `row`/`col`
-  coordinates rather than the data frame's row order, so it returns the same value for a design
-  however its rows are ordered. Previously a non-square design not supplied in row-major order could
-  return an incorrect value, including one greater than 1.
 - `calculate_adjacency_score()` now recycles a single `ring_weights` value across every entry of
-  `ring_dists`, so the documented default is usable with more than one ring.
-- `summary()` no longer reports incorrect neighbour-balance figures (self-adjacency, pair minimum,
-  maximum, variance and zero-count) for designs whose grid is not square. Neighbour balance is now
-  read from the plot coordinates, so plots separated by a buffer row or column are no longer counted
-  as neighbours.
+  `ring_dists`, so the default is usable with more than one ring.
 
 ## Minor Changes
 
-- A design whose `row`/`col` columns cannot be read as numbers now fails with a single message
-  naming the problem, instead of several coercion warnings followed by an `invalid 'nrow' value`
-  error. Designs whose plots share a `row`/`col` coordinate, such as an unsplit multi-site design,
-  are also reported explicitly rather than silently keeping one plot per position.
+- Designs whose `row`/`col` columns are not numeric, or where two plots share a coordinate, now fail
+  with a message naming the problem.
 
 # speed 0.0.9
 
