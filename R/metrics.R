@@ -172,6 +172,7 @@ objective_function_factorial <- function(layout_df,
 #'
 #' @export
 calculate_balance_score <- function(layout_df, swap, spatial_cols) {
+  .warn_if_buffers(layout_df[[swap]], "calculate_balance_score")
   score <- sapply(spatial_cols, function(el) {
     sum(
       matrixStats::rowVars(
@@ -690,6 +691,7 @@ calculate_efficiency_factor <- function(
   col_column = "col"
 ) {
   item <- as.character(substitute(item))
+  .warn_if_buffers(design_df[[item]], "calculate_efficiency_factor")
 
   # Design parameters
   encoded_items <- as.integer(as.factor(design_df[[item]]))

@@ -576,3 +576,52 @@ test_that("rbind_fill works with an empty data frame", {
   expect_equal(ab_fill$x, a$x)
   expect_equal(ab_fill$y, a$y)
 })
+
+test_that(".warn_if_buffers names the calling function", {
+  expect_warning(
+    .warn_if_buffers(factor(c("A", "B", "buffer")), "test_fn_a"),
+    "^test_fn_a\\(\\) was given a design that still contains buffer plots"
+  )
+})
+
+test_that(".warn_if_buffers is silent without a buffer level", {
+  expect_no_warning(.warn_if_buffers(factor(c("A", "B")), "test_fn_b"))
+  expect_no_warning(.warn_if_buffers(c("A", "B"), "test_fn_c"))
+})
+
+test_that("the metrics warn when handed a design containing buffers", {
+  d <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+  r <- speed(
+    d,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 50,
+    seed = 1,
+    quiet = TRUE
+  )
+  buffered <- add_buffers(r, "edge")$design_df
+
+  expect_warning(
+    calculate_adjacency_score(buffered, "treatment"),
+    "still contains buffer plots"
+  )
+  expect_warning(
+    calculate_balance_score(buffered, "treatment", c("row", "col")),
+    "still contains buffer plots"
+  )
+  expect_warning(
+    calculate_efficiency_factor(buffered, "treatment"),
+    "still contains buffer plots"
+  )
+})
+
+test_that("the metrics stay silent for an unbuffered design", {
+  d <- initialise_design_df(rep(LETTERS[1:3], 4), 4, 3)
+  expect_no_warning(calculate_adjacency_score(d, "treatment"))
+  expect_no_warning(calculate_balance_score(d, "treatment", c("row", "col")))
+})

@@ -256,6 +256,7 @@ calculate_adjacency_score <- function(
   relationship = NULL
 ) {
   ring_type <- match.arg(ring_type)
+  .warn_if_buffers(layout_df[[swap]], "calculate_adjacency_score")
 
   design_matrix <- build_design_matrix(
     layout_df,

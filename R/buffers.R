@@ -19,10 +19,20 @@ create_buffers <- function(
   nrow <- max(as_numeric_factor(design$row))
   ncol <- max(as_numeric_factor(design$col))
 
+  # Each branch displaces the real plots' coordinates to make room for the
+  # buffers, as `scale * coord + shift`. `tf` records that displacement next to
+  # the line applying it so the two cannot drift apart; `add_buffers()` stores
+  # it so `.drop_buffer_rows()` can invert it and recover the design's own
+  # coordinates. Default is the identity, for the axis a buffer type leaves
+  # alone.
+  tf <- list(row = c(scale = 1, shift = 0), col = c(scale = 1, shift = 0))
+
   # Match edge, edges or e
   if (grepl("(^edges?$|^e$)", tolower(type))) {
     design$row <- design$row + 1
     design$col <- design$col + 1
+    tf$row <- c(scale = 1, shift = 1)
+    tf$col <- c(scale = 1, shift = 1)
 
     min_row <- min(design$row)
     min_col <- min(design$col)
@@ -34,6 +44,7 @@ create_buffers <- function(
   } else if (grepl("(^rows?$|^r$)", tolower(type))) {
     # Match row, rows, r
     design$row <- 2 * design$row
+    tf$row <- c(scale = 2, shift = 0)
 
     min_row <- min(design$row)
     min_col <- min(design$col)
@@ -45,6 +56,7 @@ create_buffers <- function(
   } else if (grepl("(^col(umn)?s?$|^c$)", tolower(type))) {
     # Match col, cols, column, columns or c
     design$col <- 2 * design$col
+    tf$col <- c(scale = 2, shift = 0)
 
     min_row <- min(design$row)
     min_col <- min(design$col)
@@ -56,6 +68,7 @@ create_buffers <- function(
   } else if (grepl("(^double rows?$|^dr$)", tolower(type))) {
     # Match double row, double rows, or dr
     design$row <- (3 * design$row) - 1
+    tf$row <- c(scale = 3, shift = -1)
 
     min_row <- min(design$row)
     min_col <- min(design$col)
@@ -70,6 +83,7 @@ create_buffers <- function(
   } else if (grepl("(^double col(umn)?s?$|^dc$)", tolower(type))) {
     # Match double col, double cols, double column, double columns, dc
     design$col <- (3 * design$col) - 1
+    tf$col <- c(scale = 3, shift = -1)
 
     min_row <- min(design$row)
     min_col <- min(design$col)
@@ -129,7 +143,40 @@ create_buffers <- function(
 
   design <- rbind(design, buffers)
 
+  # Carried as an attribute rather than a list return so the existing callers
+  # keep receiving a plain data frame; `add_buffers()` strips it.
+  attr(design, "buffer_transform") <- tf
   return(design)
+}
+
+#' Compose two buffer coordinate displacements
+#'
+#' Each [add_buffers()] call displaces the coordinates it is given, so stacking
+#' calls composes the displacements: applying `new` on top of `old` gives
+#' `scale = new$scale * old$scale` and `shift = new$scale * old$shift +
+#' new$shift`. Composing (rather than overwriting) is what lets
+#' `.drop_buffer_rows()` recover the original coordinates from a design that has
+#' been buffered more than once, e.g. `add_buffers(add_buffers(d, "row"), "col")`.
+#'
+#' @param old,new Transform records, each a list of `row` and `col` named
+#'   `c(scale, shift)` vectors. `old` may be `NULL`, for a first call.
+#'
+#' @returns A transform record of the same shape.
+#' @keywords internal
+.compose_buffer_transform <- function(old, new) {
+  if (is.null(old)) {
+    return(new)
+  }
+  compose1 <- function(o, n) {
+    return(c(
+      scale = unname(n[["scale"]] * o[["scale"]]),
+      shift = unname(n[["scale"]] * o[["shift"]] + n[["shift"]])
+    ))
+  }
+  return(list(
+    row = compose1(old$row, new$row),
+    col = compose1(old$col, new$col)
+  ))
 }
 
 #' Add buffers to an existing design
@@ -171,11 +218,28 @@ add_buffers <- function(design_obj, type) {
   }
 
   # Create buffers and update the design dataframe
-  design_obj$design_df <- create_buffers(
+  buffered <- create_buffers(
     design_obj$design_df,
     type,
     blocks = has_blocks,
     treatment_cols = treatment_cols
+  )
+
+  # Buffers are a field-layout convenience: they must not change any statistical
+  # property of the design. Making room for them does displace the real plots'
+  # row/col coordinates, so record the displacement (composed with any earlier
+  # one) and let `.drop_buffer_rows()` undo it before anything is computed.
+  # Recording it here, rather than compensating in each metric, keeps the
+  # displacement a presentation detail that never reaches the statistics.
+  tf <- attr(buffered, "buffer_transform")
+  attr(buffered, "buffer_transform") <- NULL
+  design_obj$design_df <- buffered
+  design_obj$metadata$buffer <- list(
+    types = c(design_obj$metadata$buffer$types, type),
+    transform = .compose_buffer_transform(
+      design_obj$metadata$buffer$transform,
+      tf
+    )
   )
 
   return(design_obj)

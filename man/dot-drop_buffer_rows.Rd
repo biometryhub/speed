@@ -9,10 +9,12 @@
 \arguments{
 \item{df}{A design data frame.}
 
-\item{meta}{The design's \code{metadata} (for the per-level swap columns).}
+\item{meta}{The design's \code{metadata} (for the per-level swap columns and the
+buffer transform).}
 }
 \value{
-\code{df} with any buffer rows removed.
+\code{df} with any buffer rows removed and the design's coordinates
+restored.
 }
 \description{
 \code{add_buffers()} appends rows with the treatment column(s) set to \code{"buffer"}.
@@ -20,5 +22,20 @@ Buffers are a practical field-layout convenience, not part of the statistical
 design, so \code{print()} and \code{summary()} exclude them from every computation.
 Removes the buffer rows and the now-unused \code{"buffer"} factor level. A no-op
 when there is no metadata or no buffers.
+}
+\details{
+Also undoes the coordinate displacement \code{add_buffers()} applied to the real
+plots to make room for the buffers (\code{row * 2} for a row buffer, \code{row + 1} for
+an edge buffer, and so on - see \code{\link[=add_buffers]{add_buffers()}}), restoring the design's own
+\code{row}/\code{col} values from the transform recorded in \code{meta$buffer}. Without this
+every grid-shaped metric would score the displaced layout: a row-buffered
+design would report no row-direction neighbours at all, because each of its
+rows is separated from the next by an empty buffer row. Inverting it here,
+at the single point where buffers are stripped, is what keeps buffers a
+presentation concern - \code{autoplot()} still sees the displaced coordinates it
+needs to draw the field.
+
+Designs buffered before the transform was recorded have no \code{meta$buffer}, so
+the restoration is skipped for them.
 }
 \keyword{internal}

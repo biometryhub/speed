@@ -295,19 +295,13 @@ test_that("buffers are excluded from summary() and print() entirely", {
   )))
 })
 
-test_that("neighbour balance is unaffected by buffers (KNOWN_ISSUES.md #1a)", {
-  # add_buffers("edge") shifts row/col by 1. The grid is built from the
-  # coordinates, so the offset just leaves an empty leading row and column,
-  # which contribute no pairs. "edge" only offsets - it inserts no gap between
-  # the design's own plots - so the counts must match the unbuffered design
-  # exactly. (A "row" or "block" buffer does insert a gap, and there the counts
-  # are expected to differ: plots either side of a buffer are not neighbours.)
+buffer_test_design <- function() {
   d <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
     treatment = rep(LETTERS[1:3], 4)
   )
-  r <- speed(
+  return(speed(
     d,
     swap = "treatment",
     swap_within = "1",
@@ -316,15 +310,70 @@ test_that("neighbour balance is unaffected by buffers (KNOWN_ISSUES.md #1a)", {
     iterations = 100,
     seed = 1,
     quiet = TRUE
-  )
-  rb <- add_buffers(r, "edge")
+  ))
+}
 
-  nb_unbuffered <- summary(r)$per_level[[1]]$evaluation$neighbour
-  expect_no_warning(
-    nb_buffered <- summary(rb)$per_level[[1]]$evaluation$neighbour
+test_that("buffers do not change any evaluation metric (KNOWN_ISSUES.md #1a)", {
+  # Buffers are a field-layout convenience and must not change a single
+  # statistical property. Making room for them displaces the real plots'
+  # coordinates ("edge" shifts by 1, "row" doubles, ...), so .drop_buffer_rows()
+  # undoes that displacement before anything is computed. Every buffer type, and
+  # any stack of them, must therefore reproduce the unbuffered design exactly.
+  r <- buffer_test_design()
+  baseline <- summary(r, efficiency = TRUE)$per_level[[1]]$evaluation
+  metrics <- c("neighbour", "replicate_span", "efficiency")
+
+  for (type in c("edge", "row", "col", "double row", "double col")) {
+    expect_no_warning(
+      ev <- summary(add_buffers(r, type), efficiency = TRUE)$per_level[[1]]$evaluation
+    )
+    expect_true(ev$neighbour$available, info = type)
+    expect_equal(ev[metrics], baseline[metrics], info = type)
+  }
+})
+
+test_that("stacked add_buffers() calls compose their coordinate displacement", {
+  r <- buffer_test_design()
+  baseline <- summary(r, efficiency = TRUE)$per_level[[1]]$evaluation
+  metrics <- c("neighbour", "replicate_span", "efficiency")
+
+  for (types in list(c("row", "col"), c("row", "row"), c("edge", "row"))) {
+    stacked <- r
+    for (type in types) stacked <- add_buffers(stacked, type)
+    label <- paste(types, collapse = " + ")
+
+    expect_equal(stacked$metadata$buffer$types, types, info = label)
+    ev <- summary(stacked, efficiency = TRUE)$per_level[[1]]$evaluation
+    expect_equal(ev[metrics], baseline[metrics], info = label)
+  }
+
+  # row then row doubles twice; edge then row is 2 * (coord + 1).
+  rr <- add_buffers(add_buffers(r, "row"), "row")
+  expect_equal(rr$metadata$buffer$transform$row, c(scale = 4, shift = 0))
+  er <- add_buffers(add_buffers(r, "edge"), "row")
+  expect_equal(er$metadata$buffer$transform$row, c(scale = 2, shift = 2))
+})
+
+test_that("add_buffers() leaves the plotting coordinates displaced", {
+  # The displacement is what draws the field correctly, so it must survive in
+  # design_df; only the metrics see it undone.
+  r <- buffer_test_design()
+  rb <- add_buffers(r, "row")
+  inner <- rb$design_df[as.character(rb$design_df$treatment) != "buffer", ]
+  expect_equal(sort(unique(inner$row)), c(2, 4, 6, 8))
+  expect_equal(
+    sort(unique(.drop_buffer_rows(rb$design_df, rb$metadata)$row)),
+    c(1, 2, 3, 4)
   )
-  expect_true(nb_buffered$available)
-  expect_equal(nb_buffered, nb_unbuffered)
+})
+
+test_that("a design buffered before the transform was recorded still works", {
+  # Back-compat: no meta$buffer means no restoration, and no error.
+  r <- buffer_test_design()
+  rb <- add_buffers(r, "edge")
+  rb$metadata$buffer <- NULL
+  expect_no_error(s <- summary(rb))
+  expect_true(s$per_level[[1]]$evaluation$neighbour$available)
 })
 
 # --- Phase 4: evaluation metrics ------------------------------------------

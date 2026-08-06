@@ -632,9 +632,25 @@ print.summary.design <- function(x, ...) {
 #' Removes the buffer rows and the now-unused `"buffer"` factor level. A no-op
 #' when there is no metadata or no buffers.
 #'
+#' Also undoes the coordinate displacement `add_buffers()` applied to the real
+#' plots to make room for the buffers (`row * 2` for a row buffer, `row + 1` for
+#' an edge buffer, and so on - see [add_buffers()]), restoring the design's own
+#' `row`/`col` values from the transform recorded in `meta$buffer`. Without this
+#' every grid-shaped metric would score the displaced layout: a row-buffered
+#' design would report no row-direction neighbours at all, because each of its
+#' rows is separated from the next by an empty buffer row. Inverting it here,
+#' at the single point where buffers are stripped, is what keeps buffers a
+#' presentation concern - `autoplot()` still sees the displaced coordinates it
+#' needs to draw the field.
+#'
+#' Designs buffered before the transform was recorded have no `meta$buffer`, so
+#' the restoration is skipped for them.
+#'
 #' @param df A design data frame.
-#' @param meta The design's `metadata` (for the per-level swap columns).
-#' @return `df` with any buffer rows removed.
+#' @param meta The design's `metadata` (for the per-level swap columns and the
+#'   buffer transform).
+#' @return `df` with any buffer rows removed and the design's coordinates
+#'   restored.
 #' @keywords internal
 .drop_buffer_rows <- function(df, meta) {
   if (is.null(meta$per_level)) {
@@ -656,6 +672,31 @@ print.summary.design <- function(x, ...) {
   for (s in swap_cols) {
     if (is.factor(df[[s]])) df[[s]] <- droplevels(df[[s]])
   }
+  return(.restore_buffer_coords(df, meta))
+}
+
+#' Undo add_buffers()' coordinate displacement
+#'
+#' Inverts `scale * coord + shift` on the row and column columns. Split out from
+#' [.drop_buffer_rows()] so the two concerns - which rows are real, and where
+#' those rows actually sit - can be tested separately.
+#'
+#' @param df A design data frame with the buffer rows already removed.
+#' @param meta The design's `metadata`.
+#' @return `df` with `row`/`col` restored, or unchanged if nothing was recorded.
+#' @keywords internal
+.restore_buffer_coords <- function(df, meta) {
+  tf <- meta$buffer$transform
+  if (is.null(tf)) {
+    return(df)
+  }
+  rc <- meta$row_column %||% "row"
+  cc <- meta$col_column %||% "col"
+  undo <- function(x, t) {
+    return((as_numeric_factor(x) - t[["shift"]]) / t[["scale"]])
+  }
+  if (rc %in% names(df)) df[[rc]] <- undo(df[[rc]], tf$row)
+  if (cc %in% names(df)) df[[cc]] <- undo(df[[cc]], tf$col)
   return(df)
 }
 

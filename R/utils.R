@@ -1,3 +1,38 @@
+#' Warn when a metric is handed a design that still contains buffer plots
+#'
+#' Buffer plots are a field-layout convenience, not part of the statistical
+#' design: `"buffer"` is not a treatment, and [add_buffers()] displaces the real
+#' plots' coordinates to make room for them. `summary()` strips them (and undoes
+#' the displacement) via `.drop_buffer_rows()`, but a direct call to a metric
+#' does not, so the caller would get a score for a layout that is not the
+#' design.
+#'
+#' Shared by the metrics that take a design data frame, so the explanation is
+#' written once.
+#'
+#' @param x A treatment column.
+#' @param fn Name of the calling function, for the message.
+#'
+#' @returns `invisible(NULL)`, called for the side effect.
+#' @keywords internal
+.warn_if_buffers <- function(x, fn) {
+  # levels() is O(number of levels) on the factor the SA loop uses; unique() is
+  # only reached for a character column.
+  lvls <- if (is.factor(x)) levels(x) else unique(as.character(x))
+  if (!"buffer" %in% lvls) {
+    return(invisible(NULL))
+  }
+  warning(
+    fn,
+    "() was given a design that still contains buffer plots. Buffers are not ",
+    "part of the statistical design, and they displace the real plots' row/col ",
+    "coordinates, so this result describes a layout that is not the design. ",
+    "Score the design before add_buffers(), or drop the buffer rows first.",
+    call. = FALSE
+  )
+  return(invisible(NULL))
+}
+
 #' Add One to Environment
 #'
 #' @description
