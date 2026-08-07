@@ -115,9 +115,8 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
     group_data <- new_design[group_filter & !is.na(new_design[[swap]]), ]
     group_treatments <- unique(group_data[[swap]])
 
-    # Plots per treatment, in `group_treatments` order. Exchanging two equally
-    # replicated treatments leaves these counts unchanged, so one pass covers every
-    # swap made in this group below.
+    # Counted once: every swap below exchanges equally replicated treatments, so
+    # these counts are unaffected by them
     group_counts <- tabulate(match(group_data[[swap]], group_treatments), length(group_treatments))
 
     if (nrow(group_data) >= 2) {
@@ -128,23 +127,20 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
           next
         }
 
-        # Treatments can only be exchanged with others of the same replication,
-        # otherwise the swap changes the replication of the design.
-        # `.verify_swap_all_replication()` rejects unequal replication in the input, but
-        # an earlier level whose `swap_within` groups cut across this one can unbalance a
-        # group mid-search, so the pool is restricted here too.
+        # Exchanging treatments of unequal replication would change the replication of
+        # the design. `.verify_swap_all_replication()` only checks the input, and an
+        # earlier level with cross-cutting groups can unbalance a group mid-search.
         eligible <- group_treatments
         if (length(unique(group_counts)) > 1) {
           replications <- table(group_counts)
           replications <- replications[replications >= 2]
 
-          # Nothing in this group can be exchanged without changing replication
+          # No two treatments share a replication, so nothing can be exchanged
           if (length(replications) == 0) {
             next
           }
 
-          # Weighted by the pairs each replication offers, so the pair below is still
-          # drawn uniformly from every exchangeable pair in the group
+          # Weighted so the pair below is still drawn uniformly over exchangeable pairs
           chosen <- if (length(replications) == 1) {
             names(replications)
           } else {
