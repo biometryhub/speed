@@ -56,7 +56,7 @@ quarto::quarto_render("vignettes/speed.qmd")  # render a vignette (Quarto, not k
 Code formatting is handled by [Air](https://posit-dev.github.io/air/) - see `air.toml` (80-col, 2-space indent).
 Per `CONTRIBUTING.md`, do **not** restyle code that is unrelated to your PR.
 
-User-facing changes should add a bullet to the top of `NEWS.md`. NEWS entries should be kept concise, with just a short 1-2 sentence summary of the changes, not paragraphs of explanation. If a change is related to a GitHub issue, it can be referenced just by number in parentheses e.g. (#1), but do not reference GitHub issues unless it's certain that they are related.
+User-facing changes should add a bullet to the top of `NEWS.md`. Use headings Major Changes, Minor Changes and Bug Fixes to document changes appropriately. NEWS entries should be kept concise, with just a short 1-2 sentence summary of the changes, not paragraphs of explanation. If a change is related to a GitHub issue or PR, it can be referenced just by number in parentheses e.g. (#1).
 
 ## Architecture
 

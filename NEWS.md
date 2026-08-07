@@ -6,6 +6,8 @@
   decomposed optimisation score, and design-quality diagnostics (connectedness, concurrence,
   replicate spans and spread across blocks, neighbour balance, and opt-in efficiency).
   ([#73](https://github.com/biometryhub/speed/issues/73))
+- Added `calculate_pair_incidence()` to return a symmetric treatment × treatment matrix of neighbour-pair counts.
+- Added `calculate_position_incidence()` to return treatment × row/column position count matrices.
 
 ## Bug Fixes
 
