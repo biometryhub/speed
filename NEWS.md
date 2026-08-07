@@ -16,6 +16,8 @@
 
 - `swap_all = TRUE` no longer changes the replication of a design when an earlier level has
   unbalanced a swap group mid-search. Only treatments with matching replication are exchanged.
+- `speed()` now warns when a `swap_all = TRUE` group holds no two treatments of equal
+  replication, since no swap is possible there and the group is returned unchanged.
 
 # speed 0.0.9
 
