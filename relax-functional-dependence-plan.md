@@ -118,6 +118,35 @@ where it is actually needed. Note the underlying replication change is a pre-exi
 gap in #110's guard and affects designs with no `linked_cols` at all — it is worth
 fixing on its own merits.
 
+### How reachable is this?
+
+Narrower than the reproducer suggests. All five of the following are required:
+
+1. Two or more levels with `swap_all = TRUE`;
+2. both optimising the **same** treatment column — in a normal split-plot, level 1 swaps
+   `wp_trt` and level 2 `sp_trt`, so level 1 cannot disturb level 2;
+3. `swap_within` factors that are **crossed, not nested**;
+4. input balanced within every group of every level, or
+   `.verify_swap_all_replication()` errors before the search starts; **and**
+5. treatments unbalanced within the **intersection cells** of the two factors.
+
+Condition 5 is the binding one and is easy to miss. If each block × site cell is
+internally balanced, a level 1 swap permutes labels symmetrically inside every cell and
+the level 2 margins do not move. Measured against `main` before the fix:
+
+| Design | Outcome |
+| --- | --- |
+| MET, blocks nested within sites | preserved — nesting makes it structurally impossible |
+| 4×4 Latin square, row × col | never searches (scores 0, early stop) |
+| Row × col, 2 treatments | never searches (adjacency weight forced to 0) |
+| 24 plots, 4 blocks × 2 sites crossed, **cells balanced** | 0 of 10 seeds affected |
+| 12 plots, 2 blocks × 2 sites crossed, **cells unbalanced** | affected (the reproducer above) |
+
+So this is a corner, not a common case. It is still worth fixing: the failure is silent
+and returns a design with the wrong replication, the fix is local and provably inert
+outside the precondition, and relaxing `linked_cols` widens the exposure rather than
+narrowing it.
+
 Options, roughly in order of preference:
 
 - **A. Re-check per swap group at generation time.** In
@@ -230,9 +259,10 @@ hit. Options:
   up split across its old and new positions rather than moving as a whole group. Effectively a
   different operator, and a larger change than this plan.
 
-Suggest warning: it is the smallest change that removes the silent failure, and it pairs with
-the documentation note below. Partial exchange is worth considering on its own merits, but not
-as part of this plan.
+**Resolved: warn.** `generate_multi_swap_neighbour()` returns the groups it could not swap
+in as `frozen`, and `speed_hierarchical()` collects them and emits one warning per level
+after the search. Partial exchange is worth considering on its own merits, but not as part
+of this plan.
 
 ## Out of scope
 
