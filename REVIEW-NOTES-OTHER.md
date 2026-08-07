@@ -40,9 +40,11 @@ Resolved findings and settled decisions are deleted rather than annotated — se
 > duplicate coordinates. `main` silently discarded **30 of 80** plots; this branch errors instead. Neither
 > works, and coordinate construction did not cause it. Grid metrics need a grouping dimension — see A3.
 >
-> 🔶 **D7 is the one open statistical question** and it blocks the last part of G13: what a grid metric
-> should report per site versus pooled. Adjacency and neighbour balance are settled (they sum exactly);
-> efficiency and piepho's ED are not. See A4.
+> ✅ **D7 is decided (Sam, 2026-08-07): per site, gated on per-site rank, with no combined figure.**
+> Adjacency and neighbour balance sum exactly; efficiency is reported one value per site, each withheld
+> with a reason if that site's contrasts aren't estimable. A combined `dsum`-shaped number needs no
+> `asreml` to compute but is **not identified** — measured, the design ranking flips with the assumed
+> variance ratio and the value passes 1. G13 is no longer blocked on a decision. See A4.
 >
 > 🟠 **G14 — `summary()` reports an efficiency factor above 1 for a rank-deficient *single* grid.** Measured
 > 1.61 on an ordinary unreplicated 12-entry 4×3 trial, identical on `main`. **No D7 decision needed** — a
@@ -182,21 +184,27 @@ grid is exact rather than an approximation. That makes most of the fix tractable
    how the ordering bugs in G1 happened. If it should be automatic, have
    `initialise_design_df(designs = )` record `design_col` as an attribute so it is *transported* rather
    than guessed.
-5. **Efficiency and ED are not summable** — see D7. `calculate_efficiency_factor()` needs to refuse a
-   multi-grid frame rather than return `1.855529`; G12 withholds it inside `summary()`, but a direct call
-   still doesn't. Note the gate is specifically on *duplicate coordinates*: it does **not** catch a
-   rank-deficient single grid, which `summary()` still reports — see A5.
+5. **Efficiency: one value per site, each rank-gated** (D7, decided). First
+   `calculate_efficiency_factor()` must refuse a multi-grid frame rather than return `1.855529` — G12
+   withholds it inside `summary()`, but a direct call still doesn't. Note that gate is specifically on
+   *duplicate coordinates*: it does **not** catch a rank-deficient single grid, which `summary()` still
+   reports — see A5. Build the rank gate first (G14) and the per-site path inherits it. ED is not
+   summable either and still needs an answer.
 6. **Then relax G12's gate.** The single `grid_index()` call in `summary.design()` is deliberately the
    *only* place `summary()` decides a design isn't griddable, so once the metrics take a grouping factor,
    MET designs stop reaching it and it covers only genuinely un-griddable input. The split-plot test added
    with G12 guards against the gate over-reaching in the meantime.
 
-Scope check: items 1-4 are mechanical given the summability result. Item 5 needs D7 first, and can stay
-gated to "unavailable" in the meantime so MET adjacency and neighbour balance land without waiting on it.
+Scope check: items 1-4 are mechanical given the summability result, and item 5 is now unblocked — D7 is
+decided, so the only dependency left is building G14's rank gate first. ED (piepho) is the one piece still
+without an answer, and can stay gated to "unavailable" so it does not hold the rest up.
 
 ---
 
-## A4. 🔶 D7. What should the grid metrics report for a multi-grid (MET) design? — **open**
+## A4. ✅ D7. What should the grid metrics report for a multi-grid (MET) design? — **decided 2026-08-07**
+
+**Per site, gated on per-site rank; no combined figure.** The reasoning and measurements are kept because
+they are what justify refusing the combined number, and that refusal will be questioned again otherwise.
 
 Adjacency and neighbour balance answer themselves: they count edges, edges never cross a grid boundary, and
 summing per grid is exact (measured, 20 + 30 = 50). Efficiency and `objective_function_piepho()`'s ED do
@@ -231,24 +239,51 @@ the pseudo-inverse returns a meaningless number. (The pooled site-nested model f
 — low, but at least defined, because replication *across* sites is real replication.) So reporting per-site
 values by default would print garbage for exactly the designs MET support exists for.
 
-**Recommendation, in build order.**
+**Decided (Sam, 2026-08-07): report per-site values, gated on per-site rank.**
 
-1. **Refuse for multi-grid designs, with a reason.** Required as an interim state either way — the
-   alternative is continuing to return `1.855529` for a quantity bounded above by 1. G12 already does this
-   inside `summary()`; G13 item 5 moves it into `calculate_efficiency_factor()`.
-2. **Then per-site values, gated on per-site estimability** — that site's own information matrix must have
-   rank `k - 1`, i.e. every treatment contrast estimable within the site. Labelled per site, never summed
-   or averaged. This is the design-actionable quantity, because the layout that can be changed is the one
-   within a site. A site failing the rank test reports unavailable individually rather than poisoning the
-   whole vector.
-3. **The combined-analysis number only as an explicit opt-in.** It is computable (0.566 above) but needs
-   row/col nested within site *and* an assumption of equal residual variance across sites — precisely what
-   `dsum()` denies. Under unequal variances the combined efficiency depends on variance ratios that are
-   unknown at design time, so no single design-time number exists. Never the default, and never the current
-   plain `row + col` pooling.
+1. **Refuse for multi-grid designs, with a reason** — the interim state, and required either way, since
+   the alternative is returning `1.855529` for a quantity bounded above by 1. G12 already does this inside
+   `summary()`; G13 item 5 moves it into `calculate_efficiency_factor()`.
+2. **Then one value per site, each gated on that site's own rank** — the site's information matrix must
+   have rank `k - 1`, i.e. every treatment contrast estimable within the site. A site failing the test
+   reports unavailable with a reason rather than poisoning the vector or being silently dropped. Labelled
+   per site, **never summed or averaged**: per-site-then-averaged is a different quantity from the
+   combined analysis (0.487 vs 0.566 above). This is also the design-actionable quantity, because the
+   layout that can be changed is the one within a site.
+3. **No combined number, not even as an opt-in** — see below. This reverses the earlier suggestion that it
+   could be offered with a stated assumption.
 
-Item 2 is not misleading provided it is labelled per site and no aggregate is offered alongside it; the
-misleading options are the pooled 0.807 and any average of the per-site values.
+### Why there is no reliable combined-analysis figure — measured 2026-08-07
+
+**The computation needs no `asreml`.** With the residual variances treated as known it is generalised
+least squares in closed form — `C = X'WX - X'WZ (Z'WZ)⁻ Z'WX`, `W = diag(1/v_i)` — reachable with
+`model.matrix()` and `pseudo_inverse()` alone. `asreml` is only needed to *estimate* variance components
+from data, and at design time there is no data, so there is nothing to estimate. The obstacle is
+statistical, not computational.
+
+Three MET designs (two sites, 8 treatments × 3 reps, 4×6 each), combined efficiency against the assumed
+residual variance ratio B:A, with `v` normalised to plot-weighted mean 1:
+
+| design | ratio 1 | ratio 2 | ratio 4 | ratio 10 | ratio 100 |
+|---|---|---|---|---|---|
+| seed 1 | 0.4814 | 0.5244 | 0.6839 | 1.2102 | 9.1689 |
+| seed 2 | 0.5660 | 0.6454 | 0.8901 | 1.6932 | 13.9839 |
+| seed 3 | 0.5834 | 0.6535 | 0.8810 | 1.6317 | 13.1163 |
+
+Two independent reasons to refuse, either of which is sufficient:
+
+- **The ranking flips.** At ratio ≤ 2 seed 3 is the best design; from ratio 4 on, seed 2 is. So the
+  assumption is not a harmless caveat attached to a number — it changes which design you would choose.
+  Nothing at design time tells you which ratio to use.
+- **The quantity is not identified under heterogeneity.** The values exceed 1 from ratio 10 — the rank
+  test passes, so this is not rank deficiency. An A-efficiency factor is defined *relative to an
+  orthogonal reference design with a single error variance*; once the variances differ there is no
+  canonical reference to normalise against, and a different normalisation gives a different number. The
+  `> 1` values are the symptom of that, not an arithmetic slip.
+
+Under **equal** variances (ratio 1) the quantity is well defined and exact — but that is precisely the
+assumption `dsum()` exists to deny, so a MET reported that way would carry a figure computed under a model
+its own analysis contradicts. Hence: per site, and no combined figure.
 
 **`objective_function_piepho()`'s ED needs the same treatment.** NB sums like any edge count, but ED
 measures evenness of a distribution, so per-grid-then-averaged and pooled are different quantities and the
@@ -273,7 +308,9 @@ factor is bounded above by 1, so a value above it is wrong under any reading. Wh
 **fix**, not the decision — see the closing paragraph of A4.
 
 **Pre-existing, and this branch changed neither the values nor the reporting.** Measured 2026-08-06 on both
-`bugfix/grid-orientation` and a clean `main` worktree. Residual df is `n − 1 − (k−1) − (r−1) − (c−1)`:
+`bugfix/grid-orientation` and a clean `main` worktree, with `connectedness = FALSE` (S6 in
+`REVIEW-NOTES-SUMMARY.md` — the single-row shapes error under the default). Residual df is
+`n − 1 − (k−1) − (r−1) − (c−1)`:
 
 | Design | plots | residual df | value | surfaced by | `main` |
 |---|---|---|---|---|---|
@@ -327,17 +364,3 @@ wrong shape. Second, clamping or `NA`-ing anything above 1 would also be wrong: 
 `REVIEW-NOTES-EFFICIENCY.md` owns the efficiency statistics (branch `feature/a-optimality` exists). Recorded
 here because G13 item 5 and D7 both assume the only bad efficiency value is the MET one, and that is not
 true.
-
-### A5.1 Also found while probing — belongs in `REVIEW-NOTES-SUMMARY.md`
-
-`summary()` **errors outright** on a single-row or single-column design:
-
-```
-summary(<1x6 design>, efficiency = TRUE)
-#> Error: contrasts can be applied only to factors with 2 or more levels
-```
-
-Thrown from `.design_connectedness()` via `model.matrix()`, because a spatial factor with one level has no
-contrasts. Unrelated to the grid work — this branch does not touch `.design_connectedness()` — and it is why
-the table above passes `connectedness = FALSE`. Noted so it is not lost; it needs the same treatment as G12,
-i.e. report unavailable with a reason rather than propagating the error.
