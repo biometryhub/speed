@@ -3,9 +3,6 @@
 **Scope:** `R/design_utils.R` (`build_design_matrix()`, `grid_index()`), `R/calculate_adjacency_score.R`,
 `R/metrics.R`, and `R/summary.R` where it consumes a grid. Branch **`bugfix/grid-orientation`** off `main`.
 
-G13 touches `R/summary.R` but belongs **here, not in `REVIEW-NOTES-SUMMARY.md`** (Sam, 2026-08-06): this
-branch made the grid contract strict, so it owns the consequences of that strictness.
-
 **Companion files** — one per workstream:
 
 | File | Workstream |
@@ -16,43 +13,34 @@ branch made the grid contract strict, so it owns the consequences of that strict
 | `REVIEW-NOTES-PR91.md` | PR #91 `info-objective` |
 | **this file** | grid construction / core metrics |
 
-Moved out, each needing its own branch: the A-efficiency upper bound and the missing intercept
-(`REVIEW-NOTES-EFFICIENCY.md`); the S3 class collision, the `initialise_design_df()` fill order and the
-now-redundant row-major sort (`KNOWN_ISSUES.md` #2, #3, #4). The buffer coordinate convention — settled,
-and the reason `build_design_matrix()` keeps coordinates **raw** — is `KNOWN_ISSUES.md` #1.
+Moved out: the A-efficiency upper bound (`REVIEW-NOTES-EFFICIENCY.md` E1, branch `feature/a-optimality`);
+the S3 class collision, the `initialise_design_df()` fill order, the now-redundant row-major sort and the
+internal-naming convention (`KNOWN_ISSUES.md` #2-#5). The buffer coordinate convention — settled, and the
+reason `build_design_matrix()` keeps coordinates **raw** — is `KNOWN_ISSUES.md` #1.
 
-**Last verified:** 2026-08-06, R 4.6.1, `pkgload::load_all()`. All numbers measured, not inferred.
+**Last verified:** 2026-08-07, R 4.6.1, `pkgload::load_all()`. All numbers measured, not inferred.
 Resolved findings and settled decisions are deleted rather than annotated — see git history and `NEWS.md`.
 
-> ✅ **The branch's original scope is closed, and the findings it turned up with it.** The plan as
-> committed at `b1d7adc` listed D6, D1 and G1-G6, plus the hot-loop cost recorded as out of scope; all are
-> done, the last as G11. G7, S1, A5, G11, G12, G13 and G14 were found during the work and are also done.
-> See A1. Full suite: **1774 pass, 0 fail, 0 warn.**
+> ✅ **Nothing is left to implement on this branch.** The plan committed at `b1d7adc` listed D6, D1 and
+> G1-G6, plus the hot-loop cost recorded as out of scope; all are done, the last as G11. G7, S1, A5, G11,
+> G12, G13 and G14 were found during the work and are done too, along with D7 and piepho's ED. See A1.
+> Full suite: **1787 pass, 0 fail, 0 warn.**
 >
-> ⬜ **Deliberately still open from the original plan:** removing the row-major sort, which A4.7 recorded
-> as out of scope on purpose (`KNOWN_ISSUES.md` #4).
+> **Two things still gate the PR, neither of them code here:**
 >
 > 📦 **`feature/buffers` merges into this branch** (branched off `f5d68f5`), carrying the coordinate
 > restoration that makes raw coordinates correct plus the `add_buffers()` deprecation. See A2 — two items
 > are already done there, so read it before actioning anything.
 >
-> ✅ **G13 has landed.** `grid_factors` gains an optional `by`, so a design can occupy several grids.
-> Adjacency and neighbour balance are summed per grid, efficiency is reported per grid, and nothing is
-> counted between plots at different sites. See A3.
+> 🔗 **PR #97 must merge after this branch**, then be rebased onto it. See A2.1.
 >
-> ✅ **D7 is decided (Sam, 2026-08-07): per site, gated on per-site rank, with no combined figure.**
-> Adjacency and neighbour balance sum exactly; efficiency is reported one value per site, each withheld
-> with a reason if that site's contrasts aren't estimable. A combined `dsum`-shaped number needs no
-> `asreml` to compute but is **not identified** — measured, the design ranking flips with the assumed
-> variance ratio and the value passes 1. G13 is no longer blocked on a decision. See A4.
+> ⬜ **Deliberately left undone:** removing the row-major sort, which the original plan recorded as out of
+> scope on purpose (`KNOWN_ISSUES.md` #4).
 >
-> ✅ **G14 has landed.** `calculate_efficiency_factor()` refuses a design whose treatment contrasts are
-> not estimable instead of returning an impossible value, and the row-column model now carries an
-> intercept, which is what makes the rank test exact. See A5.
->
-> ✅ **piepho's ED is settled too** (Sam, 2026-08-07): scored **per grid and summed**, each grid's value
-> reported alongside the total. A grid with nothing replicated inside it contributes `0` — which also
-> fixes an `Inf` that single-grid unreplicated designs scored on `main`. See the end of A4.
+> **Closed elsewhere as a side effect of this work:** E2 in `REVIEW-NOTES-EFFICIENCY.md` (the intercept
+> the rank gate required) and S5 in `REVIEW-NOTES-SUMMARY.md` (a disconnected design no longer reports a
+> healthy-looking efficiency). S6(1) — `summary()` erroring on a single-row design — is untouched and
+> stays open there.
 
 ---
 
@@ -148,7 +136,7 @@ when it rebases.
 have a single code path); `calculate_adjacency_score()` and `.neighbour_balance()` sum per grid;
 `summary()` reports one efficiency per grid; `metadata$grid_by` records the grouping so `summary()` never
 has to guess it. A mistyped `by` is rejected rather than silently ignored. `objective_function_piepho()`
-refuses a multi-grid design, because its ED component has no agreed multi-grid form.
+sums neighbour balance across grids and scores evenness per grid.
 
 Measured on two 4×3 sites sharing coordinates: `by = "site"` scores **3**, exactly the sum of the
 per-site scores, where pooling them side by side scores higher on account of adjacencies across the join.
@@ -241,10 +229,10 @@ values by default would print garbage for exactly the designs MET support exists
 
 **Decided (Sam, 2026-08-07): report per-site values, gated on per-site rank.**
 
-1. **Refuse for multi-grid designs, with a reason** — the interim state, and required either way, since
-   the alternative is returning `1.855529` for a quantity bounded above by 1. G12 already does this inside
-   `summary()`; G13 item 5 moves it into `calculate_efficiency_factor()`.
-2. **Then one value per site, each gated on that site's own rank** — the site's information matrix must
+1. **Refuse for multi-grid designs, with a reason** — `calculate_efficiency_factor()` validates the
+   coordinates, so a multi-site frame is refused rather than returning `1.855529` for a quantity bounded
+   above by 1.
+2. **One value per site, each gated on that site's own rank** — the site's information matrix must
    have rank `k - 1`, i.e. every treatment contrast estimable within the site. A site failing the test
    reports unavailable with a reason rather than poisoning the vector or being silently dropped. Labelled
    per site, **never summed or averaged**: per-site-then-averaged is a different quantity from the
@@ -316,12 +304,10 @@ compare.
 The same answer applies to `summary()`'s `efficiency` entry and `.neighbour_balance()`, so the three never
 disagree about what a MET design's diagnostics mean.
 
-**The rank gate in recommendation 2 is needed whether or not D7 is settled.** A value `> 1` signals rank
-deficiency **however it arises** — a MET site with `r = 1` (above), a single grid that exhausts its residual
-degrees of freedom, or one where treatment is aliased with row despite having residual df to spare
-(`KNOWN_ISSUES.md` #3). The last two are single-grid designs that `summary()` reports today: see A5. So build
-the gate as a rank test on *one* information matrix rather than inside the MET path, and D7 recommendation 2
-and G14 are covered by one implementation.
+**One rank gate serves both.** A value `> 1` signals rank deficiency **however it arises** — a MET site with
+`r = 1`, a single grid that exhausts its residual degrees of freedom, or one where treatment is aliased with
+row despite having residual df to spare (`KNOWN_ISSUES.md` #3). Built as a rank test on *one* information
+matrix rather than inside the MET path, so the per-site path inherits it (G14, A5).
 
 ---
 
@@ -352,47 +338,35 @@ coefficient. `lm()` agrees with the gate on all of them — including the four t
 should return a number. Note the term order matters: `lm()` pivots in formula order, so putting `treatment`
 first lets it absorb the confounding and alias the row terms instead.
 
-**Pre-existing, and this branch changed neither the values nor the reporting.** Measured 2026-08-06 on both
-`bugfix/grid-orientation` and a clean `main` worktree, with `connectedness = FALSE` (S6 in
-`REVIEW-NOTES-SUMMARY.md` — the single-row shapes error under the default). Residual df is
+**What it was returning, on `main` as well as here.** Measured 2026-08-06, with `connectedness = FALSE`
+(S6 in `REVIEW-NOTES-SUMMARY.md` — the single-row shapes error under the default). Residual df is
 `n − 1 − (k−1) − (r−1) − (c−1)`:
 
-| Design | plots | residual df | value | surfaced by | `main` |
-|---|---|---|---|---|---|
-| 1×6 grid, 3 treatments | 6 | −2 | **1.5** | `summary()` | **1.5** |
-| 6×1 grid, 3 treatments | 6 | −2 | **1.5** | `summary()` | **1.5** |
-| 4×3 grid, 12 entries unreplicated | 12 | −5 | **1.61** | `summary()` | **1.61** |
-| 3×4 grid, 3 treatments confounded with row | 12 | **+4** | **1.5** | `.efficiency_factor()` | — |
-| 2×3 grid, 3 treatments | 6 | 0 | 0.75 | `summary()` | — |
-| 2×6 grid, 3 treatments | 12 | 3 | 0.75 | `summary()` | — |
+| Design | plots | residual df | was | now |
+|---|---|---|---|---|
+| 1×6 grid, 3 treatments | 6 | −2 | **1.5** | refused |
+| 6×1 grid, 3 treatments | 6 | −2 | **1.5** | refused |
+| 4×3 grid, 12 entries unreplicated | 12 | −5 | **1.61** | refused |
+| 3×4 grid, 3 treatments confounded with row | 12 | **+4** | **1.5** | refused |
+| 2×3 grid, 3 treatments | 6 | 0 | 0.75 | 0.75 |
+| 2×6 grid, 3 treatments | 12 | 3 | 0.75 | 0.75 |
 
-**There are two independent routes to a value above 1, so residual df is not a sufficient test.** Rows 1-3
-exhaust the residual degrees of freedom. Row 4 has *four* residual df and still returns 1.5, because
-`rep(LETTERS[1:3], length.out = 12)` over `expand.grid(row = 1:3, col = 1:4)` puts each treatment in exactly
-one row — treatment is aliased with the row effect, so eliminating the row space eliminates the treatment
-contrasts with it (`KNOWN_ISSUES.md` #3). **The gate must therefore test the rank of the information matrix,
-not count degrees of freedom.** The last two rows are included because they are the boundary a gate must not
-reject: residual df 0 is still estimable.
+**Two independent routes reach a value above 1, so residual df is not a sufficient test.** Rows 1-3 exhaust
+the residual degrees of freedom. Row 4 has *four* residual df and still returned 1.5, because each treatment
+occupies exactly one grid row — treatment is aliased with the row effect, so eliminating the row space
+eliminates the treatment contrasts with it (`KNOWN_ISSUES.md` #3). The last two rows are the boundary the
+gate must **not** reject: residual df 0 is still estimable, and both still return 0.75.
 
-Reachability differs between the two routes. Rows 1-3 come straight out of `summary()`. Row 4 is reported by
-`.efficiency_factor()` when handed such a frame, but `speed()` breaks the confounding within a single
-iteration (measured: still confounded `FALSE`, `summary()` then reports 0.4891), so a design that has been
-through `speed()` does not normally surface it. Route 1 is the one users hit.
+**Coordinate validation could never have caught it.** `has_grid` is `TRUE` throughout — the coordinates are
+unique — so G12's gate has nothing to refuse. That gate asks *can this be one grid*, a coordinate property;
+this is a *rank* property of the model fitted on that grid.
 
-**Why G12's gate does not catch either.** `has_grid` is `TRUE` throughout: the coordinates are unique, so
-`grid_index()` is satisfied and there is nothing for `.efficiency_factor()` to refuse. G12 gates on *can this
-be one grid*, a coordinate property; this is a *rank* property of the model fitted on that grid. Different
-question, so no amount of coordinate validation reaches it. The `< 3 treatments` guard already in
-`.efficiency_factor()` is the only rank-adjacent check today, and it is far too weak.
+**It is reachable from a routine single-site call.** The 4×3-with-12-unreplicated-entries row is an ordinary
+early-generation trial, and the same shape D7 measures at 1.833 per site inside a MET — so this was never
+only a MET problem.
 
-**Why it matters more than the MET case.** The 4×3-with-12-unreplicated-entries row is not a pathological
-fixture — it is an ordinary early-generation trial, and it is the *same shape* D7 measures at 1.833 per site
-inside a MET. So the impossible value is reachable from a completely routine single-site call, not only from
-the MET path everyone already knows is broken.
-
-**Why clamping would have been wrong.** Capping or `NA`-ing anything above 1 hides the confounded case
-(row 4) behind a plausible value instead of reporting that the design cannot support the estimate. The
-refusal is the point, not the bound.
+**Clamping would have been wrong.** Capping or `NA`-ing anything above 1 hides the confounded case (row 4)
+behind a plausible value instead of reporting that the design cannot support the estimate.
 
 **Fallout in the existing tests, all of it real.** Four tests asserted a finite, positive value for designs
 `lm()` also calls non-estimable, and one `@examples` block used such a design — it would have failed
