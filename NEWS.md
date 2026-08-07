@@ -12,6 +12,11 @@
   replicate spans and spread across blocks, neighbour balance, and opt-in efficiency).
   ([#73](https://github.com/biometryhub/speed/issues/73))
 
+## Bug Fixes
+
+- `swap_all = TRUE` no longer changes the replication of a design when an earlier level has
+  unbalanced a swap group mid-search. Only treatments with matching replication are exchanged.
+
 # speed 0.0.9
 
 ## Major Changes
