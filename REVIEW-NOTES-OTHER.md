@@ -24,9 +24,10 @@ and the reason `build_design_matrix()` keeps coordinates **raw** — is `KNOWN_I
 **Last verified:** 2026-08-06, R 4.6.1, `pkgload::load_all()`. All numbers measured, not inferred.
 Resolved findings and settled decisions are deleted rather than annotated — see git history and `NEWS.md`.
 
-> ✅ **The branch's original scope is closed.** The plan as committed at `b1d7adc` listed D6, D1 and
-> G1-G6, plus the hot-loop cost recorded as out of scope; all are done, the last as G11. G7, S1, A5, G11
-> and G12 were found during the work. See A1. Full suite: **1739 pass, 0 fail, 0 warn.**
+> ✅ **The branch's original scope is closed, and the findings it turned up with it.** The plan as
+> committed at `b1d7adc` listed D6, D1 and G1-G6, plus the hot-loop cost recorded as out of scope; all are
+> done, the last as G11. G7, S1, A5, G11, G12, G13 and G14 were found during the work and are also done.
+> See A1. Full suite: **1774 pass, 0 fail, 0 warn.**
 >
 > ⬜ **Deliberately still open from the original plan:** removing the row-major sort, which A4.7 recorded
 > as out of scope on purpose (`KNOWN_ISSUES.md` #4).
@@ -35,10 +36,9 @@ Resolved findings and settled decisions are deleted rather than annotated — se
 > restoration that makes raw coordinates correct plus the `add_buffers()` deprecation. See A2 — two items
 > are already done there, so read it before actioning anything.
 >
-> 🔴 **Blocker: G13 — nothing in speed represents a design occupying more than one grid, so MET is
-> broken.** `initialise_design_df(designs = )` reuses `row`/`col` per site, so every MET design has
-> duplicate coordinates. `main` silently discarded **30 of 80** plots; this branch errors instead. Neither
-> works, and coordinate construction did not cause it. Grid metrics need a grouping dimension — see A3.
+> ✅ **G13 has landed.** `grid_factors` gains an optional `by`, so a design can occupy several grids.
+> Adjacency and neighbour balance are summed per grid, efficiency is reported per grid, and nothing is
+> counted between plots at different sites. See A3.
 >
 > ✅ **D7 is decided (Sam, 2026-08-07): per site, gated on per-site rank, with no combined figure.**
 > Adjacency and neighbour balance sum exactly; efficiency is reported one value per site, each withheld
@@ -46,10 +46,12 @@ Resolved findings and settled decisions are deleted rather than annotated — se
 > `asreml` to compute but is **not identified** — measured, the design ranking flips with the assumed
 > variance ratio and the value passes 1. G13 is no longer blocked on a decision. See A4.
 >
-> 🟠 **G14 — `summary()` reports an efficiency factor above 1 for a rank-deficient *single* grid.** Measured
-> 1.61 on an ordinary unreplicated 12-entry 4×3 trial, identical on `main`. **No D7 decision needed** — a
-> single grid has no pooling question — but it is fixed by the same rank gate as D7 recommendation 2, so
-> build that gate once. Pre-existing, not branch-introduced. See A5.
+> ✅ **G14 has landed.** `calculate_efficiency_factor()` refuses a design whose treatment contrasts are
+> not estimable instead of returning an impossible value, and the row-column model now carries an
+> intercept, which is what makes the rank test exact. See A5.
+>
+> ⬜ **Still open:** `objective_function_piepho()`'s ED component has no agreed multi-grid form, so it
+> refuses a multi-grid design rather than pooling one. See the end of A4.
 
 ---
 
@@ -69,6 +71,8 @@ One-line inventory for the PR description. Full write-ups are in git history.
 | **S1** `.neighbour_balance()` reported self-adjacencies that didn't exist (6 where the truth was 0) | reads coordinates; the 4×3 fixture returns the hand-derived truth (self 0, pair min/max 5/6) |
 | **A5** lexical factor levels (`1, 10, 11, 2, …`) defeated the row-major sort, so grid metrics scored a layout that wasn't the design | coordinate construction is immune; the sort is no longer load-bearing (`KNOWN_ISSUES.md` #4) |
 | **G11** coordinate validation ran on every iteration, making grid construction 16× the `matrix()` reshape it replaced | validation split into `grid_index()`, hoisted once per `speed()` run and built lazily so a design that cannot be gridded still optimises if its objective never needs a grid; build back to parity — see A1.1 |
+| **G13** nothing represented a design occupying more than one grid, so every MET design was scored as one pooled grid — discarding plots whose coordinates collided, or inventing adjacencies between sites | `grid_factors` gains an optional `by`; `grid_indices()` returns one validated index per grid; adjacency and neighbour balance sum per grid, efficiency is reported per grid, and `metadata$grid_by` records the grouping — see A3 |
+| **G14** `calculate_efficiency_factor()` returned a plausible-looking value, usually above 1, for a design whose treatment contrasts are not estimable | refuses with a `speed_efficiency_rank` condition, which `summary()` reports as a reason; the row-column model gained an intercept, which is what makes the rank test exact and changes no existing value — see A5 |
 | **G12** `summary()` died outright on any design that couldn't be gridded — MET, or non-numeric `row`/`col` labels | `summary.design()` calls `grid_index()` once and keeps either the index or the condition's `reason` as `grid`, which it passes to `.neighbour_balance()`, `.efficiency_factor()` and `.replicate_spans()`; each reports the reason instead of computing. `has_grid` now means "reportable as one grid", so `layout` no longer describes a MET as a single grid. `nrow`/`ncol` count *occupied* rows and columns (settled, Sam), so on a design with gaps they are deliberately fewer than the coordinates span — documented in `?summary.design` |
 
 ### A1.1 G11 measurements
@@ -136,7 +140,20 @@ when it rebases.
 
 ---
 
-## A3. G13 🔴 There is no representation of a design occupying more than one grid, so MET is broken
+## A3. G13 ✅ A design can now occupy more than one grid
+
+**Landed 2026-08-07.** `grid_factors` gained an optional `by` naming the column that separates grids;
+`grid_indices()` returns one validated index per grid (a one-element list when `by` is `NULL`, so callers
+have a single code path); `calculate_adjacency_score()` and `.neighbour_balance()` sum per grid;
+`summary()` reports one efficiency per grid; `metadata$grid_by` records the grouping so `summary()` never
+has to guess it. A mistyped `by` is rejected rather than silently ignored. `objective_function_piepho()`
+refuses a multi-grid design, because its ED component has no agreed multi-grid form.
+
+Measured on two 4×3 sites sharing coordinates: `by = "site"` scores **3**, exactly the sum of the
+per-site scores, where pooling them side by side scores higher on account of adjacencies across the join.
+The record below is what the fix had to account for.
+
+### The problem it fixed
 
 **One root cause, four symptoms.** `build_design_matrix()` — and `matrix()` before it — models a design as
 *a* grid. A multi-environment trial is several grids that share a treatment set and must never share an
@@ -148,56 +165,40 @@ records which column separates the grids.
 list(a = list(nrows = 10, ncols = 3), b = list(nrows = 10, ncols = 5)))` — 80 plots, 10 unique rows,
 5 unique cols:
 
-| Symptom | `main` | this branch |
+| Symptom | `main` | now |
 |---|---|---|
-| `.neighbour_balance()` | 50-cell grid from 80 plots: **30 plots silently discarded**, one `data length differs from size of matrix` warning | reported unavailable, with a reason (G12) |
-| `calculate_adjacency_score()` | garbage from the same truncation | **errors** — correct for a direct call, but there is still no way to get the right number |
-| `calculate_efficiency_factor()` | pools sites into one row/col model | still `1.855529` on a direct call — a value `> 1` is impossible; withheld inside `summary()` only |
-| sites laid side by side in one grid (`col + 3` for site b, so coordinates *are* unique) | **60** adjacencies vs **50** summing per site — 10 phantom cross-site edges | **still 60** |
+| `.neighbour_balance()` | 50-cell grid from 80 plots: **30 plots silently discarded**, one `data length differs from size of matrix` warning | summed per grid |
+| `calculate_adjacency_score()` | garbage from the same truncation | summed per grid with `by`; still errors without it, which is correct |
+| `calculate_efficiency_factor()` | pools sites into one row/col model, returning `1.855529` — a value `> 1` is impossible | refuses a multi-grid frame; `summary()` reports one value per site |
+| sites laid side by side in one grid (`col + 3` for site b, so coordinates *are* unique) | **60** adjacencies vs **50** summing per site — 10 phantom cross-site edges | `by` gives **50**; without it, still 60 |
 
-Read the last two rows carefully. This is **not** a regression this branch introduced and it is **not fixed
-by validation or by G12's gate**: duplicate coordinates don't break coordinate *indexing*, they just quietly
-pool, and the side-by-side case has no duplicates at all, so no error can fire and no gate can catch it.
-The duplicate-coordinate error is doing its job — it is the only reason any of this is visible — but it is a
-diagnostic, not the fix.
+The last row is the one that mattered most: it has no duplicate coordinates, so **no error can fire and no
+gate can catch it** — it is a silently wrong number on `main` and would have stayed one under any amount of
+coordinate validation. Only carrying the grouping fixes it, which is why the duplicate-coordinate error was
+a diagnostic rather than the fix. It is pinned by a test that lays two sites side by side and asserts the
+pooled score exceeds the per-grid one.
 
 **Adjacency and neighbour balance are summable over grids.** Measured: per-site adjacency 20 + 30 = **50**,
 the correct whole-design figure. Both count edges, and edges never cross a grid boundary, so summing per
 grid is exact rather than an approximation. That makes most of the fix tractable.
 
-**Implementation sketch.**
+### Decisions taken while building it
 
-1. **Carry the grouping column.** Extend `grid_factors` to `list(dim1 = "row", dim2 = "col", by = "site")`.
-   Verified backwards compatible — `infer_row_col()` reads only `$dim1`/`$dim2`, and `speed()` already
-   accepts the three-element list without complaint. That tolerance is itself a trap: a mistyped `by` is
-   silently ignored today, so this needs validation added at the same time.
-2. **Record it.** `metadata` currently holds only `levels` / `row_column` / `col_column` / `per_level`
-   ([speed.R:418-423](R/speed.R#L418-L423)), which is why `summary()` cannot recover the grouping on its
-   own. Add `grid_by`.
-3. **A list-of-grids primitive.** `build_design_matrices(df, swap, rc, cc, by = NULL)` returning a named
-   list, length 1 when `by` is `NULL`. `build_design_matrix()` stays exactly as it is — the single-grid
-   primitive, still strict. Sum `adjacency_score_vec()` and the `calculate_nb()` pair tables across the
-   list. This wants a *list of indices* from `grid_index()`, one per grid, so it composes with G11's
-   hoisting rather than reintroducing per-iteration validation.
-4. **Auto-detection is the wrong instinct.** Duplicate coordinates with no `by` should keep erroring, and
-   the current message already names the remedy. Inferring the grouping from a `"site"`-like column name is
-   how the ordering bugs in G1 happened. If it should be automatic, have
-   `initialise_design_df(designs = )` record `design_col` as an attribute so it is *transported* rather
-   than guessed.
-5. **Efficiency: one value per site, each rank-gated** (D7, decided). First
-   `calculate_efficiency_factor()` must refuse a multi-grid frame rather than return `1.855529` — G12
-   withholds it inside `summary()`, but a direct call still doesn't. Note that gate is specifically on
-   *duplicate coordinates*: it does **not** catch a rank-deficient single grid, which `summary()` still
-   reports — see A5. Build the rank gate first (G14) and the per-site path inherits it. ED is not
-   summable either and still needs an answer.
-6. **Then relax G12's gate.** The single `grid_index()` call in `summary.design()` is deliberately the
-   *only* place `summary()` decides a design isn't griddable, so once the metrics take a grouping factor,
-   MET designs stop reaching it and it covers only genuinely un-griddable input. The split-plot test added
-   with G12 guards against the gate over-reaching in the meantime.
-
-Scope check: items 1-4 are mechanical given the summability result, and item 5 is now unblocked — D7 is
-decided, so the only dependency left is building G14's rank gate first. ED (piepho) is the one piece still
-without an answer, and can stay gated to "unavailable" so it does not hold the rest up.
+- **Auto-detection was rejected.** Duplicate coordinates with no `by` still error, and the message names
+  the remedy. Inferring the grouping from a `"site"`-like column name is how the ordering bugs in G1
+  happened. If it should ever be automatic, have `initialise_design_df(designs = )` record `design_col`
+  as an attribute so the grouping is *transported* rather than guessed.
+- **`by` is validated, because `grid_factors` is a plain list.** A mistyped element would otherwise be
+  silently dropped and every site pooled — the failure mode is a wrong number, not an error.
+- **`build_design_matrix()` was left untouched**, still the strict single-grid primitive.
+  `grid_indices()` sits above it and returns one index per grid, so the G11 hoisting composes: the
+  annealing loop still validates once per run, not once per iteration.
+- **`.replicate_spans()` stays withheld for multi-grid designs.** Spans are distances within one grid;
+  two sites' row 3 are not one plot apart, and there is no combined span to report.
+- **`objective_function_piepho()` refuses rather than pools.** Its NB component would sum like any edge
+  count, but ED measures evenness of a distribution: per-grid-then-combined and pooled are different
+  quantities, and the paper's definition assumes a single trial. This is the one piece of G13 still
+  awaiting a statistical answer.
 
 ---
 
@@ -300,12 +301,32 @@ and G14 are covered by one implementation.
 
 ---
 
-## A5. G14 🟠 `summary()` reports an efficiency factor above 1 for a rank-deficient single grid
+## A5. G14 ✅ An efficiency factor above 1 for a rank-deficient single grid
 
-**No decision needed — this one does not ride on D7.** D7 is open because a *multi-grid* design has a real
-statistical question (per site, pooled, or nested). A single grid has no such question: an A-efficiency
-factor is bounded above by 1, so a value above it is wrong under any reading. What G14 shares with D7 is the
-**fix**, not the decision — see the closing paragraph of A4.
+**Landed 2026-08-07.** `calculate_efficiency_factor()` now errors with a `speed_efficiency_rank` condition
+when the treatment contrasts are not estimable, and `summary()` turns that into a reason. Two findings from
+building it are worth keeping, because both contradict what this section originally proposed.
+
+**The row-column model now includes an intercept (Sam's suggestion), and that is what makes the test
+exact.** The proposed gate was `rank(A_RC) == k - 1` on the existing matrix. That is wrong without an
+intercept: `X`'s rows sum to 1, so the treatment mean is estimable, a sound design gives rank `k`, and an
+equality test rejects valid designs. Testing the contrast space instead is not a fix either — for a PSD
+matrix, "no contrast lies in the null space" is weaker than "every contrast is estimable", so it passes
+designs whose contrasts are not estimable. Putting the intercept in the nuisance space makes the null space
+exactly the all-ones direction, at which point `rank(A_RC) == k - 1` means precisely what it should.
+**Verified not to change any value**: both published designs still return 0.834 and 0.827, matching the
+paper and matching pairwise contrast variances taken from the full model's Moore-Penrose inverse. This also
+closes E2 in `REVIEW-NOTES-EFFICIENCY.md`.
+
+**`qr()$rank` is unusable here** — its default tolerance is relative, and it reports rank 3 for a matrix
+whose eigenvalues are `2, 8.7e-16, 6.3e-16`. The gate uses `svd()` with the same absolute tolerance as
+`pseudo_inverse()`, so the gate and the inverse cannot disagree about which directions are null.
+
+**Confirmed against base R.** Every design below was cross-checked by fitting
+`y ~ factor(row) + factor(col) + treatment` with `lm()` and asking whether it aliases a treatment
+coefficient. `lm()` agrees with the gate on all of them — including the four that existing tests asserted
+should return a number. Note the term order matters: `lm()` pivots in formula order, so putting `treatment`
+first lets it absorb the confounding and alias the row terms instead.
 
 **Pre-existing, and this branch changed neither the values nor the reporting.** Measured 2026-08-06 on both
 `bugfix/grid-orientation` and a clean `main` worktree, with `connectedness = FALSE` (S6 in
@@ -345,22 +366,13 @@ fixture — it is an ordinary early-generation trial, and it is the *same shape*
 inside a MET. So the impossible value is reachable from a completely routine single-site call, not only from
 the MET path everyone already knows is broken.
 
-**Fix.** Gate `calculate_efficiency_factor()` (or `.efficiency_factor()`) on the treatment information matrix
-having rank `k − 1` after eliminating the row and column space, and report unavailable with a reason when it
-does not. A rank test covers both routes above; a residual-df test covers only the first. This is exactly D7
-recommendation 2's check applied to a single grid, which is why A4 now says to build it as a property of one
-information matrix rather than inside the MET path. Landing it here first is the cheaper order: G14 needs no
-grouping column and no D7 answer, and D7 recommendation 2 then inherits the gate instead of introducing it.
+**Why clamping would have been wrong.** Capping or `NA`-ing anything above 1 hides the confounded case
+(row 4) behind a plausible value instead of reporting that the design cannot support the estimate. The
+refusal is the point, not the bound.
 
-Two details for whoever implements it. The exact spot is
-[metrics.R:749](R/metrics.R#L749) — `V <- pseudo_inverse(A_RC)`, applied to the treatment information matrix
-**unconditionally**, with no rank check. (Contrast [metrics.R:733-740](R/metrics.R#L733-L740), where the
-nuisance space `ZtZ` *is* guarded by a `kappa()` test before choosing `pseudo_inverse()` over `solve()`.) So
-the test is `rank(A_RC) == k − 1`, placed before line 749; sanity-checking the number that comes out is the
-wrong shape. Second, clamping or `NA`-ing anything above 1 would also be wrong: it hides the confounded case
-(row 4) behind a plausible value instead of reporting that the design cannot support the estimate.
-
-**Not in scope for this branch** — it is pre-existing, it is not caused by coordinate construction, and
-`REVIEW-NOTES-EFFICIENCY.md` owns the efficiency statistics (branch `feature/a-optimality` exists). Recorded
-here because G13 item 5 and D7 both assume the only bad efficiency value is the MET one, and that is not
-true.
+**Fallout in the existing tests, all of it real.** Four tests asserted a finite, positive value for designs
+`lm()` also calls non-estimable, and one `@examples` block used such a design — it would have failed
+`R CMD check` once the gate existed. Each was replaced with an estimable fixture, keeping the test's
+original intent, plus new tests pinning the refusals and the `residual df 0` boundary that must **not** be
+rejected. The comparator in "provides better result for an optimised design" is the clearest case: it was
+comparing against a number that does not exist.

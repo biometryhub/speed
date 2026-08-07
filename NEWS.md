@@ -7,8 +7,17 @@
   replicate spans and spread across blocks, neighbour balance, and opt-in efficiency).
   ([#73](https://github.com/biometryhub/speed/issues/73))
 
+- `grid_factors` gains an optional `by` element naming a column that groups plots into separate
+  grids, e.g. `list(dim1 = "row", dim2 = "col", by = "site")` for a multi-environment trial where
+  each site reuses the same `row`/`col` numbering. Each grid is scored on its own and the adjacency
+  and neighbour-balance counts summed, so nothing is counted between plots at different sites, and
+  `summary()` reports one efficiency factor per site rather than a pooled one.
+
 ## Bug Fixes
 
+- Multi-site designs are no longer scored as though they occupied one grid. Previously the sites were
+  pooled, which discarded plots whose coordinates collided and counted adjacencies between plots at
+  different sites; use `grid_factors$by` to name the grouping column.
 - Design metrics are now built from each plot's `row`/`col` coordinates rather than the order of the
   rows in the data frame, so they describe the actual layout. This corrects
   `calculate_adjacency_score()`, `calculate_efficiency_factor()`, `objective_function_piepho()` and
@@ -17,6 +26,11 @@
 - `summary()` no longer errors on designs that cannot be placed on a single grid, such as multi-site
   (MET) designs or designs with non-numeric `row`/`col` labels. The affected diagnostics report why
   they are unavailable instead, and are no longer computed from pooled grids.
+- `calculate_efficiency_factor()` now errors, rather than returning a plausible-looking value
+  (usually above 1, which is impossible), for a design that cannot support the estimate - one whose
+  treatment contrasts are not estimable once row and column effects are eliminated. `summary()`
+  reports such designs as unavailable with a reason. The row-column model now includes an intercept,
+  which does not change the value for designs that were already valid.
 - `calculate_nb()` no longer errors on designs with missing plots when `pair_mapping` is not
   supplied.
 - `calculate_adjacency_score()` now recycles a single `ring_weights` value across every entry of
