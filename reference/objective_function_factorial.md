@@ -76,8 +76,4 @@ objective_function_factorial(df, "treatment", c("row", "col", "block"))
 #> $score
 #> [1] 723
 #> 
-#> $components
-#>        main interaction 
-#>         714           9 
-#> 
 ```

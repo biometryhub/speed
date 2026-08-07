@@ -16,6 +16,9 @@ speed(
   iterations = 10000,
   early_stop_iterations = 2000,
   obj_function = objective_function,
+  swap_all = FALSE,
+  optimise = NULL,
+  optimise_params = optim_params(),
   quiet = FALSE,
   seed = NULL,
   ...
@@ -75,6 +78,23 @@ speed(
   [`objective_function()`](https://biometryhub.github.io/speed/reference/objective_functions.md)).
   For hierarchical designs, can be a named list with names matching
   `swap`.
+
+- swap_all:
+
+  Logical; Whether to swap all matching items or a single item at a time
+  (default: FALSE)
+
+- optimise:
+
+  A list of named arguments describing optimising parameters; see more
+  in example.
+
+- optimise_params:
+
+  Parameters used to control the behaviour of simulated annealing
+  algorithm. See
+  [`optim_params()`](https://biometryhub.github.io/speed/reference/optim_params.md)
+  for more details.
 
 - quiet:
 
@@ -145,9 +165,10 @@ df <- data.frame(
 # Optimise the design
 result <- speed(df, swap = "treatment", seed = 42)
 #> row and col are used as row and column, respectively.
-#> Iteration: 1000 Score: 1 Best: 1 Since Improvement: 275 
-#> Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1275 
-#> Early stopping at iteration 2725 
+#> Optimising level: single treatment within whole design 
+#> Level: single treatment within whole design Iteration: 1000 Score: 1 Best: 1 Since Improvement: 275 
+#> Level: single treatment within whole design Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1275 
+#> Early stopping at iteration 2725 for level single treatment within whole design 
 autoplot(result)
 
 
@@ -165,6 +186,7 @@ result <- speed(df_split,
                 swap = list(wp = "wholeplot_treatment",
                             sp = "subplot_treatment"),
                 swap_within = list(wp = "block", sp = "wholeplot"),
+                swap_all = TRUE,
                 seed = 42)
 #> row and col are used as row and column, respectively.
 #> Optimising level: wp 
@@ -179,5 +201,48 @@ autoplot(result, treatments = "wholeplot_treatment")
 
 # Plot subplot allocations within wholeplots
 autoplot(result, treatments = "subplot_treatment", block = "wholeplot")
+
+
+# Using optimise parameter
+# Multi-Environment Trial (MET) design
+# With 7 replicates of 100 lines in this design, each line will appear
+# twice at two different sites and once at the rest of the sites.
+lines <- rep(1:100, 7)
+df_site <- initialise_design_df(1, 28, 5, 14, 5)
+df_initial <- rbind(df_site, df_site, df_site, df_site, df_site)
+df_initial$lines <- lines
+df_initial$site <- rep(c("a", "b", "c", "d", "e"), each = 140)
+
+df_initial$site_row <- paste(df_initial$site, df_initial$row, sep = "_")
+df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
+df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
+
+optimise <- list(
+  connectivity = list(spatial_factors = ~site),
+  balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+)
+
+result <- speed(
+  data = df_initial,
+  swap = "lines",
+  optimise = optimise,
+  optimise_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
+  seed = 112,
+  quiet = TRUE
+)
+
+head(table(result$design_df$lines, result$design_df$site))
+#>    
+#>     a b c d e
+#>   1 1 1 2 1 2
+#>   2 1 2 1 1 2
+#>   3 2 1 1 2 1
+#>   4 1 1 1 2 2
+#>   5 1 1 1 2 2
+#>   6 2 1 1 1 2
+
+# Plot the MET design with facets
+autoplot(result, treatments = "lines") +
+ggplot2::facet_wrap(~site)
 
 ```

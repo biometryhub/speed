@@ -20,4 +20,6 @@ A list containing:
 
 - **df** - A data frame with factors
 
-- **input_types** - A named list of the original type of each column
+- **input_types** - A named character vector of the original base type
+  of each column (for restoring via
+  [`to_types()`](https://biometryhub.github.io/speed/reference/to_types.md))

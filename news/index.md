@@ -1,22 +1,5 @@
 # Changelog
 
-## speed 0.0.10
-
-### Major Changes
-
-- Added a [`summary()`](https://rdrr.io/r/base/summary.html) method for
-  `"design"` objects, reporting structure and replication, a decomposed
-  optimisation score, and design-quality diagnostics (connectedness,
-  concurrence, replicate spans and spread across blocks, neighbour
-  balance, and opt-in efficiency).
-  ([\#73](https://github.com/biometryhub/speed/issues/73))
-
-### Bug Fixes
-
-- `swap_all = TRUE` no longer changes the replication of a design when
-  an earlier level has unbalanced a swap group mid-search. Only
-  treatments with matching replication are exchanged.
-
 ## speed 0.0.9
 
 ### Major Changes
@@ -30,20 +13,29 @@
 ### Bug Fixes
 
 - [`speed()`](https://biometryhub.github.io/speed/reference/speed.md)
-  now errors when `swap_all = TRUE` is used on a design with unequal
-  within-group replication, instead of silently swapping treatments with
-  different replication counts.
+  now errors when `swap_all = TRUE` is used on a design whose treatments
+  are unequally replicated within a swap group, instead of silently
+  changing the replication. Such a swap exchanges every plot of one
+  treatment with every plot of another, so when the two treatments
+  occupy different numbers of plots they exchange replication counts and
+  the returned design is not a rearrangement of the input. Designs with
+  equal within-group replication, which is what `swap_all` is intended
+  for, are unaffected.
 - [`speed()`](https://biometryhub.github.io/speed/reference/speed.md) no
-  longer returns numeric/integer columns (e.g. `treatment`, `row`,
-  `col`) as their internal factor level codes instead of their original
-  values.
+  longer returns numeric and integer columns as their factor level
+  codes; a `treatment` column of `c(10, 100, 30, 9)` was previously
+  returned as `c(2, 4, 3, 1)`. Numeric `row` and `col` values other than
+  `1:n` were affected in the same way.
 - [`speed()`](https://biometryhub.github.io/speed/reference/speed.md) no
   longer emits a “Setting row names on a tibble is deprecated” warning
-  when passed a tibble.
+  when passed a tibble; row labels are now only reset for base data
+  frames.
 - [`speed()`](https://biometryhub.github.io/speed/reference/speed.md)
-  now accepts designs with `vctrs`-backed multi-class columns (e.g. from
-  the `edibble` package) instead of erroring; such columns are now
-  returned as `character`.
+  now accepts designs with `vctrs`-backed columns that report a
+  multi-class [`class()`](https://rdrr.io/r/base/class.html) (such as
+  the tables produced by the `edibble` package). Previously these failed
+  with “first argument has length \> 1” when restoring column types;
+  such columns are now restored as `character`.
 
 ## speed 0.0.8
 

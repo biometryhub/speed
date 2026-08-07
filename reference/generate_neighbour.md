@@ -9,9 +9,9 @@ generate_neighbour(
   design,
   swap,
   swap_within,
-  level = NULL,
   swap_count = getOption("speed.swap_count", 1),
-  swap_all_blocks = getOption("speed.swap_all_blocks", FALSE)
+  swap_all_blocks = getOption("speed.swap_all_blocks", FALSE),
+  swap_all = FALSE
 )
 ```
 
@@ -31,11 +31,6 @@ generate_neighbour(
   Column name defining groups within which to swap treatments, or named
   list for hierarchical designs
 
-- level:
-
-  The level of the design to be optimised in the current loop. Relevant
-  for sequential designs. Simple designs pass this as `NULL`.
-
 - swap_count:
 
   Number of swaps to perform
@@ -43,6 +38,11 @@ generate_neighbour(
 - swap_all_blocks:
 
   Whether to perform swaps in all blocks or just one
+
+- swap_all:
+
+  Whether to swap all matching items or a single item at a time
+  (default: FALSE)
 
 ## Value
 

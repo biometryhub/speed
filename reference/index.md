@@ -13,6 +13,8 @@ Functions to optimise designs in different ways.
 
 ### Objective functions
 
+- [`objective_function_factorial()`](https://biometryhub.github.io/speed/reference/objective_function_factorial.md)
+  : Objective Function for Factorial Design Optimization
 - [`objective_function_piepho()`](https://biometryhub.github.io/speed/reference/objective_function_piepho.md)
   : Objective Function with Metric from Piepho
 - [`objective_function_signature()`](https://biometryhub.github.io/speed/reference/objective_functions.md)
@@ -58,10 +60,19 @@ Utility functions to initialize objects.
 - [`initialise_design_df()`](https://biometryhub.github.io/speed/reference/initialise_design_df.md)
   [`initialize_design_df()`](https://biometryhub.github.io/speed/reference/initialise_design_df.md)
   : Initialise Design Data Frame
+- [`initialise_split_design_df()`](https://biometryhub.github.io/speed/reference/initialise_split_design_df.md)
+  : Initialise a Split-Plot Design Data Frame
+- [`add_buffers()`](https://biometryhub.github.io/speed/reference/add_buffers.md)
+  : Add buffers to an existing design
+- [`prep_relationship()`](https://biometryhub.github.io/speed/reference/prep_relationship.md)
+  : Validate and Flatten a Relationship Matrix for Lookup
 
 ## Advanced options
 
-- [`speed-options`](https://biometryhub.github.io/speed/reference/speed-options.md)
+- [`optim_params()`](https://biometryhub.github.io/speed/reference/optim_params.md)
+  : Create and Verify Optimization Parameters
+
+- [`speed-options-deprecated`](https://biometryhub.github.io/speed/reference/speed-options-deprecated.md)
   :
 
-  Package Options for `speed`
+  Package Options for `speed` (Deprecated)

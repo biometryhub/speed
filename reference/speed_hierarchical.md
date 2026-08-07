@@ -5,16 +5,5 @@ Speed function for hierarchical designs
 ## Usage
 
 ``` r
-speed_hierarchical(
-  data,
-  swap,
-  swap_within,
-  spatial_factors,
-  iterations,
-  early_stop_iterations,
-  obj_function,
-  quiet,
-  seed,
-  ...
-)
+speed_hierarchical(data, optimise, quiet, seed, ...)
 ```

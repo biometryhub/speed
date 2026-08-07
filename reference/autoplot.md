@@ -14,7 +14,6 @@ autoplot(
   size = 4,
   margin = FALSE,
   palette = "default",
-  buffer = NULL,
   row = NULL,
   column = NULL,
   block = NULL,
@@ -63,16 +62,6 @@ autoplot(
   [`scales::brewer_pal()`](https://scales.r-lib.org/reference/pal_brewer.html)
   are also possible.
 
-- buffer:
-
-  A string specifying the buffer plots to include for plotting. Default
-  is `NULL` (no buffers plotted). Other options are "edge" (outer edge
-  of trial area), "rows" (between rows), "columns" (between columns),
-  "double row" (a buffer row each side of a treatment row) or "double
-  column" (a buffer row each side of a treatment column). "blocks" (a
-  buffer around each treatment block) will be implemented in a future
-  release.
-
 - row:
 
   A variable to plot a column from `object` as rows.
@@ -118,9 +107,10 @@ result <- speed(df,
                 swap_within = "block",
                 seed = 42)
 #> row and col are used as row and column, respectively.
-#> Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 
-#> Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 
-#> Early stopping at iteration 2457 
+#> Optimising level: single treatment within block 
+#> Level: single treatment within block Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 
+#> Level: single treatment within block Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 
+#> Early stopping at iteration 2457 for level single treatment within block 
 
 # Plot the design with block boundaries
 autoplot(result)

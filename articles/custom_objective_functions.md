@@ -20,6 +20,8 @@ design challenges.
 ``` r
 
 library(speed)
+#> A newer version of speed is available on GitHub (installed: 0.0.9, available: 0.0.10).
+#> Update with: devtools::install_github("biometryhub/speed")
 ```
 
 ## Understanding the Optimisation Process

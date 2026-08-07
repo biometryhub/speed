@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +64,7 @@
       <p class="author">Wasin Pipattungsakul</p>
       <p class="date">2026-08-07</p>
 
-      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/vignettes/factorial.qmd" class="external-link"><code>vignettes/factorial.qmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/v0.0.9/vignettes/factorial.qmd" class="external-link"><code>vignettes/factorial.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
     </div>
 
@@ -80,8 +80,13 @@
 <p>Factorial designs are experimental designs used to study the effects of two or more factors simultaneously. They allow estimation of main effects and interactions between factors, making them efficient and informative.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://biometryhub.github.io/speed/">speed</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://biometryhub.github.io/speed/">speed</a></span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>A newer version of speed is available on GitHub (installed: 0.0.9, available: 0.0.10).
+Update with: devtools::install_github("biometryhub/speed")</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h3 id="when-to-use">When to Use<a class="anchor" aria-label="anchor" href="#when-to-use"></a>
 </h3>
@@ -93,7 +98,7 @@
 </h3>
 <p>Now we can create a data frame representing a factorial design. Note that the treatment column we are creating is the interaction (or combination) of the individual treatments.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">treatment_a</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">8</span><span class="op">)</span></span>
 <span><span class="va">treatment_b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span></span>
 <span><span class="va">treatments</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/with.html" class="external-link">with</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span><span class="va">treatment_a</span>, <span class="va">treatment_b</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">Var1</span>, <span class="va">Var2</span>, sep <span class="op">=</span> <span class="st">"-"</span><span class="op">)</span><span class="op">)</span></span>
@@ -124,7 +129,7 @@
 <p>For factorial designs, speed provides a customised objective function <code>objective_function_factorial</code> which allows us to pass <code>interaction_weight</code> and <code>main_weight</code> arguments to control the spatial balance of those effects. The <code>optimise_params</code> argument is also used in this case to adjust the optimisation strategy due to the difficulty of optimising such designs.</p>
 <p>Make sure <code>factorial_separator</code> matches how you constructed the interaction treatment (here we used <code>"-"</code>). If your treatments use a different separator (e.g. <code>"A1:B2"</code>), pass <code>factorial_separator = ":"</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">optimise_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/optim_params.html">optim_params</a></span><span class="op">(</span></span>
 <span>  swap_count <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  random_initialisation <span class="op">=</span> <span class="fl">10</span>,</span>
@@ -171,7 +176,7 @@ Level: single treatment within block Iteration: 18000 Score: 36.81988 Best: 36.8
 Level: single treatment within block Iteration: 19000 Score: 36.81988 Best: 36.81988 Since Improvement: 9537
 Early stopping at iteration 19463 for level single treatment within block </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">factorial_result</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Optimised Experimental Design
@@ -188,10 +193,10 @@ Seed: 112 </code></pre>
 <p>The output summarises the optimisation of the factorial <strong>interaction</strong> treatment (e.g. <code>"A1-B2"</code>) across the spatial layout. The reported score is for the whole design after optimisation, and the returned <code>design_df</code> contains the updated treatment allocation.</p>
 <p>Because the treatment column encodes multiple factors, it can be helpful to split it back into its component factors (e.g. <code>treatment_a</code> and <code>treatment_b</code>) when inspecting the result. This lets you check whether the optimisation improved not only the interaction layout, but also the balance/adjacency patterns of the main effects.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">factorial_result</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>List of 9
+<pre><code>List of 8
  $ design_df     :Classes 'design' and 'data.frame':    72 obs. of  8 variables:
   ..$ row        : int [1:72] 1 1 1 2 2 2 3 3 3 4 ...
   ..$ col        : int [1:72] 1 2 3 1 2 3 1 2 3 1 ...
@@ -214,34 +219,13 @@ Seed: 112 </code></pre>
  $ stopped_early : logi TRUE
  $ treatments    : chr [1:24] "A1-B1" "A1-B2" "A1-B3" "A2-B1" ...
  $ seed          : num 112
- $ metadata      :List of 5
-  ..$ levels    : chr "single treatment within block"
-  ..$ row_column: chr "row"
-  ..$ col_column: chr "col"
-  ..$ per_level :List of 1
-  .. ..$ single treatment within block:List of 11
-  .. .. ..$ swap            : chr "treatment"
-  .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: R_GlobalEnv&gt;
-  .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
-  .. .. ..$ adj_weight      : num 1
-  .. .. ..$ bal_weight      : num 1
-  .. .. ..$ iterations      : num 2e+05
-  .. .. ..$ start_temp      : num 100
-  .. .. ..$ cooling_rate    : num 0.999
-  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, interaction_weight = 1, main_weight = 1,
-    factorial_separator = "-", ...)
-  .. .. ..$ final_score     : num 36.8
-  .. .. ..$ final_components: Named num [1:2] 9.43 27.39
-  .. .. .. ..- attr(*, "names")= chr [1:2] "main" "interaction"
-  ..$ call      : language speed(data = factorial_design, swap = "treatment", swap_within = "block",      spatial_factors = ~row + col, iter| __truncated__ ...
  - attr(*, "class")= chr [1:2] "design" "list"</code></pre>
 </div>
 </div>
 </section><section class="level3"><h4 id="visualise-the-output">Visualise the Output<a class="anchor" aria-label="anchor" href="#visualise-the-output"></a>
 </h4>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">treatments</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/strsplit.html" class="external-link">strsplit</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">factorial_result</span><span class="op">$</span><span class="va">design_df</span><span class="op">$</span><span class="va">treatment</span><span class="op">)</span>, <span class="st">"-"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span>ncol <span class="op">=</span> <span class="fl">2</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
