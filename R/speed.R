@@ -44,8 +44,9 @@
 #'   `list(wp = "wholeplot_label", sp = "subplot_label")`; a bare character
 #'   vector applies to every level. Columns used as `swap`, `swap_within` or
 #'   spatial factors cannot be linked. On a level with `swap_all = TRUE` whole
-#'   treatment groups move at once, so a linked column must have exactly one
-#'   value per treatment at that level (default: `NULL`).
+#'   treatment groups move at once, so a linked column with more than one value
+#'   per treatment travels with its treatment group rather than being paired
+#'   plot for plot (default: `NULL`).
 #' @param optimise_params Parameters used to control the behaviour of
 #'   simulated annealing algorithm. See [optim_params()] for more details.
 #' @param optimise A list of named arguments describing optimising parameters;
@@ -352,6 +353,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     scores <- numeric(opt$iterations)
     temperatures <- numeric(opt$iterations)
     last_improvement_iter <- 0
+    frozen_groups <- character(0)
 
     # Optimisation loop for this level
     for (iter in 1:opt$iterations) {
@@ -369,6 +371,10 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       # Generate new design by swapping treatments at this level
       new_design <- generate_neighbour(current_design, opt$swap, opt$swap_within, current_swap_count,
                                        current_swap_all_blocks, opt$swap_all, opt$origin_col)
+
+      if (length(new_design$frozen)) {
+        frozen_groups <- union(frozen_groups, new_design$frozen)
+      }
 
       # Calculate new score
       new_score_obj <- opt$obj_function(new_design$design,opt$swap, spatial_cols, adj_weight = adj_weight,
@@ -417,6 +423,21 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
         }
         break
       }
+    }
+
+    # `swap_all` only exchanges equally replicated treatments, so a group where no two
+    # share a replication can never swap. The search still runs, so say so rather than
+    # returning those groups silently unchanged.
+    if (length(frozen_groups)) {
+      warning(
+        "No treatments could be swapped",
+        if (length(optimise) > 1) paste0(" at level `", level, "`") else "",
+        " within `", opt$swap_within, "` ", paste0(sort(frozen_groups), collapse = ", "),
+        ", because `swap_all = TRUE` only exchanges treatments with equal replication",
+        " and no two treatments there share a replication count.",
+        " Those groups were left unchanged.",
+        call. = FALSE
+      )
     }
 
     all_scores[[level]] <- scores

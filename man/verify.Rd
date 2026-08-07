@@ -4,7 +4,6 @@
 \alias{.verify_speed_inputs}
 \alias{.verify_hierarchical_inputs}
 \alias{.verify_linked_cols}
-\alias{.verify_functionally_dependent}
 \alias{.verify_optim_params}
 \alias{.verify_swap_all_replication}
 \title{Verify Inputs for \code{speed}}
@@ -33,8 +32,6 @@
 )
 
 .verify_linked_cols(data, optimise, linked_cols = NULL)
-
-.verify_functionally_dependent(data, swap, col, level)
 
 .verify_optim_params(
   swap_count,
@@ -98,12 +95,9 @@ levels, e.g.
 \code{list(wp = "wholeplot_label", sp = "subplot_label")}; a bare character
 vector applies to every level. Columns used as \code{swap}, \code{swap_within} or
 spatial factors cannot be linked. On a level with \code{swap_all = TRUE} whole
-treatment groups move at once, so a linked column must have exactly one
-value per treatment at that level (default: \code{NULL}).}
-
-\item{col}{Name of the linked column being checked.}
-
-\item{level}{Name of the hierarchy level the column is declared on.}
+treatment groups move at once, so a linked column with more than one value
+per treatment travels with its treatment group rather than being paired
+plot for plot (default: \code{NULL}).}
 
 \item{swap_count}{Number of treatment swaps per iteration (default: 1).}
 

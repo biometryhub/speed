@@ -171,60 +171,10 @@
         )
       }
       owner[[col]] <- opt$swap
-
-      # Multi-swap levels move whole treatment groups, which have no unit-level
-      # bijection, so only functionally dependent columns are well defined there
-      if (isTRUE(opt$swap_all)) {
-        .verify_functionally_dependent(data, opt$swap, col, level)
-      }
     }
   }
 
   return(invisible(NULL))
-}
-
-#' Verify a linked column has one value per treatment
-#'
-#' @rdname verify
-#'
-#' @param col Name of the linked column being checked.
-#' @param level Name of the hierarchy level the column is declared on.
-#'
-#' @keywords internal
-.verify_functionally_dependent <- function(data, swap, col, level) {
-  keys <- as.character(data[[swap]])
-  values <- as.character(data[[col]])
-  keep <- !is.na(keys)
-  if (!any(keep)) {
-    return(invisible(NULL))
-  }
-
-  n_values <- tapply(values[keep], keys[keep], function(v) length(unique(v)))
-  clashes <- names(n_values)[n_values > 1]
-  if (length(clashes) == 0) {
-    return(invisible(NULL))
-  }
-
-  example_values <- unique(values[keep][keys[keep] == clashes[1]])
-  stop(
-    "`linked_cols` column '",
-    col,
-    "' is not uniquely determined by '",
-    swap,
-    "' at level '",
-    level,
-    "': treatment '",
-    clashes[1],
-    "' has ",
-    length(example_values),
-    " different values (",
-    paste0("'", utils::head(example_values, 3), "'", collapse = ", "),
-    if (length(example_values) > 3) ", ..." else "",
-    "). ",
-    "A level using `swap_all = TRUE` moves whole treatment groups at once, so its linked ",
-    "columns must have exactly one value per treatment.",
-    call. = FALSE
-  )
 }
 
 #' Verify Optimization Parameters for `speed`

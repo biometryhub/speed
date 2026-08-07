@@ -120,6 +120,9 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
   swapped_idx <- 1
   swapped_items <- character(2 * swap_count * length(groups_to_swap))
 
+  # Groups holding no exchangeable pair, reported so the caller can warn once
+  frozen <- character(0)
+
   # Perform swaps in selected groups
   for (group in groups_to_swap) {
     # Get unique treatments within this group
@@ -149,6 +152,7 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
 
           # No two treatments share a replication, so nothing can be exchanged
           if (length(replications) == 0) {
+            frozen <- c(frozen, group)
             next
           }
 
@@ -171,9 +175,8 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
 
         # Swap all instances of these treatments
         if (!is.null(origin_col)) {
-          # `.verify_swap_all_replication()` rejects unequal replication within a swap
-          # group, so the two plot sets are the same size and their provenance indices
-          # exchange one for one
+          # The swap pair is drawn from treatments with equal replication, so the two
+          # plot sets are the same size and their provenance indices exchange one for one
           origins_1 <- new_design[[origin_col]][plots_1]
           new_design[[origin_col]][plots_1] <- new_design[[origin_col]][plots_2]
           new_design[[origin_col]][plots_2] <- origins_1
@@ -188,7 +191,8 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
     }
   }
 
-  return(list(design = new_design, swapped_items = swapped_items[1:(swapped_idx - 1)]))
+  return(list(design = new_design, swapped_items = swapped_items[1:(swapped_idx - 1)],
+              frozen = unique(frozen)))
 }
 
 #' Infer 'row' and 'col' with Patterns

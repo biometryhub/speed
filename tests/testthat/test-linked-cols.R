@@ -403,22 +403,65 @@ test_that("linked_cols rejects one column linked to two swap columns", {
   )
 })
 
-test_that("linked_cols rejects a per-plot column on a swap_all level", {
+test_that("linked_cols carries a per-plot column on a swap_all level", {
   df <- split_plot_df()
+  # Unique per row, so no value-level lookup could reconstruct it
   df$plot_id <- sprintf("P%02d", seq_len(nrow(df)))
 
-  expect_error(
-    speed(
-      df,
-      swap = list(wp = "wp_trt", sp = "sp_trt"),
-      swap_within = list(wp = "block", sp = "wholeplot"),
-      linked_cols = list(wp = "plot_id"),
-      swap_all = TRUE,
-      seed = 42,
-      quiet = TRUE
-    ),
-    "is not uniquely determined by 'wp_trt'"
+  result <- speed(
+    df,
+    swap = list(wp = "wp_trt", sp = "sp_trt"),
+    swap_within = list(wp = "block", sp = "wholeplot"),
+    linked_cols = list(wp = "plot_id"),
+    swap_all = TRUE,
+    seed = 42,
+    quiet = TRUE
   )
+
+  # No value duplicated or lost, and each plot_id still sits with its own treatment
+  expect_setequal(result$design_df$plot_id, df$plot_id)
+  expect_pairing_preserved(df, result$design_df, "plot_id", "wp_trt")
+})
+
+test_that("linked_cols survives cross-cutting swap_all levels", {
+  # `block` and `site` cut across each other, so a level 1 swap can unbalance a site
+  # mid-search. The provenance index must stay a permutation regardless.
+  df <- data.frame(
+    row = rep(1:6, times = 2),
+    col = rep(1:2, each = 6),
+    block = c(1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2),
+    site = c("a", "a", "a", "b", "b", "b", "a", "a", "a", "b", "b", "b"),
+    lines = c("X", "X", "Z", "Y", "Y", "Z", "Y", "Y", "Z", "X", "X", "Z"),
+    stringsAsFactors = FALSE
+  )
+  df$plot_id <- sprintf("P%02d", seq_len(nrow(df)))
+
+  for (seed in 1:5) {
+    warnings_seen <- character(0)
+    result <- withCallingHandlers(
+      speed(
+        df,
+        swap = "lines",
+        optimise = list(
+          lvl1 = list(swap_within = "block", swap_all = TRUE),
+          lvl2 = list(swap_within = "site", swap_all = TRUE)
+        ),
+        linked_cols = "plot_id",
+        iterations = 30,
+        seed = seed,
+        quiet = TRUE
+      ),
+      warning = function(w) {
+        warnings_seen <<- c(warnings_seen, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      }
+    )
+
+    # The recycling this guards against; a frozen-group warning is expected on some seeds
+    expect_false(any(grepl("number of items to replace", warnings_seen)))
+    expect_setequal(result$design_df$plot_id, df$plot_id)
+    expect_pairing_preserved(df, result$design_df, "plot_id", "lines")
+  }
 })
 
 test_that("linked_cols allows a functionally dependent column on a swap_all level", {

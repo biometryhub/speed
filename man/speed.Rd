@@ -71,8 +71,9 @@ levels, e.g.
 \code{list(wp = "wholeplot_label", sp = "subplot_label")}; a bare character
 vector applies to every level. Columns used as \code{swap}, \code{swap_within} or
 spatial factors cannot be linked. On a level with \code{swap_all = TRUE} whole
-treatment groups move at once, so a linked column must have exactly one
-value per treatment at that level (default: \code{NULL}).}
+treatment groups move at once, so a linked column with more than one value
+per treatment travels with its treatment group rather than being paired
+plot for plot (default: \code{NULL}).}
 
 \item{optimise}{A list of named arguments describing optimising parameters;
 see more in example.}

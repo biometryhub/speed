@@ -100,7 +100,9 @@ test_that("swap_all preserves replication when levels have cross-cutting groups"
   )
 
   for (seed in 1:5) {
-    result <- speed(
+    # Some seeds leave a site with no exchangeable pair, which warns; that is covered
+    # separately below
+    result <- suppressWarnings(speed(
       df,
       swap = "lines",
       optimise = list(
@@ -110,8 +112,83 @@ test_that("swap_all preserves replication when levels have cross-cutting groups"
       iterations = 30,
       seed = seed,
       quiet = TRUE
-    )
+    ))
 
     expect_equal(as.integer(table(result$design_df$lines)), c(4L, 4L, 4L))
   }
+})
+
+test_that("generate_multi_swap_neighbour reports groups it could not swap in", {
+  # A/B/C replicated 3/2/1, so no two treatments can be exchanged
+  design <- data.frame(
+    block = factor(rep("g1", 6)),
+    treatment = factor(c("A", "A", "A", "B", "B", "C"))
+  )
+
+  result <- generate_multi_swap_neighbour(design, "treatment", "block", 1, FALSE)
+
+  expect_equal(result$frozen, "g1")
+  expect_equal(result$design, design)
+})
+
+test_that("generate_multi_swap_neighbour reports no frozen groups when swaps are possible", {
+  design <- data.frame(
+    block = factor(rep("g1", 6)),
+    treatment = factor(c("A", "A", "B", "B", "C", "C"))
+  )
+
+  result <- generate_multi_swap_neighbour(design, "treatment", "block", 1, FALSE)
+
+  expect_length(result$frozen, 0)
+})
+
+test_that("speed() warns when a swap group is left frozen mid-search", {
+  # `block` and `site` cut across each other, so a level 1 swap can leave a site with
+  # no two treatments sharing a replication count. The search cannot move anything
+  # there, which should be reported rather than returned silently.
+  df <- data.frame(
+    row = rep(1:6, times = 2),
+    col = rep(1:2, each = 6),
+    block = c(1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2),
+    site = c("a", "a", "a", "b", "b", "b", "a", "a", "a", "b", "b", "b"),
+    lines = c("X", "X", "Z", "Y", "Y", "Z", "Y", "Y", "Z", "X", "X", "Z"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_warning(
+    speed(
+      df,
+      swap = "lines",
+      optimise = list(
+        lvl1 = list(swap_within = "block", swap_all = TRUE),
+        lvl2 = list(swap_within = "site", swap_all = TRUE)
+      ),
+      iterations = 30,
+      seed = 4,
+      quiet = TRUE
+    ),
+    "No treatments could be swapped at level `lvl2` within `site`",
+    fixed = TRUE
+  )
+})
+
+test_that("speed() does not warn when every group can swap", {
+  df <- data.frame(
+    row = rep(1:6, times = 2),
+    col = rep(1:2, each = 6),
+    block = rep(c(1, 2), each = 6),
+    trt = rep(c("A", "B", "C"), times = 4)
+  )
+
+  expect_no_warning(
+    speed(
+      df,
+      swap = "trt",
+      swap_within = "block",
+      swap_all = TRUE,
+      iterations = 30,
+      seed = 1,
+      quiet = TRUE
+    )
+  )
 })
