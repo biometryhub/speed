@@ -509,7 +509,7 @@ str(ribd_result)
       .. ..$ single treatment within replicate:List of 11
       .. .. ..$ swap            : chr "treatment"
       .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x564837769ea0>
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x56468b108890>
       .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
       .. .. ..$ adj_weight      : num 1
       .. .. ..$ bal_weight      : num 1

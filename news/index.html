@@ -47,6 +47,11 @@
 <h3 id="major-changes-0-0-10">Major Changes<a class="anchor" aria-label="anchor" href="#major-changes-0-0-10"></a></h3>
 <ul><li>Added a <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> method for <code>"design"</code> objects, reporting structure and replication, a decomposed optimisation score, and design-quality diagnostics (connectedness, concurrence, replicate spans and spread across blocks, neighbour balance, and opt-in efficiency). (<a href="https://github.com/biometryhub/speed/issues/73" class="external-link">#73</a>)</li>
 </ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-0-10">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-0-10"></a></h3>
+<ul><li>
+<code>swap_all = TRUE</code> no longer changes the replication of a design when an earlier level has unbalanced a swap group mid-search. Only treatments with matching replication are exchanged.</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.0.9" id="speed-009">speed 0.0.9<a class="anchor" aria-label="anchor" href="#speed-009"></a></h2>
