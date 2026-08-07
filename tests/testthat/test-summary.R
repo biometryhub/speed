@@ -1,12 +1,12 @@
 # Tests for summary.design / print.summary.design (Phase 3: Structure +
 # Optimisation + flags). Evaluation metrics are covered separately.
 
-# The `grid` argument the evaluation helpers take: a grid_index() list, or the
-# reason there is no grid. summary.design() builds it inline, once per call;
-# tests calling a helper directly need the same value.
-grid_or_reason <- function(df, rc = "row", cc = "col") {
+# The `grid` argument the evaluation helpers take: a grid_indices() list - one
+# entry per grid - or the reason there is no grid at all. summary.design() builds
+# it inline, once per call; tests calling a helper directly need the same value.
+grid_or_reason <- function(df, rc = "row", cc = "col", by = NULL) {
   return(tryCatch(
-    grid_index(df, row_column = rc, col_column = cc),
+    grid_indices(df, row_column = rc, col_column = cc, by = by),
     speed_grid_error = function(e) return(e$reason)
   ))
 }
@@ -1004,10 +1004,11 @@ test_that("multi-site (MET) designs summarise instead of erroring", {
 })
 
 test_that("efficiency is withheld rather than reported above 1 for MET designs", {
-  # calculate_efficiency_factor() does not error on duplicate coordinates, it
-  # pools the grids and returns a value above 1 - impossible for an efficiency
-  # factor. The gate exists to stop that reaching the user, not just to stop an
-  # error, so pin the underlying behaviour that makes it necessary.
+  # An efficiency factor is a property of one experiment's information matrix,
+  # so a multi-site frame has no single answer. Nothing about the arithmetic
+  # stops it being computed - duplicate coordinates just pool the sites into one
+  # row/column model - so the refusal has to be explicit. Before it, this
+  # returned a value above 1, impossible for an efficiency factor.
   met <- initialise_design_df(
     items = rep(LETTERS[1:3], 6),
     designs = list(
@@ -1015,7 +1016,10 @@ test_that("efficiency is withheld rather than reported above 1 for MET designs",
       b = list(nrows = 3, ncols = 4)
     )
   )
-  expect_gt(calculate_efficiency_factor(met, treatment), 1)
+  expect_error(
+    calculate_efficiency_factor(met, treatment),
+    class = "speed_grid_duplicate"
+  )
   gate <- .efficiency_factor(
     met,
     "treatment",
@@ -1025,6 +1029,133 @@ test_that("efficiency is withheld rather than reported above 1 for MET designs",
   )
   expect_false(gate$available)
   expect_match(gate$reason, "duplicate")
+})
+
+test_that("a MET design reports one efficiency per site and never a pooled one", {
+  set.seed(1)
+  d <- rbind(
+    data.frame(
+      site = "a",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = sample(rep(LETTERS[1:6], 2))
+    ),
+    data.frame(
+      site = "b",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = sample(rep(LETTERS[1:6], 2))
+    )
+  )
+  r <- speed(
+    d,
+    swap = "treatment",
+    swap_within = "site",
+    spatial_factors = ~ row + col + site,
+    grid_factors = list(dim1 = "row", dim2 = "col", by = "site"),
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+  s <- summary(r, efficiency = TRUE)
+
+  # The grouping is recorded, not guessed from the column name.
+  expect_equal(r$metadata$grid_by, "site")
+  expect_false(s$layout$has_grid)
+  expect_equal(s$layout$n_grids, 2L)
+  expect_match(s$layout$grid_reason, "2 grids")
+  # nrow/ncol stay NA: no single shape describes a design spanning two grids.
+  expect_true(is.na(s$layout$nrow))
+
+  ef <- s$per_level[[1]]$evaluation$efficiency
+  expect_named(ef$per_grid, c("a", "b"))
+  expect_equal(ef$grid_by, "site")
+  expect_null(ef$value) # no pooled value, ever
+  for (one in ef$per_grid) {
+    expect_true(one$available)
+    expect_lte(one$value, 1)
+  }
+  # Each site's value is that site scored on its own.
+  expect_equal(
+    ef$per_grid$a$value,
+    calculate_efficiency_factor(
+      r$design_df[r$design_df$site == "a", ],
+      treatment
+    )
+  )
+
+  out <- capture_output(print(s))
+  expect_match(out, "per `site`")
+
+  # Spans pool sites if computed naively - two sites' row 3 are not one plot
+  # apart - so they are withheld with a reason instead.
+  spans <- s$per_level[[1]]$evaluation$replicate_span
+  expect_false(spans$available)
+  expect_match(spans$reason, "spans 2 grids")
+})
+
+test_that("a site that cannot support an efficiency factor reports only for itself", {
+  # Site b puts each treatment in one column, so its treatment contrasts are
+  # confounded with the column effects. That must not withhold site a's value.
+  d <- rbind(
+    data.frame(
+      site = "a",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = c("A", "B", "C", "D", "C", "D", "A", "B", "B", "A", "D", "C")
+    ),
+    data.frame(
+      site = "b",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = rep(c("A", "B", "C"), each = 4)
+    )
+  )
+  grid <- grid_or_reason(d, by = "site")
+  ef <- .efficiency_factor(d, "treatment", "row", "col", grid)
+
+  expect_true(ef$per_grid$a$available)
+  expect_false(ef$per_grid$b$available)
+  expect_match(ef$per_grid$b$reason, "not estimable")
+  # `available` is TRUE overall because at least one site reported.
+  expect_true(ef$available)
+})
+
+test_that("neighbour balance sums across grids rather than pooling them", {
+  set.seed(3)
+  d <- rbind(
+    data.frame(
+      site = "a",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = sample(rep(LETTERS[1:6], 2))
+    ),
+    data.frame(
+      site = "b",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = sample(rep(LETTERS[1:6], 2))
+    )
+  )
+  both <- .neighbour_balance(
+    d,
+    "treatment",
+    "row",
+    "col",
+    grid_or_reason(d, by = "site")
+  )
+  expect_true(both$available)
+
+  # The self-adjacency count is an edge count, so it is exactly the sum of the
+  # per-site counts - no edge crosses a site boundary.
+  per_site <- vapply(
+    split(d, d$site),
+    function(s) {
+      return(.neighbour_balance(
+        s,
+        "treatment",
+        "row",
+        "col",
+        grid_or_reason(s)
+      )$self_adjacent)
+    },
+    numeric(1)
+  )
+  expect_equal(both$self_adjacent, sum(per_site))
 })
 
 test_that("non-numeric row/col labels are reported, not coerced silently", {

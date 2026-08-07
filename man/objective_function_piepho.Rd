@@ -13,6 +13,7 @@ objective_function_piepho(
   pair_mapping = NULL,
   row_column = "row",
   col_column = "col",
+  by = NULL,
   grid_index = NULL,
   ...
 )

@@ -981,6 +981,62 @@ grid_index <- function(df, row_column = "row", col_column = "col") {
   ))
 }
 
+#' Split a Design into One Grid Index per Grid
+#'
+#' @description
+#' The multi-grid counterpart of [grid_index()]. A multi-environment trial is
+#' several grids that share a treatment set and never share an edge, so it
+#' cannot be one matrix: sites reuse `row`/`col`, and pooling them either
+#' silently overwrites plots or invents adjacencies between sites.
+#'
+#' With `by = NULL` this returns a one-element list, so callers have a single
+#' code path whether or not the design spans grids.
+#'
+#' @inheritParams grid_index
+#' @param by Optional column name grouping plots into grids (e.g. `"site"`).
+#'   `NULL` treats the design as one grid.
+#'
+#' @return A named list with one element per grid, each a list of `rows` (the
+#'   positions in `df` belonging to that grid) and `index` (that grid's
+#'   [grid_index()]). Named `"1"` when `by` is `NULL`.
+#'
+#' @keywords internal
+grid_indices <- function(
+  df,
+  row_column = "row",
+  col_column = "col",
+  by = NULL
+) {
+  if (is.null(by)) {
+    return(list("1" = list(
+      rows = seq_len(nrow(df)),
+      index = grid_index(df, row_column, col_column)
+    )))
+  }
+  if (!by %in% names(df)) {
+    .grid_stop(
+      "speed_grid_missing_by",
+      sprintf("no `%s` column to group grids by", by),
+      "Cannot split the design into grids: no `",
+      by,
+      "` column."
+    )
+  }
+  # drop = TRUE so an unused factor level does not produce an empty grid, which
+  # grid_index() would then reject for having no coordinates.
+  groups <- split(seq_len(nrow(df)), df[[by]], drop = TRUE)
+  out <- lapply(groups, function(rows) {
+    return(list(
+      rows = rows,
+      index = grid_index(df[rows, , drop = FALSE], row_column, col_column)
+    ))
+  })
+  # Carried so consumers can label per-grid output without being told separately
+  # which column the grids came from.
+  attr(out, "by") <- by
+  return(out)
+}
+
 #' Build a Spatial Design Matrix from a Data Frame
 #'
 #' @description

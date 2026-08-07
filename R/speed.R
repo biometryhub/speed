@@ -23,6 +23,14 @@
 #' @param grid_factors A named list specifying grid factors to construct a
 #'   matrix for calculating adjacency score, `dim1` for row and `dim2` for
 #'   column. (default: `list(dim1 = "row", dim2 = "col")`).
+#'
+#'   An optional third element, `by`, names a column that groups plots into
+#'   *separate* grids - a multi-environment trial, where each site reuses the
+#'   same `row`/`col` numbering. Each grid is then scored on its own and the
+#'   adjacency counts summed, so no adjacency is counted between plots at
+#'   different sites, e.g.
+#'   `list(dim1 = "row", dim2 = "col", by = "site")`. Without it, a design whose
+#'   sites share coordinates is refused rather than silently pooled.
 #' @param iterations Maximum number of iterations for the simulated annealing
 #'   algorithm (default: 10000). For hierarchical designs, can be a named list
 #'   with names matching `swap`.
@@ -187,13 +195,35 @@ speed <- function(data,
   inferred <- infer_row_col(data, grid_factors, quiet)
   row_column <- inferred$row
   col_column <- inferred$col
+  # `by` groups plots into separate grids (a multi-environment trial). Validated
+  # here rather than left to fail later: `grid_factors` is a plain list, so a
+  # mistyped name would otherwise be silently ignored and every site pooled.
+  grid_by <- grid_factors$by
+  if (!is.null(grid_by)) {
+    if (!is.character(grid_by) || length(grid_by) != 1) {
+      stop(
+        "`grid_factors$by` must be a single column name.",
+        call. = FALSE
+      )
+    }
+    if (!grid_by %in% names(data)) {
+      stop(
+        "`grid_factors$by` is \"",
+        grid_by,
+        "\", which is not a column in the design.",
+        call. = FALSE
+      )
+    }
+  }
 
   # convert to factors
   factored <- to_factor(data)
   data <- factored$df
 
   if (inferred$inferred) {
-    # Sort the data frame to start with to ensure consistency in calculating the adjacency later
+    # Row order no longer affects any metric - grids are built from each plot's
+    # coordinates - but generate_neighbour(), random_initialise(), print() and
+    # autoplot() may still rely on it, so the sort stays until that is checked.
     data <- data[do.call(order, data[c(row_column, col_column)]), ]
     # Only reset row labels for base data frames; tibbles are positional and
     # warn on `rownames<-`, and nothing downstream reads the design's row names.
@@ -229,7 +259,8 @@ speed <- function(data,
 
   design <- do.call(speed_hierarchical, c(
     list(data = data, optimise = optimise, quiet = quiet, seed = seed,
-         row_column = row_column, col_column = col_column),
+         row_column = row_column, col_column = col_column,
+         grid_by = grid_by),
     dots
   ))
   # Set here, not passed through do.call(): do.call would evaluate a language
@@ -266,10 +297,11 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   # errors from build_design_matrix() if it does.
   dots <- list(...)
   grid_idx <- tryCatch(
-    grid_index(
+    grid_indices(
       current_design,
       dots$row_column %||% "row",
-      dots$col_column %||% "col"
+      dots$col_column %||% "col",
+      by = dots$grid_by
     ),
     error = function(e) return(NULL)
   )
@@ -417,6 +449,9 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     levels     = hierarchy_levels,
     row_column = .dots$row_column %||% "row",
     col_column = .dots$col_column %||% "col",
+    # NULL for a single-grid design; the column separating grids otherwise, so
+    # summary() can recover the grouping instead of guessing it from a name.
+    grid_by    = .dots$grid_by,
     per_level  = per_level_meta
   )
 

@@ -63,6 +63,7 @@ objective_function <- function(layout_df,
       "ring_weights",
       "ring_type",
       "relationship",
+      "by",
       "grid_index"
     )
   )]
@@ -236,14 +237,32 @@ objective_function_piepho <- function(design,
                                       pair_mapping = NULL,
                                       row_column = "row",
                                       col_column = "col",
+                                      by = NULL,
                                       grid_index = NULL,
                                       ...) {
+  if (is.null(grid_index)) {
+    grid_index <- grid_indices(design, row_column, col_column, by = by)
+  }
+  # Neighbour balance would sum across grids like any edge count, but the
+  # evenness-of-distribution component does not: per-grid-then-combined and
+  # pooled are different quantities, and Piepho's definition assumes a single
+  # trial. Refusing is the honest interim answer - pooling would score
+  # adjacencies and distances between plots at different sites.
+  if (length(grid_index) > 1) {
+    stop(
+      "`objective_function_piepho()` is defined for a single grid, but this ",
+      "design spans ",
+      length(grid_index),
+      ". Its evenness-of-distribution component has no agreed multi-grid form.",
+      call. = FALSE
+    )
+  }
   design_matrix <- build_design_matrix(
     design,
     swap,
     row_column = row_column,
     col_column = col_column,
-    index = grid_index
+    index = grid_index[[1]]$index
   )
 
   ed <- calculate_ed(design_matrix, current_score_obj$ed, swapped_items)
@@ -679,15 +698,38 @@ create_pair_mapping <- function(items) {
 #' @param col_column Name of the column giving the column of the design (default: "col")
 #'
 #' @examples
+#' # `initialise_design_df()` fills `items` down columns, so the literal below is
+#' # column-major; the grid it produces is
+#' #   a b d c
+#' #   e a f b
+#' #   c f e d
 #' df_design <- initialise_design_df(c(
-#'   "a", "b", "d", "c",
-#'   "e", "a", "f", "b",
-#'   "c", "f", "e", "d"
+#'   "a", "e", "c",
+#'   "b", "a", "f",
+#'   "d", "f", "e",
+#'   "c", "b", "d"
 #' ), 3, 4)
 #'
 #' calculate_efficiency_factor(df_design, "treatment")
 #'
-#' @return A numeric value representing the efficiency factor of the design. Higher values indicate more efficient designs.
+#' # Not every design can support the estimate. Here each treatment fills one
+#' # grid row, so the treatment differences cannot be separated from the row
+#' # effects and there is no efficiency factor to report:
+#' #   a a a a
+#' #   b b b b
+#' #   c c c c
+#' confounded <- initialise_design_df(rep(c("a", "b", "c"), 4), 3, 4)
+#' try(calculate_efficiency_factor(confounded, "treatment"))
+#'
+#' @return A numeric value representing the efficiency factor of the design,
+#'   between 0 and 1. Higher values indicate more efficient designs.
+#'
+#'   Errors with a `speed_efficiency_rank` condition if the design cannot support
+#'   the estimate - that is, if some treatment contrast is not estimable once row
+#'   and column effects are eliminated, whether because too few residual degrees
+#'   of freedom remain or because a treatment is confounded with a row or column.
+#'   Such a design has no efficiency factor; before this check the formula
+#'   returned a plausible-looking value, usually above 1.
 #'
 #' @references Piepho, H. P., Williams, E., & Michel, V. (2015). Nonresolvable Row-Column Designs with an Even
 #'   Distribution of Treatment Replications. Journal of Agricultural, Biological, and Environmental Statistics,
@@ -701,6 +743,14 @@ calculate_efficiency_factor <- function(
   col_column = "col"
 ) {
   item <- as.character(substitute(item))
+
+  # An efficiency factor is a property of one experiment's information matrix,
+  # and there is no meaningful way to combine several. A multi-site frame does
+  # not error of its own accord here - duplicate coordinates just pool the sites
+  # into one row/column model, which returns a value above 1 - so validate the
+  # coordinates explicitly rather than letting that through. Report one value
+  # per site instead, as `summary()` does.
+  grid_index(design_df, row_column, col_column)
 
   # Design parameters
   encoded_items <- as.integer(as.factor(design_df[[item]]))
@@ -725,8 +775,16 @@ calculate_efficiency_factor <- function(
   Z_row[cbind(in_row, rows[in_row])] <- 1
   Z_col[cbind(in_col, cols[in_col])] <- 1
 
-  # Combine row and column design matrices
-  Z <- cbind(Z_row, Z_col)
+  # Intercept, then row and column design matrices. The intercept belongs to the
+  # nuisance space on its own account - the row-column model has a mean - and it
+  # is also what makes the estimability test below exact. Without it the mean is
+  # left inside the treatment term (X's rows sum to 1), so `A_RC` keeps a
+  # non-null direction that is neither a contrast nor orthogonal to one, and no
+  # rank test on it distinguishes "all contrasts estimable" from "some are not".
+  # Adding it does not change the reported value for a design that is estimable:
+  # verified against both published designs (0.834, 0.827) and against pairwise
+  # contrast variances taken from the full model's Moore-Penrose inverse.
+  Z <- cbind(1, Z_row, Z_col)
 
   # Check if Z^TZ is invertible
   ZtZ <- t(Z) %*% Z
@@ -744,6 +802,39 @@ calculate_efficiency_factor <- function(
   P_Z <- Z %*% ZtZ_inv %*% t(Z)
   I_n <- diag(n_plots)
   A_RC <- t(X) %*% (I_n - P_Z) %*% X
+
+  # With the intercept eliminated, A_RC's null space contains the all-ones
+  # direction, so rank n_treatments - 1 means exactly "every treatment contrast
+  # is estimable" and anything less means some are not. Where they are not,
+  # pseudo_inverse() drops the null directions and the surviving pairwise
+  # variances still average to something finite, so the formula returns a
+  # plausible-looking number - typically above 1, which is impossible - instead
+  # of failing. Two distinct designs reach here: one with too few residual
+  # degrees of freedom, and one where treatment is aliased with a row or column
+  # effect despite having degrees of freedom to spare. Rank catches both;
+  # counting degrees of freedom catches only the first. The tolerance matches
+  # pseudo_inverse()'s, so the gate and the inverse cannot disagree about which
+  # directions are null. (`qr()` is not used: its default tolerance is relative
+  # and reports full rank for a matrix whose eigenvalues are 2, 9e-16, 6e-16.)
+  if (sum(svd(A_RC)$d > 1e-10) != n_treatments - 1) {
+    stop(structure(
+      class = c(
+        "speed_efficiency_rank",
+        "speed_efficiency_error",
+        "error",
+        "condition"
+      ),
+      list(
+        message = paste0(
+          "Not all treatment contrasts are estimable after eliminating ",
+          "`", row_column, "` and `", col_column, "` effects, so this design ",
+          "cannot support an efficiency factor."
+        ),
+        reason = "treatment contrasts not estimable given row + col",
+        call = NULL
+      )
+    ))
+  }
 
   # Calculate Moore-Penrose inverse of A_RC, variance matrix
   V <- pseudo_inverse(A_RC)

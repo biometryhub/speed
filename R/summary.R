@@ -148,10 +148,13 @@ summary.design <- function(
   # columns exist": a design with duplicate coordinates spans several grids of
   # possibly different shapes, so no single `nrow` x `ncol` describes it.
   grid <- tryCatch(
-    grid_index(df, row_column = rc, col_column = cc),
+    grid_indices(df, row_column = rc, col_column = cc, by = meta$grid_by),
     speed_grid_error = function(e) return(e$reason)
   )
-  has_grid <- !is.character(grid)
+  # A multi-environment trial occupies several grids that share a treatment set
+  # and never share an edge, so no single `nrow` x `ncol` describes it.
+  n_grids <- if (is.character(grid)) NA_integer_ else length(grid)
+  has_grid <- !is.character(grid) && n_grids == 1L
   layout <- list(
     n_plots = nrow(df),
     nrow = if (has_grid) length(unique(df[[rc]])) else NA_integer_,
@@ -159,7 +162,15 @@ summary.design <- function(
     row_column = rc,
     col_column = cc,
     has_grid = has_grid,
-    grid_reason = if (has_grid) NA_character_ else grid
+    n_grids = n_grids,
+    grid_by = meta$grid_by,
+    grid_reason = if (has_grid) {
+      NA_character_
+    } else if (is.character(grid)) {
+      grid
+    } else {
+      sprintf("%d grids, grouped by `%s`", n_grids, meta$grid_by)
+    }
   )
 
   per_level <- lapply(levels, function(lv) {
@@ -554,9 +565,30 @@ print.summary.design <- function(x, ...) {
     cat(lab("Repl. span:"), rs$reason, "\n", sep = "")
   }
 
-  # Efficiency
+  # Efficiency. A multi-grid design reports one value per grid and no total:
+  # there is no meaningful way to combine them (see `.efficiency_factor()`).
   ef <- e$efficiency
-  if (isTRUE(ef$available)) {
+  if (!is.null(ef$per_grid)) {
+    cat(
+      lab("Efficiency:"),
+      sprintf(
+        "per %s (A-efficiency, row-column model)\n",
+        if (is.null(ef$grid_by)) "grid" else paste0("`", ef$grid_by, "`")
+      ),
+      sep = ""
+    )
+    for (nm in names(ef$per_grid)) {
+      one <- ef$per_grid[[nm]]
+      cat(
+        "    ",
+        format(nm, width = max(nchar(names(ef$per_grid)))),
+        "  ",
+        if (isTRUE(one$available)) fmt_num(one$value) else one$reason,
+        "\n",
+        sep = ""
+      )
+    }
+  } else if (isTRUE(ef$available)) {
     cat(
       lab("Efficiency:"),
       fmt_num(ef$value),
@@ -701,6 +733,16 @@ print.summary.design <- function(x, ...) {
   # (two sites' row 3 are not one plot apart), so refuse rather than pool.
   if (is.character(grid)) {
     return(list(available = FALSE, reason = grid))
+  }
+  if (length(grid) > 1L) {
+    return(list(
+      available = FALSE,
+      reason = sprintf(
+        "design spans %d grids (grouped by `%s`)",
+        length(grid),
+        attr(grid, "by")
+      )
+    ))
   }
   span1 <- function(x) {
     if (length(x) < 2) {
@@ -930,22 +972,48 @@ print.summary.design <- function(x, ...) {
   if (length(unique(df[[swap]])) < 3) {
     return(list(available = FALSE, reason = "requires >= 3 treatments"))
   }
-  ef <- tryCatch(
-    eval(bquote(calculate_efficiency_factor(
-      df,
-      .(as.name(swap)),
-      row_column = rc,
-      col_column = cc
-    ))),
-    error = function(e) return(NULL)
-  )
-  if (is.null(ef) || !is.finite(ef)) {
-    return(list(
-      available = FALSE,
-      reason = "could not be computed for this design"
-    ))
+
+  one <- function(sub) {
+    ef <- tryCatch(
+      eval(bquote(calculate_efficiency_factor(
+        sub,
+        .(as.name(swap)),
+        row_column = rc,
+        col_column = cc
+      ))),
+      # A rank failure is a property of the design, so it carries its own
+      # reason; anything else is unexpected and gets the generic one.
+      speed_efficiency_error = function(e) return(e$reason),
+      error = function(e) return(NULL)
+    )
+    if (is.character(ef)) {
+      return(list(available = FALSE, reason = ef))
+    }
+    if (is.null(ef) || !is.finite(ef)) {
+      return(list(
+        available = FALSE,
+        reason = "could not be computed for this design"
+      ))
+    }
+    return(list(available = TRUE, value = ef))
   }
-  return(list(available = TRUE, value = ef))
+
+  if (length(grid) == 1L) {
+    return(one(df))
+  }
+
+  # One value per grid, never summed or averaged. An efficiency factor is a
+  # property of a single experiment's information matrix: averaging per-grid
+  # values gives a different quantity from the combined analysis, and the
+  # combined analysis is not identified anyway - it depends on residual variance
+  # ratios that are unknown at design time. Each grid is gated on its own rank,
+  # so one unreplicated site reports its reason without withholding the others.
+  per_grid <- lapply(grid, function(g) return(one(df[g$rows, , drop = FALSE])))
+  return(list(
+    available = any(vapply(per_grid, function(x) x$available, logical(1))),
+    per_grid = per_grid,
+    grid_by = attr(grid, "by")
+  ))
 }
 
 #' Neighbour-balance diagnostics
@@ -979,19 +1047,24 @@ print.summary.design <- function(x, ...) {
   if (is.character(grid)) {
     return(list(available = FALSE, reason = grid))
   }
-  dm <- build_design_matrix(
-    df,
-    swap,
-    row_column = rc,
-    col_column = cc,
-    index = grid
-  )
+  # One pair mapping for the whole design, so every grid contributes to the same
+  # set of pairs and a pair absent from one site is still counted as zero rather
+  # than dropped. Counts sum across grids: an adjacency is an edge, and no edge
+  # crosses a grid boundary.
   pair_mapping <- create_pair_mapping(df[[swap]])
-  nb <- calculate_nb(dm, pair_mapping)
-
   all_pairs <- unique(pair_mapping)
   counts <- setNames(rep(0L, length(all_pairs)), all_pairs)
-  counts[names(nb$nb)] <- nb$nb
+  for (g in grid) {
+    dm <- build_design_matrix(
+      df[g$rows, , drop = FALSE],
+      swap,
+      row_column = rc,
+      col_column = cc,
+      index = g$index
+    )
+    nb <- calculate_nb(dm, pair_mapping)
+    counts[names(nb$nb)] <- counts[names(nb$nb)] + nb$nb
+  }
 
   # create_pair_mapping() keys are "trt1,trt2"; a self-pair repeats the level.
   parts <- strsplit(names(counts), ",", fixed = TRUE)

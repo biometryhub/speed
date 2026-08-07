@@ -229,9 +229,80 @@ test_that("a supplied index is checked against the design it is used with", {
 test_that("calculate_adjacency_score() accepts a pre-built index", {
   d <- initialise_design_df(rep(LETTERS[1:6], 4), 3, 8)
   expect_equal(
-    calculate_adjacency_score(d, "treatment", grid_index = grid_index(d)),
+    calculate_adjacency_score(d, "treatment", grid_index = grid_indices(d)),
     calculate_adjacency_score(d, "treatment")
   )
+})
+
+test_that("calculate_adjacency_score() sums per grid and never across them", {
+  # Two sites sharing row/col numbering. Scoring them as one grid is impossible
+  # (duplicate coordinates); scoring them side by side in one grid would invent
+  # adjacencies between plots at different sites.
+  set.seed(1)
+  d <- rbind(
+    data.frame(
+      site = "a",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = sample(rep(LETTERS[1:6], 2))
+    ),
+    data.frame(
+      site = "b",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = sample(rep(LETTERS[1:6], 2))
+    )
+  )
+
+  expect_error(
+    calculate_adjacency_score(d, "treatment"),
+    class = "speed_grid_duplicate"
+  )
+
+  per_site <- sum(vapply(
+    split(d, d$site),
+    function(s) return(calculate_adjacency_score(s, "treatment")),
+    numeric(1)
+  ))
+  expect_equal(
+    calculate_adjacency_score(d, "treatment", by = "site"),
+    per_site
+  )
+
+  # Laid side by side the coordinates are unique, so nothing errors - but the
+  # score picks up adjacencies across the join, which is exactly what `by`
+  # prevents. This is the case no amount of coordinate validation can catch.
+  side_by_side <- d
+  side_by_side$col[side_by_side$site == "b"] <-
+    side_by_side$col[side_by_side$site == "b"] + 3
+  expect_gt(
+    calculate_adjacency_score(side_by_side, "treatment"),
+    calculate_adjacency_score(side_by_side, "treatment", by = "site")
+  )
+  expect_equal(
+    calculate_adjacency_score(side_by_side, "treatment", by = "site"),
+    per_site
+  )
+})
+
+test_that("grid_indices() returns one index per grid", {
+  d <- rbind(
+    data.frame(site = "a", expand.grid(row = 1:4, col = 1:3), treatment = "x"),
+    data.frame(site = "b", expand.grid(row = 1:4, col = 1:3), treatment = "y")
+  )
+
+  single <- grid_indices(d[d$site == "a", ])
+  expect_length(single, 1)
+  expect_equal(single[[1]]$index$n, 12)
+
+  split_grids <- grid_indices(d, by = "site")
+  expect_named(split_grids, c("a", "b"))
+  expect_equal(attr(split_grids, "by"), "site")
+  expect_equal(vapply(split_grids, function(g) return(g$index$n), numeric(1)),
+               c(a = 12, b = 12))
+  # The rows recorded for each grid are the rows of that site, so a caller can
+  # subset the design with them.
+  expect_equal(split_grids$b$rows, which(d$site == "b"))
+
+  expect_error(grid_indices(d, by = "nope"), class = "speed_grid_missing_by")
 })
 
 test_that("speed() scores identically whether or not the index is hoisted", {

@@ -67,11 +67,16 @@ test_that("calculate_efficiency_factor provides the same results as the paper", 
 })
 
 test_that("calculate_efficiency_factor provides better result for an optimised design", {
+  # A poor but *estimable* comparator. The obvious "unoptimised" layout - each
+  # treatment filling one grid row - is not merely inefficient, it confounds
+  # treatment with row, so it has no efficiency factor at all and is refused
+  # (see the estimability tests below). Comparing against it would have been
+  # comparing against a number that does not exist.
   # fmt: skip
   df_design_initial <- by_row(c(
-    1, 1, 2, 2,
-    3, 3, 4, 4,
-    5, 5, 6, 6
+    1, 2, 6, 3,
+    4, 3, 5, 5,
+    1, 4, 2, 6
   ), 3, 4)
 
   # fmt: skip
@@ -85,6 +90,9 @@ test_that("calculate_efficiency_factor provides better result for an optimised d
     abs(1 - calculate_efficiency_factor(df_design_optimised, "treatment")),
     abs(1 - calculate_efficiency_factor(df_design_initial, "treatment"))
   )
+  # Both are genuine values in [0, 1], so the comparison above is meaningful.
+  expect_lte(calculate_efficiency_factor(df_design_optimised, "treatment"), 1)
+  expect_gt(calculate_efficiency_factor(df_design_initial, "treatment"), 0)
 })
 
 test_that("calculate_efficiency_factor provides same result for mathematically identical designs", {
@@ -120,28 +128,42 @@ test_that("calculate_efficiency_factor provides same result for mathematically i
   )
 })
 
-test_that("calculate_efficiency_factor handles near-singular matrices using pseudoinverse", {
-  # Instead of trying to create a design that naturally triggers the pseudoinverse,
-  # let's test with a design that we know works and verify the function handles
-  # both the regular and pseudoinverse cases properly
-
-  # Use a simple but slightly unbalanced design
-  df_design_test <- data.frame(
+test_that("calculate_efficiency_factor refuses a design whose contrasts are not estimable", {
+  # C occupies row 3 entirely, so the C-vs-A contrast cannot be separated from
+  # the row 3 effect. Confirmed independently: fitting
+  # `y ~ factor(row) + factor(col) + treatment` with lm() aliases one treatment
+  # coefficient. There is no efficiency factor for such a design - before this
+  # check the formula returned a finite, plausible-looking value anyway.
+  df_confounded_row <- data.frame(
     row = c(1, 1, 2, 2, 3, 3),
     col = c(1, 2, 1, 2, 1, 2),
     treatment = c("A", "B", "A", "B", "C", "C")
   )
 
-  # This should complete without error regardless of which inversion method is used
-  expect_no_error({
-    result <- calculate_efficiency_factor(df_design_test, "treatment")
-  })
+  expect_error(
+    calculate_efficiency_factor(df_confounded_row, "treatment"),
+    class = "speed_efficiency_rank"
+  )
+  expect_error(
+    calculate_efficiency_factor(df_confounded_row, "treatment"),
+    "not all treatment contrasts are estimable",
+    ignore.case = TRUE
+  )
+})
 
-  result <- calculate_efficiency_factor(df_design_test, "treatment")
-  expect_type(result, "double")
-  expect_length(result, 1)
+test_that("calculate_efficiency_factor keeps designs with no residual df to spare", {
+  # The boundary the gate must not overshoot: zero residual degrees of freedom
+  # is still estimable, so these must return a value rather than be refused.
+  # fmt: skip
+  df_df0 <- by_row(c(
+    1, 2, 3,
+    3, 1, 2
+  ), 2, 3)
+
+  result <- calculate_efficiency_factor(df_df0, "treatment")
   expect_true(is.finite(result))
   expect_gt(result, 0)
+  expect_lte(result, 1)
 })
 
 test_that("calculate_efficiency_factor works with minimal design dimensions", {
@@ -162,25 +184,41 @@ test_that("calculate_efficiency_factor works with minimal design dimensions", {
   expect_gt(result, 0)
 })
 
-test_that("calculate_efficiency_factor handles designs with high treatment-space confounding", {
-  # Create a design where treatments are highly confounded with a spatial dimension
-  # This creates a scenario more likely to need pseudoinverse without being perfectly singular
+test_that("calculate_efficiency_factor refuses a single-column design with blocked treatments", {
+  # One plot per row means every row effect is a plot effect, so nothing is left
+  # to estimate a treatment difference with. Refusing is the only honest answer;
+  # the formula previously returned a finite value here.
   df_design_confounded <- data.frame(
     row = rep(1:8, each = 1),
     col = rep(1, times = 8),
     treatment = c("A", "A", "A", "A", "B", "B", "B", "B") # Single column, treatments in blocks
   )
 
-  # This single-column design with blocked treatments should be numerically challenging
-  # but still solvable
-  expect_no_error({
-    result <- calculate_efficiency_factor(df_design_confounded, "treatment")
-  })
+  expect_error(
+    calculate_efficiency_factor(df_design_confounded, "treatment"),
+    class = "speed_efficiency_rank"
+  )
+})
 
-  result <- calculate_efficiency_factor(df_design_confounded, "treatment")
-  expect_type(result, "double")
-  expect_true(is.finite(result))
-  expect_gt(result, 0)
+test_that("calculate_efficiency_factor refuses unreplicated and degenerate designs", {
+  # Every route to an impossible value, pinned together. Each was measured
+  # returning > 1 before the rank check existed.
+  unreplicated <- initialise_design_df(as.character(1:12), 4, 3)
+  single_row <- data.frame(
+    row = rep(1, 6),
+    col = 1:6,
+    treatment = rep(c("A", "B", "C"), 2)
+  )
+  # Column-major storage, so this is one treatment per grid row - `each = 4`
+  # would give a diagonal pattern, which is estimable.
+  aliased_with_row <- initialise_design_df(rep(c("a", "b", "c"), 4), 3, 4)
+
+  for (d in list(unreplicated, single_row, aliased_with_row)) {
+    expect_error(
+      calculate_efficiency_factor(d, "treatment"),
+      class = "speed_efficiency_rank"
+    )
+  }
 })
 
 test_that("calculate_efficiency_factor uses pseudoinverse for matrices with high condition numbers", {
@@ -218,24 +256,12 @@ test_that("calculate_efficiency_factor uses pseudoinverse for matrices with high
 })
 
 test_that("calculate_efficiency_factor honours custom row/col column names", {
-  df <- initialise_design_df(
-    c(
-      "a",
-      "b",
-      "d",
-      "c",
-      "e",
-      "a",
-      "f",
-      "b",
-      "c",
-      "f",
-      "e",
-      "d"
-    ),
-    3,
-    4
-  )
+  # fmt: skip
+  df <- by_row(c(
+    "a", "b", "d", "c",
+    "e", "a", "f", "b",
+    "c", "f", "e", "d"
+  ), 3, 4)
   base <- calculate_efficiency_factor(df, "treatment")
 
   # Same design, grid columns renamed - must give the same efficiency.

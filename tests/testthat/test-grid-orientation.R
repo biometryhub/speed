@@ -322,8 +322,13 @@ test_that("efficiency factor computes on a grid with a genuine hole", {
   # road - and is not a buffer, so it must be scored on the coordinates it has
   # rather than closed up. Here Z has no empty columns, so this is a separate
   # path from the offset case above: solve(), not pseudo_inverse().
+  # The treatments are shuffled rather than laid out systematically:
+  # `rep(LETTERS[1:6], 4)` down a 4 x 6 grid puts each treatment in only two of
+  # the four rows, which confounds treatment with row and leaves the design with
+  # no efficiency factor to report at all.
+  set.seed(2)
   full <- initialise_design_df(
-    items = rep(LETTERS[1:6], 4),
+    items = sample(rep(LETTERS[1:6], 4)),
     nrows = 4,
     ncols = 6
   )
@@ -335,8 +340,8 @@ test_that("efficiency factor computes on a grid with a genuine hole", {
   # silent change in either is caught.
   expect_equal(
     calculate_efficiency_factor(full, treatment),
-    0.7058824,
+    0.5949797,
     tolerance = 1e-6
   )
-  expect_equal(holed_ef, 0.7008719, tolerance = 1e-6)
+  expect_equal(holed_ef, 0.5764686, tolerance = 1e-6)
 })
