@@ -11,8 +11,8 @@ objective_function(
   layout_df,
   swap,
   spatial_cols,
-  adj_weight = 1,
-  bal_weight = 1,
+  adj_weight = getOption("speed.adj_weight", 1),
+  bal_weight = getOption("speed.bal_weight", 1),
   row_column = "row",
   col_column = "col",
   ...
@@ -69,9 +69,5 @@ layout_df <- data.frame(
 objective_function(layout_df, "treatment", c("row", "col"))
 #> $score
 #> [1] 15
-#> 
-#> $components
-#> adjacency   balance 
-#>         6         9 
 #> 
 ```

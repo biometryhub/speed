@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -15,17 +15,11 @@
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/speed.html">Get started</a></li>
-<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+      <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/complex_designs.html">Complex Agricultural Experimental Designs with speed</a></li>
-    <li><a class="dropdown-item" href="../articles/custom_objective_functions.html">Custom Objective Functions and Advanced Options for Optimisation in speed</a></li>
-    <li><a class="dropdown-item" href="../articles/factorial.html">Factorial Design with speed</a></li>
-    <li><a class="dropdown-item" href="../articles/genetic_relationship.html">Relationship-Aware Adjacency in speed</a></li>
-    <li><a class="dropdown-item" href="../articles/met.html">Multi-Environment Trials with speed</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/common_designs.html">Common Agricultural Experimental Designs with speed</a></li>
   </ul></li>
-<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/biometryhub/speed/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
@@ -38,7 +32,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Generate plots for designs generated in speed</h1>
-      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/R/plotting.R" class="external-link"><code>R/plotting.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/v0.0.1/R/plotting.R" class="external-link"><code>R/plotting.R</code></a></small>
       <div class="d-none name"><code>autoplot.Rd</code></div>
     </div>
 
@@ -57,6 +51,7 @@
 <span>  size <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  margin <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  palette <span class="op">=</span> <span class="st">"default"</span>,</span>
+<span>  buffer <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  row <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  column <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  block <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -92,6 +87,10 @@
 
 <dt id="arg-palette">palette<a class="anchor" aria-label="anchor" href="#arg-palette"></a></dt>
 <dd><p>A string specifying the colour scheme to use for plotting or a vector of custom colours to use as the palette. Default is equivalent to "Spectral". Colour blind friendly palettes can also be provided via options <code>"colour blind"</code> (or <code>"color blind"</code>, both equivalent to <code>"viridis"</code>), <code>"magma"</code>, <code>"inferno"</code>, <code>"plasma"</code>, <code>"cividis"</code>, <code>"rocket"</code>, <code>"mako"</code> or <code>"turbo"</code>. Other palettes from <code><a href="https://scales.r-lib.org/reference/pal_brewer.html" class="external-link">scales::brewer_pal()</a></code> are also possible.</p></dd>
+
+
+<dt id="arg-buffer">buffer<a class="anchor" aria-label="anchor" href="#arg-buffer"></a></dt>
+<dd><p>A string specifying the buffer plots to include for plotting. Default is <code>NULL</code> (no buffers plotted). Other options are "edge" (outer edge of trial area), "rows" (between rows), "columns" (between columns), "double row" (a buffer row each side of a treatment row) or "double column" (a buffer row each side of a treatment column). "blocks" (a buffer around each treatment block) will be implemented in a future release.</p></dd>
 
 
 <dt id="arg-row">row<a class="anchor" aria-label="anchor" href="#arg-row"></a></dt>
@@ -138,10 +137,9 @@
 <span class="r-in"><span>                swap_within <span class="op">=</span> <span class="st">"block"</span>,</span></span>
 <span class="r-in"><span>                seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> row and col are used as row and column, respectively.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Optimising level: single treatment within block </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Level: single treatment within block Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Level: single treatment within block Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Early stopping at iteration 2457 for level single treatment within block </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Early stopping at iteration 2457 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Plot the design with block boundaries</span></span></span>
 <span class="r-in"><span><span class="fu">autoplot</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></span>
@@ -170,7 +168,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Sam Rogers, Wasin Pipattungsakul, Julian Taylor, University of Adelaide, Grains Research and Development Corporation.</p>
+  <p>Developed by Sam Rogers, Julian Taylor, Russell Edson, Wasin Pipattungsakul, University of Adelaide, Grains Research and Development Corporation.</p>
 </div>
 
 <div class="pkgdown-footer-right">

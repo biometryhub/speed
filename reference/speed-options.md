@@ -46,12 +46,12 @@ function controlling the behaviour of the optimisation algorithm.
 
 - `speed.random_initialisation`:
 
-  Number of times to randomly shuffle items within `swap_within`; the
-  design with the best score is used as an initial design. (default: 0)
+  Logical; if TRUE, randomly shuffle items within `swap_within`
+  (default: FALSE)
 
 - `speed.adj_weight`:
 
-  Weight for adjacency score (default: 1).
+  Weight for adjacency score (default: 0).
 
 - `speed.bal_weight`:
 

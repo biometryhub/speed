@@ -5,12 +5,7 @@ Calculates an efficiency factor of a design according to Piepho 2015.
 ## Usage
 
 ``` r
-calculate_efficiency_factor(
-  design_df,
-  item,
-  row_column = "row",
-  col_column = "col"
-)
+calculate_efficiency_factor(design_df, item)
 ```
 
 ## Arguments
@@ -24,14 +19,6 @@ calculate_efficiency_factor(
 
   A column name of the items in the design (e.g., `treatment`,
   `variety`, `genotype`, etc)
-
-- row_column:
-
-  Name of the column giving the row of the design (default: "row")
-
-- col_column:
-
-  Name of the column giving the column of the design (default: "col")
 
 ## Value
 

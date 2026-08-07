@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -15,17 +15,11 @@
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/speed.html">Get started</a></li>
-<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+      <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/complex_designs.html">Complex Agricultural Experimental Designs with speed</a></li>
-    <li><a class="dropdown-item" href="../articles/custom_objective_functions.html">Custom Objective Functions and Advanced Options for Optimisation in speed</a></li>
-    <li><a class="dropdown-item" href="../articles/factorial.html">Factorial Design with speed</a></li>
-    <li><a class="dropdown-item" href="../articles/genetic_relationship.html">Relationship-Aware Adjacency in speed</a></li>
-    <li><a class="dropdown-item" href="../articles/met.html">Multi-Environment Trials with speed</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/common_designs.html">Common Agricultural Experimental Designs with speed</a></li>
   </ul></li>
-<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/biometryhub/speed/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
@@ -38,7 +32,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Objective Function with Metric from Piepho</h1>
-      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/R/metrics.R" class="external-link"><code>R/metrics.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/v0.0.1/R/metrics.R" class="external-link"><code>R/metrics.R</code></a></small>
       <div class="d-none name"><code>objective_function_piepho.Rd</code></div>
     </div>
 
@@ -105,16 +99,14 @@
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A function which returns a named list of numeric values with one required name <code>score</code> representing
 the score of the design (lower is better) with a signature <code>function(design_df, swap, spatial_cols, ...)</code>.
-An objective may optionally return a <code>components</code> element: a named numeric vector of the additive pieces
-that sum to <code>score</code> (e.g. <code>c(adjacency = ..., balance = ...)</code>). When present, <code><a href="summary.design.html">summary.design()</a></code> reports
-this as a faithful score decomposition. See signature
+See signature
 details in <a href="objective_functions.html">objective_function_signature</a>.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Piepho, H. P., Michel, V., &amp; Williams, E. (2018). Neighbor balance and evenness of distribution
 of treatment replications in row-column designs. Biometrical journal. Biometrische Zeitschrift, 60(6),
-1172-1189. <a href="https://doi.org/10.1002/bimj.201800013" class="external-link">https://doi.org/10.1002/bimj.201800013</a></p>
+1172–1189. <a href="https://doi.org/10.1002/bimj.201800013" class="external-link">https://doi.org/10.1002/bimj.201800013</a></p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -197,10 +189,6 @@ of treatment replications in row-column designs. Biometrical journal. Biometrisc
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $components</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> neighbour_balance even_distribution           balance         adjacency </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1.2000000         0.1666667         8.0000000         7.0000000 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="co"># usage in speed, speed(..., obj_function = objective_function_piepho, pair_mapping = pair_mapping)</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
@@ -210,7 +198,7 @@ of treatment replications in row-column designs. Biometrical journal. Biometrisc
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Sam Rogers, Wasin Pipattungsakul, Julian Taylor, University of Adelaide, Grains Research and Development Corporation.</p>
+  <p>Developed by Sam Rogers, Julian Taylor, Russell Edson, Wasin Pipattungsakul, University of Adelaide, Grains Research and Development Corporation.</p>
 </div>
 
 <div class="pkgdown-footer-right">

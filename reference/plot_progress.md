@@ -44,8 +44,7 @@ df <- data.frame(
 # Optimise the design
 result <- speed(df, "treatment")
 #> row and col are used as row and column, respectively.
-#> Optimising level: single treatment within whole design 
-#> Early stopping at iteration 76 for level single treatment within whole design 
+#> Early stopping at iteration 76 
 
 # Plot optimization progress
 plot_progress(result)

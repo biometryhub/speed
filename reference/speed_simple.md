@@ -1,11 +1,11 @@
-# Speed function for hierarchical designs
+# Speed function for simple (non-hierarchical) designs
 
-Speed function for hierarchical designs
+Speed function for simple (non-hierarchical) designs
 
 ## Usage
 
 ``` r
-speed_hierarchical(
+speed_simple(
   data,
   swap,
   swap_within,

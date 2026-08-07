@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,19 +31,13 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item"><a class="nav-link" href="articles/speed.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/complex_designs.html">Complex Agricultural Experimental Designs with speed</a></li>
-    <li><a class="dropdown-item" href="articles/custom_objective_functions.html">Custom Objective Functions and Advanced Options for Optimisation in speed</a></li>
-    <li><a class="dropdown-item" href="articles/factorial.html">Factorial Design with speed</a></li>
-    <li><a class="dropdown-item" href="articles/genetic_relationship.html">Relationship-Aware Adjacency in speed</a></li>
-    <li><a class="dropdown-item" href="articles/met.html">Multi-Environment Trials with speed</a></li>
+<li><a class="dropdown-item" href="articles/common_designs.html">Common Agricultural Experimental Designs with speed</a></li>
   </ul>
 </li>
-<li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -65,27 +59,23 @@
 <div class="section level2">
 <h2 id="table-of-contents">Table of Contents<a class="anchor" aria-label="anchor" href="#table-of-contents"></a>
 </h2>
+<!-- vim-markdown-toc GFM -->
 <ul>
 <li><a href="#overview">Overview</a></li>
 <li><a href="#installation">Installation</a></li>
 <li><a href="#features">Features</a></li>
-<li><a href="#whats-new">What’s New</a></li>
 <li>
-<a href="#examples">Examples</a>
+<a href="#example">Example</a>
 <ul>
 <li><a href="#basic">Basic</a></li>
 <li><a href="#blocked-design">Blocked design</a></li>
-<li><a href="https://biometryhub.github.io/speed/articles/speed.html#split-plot-design">Split-plot design</a></li>
-<li><a href="https://biometryhub.github.io/speed/articles/complex_designs.html#strip-plot-designs">Strip-plot design</a></li>
-<li><a href="https://biometryhub.github.io/speed/articles/complex_designs.html#p-rep-partially-replicated-designs">P-rep design</a></li>
-<li><a href="https://biometryhub.github.io/speed/articles/complex_designs.html#balanced-incomplete-block-design-bibd">BIBD</a></li>
 <li><a href="#more-examples">More Examples</a></li>
 </ul>
 </li>
-<li><a href="#how-it-works">How It Works</a></li>
 <li><a href="#citation">Citation</a></li>
 <li><a href="#license">License</a></li>
 </ul>
+<!-- vim-markdown-toc -->
 </div>
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
@@ -103,17 +93,8 @@
 </h2>
 <p>You can install the development version of speed from <a href="https://github.com/biometryhub/speed" class="external-link">GitHub</a> with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># pak</span></span>
-<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="https://pak.r-lib.org/" class="external-link">"pak"</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span></span>
-<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"biometryhub/speed"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># devtools</span></span>
-<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="https://devtools.r-lib.org/" class="external-link">"devtools"</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"biometryhub/speed"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># remotes</span></span>
-<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="https://remotes.r-lib.org" class="external-link">"remotes"</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"biometryhub/speed"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"biometryhub/speed"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
@@ -126,15 +107,10 @@
 <li>Progress tracking during optimisation</li>
 <li>Early stopping when convergence is reached</li>
 </ul>
-<p>See the package <a href="https://biometryhub.github.io/speed/reference/index.html">documentation</a> for more detailed examples and options.</p>
+<p>See the package documentation for more detailed examples and options.</p>
 </div>
 <div class="section level2">
-<h2 id="whats-new">What’s New<a class="anchor" aria-label="anchor" href="#whats-new"></a>
-</h2>
-<p>See <a href="https://biometryhub.github.io/speed/news/index.html">news</a>.</p>
-</div>
-<div class="section level2">
-<h2 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a>
+<h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
 <div class="section level3">
 <h3 id="basic">Basic<a class="anchor" aria-label="anchor" href="#basic"></a>
@@ -153,19 +129,18 @@
 <span><span class="co"># Optimise the design with seed for reproducibility</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/speed.html">speed</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"treatment"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
 <span><span class="co">#&gt; row and col are used as row and column, respectively.</span></span>
-<span><span class="co">#&gt; Optimising level: single treatment within whole design </span></span>
-<span><span class="co">#&gt; Level: single treatment within whole design Iteration: 1000 Score: 1 Best: 1 Since Improvement: 475 </span></span>
-<span><span class="co">#&gt; Level: single treatment within whole design Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1475 </span></span>
-<span><span class="co">#&gt; Early stopping at iteration 2525 for level single treatment within whole design</span></span>
+<span><span class="co">#&gt; Iteration: 1000 Score: 1 Best: 1 Since Improvement: 475 </span></span>
+<span><span class="co">#&gt; Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1475 </span></span>
+<span><span class="co">#&gt; Early stopping at iteration 2525</span></span>
 <span></span>
 <span><span class="co"># Plot the optimised design</span></span>
 <span><span class="fu"><a href="reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-example-1.png" alt="" width="100%"></p>
+<p><img src="reference/figures/README-example-1.png" width="100%"></p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># View optimisation progress</span></span>
 <span><span class="fu"><a href="reference/plot_progress.html">plot_progress</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-example-2.png" alt="" width="100%"><img src="reference/figures/README-example-3.png" alt="" width="100%"></p>
+<p><img src="reference/figures/README-example-2.png" width="100%"><img src="reference/figures/README-example-3.png" width="100%"></p>
 </div>
 <div class="section level3">
 <h3 id="blocked-design">Blocked design<a class="anchor" aria-label="anchor" href="#blocked-design"></a>
@@ -188,84 +163,45 @@
 <span>  seed <span class="op">=</span> <span class="fl">42</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; row and col are used as row and column, respectively.</span></span>
-<span><span class="co">#&gt; Optimising level: single treatment within block </span></span>
-<span><span class="co">#&gt; Level: single treatment within block Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 </span></span>
-<span><span class="co">#&gt; Level: single treatment within block Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 </span></span>
-<span><span class="co">#&gt; Early stopping at iteration 2457 for level single treatment within block</span></span>
+<span><span class="co">#&gt; Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 </span></span>
+<span><span class="co">#&gt; Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 </span></span>
+<span><span class="co">#&gt; Early stopping at iteration 2457</span></span>
 <span></span>
 <span><span class="co"># Plot the design with block boundaries</span></span>
 <span><span class="fu"><a href="reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-blocks-1.png" alt="" width="100%"></p>
+<p><img src="reference/figures/README-blocks-1.png" width="100%"></p>
 </div>
 <div class="section level3">
 <h3 id="more-examples">More Examples<a class="anchor" aria-label="anchor" href="#more-examples"></a>
 </h3>
-<p>For more detailed examples, see the <a href="https://biometryhub.github.io/speed/articles/speed.html">getting started vignette</a> or the vignette about <a href="https://biometryhub.github.io/speed/articles/complex_designs.html">more complex examples</a> including, but not limited to:</p>
-<ul>
-<li><a href="https://biometryhub.github.io/speed/articles/speed.html#split-plot-design">Split-plot design</a></li>
-<li><a href="https://biometryhub.github.io/speed/articles/complex_designs.html#strip-plot-designs">Strip-plot design</a></li>
-<li><a href="https://biometryhub.github.io/speed/articles/complex_designs.html#p-rep-partially-replicated-designs">P-rep design</a></li>
-<li><a href="https://biometryhub.github.io/speed/articles/complex_designs.html#balanced-incomplete-block-design-bibd">BIBD</a></li>
-<li><a href="https://biometryhub.github.io/speed/articles/met.html">Multi-Environment trial (MET)</a></li>
-<li><a href="https://biometryhub.github.io/speed/articles/factorial.html">Factorial</a></li>
-<li><a href="https://biometryhub.github.io/speed/articles/genetic_relationship.html">Relationship matrix</a></li>
-</ul>
+<p>For more detailed examples, visit <a href="https://biometryhub.github.io/speed/articles/common_designs.html">here</a>.</p>
 </div>
-</div>
-<div class="section level2">
-<h2 id="how-it-works">How It Works<a class="anchor" aria-label="anchor" href="#how-it-works"></a>
-</h2>
-<p>The <code>speed</code> package uses simulated annealing to optimise experimental designs by evaluating and improving layouts based on an objective function. By default the optimisation process:</p>
-<ul>
-<li>
-<strong>Evaluates designs</strong> using a score (lower is better) that combines:
-<ul>
-<li>
-<strong>Adjacency score</strong>: Penalises treatments appearing next to each other (reduces neighbour effects)</li>
-<li>
-<strong>Balance score</strong>: Rewards even distribution of treatments across spatial factors (rows, columns, blocks)</li>
-</ul>
-</li>
-<li>
-<strong>Proposes changes</strong> by swapping treatments between plots</li>
-<li>
-<strong>Accepts improvements</strong> and occasionally accepts worse solutions to avoid local optima</li>
-<li>
-<strong>Converges</strong> to an optimised layout through gradual “cooling” of the acceptance threshold</li>
-</ul>
-<p>You can customise the objective function and optimisation parameters to suit specific experimental needs (see <a href="https://biometryhub.github.io/speed/articles/custom_objective_functions.html">vignettes</a> for details).</p>
 </div>
 <div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
 <p>If you use <code>speed</code> in your research, please cite:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>To cite package <span class="st">'speed'</span> <span class="cf">in</span> publications use<span class="sc">:</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  Rogers S, Pipattungsakul W, Taylor <span class="fu">J</span> (<span class="dv">2026</span>). _speed<span class="sc">:</span> Generate</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  Spatially Efficient Experimental Designs_. R package version <span class="dv">0</span>.<span class="fl">0.10</span>,</span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="sc">&lt;</span>https<span class="sc">:</span><span class="er">//</span>biometryhub.github.io<span class="sc">/</span>speed<span class="sc">/</span><span class="er">&gt;</span>.</span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>A BibTeX entry <span class="cf">for</span> LaTeX users is</span>
+<div class="sourceCode" id="cb5"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="fu">citation</span>(<span class="st">"speed"</span>)<span class="sc">:</span> could not determine year <span class="cf">for</span> <span class="st">'speed'</span> from package</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>DESCRIPTION file</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>To cite package <span class="st">'speed'</span> <span class="cf">in</span> publications use<span class="sc">:</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  Rogers S, Taylor J, Edson R, Pipattungsakul <span class="fu">W</span> (????). _speed<span class="sc">:</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  Generate Spatially Efficient Experimental Designs_. R package version</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="dv">0</span>.<span class="fl">0.1</span>, <span class="sc">&lt;</span>https<span class="sc">:</span><span class="er">//</span>biometryhub.github.io<span class="sc">/</span>speed<span class="sc">/</span><span class="er">&gt;</span>.</span>
 <span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a></span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>  <span class="sc">@</span>Manual{,</span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>    title <span class="ot">=</span> {speed<span class="sc">:</span> Generate Spatially Efficient Experimental Designs},</span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>    author <span class="ot">=</span> {Sam Rogers and Wasin Pipattungsakul and Julian Taylor},</span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>    year <span class="ot">=</span> {<span class="dv">2026</span>},</span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>    note <span class="ot">=</span> {R package version <span class="dv">0</span>.<span class="fl">0.10</span>},</span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>    url <span class="ot">=</span> {https<span class="sc">:</span><span class="er">//</span>biometryhub.github.io<span class="sc">/</span>speed<span class="sc">/</span>},</span>
-<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>  }</span></code></pre></div>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>A BibTeX entry <span class="cf">for</span> LaTeX users is</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  <span class="sc">@</span>Manual{,</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>    title <span class="ot">=</span> {speed<span class="sc">:</span> Generate Spatially Efficient Experimental Designs},</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>    author <span class="ot">=</span> {Sam Rogers and Julian Taylor and Russell Edson and Wasin Pipattungsakul},</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>    note <span class="ot">=</span> {R package version <span class="dv">0</span>.<span class="fl">0.1</span>},</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>    url <span class="ot">=</span> {https<span class="sc">:</span><span class="er">//</span>biometryhub.github.io<span class="sc">/</span>speed<span class="sc">/</span>},</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>  }</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
 </h2>
 <p>This project is licensed under the MIT License - see the <a href="LICENSE.html">LICENSE</a> file for details.</p>
-<!-- external -->
-<!-- internal -->
-</div>
-<div class="section level2">
-<h2 id="code-of-conduct">Code of Conduct<a class="anchor" aria-label="anchor" href="#code-of-conduct"></a>
-</h2>
-<p>Please note that the speed project is released with a <a href="https://biometryhub.github.io/speed/CODE_OF_CONDUCT.html">Contributor Code of Conduct</a>. By contributing to this project, you agree to abide by its terms.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
@@ -284,13 +220,6 @@
 </ul>
 </div>
 
-<div class="community">
-<h2 data-toc-skip>Community</h2>
-<ul class="list-unstyled">
-<li><a href="CONTRIBUTING.html">Contributing guide</a></li>
-<li><a href="CODE_OF_CONDUCT.html">Code of conduct</a></li>
-</ul>
-</div>
 
 <div class="citation">
 <h2 data-toc-skip>Citation</h2>
@@ -303,8 +232,9 @@
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>Sam Rogers <br><small class="roles"> Author, maintainer </small>   </li>
-<li>Wasin Pipattungsakul <br><small class="roles"> Author </small>   </li>
 <li>Julian Taylor <br><small class="roles"> Author </small>   </li>
+<li>Russell Edson <br><small class="roles"> Author </small>   </li>
+<li>Wasin Pipattungsakul <br><small class="roles"> Author </small>   </li>
 <li>University of Adelaide <br><small class="roles"> Copyright holder, funder </small>   </li>
 <li>Grains Research and Development Corporation <br><small class="roles"> Copyright holder, funder </small>   </li>
 <li><a href="authors.html">More about authors...</a></li>
@@ -326,7 +256,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Sam Rogers, Wasin Pipattungsakul, Julian Taylor, University of Adelaide, Grains Research and Development Corporation.</p>
+  <p>Developed by Sam Rogers, Julian Taylor, Russell Edson, Wasin Pipattungsakul, University of Adelaide, Grains Research and Development Corporation.</p>
 </div>
 
 <div class="pkgdown-footer-right">
