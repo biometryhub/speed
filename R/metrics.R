@@ -202,6 +202,14 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #' @inheritParams calculate_ed
 #' @param design A data frame representing the spatial information of the design
 #' @param current_score_obj A named list containing the current score
+#' @param by,grid_index Optional grouping of plots into separate grids; see
+#'   [calculate_adjacency_score()]. Neighbour balance counts edges, so it sums
+#'   across grids. Evenness of distribution measures how far apart a treatment's
+#'   replicates are, and there is no distance between plots at different sites,
+#'   so it is scored **per grid** and the scores summed - reported both in total
+#'   and per grid, and identical to optimising each grid on its own, since a swap
+#'   moves plots within one grid. A grid with no treatment replicated inside it
+#'   has no evenness to measure and contributes `0`.
 #'
 #' @examples
 #' design_df <- initialise_design_df(
@@ -240,35 +248,67 @@ objective_function_piepho <- function(design,
                                       by = NULL,
                                       grid_index = NULL,
                                       ...) {
+  # `by`/`grid_index` are documented on calculate_adjacency_score(); evenness is
+  # scored per grid and the scores summed. See the loop below.
   if (is.null(grid_index)) {
     grid_index <- grid_indices(design, row_column, col_column, by = by)
   }
-  # Neighbour balance would sum across grids like any edge count, but the
-  # evenness-of-distribution component does not: per-grid-then-combined and
-  # pooled are different quantities, and Piepho's definition assumes a single
-  # trial. Refusing is the honest interim answer - pooling would score
-  # adjacencies and distances between plots at different sites.
-  if (length(grid_index) > 1) {
-    stop(
-      "`objective_function_piepho()` is defined for a single grid, but this ",
-      "design spans ",
-      length(grid_index),
-      ". Its evenness-of-distribution component has no agreed multi-grid form.",
-      call. = FALSE
-    )
-  }
-  design_matrix <- build_design_matrix(
-    design,
-    swap,
-    row_column = row_column,
-    col_column = col_column,
-    index = grid_index[[1]]$index
-  )
 
-  ed <- calculate_ed(design_matrix, current_score_obj$ed, swapped_items)
-  # sum(1/) or 1/sum
-  ed_score <- 1 / sum(vapply(ed, function(ed_rep) ed_rep$min_mst, numeric(1)))
-  nb <- calculate_nb(design_matrix, pair_mapping)
+  # Every grid is scored on its own. A spanning tree measures distance between
+  # plots, and there is no distance between plots at different sites: pooling
+  # them either treats two sites' (1, 1) as the same point or invents a distance
+  # across the join.
+  ed <- list()
+  ed_scores <- setNames(numeric(length(grid_index)), names(grid_index))
+  nb_counts <- list()
+
+  for (nm in names(grid_index)) {
+    g <- grid_index[[nm]]
+    design_matrix <- build_design_matrix(
+      design[g$rows, , drop = FALSE],
+      swap,
+      row_column = row_column,
+      col_column = col_column,
+      index = g$index
+    )
+    ed[[nm]] <- calculate_ed(
+      design_matrix,
+      current_score_obj$ed[[nm]],
+      swapped_items
+    )
+    # A grid with nothing replicated inside it has no spanning tree to measure,
+    # so evenness of distribution does not apply there: it contributes 0 rather
+    # than 1/0, which would make the whole score `Inf` and leave the optimiser
+    # with nothing to compare. Replication is fixed for the run, so a grid is
+    # either in or out of this component for the whole run.
+    ed_scores[[nm]] <- if (length(ed[[nm]]) == 0L) {
+      0
+    } else {
+      1 /
+        sum(vapply(ed[[nm]], function(ed_rep) return(ed_rep$min_mst), numeric(1)))
+    }
+    nb_counts[[nm]] <- unlist(calculate_nb(design_matrix, pair_mapping)$nb)
+  }
+
+  # The per-grid scores are summed rather than pooled into one reciprocal. Both
+  # give the same optimisation - a swap moves plots within one grid, so it
+  # changes only that grid's term - but summing keeps ED scaling with adjacency,
+  # which also sums per grid, instead of shrinking as sites are added.
+  ed_score <- sum(ed_scores)
+
+  # Neighbour balance counts edges and no edge crosses a grid boundary, so the
+  # counts sum across grids before the variance is taken.
+  all_pairs <- unique(unlist(lapply(nb_counts, names)))
+  totals <- setNames(numeric(length(all_pairs)), all_pairs)
+  for (counts in nb_counts) {
+    totals[names(counts)] <- totals[names(counts)] + counts
+  }
+  nb <- list(
+    nb = totals,
+    max_nb = max(totals),
+    max_pairs = names(totals)[totals == max(totals)],
+    var = stats::var(totals)
+  )
   nb_score <- nb$var
 
   # Balance and adjacency read `design` directly: the treatment column and the
@@ -282,18 +322,31 @@ objective_function_piepho <- function(design,
     grid_index = grid_index
   )
 
+  # Per-grid evenness is reported alongside the total, never instead of it: the
+  # values are not comparable *between* grids - a 3-replicate spanning tree is
+  # longer than a 2-replicate one whatever the spread - so they are shown side
+  # by side rather than ranked or averaged.
+  components <- c(
+    neighbour_balance = nb_score,
+    even_distribution = ed_score,
+    balance           = bal_score,
+    adjacency         = adj_score
+  )
+  if (length(grid_index) > 1) {
+    components <- c(
+      components,
+      setNames(ed_scores, paste0("even_distribution_", names(ed_scores)))
+    )
+  }
+
   return(list(
     score = round(nb_score + ed_score + bal_score + adj_score, 10),
     ed = ed,
+    ed_per_grid = ed_scores,
     bal = bal_score,
     adj = adj_score,
     nb = nb,
-    components = c(
-      neighbour_balance = nb_score,
-      even_distribution = ed_score,
-      balance           = bal_score,
-      adjacency         = adj_score
-    )
+    components = components
   ))
 }
 
