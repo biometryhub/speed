@@ -9,6 +9,11 @@
   several grids, e.g. `list(dim1 = "row", dim2 = "col", by = "site")` for a multi-environment trial.
   Each grid is scored on its own.
 
+## Minor Changes
+
+- Designs whose `row`/`col` columns are not numeric, or where two plots share a coordinate, now fail
+  with a message naming the problem.
+
 ## Bug Fixes
 
 - Design metrics are now built from each plot's `row`/`col` coordinates rather than the order of the
@@ -28,11 +33,6 @@
   `ring_dists`, so the default is usable with more than one ring.
 - `swap_all = TRUE` no longer changes the replication of a design when an earlier level has
   unbalanced a swap group mid-search. Only treatments with matching replication are exchanged.
-
-## Minor Changes
-
-- Designs whose `row`/`col` columns are not numeric, or where two plots share a coordinate, now fail
-  with a message naming the problem.
 
 # speed 0.0.9
 
