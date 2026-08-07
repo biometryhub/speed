@@ -50,8 +50,9 @@ Resolved findings and settled decisions are deleted rather than annotated — se
 > not estimable instead of returning an impossible value, and the row-column model now carries an
 > intercept, which is what makes the rank test exact. See A5.
 >
-> ⬜ **Still open:** `objective_function_piepho()`'s ED component has no agreed multi-grid form, so it
-> refuses a multi-grid design rather than pooling one. See the end of A4.
+> ✅ **piepho's ED is settled too** (Sam, 2026-08-07): scored **per grid and summed**, each grid's value
+> reported alongside the total. A grid with nothing replicated inside it contributes `0` — which also
+> fixes an `Inf` that single-grid unreplicated designs scored on `main`. See the end of A4.
 
 ---
 
@@ -195,10 +196,8 @@ grid is exact rather than an approximation. That makes most of the fix tractable
   annealing loop still validates once per run, not once per iteration.
 - **`.replicate_spans()` stays withheld for multi-grid designs.** Spans are distances within one grid;
   two sites' row 3 are not one plot apart, and there is no combined span to report.
-- **`objective_function_piepho()` refuses rather than pools.** Its NB component would sum like any edge
-  count, but ED measures evenness of a distribution: per-grid-then-combined and pooled are different
-  quantities, and the paper's definition assumes a single trial. This is the one piece of G13 still
-  awaiting a statistical answer.
+- **`objective_function_piepho()` scores ED per grid and sums.** Its NB component sums like any edge
+  count; ED is a within-grid measure and is reported per grid as well as in total. See the end of A4.
 
 ---
 
@@ -286,11 +285,36 @@ Under **equal** variances (ratio 1) the quantity is well defined and exact — b
 assumption `dsum()` exists to deny, so a MET reported that way would carry a figure computed under a model
 its own analysis contradicts. Hence: per site, and no combined figure.
 
-**`objective_function_piepho()`'s ED needs the same treatment.** NB sums like any edge count, but ED
-measures evenness of a distribution, so per-grid-then-averaged and pooled are different quantities and the
-paper's definition assumes a single trial. Whatever is decided, the same answer must apply to `summary()`'s
-`efficiency` entry and to `.neighbour_balance()`, so the two never disagree about what a MET design's
-diagnostics mean.
+### ED: scored per grid and summed — decided 2026-08-07
+
+NB sums like any edge count. ED does not: it measures how far apart a treatment's replicates are, and
+there is no distance between plots at different sites. Pooling either treats two sites' `(1, 1)` as the
+same point or invents a distance across the join — measured on a p-rep MET, **five of nine treatments**
+had pooled replication exceeding their within-site maximum, so their spanning trees were built largely
+from non-distances.
+
+**Each grid is scored on its own and the scores are summed**, with each grid's value reported alongside
+the total. Three things settle the form:
+
+- **Summing is not a compromise.** A swap moves plots within one grid, so it changes only that grid's
+  term; minimising the sum is identical, move for move, to optimising each grid independently.
+- **Per-grid scores must not be compared with each other.** Measured on a p-rep MET: site a scores 1.00
+  with replication class `{2}`, site b scores 0.50 with class `{3}` — a 3-replicate spanning tree is
+  longer than a 2-replicate one whatever the spread. So "min across grids" and "mean of per-grid scores"
+  would both systematically flag whichever site had lower replication. They are reported side by side,
+  never ranked or averaged, exactly like per-site efficiency.
+- **Summing the per-grid scores beats one pooled reciprocal.** Both optimise identically, but adjacency
+  sums counts across grids, so it grows with site count; under a pooled `1 / sum(all MSTs)` ED *shrinks*
+  as sites are added (the two sites above: 1.00 and 0.50 individually, 0.33 pooled) and quietly loses
+  weight against adjacency and balance. Summing gives 1.50 and tracks the other components.
+
+**A grid with nothing replicated inside it contributes `0`**, not `1/0`. This also fixes a pre-existing
+single-grid defect: `objective_function_piepho()` returned **`Inf`** for a fully unreplicated design — an
+ordinary early-generation trial — leaving every candidate scoring `Inf` and the optimiser with nothing to
+compare.
+
+The same answer applies to `summary()`'s `efficiency` entry and `.neighbour_balance()`, so the three never
+disagree about what a MET design's diagnostics mean.
 
 **The rank gate in recommendation 2 is needed whether or not D7 is settled.** A value `> 1` signals rank
 deficiency **however it arises** — a MET site with `r = 1` (above), a single grid that exhausts its residual

@@ -18,6 +18,10 @@
 - Multi-site designs are no longer scored as though they occupied one grid. Previously the sites were
   pooled, which discarded plots whose coordinates collided and counted adjacencies between plots at
   different sites; use `grid_factors$by` to name the grouping column.
+- `objective_function_piepho()` now scores evenness of distribution per grid and sums the scores,
+  reporting each grid's separately, instead of measuring distances between plots at different sites.
+  A grid with no treatment replicated within it contributes `0`; previously such a design scored
+  `Inf`, which also affected single-site designs with no replication at all.
 - Design metrics are now built from each plot's `row`/`col` coordinates rather than the order of the
   rows in the data frame, so they describe the actual layout. This corrects
   `calculate_adjacency_score()`, `calculate_efficiency_factor()`, `objective_function_piepho()` and
