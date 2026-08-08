@@ -90,8 +90,7 @@ A list of class `"summary.design"`:
     `available` flag and either its value(s) or a `reason` it wasn't
     computed.
 
-  - `score` - `initial`, `final`, `optimal` (`NA` when not applicable),
-    `components`.
+  - `score` - `initial`, `final`, `components`.
 
   - `optim` - `objective`, `start_temp`, `cooling_rate`,
     `iterations_requested`, `iterations_run`, `stopped_early`.
@@ -182,10 +181,13 @@ design <- speed(df, swap = "treatment", swap_within = "1",
                 spatial_factors = ~ row + col, iterations = 100, seed = 1)
 #> row and col are used as row and column, respectively.
 #> Optimising level: single treatment within whole design 
-#> Optimal score reached at iteration 1 for level single treatment within whole design 
 summary(design)
 #> Design Summary
 #> ==============
+#> 
+#> Flags
+#> -----
+#> ! Ran to iteration cap - may not have converged
 #> 
 #> Structure
 #> ---------
@@ -201,8 +203,7 @@ summary(design)
 #> Score:        1  (initial 1 -> final 1)
 #>               adjacency  0
 #>               balance    1
-#> Optimal:      1  (reached)
-#> Iterations:   1 / 100 (stopped early)
+#> Iterations:   100 / 100 (ran to cap)
 #> Temperature:  start 100, cooling 0.99
 #> 
 #> Evaluation
@@ -220,6 +221,10 @@ summary(design, efficiency = TRUE)
 #> Design Summary
 #> ==============
 #> 
+#> Flags
+#> -----
+#> ! Ran to iteration cap - may not have converged
+#> 
 #> Structure
 #> ---------
 #> Layout:       4 rows x 3 cols (12 plots)
@@ -234,8 +239,7 @@ summary(design, efficiency = TRUE)
 #> Score:        1  (initial 1 -> final 1)
 #>               adjacency  0
 #>               balance    1
-#> Optimal:      1  (reached)
-#> Iterations:   1 / 100 (stopped early)
+#> Iterations:   100 / 100 (ran to cap)
 #> Temperature:  start 100, cooling 0.99
 #> 
 #> Evaluation

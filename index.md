@@ -194,7 +194,7 @@ If you use `speed` in your research, please cite:
 To cite package 'speed' in publications use:
 
   Rogers S, Pipattungsakul W, Taylor J (2026). _speed: Generate
-  Spatially Efficient Experimental Designs_. R package version 0.0.11,
+  Spatially Efficient Experimental Designs_. R package version 0.0.10,
   <https://biometryhub.github.io/speed/>.
 
 A BibTeX entry for LaTeX users is
@@ -203,7 +203,7 @@ A BibTeX entry for LaTeX users is
     title = {speed: Generate Spatially Efficient Experimental Designs},
     author = {Sam Rogers and Wasin Pipattungsakul and Julian Taylor},
     year = {2026},
-    note = {R package version 0.0.11},
+    note = {R package version 0.0.10},
     url = {https://biometryhub.github.io/speed/},
   }
 ```

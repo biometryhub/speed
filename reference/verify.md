@@ -51,8 +51,7 @@ every grid silently pooled. Checked before any optimisation happens.
   cooling_rate,
   random_initialisation,
   adj_weight,
-  bal_weight,
-  stop_at_optimal
+  bal_weight
 )
 
 .verify_swap_all_replication(data, optimise, dummy_group = NULL)
@@ -99,12 +98,7 @@ every grid silently pooled. Checked before any optimisation happens.
 
   Number of iterations without improvement before early stopping
   (default: 2000). For hierarchical designs, can be a named list with
-  names matching `swap`. Optimisation also stops as soon as a level
-  reaches the lowest score its layout allows, which is only applicable
-  for the default
-  [`objective_function()`](https://biometryhub.github.io/speed/reference/objective_functions.md);
-  see
-  [summary()](https://biometryhub.github.io/speed/reference/summary.design.md).
+  names matching `swap`.
 
 - quiet:
 

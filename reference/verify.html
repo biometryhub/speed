@@ -29,7 +29,7 @@ grid silently pooled. Checked before any optimisation happens."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@ grid silently pooled. Checked before any optimisation happens."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Verify Inputs for <code>speed</code></h1>
-      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/R/verify_utils.R" class="external-link"><code>R/verify_utils.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/v0.0.10/R/verify_utils.R" class="external-link"><code>R/verify_utils.R</code></a></small>
       <div class="d-none name"><code>verify.Rd</code></div>
     </div>
 
@@ -112,8 +112,7 @@ grid silently pooled. Checked before any optimisation happens.</p>
 <span>  <span class="va">cooling_rate</span>,</span>
 <span>  <span class="va">random_initialisation</span>,</span>
 <span>  <span class="va">adj_weight</span>,</span>
-<span>  <span class="va">bal_weight</span>,</span>
-<span>  <span class="va">stop_at_optimal</span></span>
+<span>  <span class="va">bal_weight</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">.verify_swap_all_replication</span><span class="op">(</span><span class="va">data</span>, <span class="va">optimise</span>, dummy_group <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
@@ -161,9 +160,7 @@ with names matching <code>swap</code>.</p></dd>
 <dt id="arg-early-stop-iterations">early_stop_iterations<a class="anchor" aria-label="anchor" href="#arg-early-stop-iterations"></a></dt>
 <dd><p>Number of iterations without improvement before
 early stopping (default: 2000). For hierarchical designs, can be a named
-list with names matching <code>swap</code>. Optimisation also stops as soon as a level
-reaches the lowest score its layout allows, which is only applicable for the
-default <code><a href="objective_functions.html">objective_function()</a></code>; see <a href="summary.design.html">summary()</a>.</p></dd>
+list with names matching <code>swap</code>.</p></dd>
 
 
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>

@@ -9,7 +9,7 @@ simulated annealing algorithm."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,7 @@ simulated annealing algorithm."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create and Verify Optimization Parameters</h1>
-      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/R/optim_params.R" class="external-link"><code>R/optim_params.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/v0.0.10/R/optim_params.R" class="external-link"><code>R/optim_params.R</code></a></small>
       <div class="d-none name"><code>optim_params.Rd</code></div>
     </div>
 
@@ -59,8 +59,7 @@ simulated annealing algorithm.</p>
 <span>  cooling_rate <span class="op">=</span> <span class="fl">0.99</span>,</span>
 <span>  random_initialisation <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  adj_weight <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  bal_weight <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  stop_at_optimal <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  bal_weight <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -108,13 +107,6 @@ the best score is used as an initial design (default: 0).</p></dd>
 
 <dt id="arg-bal-weight">bal_weight<a class="anchor" aria-label="anchor" href="#arg-bal-weight"></a></dt>
 <dd><p>Weight for balance score (default: 1).</p></dd>
-
-
-<dt id="arg-stop-at-optimal">stop_at_optimal<a class="anchor" aria-label="anchor" href="#arg-stop-at-optimal"></a></dt>
-<dd><p>Logical; if <code>TRUE</code>, stops the level as soon as the best score reaches the lowest score
-its layout allows (default: <code>TRUE</code>). The bound is only derivable for the default <code><a href="objective_functions.html">objective_function()</a></code>
-with non-negative weights and no <code>relationship</code> matrix; otherwise the level runs to its usual stopping
-rules regardless of this setting.</p></dd>
 
 </dl></div>
     <div class="section level2">

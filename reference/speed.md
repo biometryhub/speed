@@ -78,12 +78,7 @@ speed(
 
   Number of iterations without improvement before early stopping
   (default: 2000). For hierarchical designs, can be a named list with
-  names matching `swap`. Optimisation also stops as soon as a level
-  reaches the lowest score its layout allows, which is only applicable
-  for the default
-  [`objective_function()`](https://biometryhub.github.io/speed/reference/objective_functions.md);
-  see
-  [summary()](https://biometryhub.github.io/speed/reference/summary.design.md).
+  names matching `swap`.
 
 - obj_function:
 
@@ -188,7 +183,9 @@ df <- data.frame(
 result <- speed(df, swap = "treatment", seed = 42)
 #> row and col are used as row and column, respectively.
 #> Optimising level: single treatment within whole design 
-#> Optimal score reached at iteration 726 for level single treatment within whole design 
+#> Level: single treatment within whole design Iteration: 1000 Score: 1 Best: 1 Since Improvement: 275 
+#> Level: single treatment within whole design Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1275 
+#> Early stopping at iteration 2725 for level single treatment within whole design 
 autoplot(result)
 
 
@@ -254,11 +251,11 @@ result <- speed(
 head(table(result$design_df$lines, result$design_df$site))
 #>    
 #>     a b c d e
-#>   1 2 2 1 1 1
-#>   2 2 1 1 2 1
-#>   3 2 1 1 1 2
-#>   4 2 1 1 1 2
-#>   5 1 2 1 2 1
+#>   1 1 1 2 1 2
+#>   2 1 2 1 1 2
+#>   3 2 1 1 2 1
+#>   4 1 1 1 2 2
+#>   5 1 1 1 2 2
 #>   6 2 1 1 1 2
 
 # Plot the MET design with facets

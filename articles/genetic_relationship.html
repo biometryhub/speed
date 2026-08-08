@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +64,7 @@
       <p class="author">Wasin Pipattungsakul</p>
       <p class="date">2026-08-08</p>
 
-      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/vignettes/genetic_relationship.qmd" class="external-link"><code>vignettes/genetic_relationship.qmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/v0.0.10/vignettes/genetic_relationship.qmd" class="external-link"><code>vignettes/genetic_relationship.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
     </div>
 
@@ -81,8 +81,13 @@
 <p>The <code>relationship</code> argument lets the simulated-annealing loop look up a graded similarity from a user-supplied matrix instead of hard-coding <code>1</code> for matches and <code>0</code> for non-matches. This vignette walks through a blocked design with sixteen treatments split into four groups whose within-group relatedness varies from “tightly related” to “unrelated”.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://biometryhub.github.io/speed/">speed</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://biometryhub.github.io/speed/">speed</a></span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>A newer version of speed is available on GitHub (installed: 0.0.10, available: 0.0.11).
+Update with: devtools::install_github("biometryhub/speed")</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h3 id="when-to-use">When to Use<a class="anchor" aria-label="anchor" href="#when-to-use"></a>
 </h3>
@@ -129,7 +134,7 @@
 </table>
 <p>The trial uses an <code>8 × 8</code> grid divided into four <code>4 × 4</code> blocks.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">items</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"T"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">16</span><span class="op">)</span></span>
 <span><span class="va">groups</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"D"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>, <span class="va">items</span><span class="op">)</span></span>
 <span></span>
@@ -155,7 +160,7 @@
 </div>
 <p>Plotting these factors shows the initial layout of the treatments and their group.</p>
 <div class="cell">
-<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">design_df</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"design"</span>, <span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">design_df</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">p_treat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">design_df</span>, treatments <span class="op">=</span> <span class="st">"treatment"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Treatments"</span><span class="op">)</span></span>
@@ -177,7 +182,7 @@ Figure 1: Initial systematic layout: treatments and groups, with block boundari
 </h3>
 <p>The relationship matrix is a numeric matrix with rownames and colnames covering every value of the swap column. Each entry is the contribution of having that pair adjacent. The diagonal is typically <code>1</code> (self-pair = identity). Off-diagonal entries are usually in <code>[0, 1]</code>; here we encode four within-group levels and zero between-group similarity.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span>
 <span><span class="va">rel</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">n</span>, <span class="va">n</span>, dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">items</span>, <span class="va">items</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">within</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>A <span class="op">=</span> <span class="fl">0.8</span>, B <span class="op">=</span> <span class="fl">0.4</span>, C <span class="op">=</span> <span class="fl">0.1</span>, D <span class="op">=</span> <span class="fl">0.0</span><span class="op">)</span></span>
@@ -188,7 +193,7 @@ Figure 1: Initial systematic layout: treatments and groups, with block boundari
 <span><span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="va">rel</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fl">1</span></span></code></pre></div>
 </div>
 <div class="cell">
-<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rel_long</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">as.data.frame.table</a></span><span class="op">(</span><span class="va">rel</span>, responseName <span class="op">=</span> <span class="st">"value"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">rel_long</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row"</span>, <span class="st">"col"</span><span class="op">)</span></span>
 <span></span>
@@ -223,7 +228,7 @@ Figure 2: Relationship matrix as a heatmap. Diagonal cells are self-pairs (<cod
 </h3>
 <p>We run <code><a href="../reference/speed.html">speed()</a></code> twice with the same seed: first using the default identity-only adjacency, then with the relationship matrix (<code>relationship = rel</code>).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">default_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span></span>
 <span>  <span class="va">design_df</span>,</span>
 <span>  swap <span class="op">=</span> <span class="st">"treatment"</span>,</span>
@@ -246,12 +251,12 @@ Figure 2: Relationship matrix as a heatmap. Diagonal cells are self-pairs (<cod
 <pre><code>Optimised Experimental Design
 ----------------------------
 Score: 4.266667
-Iterations Run: 872
+Iterations Run: 2872
 Stopped Early: TRUE
 Treatments: T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16
 Seed: 42 </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">related_result</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Optimised Experimental Design
@@ -266,7 +271,7 @@ Seed: 42 </code></pre>
 </section><section class="level2"><h3 id="visualising-the-output">Visualising the Output<a class="anchor" aria-label="anchor" href="#visualising-the-output"></a>
 </h3>
 <div class="cell">
-<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">default_result</span><span class="op">$</span><span class="va">design_df</span><span class="op">$</span><span class="va">group</span> <span class="op">&lt;-</span> <span class="va">groups</span><span class="op">[</span><span class="va">default_result</span><span class="op">$</span><span class="va">design_df</span><span class="op">$</span><span class="va">treatment</span><span class="op">]</span></span>
 <span><span class="va">related_result</span><span class="op">$</span><span class="va">design_df</span><span class="op">$</span><span class="va">group</span> <span class="op">&lt;-</span> <span class="va">groups</span><span class="op">[</span><span class="va">related_result</span><span class="op">$</span><span class="va">design_df</span><span class="op">$</span><span class="va">treatment</span><span class="op">]</span></span>
 <span></span>
@@ -287,7 +292,7 @@ Figure 3: Group view: default identity-only adjacency vs. relationship-aware a
 </div>
 </div>
 <div class="cell">
-<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">p_def_t</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">default_result</span>, treatments <span class="op">=</span> <span class="st">"treatment"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Default speed: treatments"</span><span class="op">)</span></span>
 <span><span class="va">p_rel_t</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">related_result</span>, treatments <span class="op">=</span> <span class="st">"treatment"</span><span class="op">)</span> <span class="op">+</span></span>
@@ -311,7 +316,7 @@ Figure 4: Treatment view: default identity-only adjacency vs. relationship-awa
 </h3>
 <p>Eight varieties <code>V01</code>–<code>V08</code> are evaluated on a <code>4 × 8</code> grid divided into two <code>4 × 4</code> blocks, with two replicates of every variety per block. Unlike the previous example, there is no group structure - every pair of varieties carries its own similarity coefficient.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">items2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"V"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">8</span><span class="op">)</span></span>
 <span><span class="va">design_df2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/initialise_design_df.html">initialise_design_df</a></span><span class="op">(</span></span>
 <span>  items <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">items2</span>, <span class="fl">4</span><span class="op">)</span>,</span>
@@ -336,7 +341,7 @@ Figure 4: Treatment view: default identity-only adjacency vs. relationship-awa
 </h3>
 <p>We populate the upper triangle with random similarities in <code>[0, 0.9]</code>, mirror it for symmetry, and pin the diagonal to <code>1</code>. The result is a relationship matrix in which every off-diagonal entry is distinct - there is no plateau for the optimiser to exploit, so each pair contributes its own adjacency cost.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">n_v</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">items2</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">rel2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">n_v</span>, <span class="va">n_v</span>, dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">items2</span>, <span class="va">items2</span><span class="op">)</span><span class="op">)</span></span>
@@ -346,7 +351,7 @@ Figure 4: Treatment view: default identity-only adjacency vs. relationship-awa
 <span><span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="va">rel2</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fl">1</span></span></code></pre></div>
 </div>
 <div class="cell">
-<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rel2_long</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">as.data.frame.table</a></span><span class="op">(</span><span class="va">rel2</span>, responseName <span class="op">=</span> <span class="st">"value"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">rel2_long</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row"</span>, <span class="st">"col"</span><span class="op">)</span></span>
 <span></span>
@@ -381,7 +386,7 @@ Figure 5: Per-pair relationship matrix as a heatmap. Every off-diagonal cell is
 </h3>
 <p>We run <code><a href="../reference/speed.html">speed()</a></code> twice with the same seed: first using the default identity-only adjacency, then with the per-pair relationship matrix (<code>relationship = rel2</code>) and a stronger balance weight set through <code><a href="../reference/optim_params.html">optim_params()</a></code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">default_result2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span></span>
 <span>  <span class="va">design_df2</span>,</span>
 <span>  swap <span class="op">=</span> <span class="st">"treatment"</span>,</span>
@@ -405,12 +410,12 @@ Figure 5: Per-pair relationship matrix as a heatmap. Every off-diagonal cell is
 <pre><code>Optimised Experimental Design
 ----------------------------
 Score: 2.285714
-Iterations Run: 758
+Iterations Run: 2758
 Stopped Early: TRUE
 Treatments: V1, V2, V3, V4, V5, V6, V7, V8
 Seed: 112 </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">related_result2</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Optimised Experimental Design
@@ -425,7 +430,7 @@ Seed: 112 </code></pre>
 </section><section class="level2"><h3 id="visualising-the-output-1">Visualising the Output<a class="anchor" aria-label="anchor" href="#visualising-the-output-1"></a>
 </h3>
 <div class="cell">
-<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">p_def_t2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">default_result2</span>, treatments <span class="op">=</span> <span class="st">"treatment"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Default speed: treatments"</span><span class="op">)</span></span>
 <span><span class="va">p_rel_t2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">related_result2</span>, treatments <span class="op">=</span> <span class="st">"treatment"</span><span class="op">)</span> <span class="op">+</span></span>
@@ -445,7 +450,7 @@ Figure 6: Treatment view: default identity-only adjacency vs. relationship-awa
 <p>The default optimisation treats every non-self adjacency as equally costly. With a relationship matrix, the algorithm can separate the similar varieties - neighbours of any given variety tend to be the varieties with the smallest entries in its row of <code>rel2</code>.</p>
 <p>The placements of the closely related pairs of treatments:</p>
 <div class="cell">
-<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Plot a layout where cells with NA treatments are greyed and the rest</span></span>
 <span><span class="co"># are labelled in red.</span></span>
 <span><span class="va">plot_highlighted_layout</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">layout_df</span><span class="op">)</span> <span class="op">{</span></span>

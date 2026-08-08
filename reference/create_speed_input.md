@@ -68,12 +68,7 @@ create_speed_input(
 
   Number of iterations without improvement before early stopping
   (default: 2000). For hierarchical designs, can be a named list with
-  names matching `swap`. Optimisation also stops as soon as a level
-  reaches the lowest score its layout allows, which is only applicable
-  for the default
-  [`objective_function()`](https://biometryhub.github.io/speed/reference/objective_functions.md);
-  see
-  [summary()](https://biometryhub.github.io/speed/reference/summary.design.md).
+  names matching `swap`.
 
 - obj_function:
 

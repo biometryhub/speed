@@ -1,18 +1,5 @@
 # Changelog
 
-## speed 0.0.11
-
-### Major Changes
-
-- [`speed()`](https://biometryhub.github.io/speed/reference/speed.md)
-  now stops as soon as a design reaches the lowest score its layout
-  allows, applicable only to the default
-  [`objective_function()`](https://biometryhub.github.io/speed/reference/objective_functions.md).
-  This can be turned off per level with
-  `optim_params(stop_at_optimal = FALSE)`.
-  [`summary()`](https://rdrr.io/r/base/summary.html) now reports the
-  lower bound score alongside the achieved one.
-
 ## speed 0.0.10
 
 ### Major Changes
