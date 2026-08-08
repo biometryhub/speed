@@ -137,6 +137,11 @@ adjacency_score_vec <- function(
   relationship = NULL
 ) {
   ring_type <- match.arg(ring_type)
+  # A single weight applies to every ring, so the scalar default stays usable
+  # with a multi-ring `dists`. Any other length mismatch is still an error.
+  if (length(weights) == 1L) {
+    weights <- rep(weights, length(dists))
+  }
   stopifnot(length(dists) == length(weights))
   nr <- nrow(design_matrix)
   nc <- ncol(design_matrix)
@@ -207,6 +212,16 @@ adjacency_score_vec <- function(
 #'   to `NULL`, which keeps the strict identity match. Pass the raw matrix
 #'   through `prep_relationship()` first; the score functions consume only
 #'   the prepped form.
+#' @param by Optional column name grouping plots into separate grids (e.g.
+#'   `"site"` for a multi-environment trial). Each grid is scored on its own and
+#'   the counts summed, so no adjacency is counted between plots at different
+#'   sites. `NULL` (default) treats the design as a single grid, which errors if
+#'   two plots share a coordinate.
+#' @param grid_index Optional pre-built list of indices from [grid_indices()],
+#'   passed to [build_design_matrix()] to skip coordinate validation. `speed()`
+#'   supplies one so the annealing loop does not revalidate every iteration;
+#'   leave it `NULL` for a one-off call. Supplying it ignores `by`, which the
+#'   indices already encode.
 #'
 #' @return A non-negative numeric value: the number of like-treatment edges
 #'   in the row/column adjacency graph.
@@ -248,23 +263,38 @@ calculate_adjacency_score <- function(
   ring_dists = 1,
   ring_weights = 1,
   ring_type = c("manhattan", "chebyshev"),
-  relationship = NULL
+  relationship = NULL,
+  by = NULL,
+  grid_index = NULL
 ) {
   ring_type <- match.arg(ring_type)
 
-  design_matrix <- matrix(
-    layout_df[[swap]],
-    nrow = max(as_numeric_factor(layout_df[[row_column]]), na.rm = TRUE),
-    ncol = max(as_numeric_factor(layout_df[[col_column]]), na.rm = TRUE),
-    byrow = TRUE
-  )
+  if (is.null(grid_index)) {
+    grid_index <- grid_indices(layout_df, row_column, col_column, by = by)
+  }
 
-  per_cell <- adjacency_score_vec(
-    design_matrix,
-    dists = ring_dists,
-    weights = ring_weights,
-    ring_type = ring_type,
-    relationship = relationship
+  # Adjacency counts edges, and no edge crosses a grid boundary, so summing per
+  # grid is exact rather than an approximation.
+  totals <- vapply(
+    grid_index,
+    function(g) {
+      design_matrix <- build_design_matrix(
+        layout_df[g$rows, , drop = FALSE],
+        swap,
+        row_column = row_column,
+        col_column = col_column,
+        index = g$index
+      )
+      per_cell <- adjacency_score_vec(
+        design_matrix,
+        dists = ring_dists,
+        weights = ring_weights,
+        ring_type = ring_type,
+        relationship = relationship
+      )
+      return(sum(per_cell) / 2)
+    },
+    numeric(1)
   )
-  return(sum(per_cell) / 2)
+  return(sum(totals))
 }

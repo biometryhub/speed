@@ -32,6 +32,7 @@ test_that("speed returns correct output structure", {
     swap = "treatment",
     spatial_factors = ~ row + col,
     iterations = 1000,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
     seed = 42,
     quiet = TRUE
   )
@@ -134,6 +135,174 @@ test_that("speed stops early when no improvement", {
   )
   expect_true(result$stopped_early)
   expect_lt(result$iterations_run, 100)
+})
+
+test_that("speed stops without iterating on an already-optimal design", {
+  #      [,1] [,2] [,3] [,4]
+  # [1,] "A"  "B"  "C"  "D"
+  # [2,] "B"  "C"  "D"  "A"
+  # [3,] "C"  "D"  "A"  "B"
+  # [4,] "D"  "A"  "B"  "C"
+  # [5,] "A"  "B"  "C"  "D"
+  test_data <- expand.grid(row = 1:5, col = 1:4)
+  test_data$treatment <- LETTERS[1:4]
+
+  expect_message(
+    output <- capture_output(
+      result <- speed(
+        data = test_data,
+        swap = "treatment",
+        spatial_factors = ~ row + col,
+        iterations = 5000,
+        seed = 42,
+        quiet = FALSE
+      )
+    ),
+    "row and col are used as row and column, respectively"
+  )
+
+  expect_match(output, "Optimal score reached at iteration 1 for")
+  expect_equal(result$score, 1)
+  expect_equal(result$iterations_run, 1)
+  expect_true(result$stopped_early)
+  # The design is returned untouched, only re-sorted by row then column
+  sorted <- test_data[order(test_data$row, test_data$col), ]
+  expect_equal(result$design_df$treatment, sorted$treatment)
+})
+
+test_that("speed stops as soon as the optimal score is reached mid-run", {
+  test_data <- expand.grid(row = 1:4, col = 1:5)
+  test_data$treatment <- LETTERS[1:4]
+
+  expect_message(
+    output <- capture_output(
+      result <- speed(
+        data = test_data,
+        swap = "treatment",
+        spatial_factors = ~ row + col,
+        iterations = 5000,
+        seed = 42,
+        quiet = FALSE
+      )
+    ),
+    "row and col are used as row and column, respectively"
+  )
+
+  # The 4 rows of 5 plots over 4 treatments leave a balance floor of 1
+  expect_match(output, "Optimal score reached at iteration")
+  expect_equal(result$score, 1)
+  expect_gt(result$iterations_run, 1)
+  expect_lt(result$iterations_run, 5000)
+  expect_true(result$stopped_early)
+})
+
+test_that("speed keeps running when stop_at_optimal is FALSE", {
+  test_data <- expand.grid(row = 1:4, col = 1:5)
+  test_data$treatment <- LETTERS[1:4]
+
+  expect_message(
+    output <- capture_output(
+      result <- speed(
+        data = test_data,
+        swap = "treatment",
+        spatial_factors = ~ row + col,
+        optimise_params = optim_params(stop_at_optimal = FALSE),
+        iterations = 500,
+        early_stop_iterations = 500,
+        seed = 42,
+        quiet = FALSE
+      )
+    ),
+    "row and col are used as row and column, respectively"
+  )
+
+  expect_no_match(output, "Optimal score reached")
+  # the bound is still reported, it just no longer stops the run
+  expect_equal(result$metadata$per_level[[1]]$optimal_score, 1)
+  expect_equal(result$iterations_run, 500)
+})
+
+test_that("speed keeps running when the optimal score is out of reach", {
+  # having high rep for 1 treatment makes optimal score out of reach
+  test_data <- expand.grid(row = 1:3, col = 1:4)
+  test_data$treatment <- c(rep("A", 6), rep(c("B", "C"), 3))
+
+  expect_message(
+    output <- capture_output(
+      result <- speed(
+        data = test_data,
+        swap = "treatment",
+        spatial_factors = ~ row + col,
+        iterations = 500,
+        early_stop_iterations = 500,
+        seed = 42,
+        quiet = FALSE
+      )
+    ),
+    "row and col are used as row and column, respectively"
+  )
+
+  expect_no_match(output, "Optimal score reached")
+  expect_gt(result$score, result$metadata$per_level[[1]]$optimal_score)
+  expect_equal(result$iterations_run, 500)
+})
+
+test_that("speed does not stop on the optimal score for custom objectives", {
+  custom_objective <- function(layout_df, swap, spatial_cols, ...) {
+    return(list(
+      score = calculate_balance_score(layout_df, swap, spatial_cols)
+    ))
+  }
+
+  test_data <- expand.grid(row = 1:5, col = 1:4)
+  test_data$treatment <- LETTERS[1:4]
+
+  expect_message(
+    output <- capture_output(
+      result <- speed(
+        data = test_data,
+        swap = "treatment",
+        spatial_factors = ~ row + col,
+        obj_function = custom_objective,
+        iterations = 200,
+        early_stop_iterations = 200,
+        seed = 42,
+        quiet = FALSE
+      )
+    ),
+    "row and col are used as row and column, respectively"
+  )
+
+  expect_no_match(output, "Optimal score reached")
+  expect_true(is.na(result$metadata$per_level[[1]]$optimal_score))
+  expect_equal(result$iterations_run, 200)
+})
+
+test_that("speed does not stop on the optimal score (NA) for negative weights", {
+  test_data <- expand.grid(row = 1:5, col = 1:4)
+  test_data$treatment <- LETTERS[1:4]
+
+  expect_message(
+    output <- capture_output(
+      result <- speed(
+        data = test_data,
+        swap = "treatment",
+        spatial_factors = ~ row + col,
+        ring_dists = c(1, 2),
+        ring_weights = c(1, -1),
+        optimise_params = optim_params(bal_weight = 20),
+        iterations = 4000,
+        seed = 7,
+        quiet = FALSE
+      )
+    ),
+    "row and col are used as row and column, respectively"
+  )
+
+  expect_no_match(output, "Optimal score reached")
+  expect_true(is.na(result$metadata$per_level[[1]]$optimal_score))
+  expect_gt(result$iterations_run, 1)
+  expect_lt(result$score, 20)
 })
 
 # Test 6: Check reproducibility with seed
@@ -497,6 +666,7 @@ test_that("speed runs with random initialisation", {
     swap = "treatment",
     spatial_factors = ~ row + col,
     iterations = 1000,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
     seed = 42,
     quiet = TRUE
   )
@@ -506,7 +676,10 @@ test_that("speed runs with random initialisation", {
     swap = "treatment",
     spatial_factors = ~ row + col,
     iterations = 1000,
-    optimise_params = optim_params(random_initialisation = TRUE),
+    optimise_params = optim_params(
+      random_initialisation = TRUE,
+      stop_at_optimal = FALSE
+    ),
     seed = 42,
     quiet = TRUE
   )
@@ -913,39 +1086,28 @@ test_that("autoplot handles factor columns with custom column names", {
   )
 })
 
-test_that("autoplot fails with factor columns with character levels", {
-  # Sample data with factor columns that have character levels
-  # Too hard to predict plot layout with character levels
+test_that("speed reports non-numeric row/col labels clearly", {
+  # Row/col labels like "R1"/"C1" cannot index a grid. This used to surface as
+  # five coercion warnings followed by a cryptic "invalid 'nrow' value (too
+  # large or NA)" from matrix(); build_design_matrix() now names the actual
+  # problem once, with no warnings.
   test_data <- data.frame(
     row = factor(rep(paste0("R", 1:5), times = 4)),
     col = factor(rep(paste0("C", 1:4), each = 5)),
     treatment = rep(LETTERS[1:4], 5)
   )
 
-  expect_warning(
-    expect_warning(
-      expect_warning(
-        expect_warning(
-          expect_warning(
-            expect_error(
-              speed(
-                data = test_data,
-                swap = "treatment",
-                iterations = 100,
-                seed = 42,
-                quiet = TRUE
-              ),
-              "invalid 'nrow' value \\(too large or NA\\)"
-            ),
-            "NAs introduced by coercion"
-          ),
-          "no non-missing arguments to max; returning -Inf"
-        ),
-        "no non-missing arguments to max; returning -Inf"
+  expect_no_warning(
+    expect_error(
+      speed(
+        data = test_data,
+        swap = "treatment",
+        iterations = 100,
+        seed = 42,
+        quiet = TRUE
       ),
-      "NAs introduced by coercion to integer range"
-    ),
-    "NAs introduced by coercion"
+      "must be numeric, or coercible to numeric"
+    )
   )
 })
 
@@ -1428,6 +1590,35 @@ test_that("speed runs with grid_factors", {
   expect_equal(result$score, 1)
 })
 
+test_that("`grid_factors$by` is checked before optimising", {
+  test_data <- data.frame(
+    lane = rep(1:5, times = 4),
+    position = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  speed_by <- function(by) {
+    return(speed(
+      data = test_data,
+      swap = "treatment",
+      spatial_factors = ~ lane + position,
+      grid_factors = list(dim1 = "lane", dim2 = "position", by = by),
+      iterations = 10,
+      seed = 42,
+      quiet = TRUE
+    ))
+  }
+
+  # A mistyped column would otherwise be ignored and every grid pooled
+  expect_error(speed_by("site"), "not found in", fixed = TRUE)
+  expect_error(
+    speed_by(c("site", "block")),
+    "must be a single column name",
+    fixed = TRUE
+  )
+  expect_error(speed_by(1), "must be a single column name", fixed = TRUE)
+})
+
 test_that("speed handles MET", {
   # 5 sites, 100 treatments, 7 total reps
   # 5x28x5
@@ -1756,6 +1947,7 @@ test_that("speed prints progress output when quiet=FALSE for simple designs", {
       swap_within = "1",
       spatial_factors = ~ row + col,
       iterations = 2000, # Enough to trigger progress output at 1000
+      optimise_params = optim_params(stop_at_optimal = FALSE),
       seed = 42,
       quiet = FALSE
     )
@@ -1791,6 +1983,7 @@ test_that("speed prints early stopping message when quiet=FALSE for simple desig
         spatial_factors = ~ row + col,
         iterations = 1000,
         early_stop_iterations = 10, # Low threshold for early stopping
+        optimise_params = optim_params(stop_at_optimal = FALSE),
         seed = 42,
         quiet = FALSE
       )
@@ -1825,6 +2018,7 @@ test_that("speed prints progress output when quiet=FALSE for hierarchical design
       swap_within = list(wp = "block", sp = "wholeplot_treatment"),
       spatial_factors = ~ row + col,
       iterations = list(wp = 1500, sp = 1500), # Enough to trigger progress output
+      optimise_params = optim_params(stop_at_optimal = FALSE),
       seed = 42,
       quiet = FALSE
     )
@@ -1967,6 +2161,7 @@ test_that("speed prints progress output at correct intervals", {
         swap_within = "1",
         spatial_factors = ~ row + col,
         iterations = 3500, # Should trigger output at 1000, 2000, 3000
+        optimise_params = optim_params(stop_at_optimal = FALSE),
         seed = 42,
         quiet = FALSE
       )

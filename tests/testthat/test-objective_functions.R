@@ -276,7 +276,7 @@ test_that("objective_function_piepho works with basic design", {
   )
 
   expect_type(result, "list")
-  expect_named(result, c("score", "ed", "bal", "adj", "nb", "components"))
+  expect_named(result, c("score", "ed", "ed_per_grid", "bal", "adj", "nb", "components"))
   expect_type(result$score, "double")
   expect_length(result$score, 1)
   expect_type(result$ed, "list")
@@ -335,10 +335,12 @@ test_that("objective_function_piepho handles different treatment replication pat
   expect_type(result_3_reps, "list")
   expect_type(result_4_reps, "list")
 
-  # Check that ed structure reflects different replication patterns
-  expect_true("2" %in% names(result_2_reps$ed))
-  expect_true("3" %in% names(result_3_reps$ed))
-  expect_true("4" %in% names(result_4_reps$ed))
+  # `ed` is keyed by grid, then by replication class within that grid. A design
+  # with no `by` is a single grid named "1".
+  expect_named(result_2_reps$ed, "1")
+  expect_true("2" %in% names(result_2_reps$ed[["1"]]))
+  expect_true("3" %in% names(result_3_reps$ed[["1"]]))
+  expect_true("4" %in% names(result_4_reps$ed[["1"]]))
 
   # Scores should be different for different replication patterns
   expect_false(identical(result_2_reps$score, result_3_reps$score))
@@ -376,7 +378,7 @@ test_that("objective_function_piepho handles incremental calculation with curren
   expect_type(incremental_result, "list")
   expect_named(
     incremental_result,
-    c("score", "ed", "bal", "adj", "nb", "components")
+    c("score", "ed", "ed_per_grid", "bal", "adj", "nb", "components")
   )
 
   # Test that incremental calculation works differently from full calculation
@@ -405,7 +407,7 @@ test_that("objective_function_piepho works without pair_mapping", {
 
   result <- objective_function_piepho(design_df, "treatment", c("row", "col"))
   expect_type(result, "list")
-  expect_named(result, c("score", "ed", "bal", "adj", "nb", "components"))
+  expect_named(result, c("score", "ed", "ed_per_grid", "bal", "adj", "nb", "components"))
 })
 
 test_that("objective_function_piepho handles different spatial column configurations", {
@@ -484,7 +486,7 @@ test_that("objective_function_piepho uses custom row and column names", {
     col_column = "Column"
   )
   expect_type(result, "list")
-  expect_named(result, c("score", "ed", "bal", "adj", "nb", "components"))
+  expect_named(result, c("score", "ed", "ed_per_grid", "bal", "adj", "nb", "components"))
 })
 
 test_that("objective_function_piepho score is properly rounded to 10 decimal places", {
@@ -534,7 +536,7 @@ test_that("objective_function_piepho handles designs with missing values", {
     pair_mapping = pair_mapping
   )
   expect_type(result, "list")
-  expect_named(result, c("score", "ed", "bal", "adj", "nb", "components"))
+  expect_named(result, c("score", "ed", "ed_per_grid", "bal", "adj", "nb", "components"))
 })
 
 test_that("objective_function_piepho errors on single treatment design", {
@@ -575,13 +577,132 @@ test_that("objective_function_piepho individual components are reasonable", {
   expect_true(is.finite(result$nb$var))
   expect_gte(result$nb$var, 0) # Variance should be non-negative
 
-  # Check ed component structure
+  # Check ed component structure: one entry per grid, each keyed by replication
+  # class.
   expect_type(result$ed, "list")
-  for (ed_rep in result$ed) {
-    expect_named(ed_rep, c("msts", "min_mst", "min_items"))
-    expect_true(is.finite(ed_rep$min_mst))
-    expect_gte(ed_rep$min_mst, 0) # MST should be non-negative
+  for (grid_ed in result$ed) {
+    for (ed_rep in grid_ed) {
+      expect_named(ed_rep, c("msts", "min_mst", "min_items"))
+      expect_true(is.finite(ed_rep$min_mst))
+      expect_gte(ed_rep$min_mst, 0) # MST should be non-negative
+    }
   }
+
+  # One evenness score per grid, summing to the reported component.
+  expect_length(result$ed_per_grid, length(result$ed))
+  expect_equal(
+    sum(result$ed_per_grid),
+    result$components[["even_distribution"]]
+  )
+})
+
+test_that("objective_function_piepho scores evenness per grid and sums them", {
+  # A p-rep multi-environment trial: partial replication *within* each site,
+  # overlapping but unequal subsets across them.
+  set.seed(7)
+  d <- rbind(
+    data.frame(
+      site = "a",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = sample(c(
+        rep(c("A", "B", "C", "D"), 2),
+        "E", "F", "G", "H"
+      ))
+    ),
+    data.frame(
+      site = "b",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = sample(c(rep(c("E", "F", "G"), 3), "A", "B", "I"))
+    )
+  )
+
+  res <- objective_function_piepho(
+    d,
+    "treatment",
+    c("row", "col", "site"),
+    by = "site"
+  )
+
+  expect_named(res$ed_per_grid, c("a", "b"))
+  expect_equal(
+    sum(res$ed_per_grid),
+    res$components[["even_distribution"]]
+  )
+  # Reported per grid as well as in total, so a site can be acted on.
+  expect_equal(
+    res$components[["even_distribution_a"]],
+    res$ed_per_grid[["a"]]
+  )
+
+  # Each grid's evenness is exactly what that grid scores on its own: a
+  # spanning tree measures distance between plots, and there is none between
+  # plots at different sites.
+  alone <- objective_function_piepho(
+    d[d$site == "a", ],
+    "treatment",
+    c("row", "col")
+  )
+  expect_equal(
+    res$ed_per_grid[["a"]],
+    alone$components[["even_distribution"]]
+  )
+
+  # A swap inside one grid cannot change another grid's evenness, which is why
+  # summing the per-grid scores optimises each grid independently.
+  moved <- d
+  i <- which(moved$site == "a")[c(1, 5)]
+  moved$treatment[i] <- moved$treatment[rev(i)]
+  after <- objective_function_piepho(
+    moved,
+    "treatment",
+    c("row", "col", "site"),
+    by = "site"
+  )
+  expect_equal(after$ed_per_grid[["b"]], res$ed_per_grid[["b"]])
+})
+
+test_that("a grid with nothing replicated inside it contributes no evenness", {
+  # Evenness measures how far apart a treatment's replicates are, so a grid
+  # with no replicated treatment has nothing to measure. It must contribute 0
+  # rather than 1/0, which would make the whole score Inf and leave the
+  # optimiser with nothing to compare.
+  set.seed(7)
+  d <- rbind(
+    data.frame(
+      site = "a",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = sample(c(
+        rep(c("A", "B", "C", "D"), 2),
+        "E", "F", "G", "H"
+      ))
+    ),
+    data.frame(
+      site = "b",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = LETTERS[1:12] # every entry once at this site
+    )
+  )
+
+  res <- objective_function_piepho(
+    d,
+    "treatment",
+    c("row", "col", "site"),
+    by = "site"
+  )
+  expect_equal(res$ed_per_grid[["b"]], 0)
+  expect_gt(res$ed_per_grid[["a"]], 0)
+  expect_true(is.finite(res$score))
+
+  # The same rule covers a single grid with no replication at all, which
+  # previously scored Inf.
+  unreplicated <- initialise_design_df(as.character(1:12), 4, 3)
+  single <- objective_function_piepho(
+    unreplicated,
+    "treatment",
+    c("row", "col")
+  )
+  expect_equal(single$components[["even_distribution"]], 0)
+  expect_true(is.finite(single$score))
 })
 
 test_that("objective_function_piepho handles extra parameters via ...", {
@@ -606,7 +727,7 @@ test_that("objective_function_piepho handles extra parameters via ...", {
   })
 
   expect_type(result, "list")
-  expect_named(result, c("score", "ed", "bal", "adj", "nb", "components"))
+  expect_named(result, c("score", "ed", "ed_per_grid", "bal", "adj", "nb", "components"))
 })
 
 test_that("objective_function_factorial works", {

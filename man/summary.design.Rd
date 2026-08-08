@@ -41,7 +41,12 @@ See Details for more information.}
 A list of class \code{"summary.design"}:
 \itemize{
 \item \strong{hierarchical} - \code{TRUE} for a multi-level (e.g. split-plot) design.
-\item \strong{layout} - \code{n_plots}, \code{nrow}, \code{ncol}, \code{row_column}, \code{col_column}, \code{has_grid}.
+\item \strong{layout} - \code{n_plots}, \code{nrow}, \code{ncol}, \code{row_column}, \code{col_column},
+\code{has_grid} (\code{TRUE} when the design is reportable as a single grid), and
+\code{grid_reason} (why not, or \code{NA}). \code{nrow}/\code{ncol} count the rows and columns
+the design \emph{occupies}, so a design with a gap in its coordinates (a missing
+plot, or a removed buffer) reports fewer than the coordinates span. Both are
+\code{NA} unless \code{has_grid}.
 \item \strong{levels} - character vector of level names (e.g. \code{"wp"}/\code{"sp"}; a single
 name for a simple design).
 \item \strong{per_level} - one element per level (named by \code{levels}), each a list with:
@@ -53,7 +58,7 @@ name for a simple design).
 \code{block_spread}, \code{efficiency}, \code{neighbour}; each a list with an
 \code{available} flag and either its value(s) or a \code{reason} it wasn't
 computed.
-\item \code{score} - \code{initial}, \code{final}, \code{components}.
+\item \code{score} - \code{initial}, \code{final}, \code{optimal} (\code{NA} when not applicable), \code{components}.
 \item \code{optim} - \code{objective}, \code{start_temp}, \code{cooling_rate},
 \code{iterations_requested}, \code{iterations_run}, \code{stopped_early}.
 }

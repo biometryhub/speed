@@ -99,6 +99,10 @@ plot_layout(met_design, "block")
 For MET designs, we use lists of named arguments to specify the hierarchical structure. The `optimise` parameter
 defines what to optimise and constraints at each level.
 
+Each site numbers its rows and columns from 1, so several plots share the same `row`/`col` pair. A MET is not
+one grid but several, which share a treatment set and never share an edge. Tell `speed()` which column
+separates them with the `by` element of `grid_factors`:
+
 ```{r met-example}
 optimise <- list(
   connectivity = list(spatial_factors = ~site),
@@ -110,12 +114,17 @@ met_result <- speed(
   swap = "treatment",
   early_stop_iterations = 5000,
   optimise = optimise,
+  grid_factors = list(dim1 = "row", dim2 = "col", by = "site"),
   optimise_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
   seed = 112
 )
 
 met_result
 ```
+
+Each site is then scored on its own and the results combined, so no two plots at different sites are ever
+treated as neighbours. Without `by`, a design whose sites reuse coordinates is refused rather than silently
+pooled - the grid-based diagnostics would otherwise describe a layout that does not exist.
 
 ## Output of the Optimisation
 
@@ -203,6 +212,7 @@ met_result <- speed(
   early_stop_iterations = 10000,
   iterations = 50000,
   optimise = optimise,
+  grid_factors = list(dim1 = "row", dim2 = "col", by = "site"),
   optimise_params = optim_params(random_initialisation = 10, adj_weight = 0),
   seed = 112
 )
@@ -330,6 +340,7 @@ met_result <- speed(
   early_stop_iterations = 8000,
   iterations = 50000,
   optimise = optimise,
+  grid_factors = list(dim1 = "row", dim2 = "col", by = "site"),
   optimise_params = optim_params(random_initialisation = 30, adj_weight = 0),
   seed = 112
 )

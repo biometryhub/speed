@@ -7,7 +7,8 @@ test_that("optim_params works with no arguments", {
     "cooling_rate",
     "random_initialisation",
     "adj_weight",
-    "bal_weight"
+    "bal_weight",
+    "stop_at_optimal"
   )
 
   optimize_params <- optim_params()
@@ -25,7 +26,8 @@ test_that("optim_params works with arguments", {
     "cooling_rate",
     "random_initialisation",
     "adj_weight",
-    "bal_weight"
+    "bal_weight",
+    "stop_at_optimal"
   )
 
   optimize_params <- optim_params(swap_count = 2)
@@ -54,7 +56,8 @@ test_that("optim_params works with arguments", {
     start_temp = 99,
     random_initialisation = 3,
     adj_weight = 2,
-    bal_weight = 3
+    bal_weight = 3,
+    stop_at_optimal = FALSE
   )
 
   optimize_params <- do.call(optim_params, optimize_params_expected)
@@ -73,7 +76,8 @@ test_that("optim_params works with legacy options", {
     "cooling_rate",
     "random_initialisation",
     "adj_weight",
-    "bal_weight"
+    "bal_weight",
+    "stop_at_optimal"
   )
 
   withr::with_options(
@@ -142,4 +146,8 @@ test_that("optim_params throws error for invalid inputs", {
 
   expect_error(optim_params(bal_weight = "a"))
   expect_error(optim_params(bal_weight = c(1, 2)))
+
+  expect_error(optim_params(stop_at_optimal = "a"))
+  expect_error(optim_params(stop_at_optimal = "TRUE"))
+  expect_error(optim_params(stop_at_optimal = 1))
 })
