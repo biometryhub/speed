@@ -3,12 +3,34 @@
 ## Major Changes
 
 - Added a `summary()` method for `"design"` objects, reporting structure and replication, a
-  decomposed optimisation score, and design-quality diagnostics (connectedness, concurrence,
-  replicate spans and spread across blocks, neighbour balance, and opt-in efficiency).
+  decomposed optimisation score, and design-quality diagnostics.
   ([#73](https://github.com/biometryhub/speed/issues/73))
+- `grid_factors` gains an optional `by` element naming the column that separates a design into
+  several grids, e.g. `list(dim1 = "row", dim2 = "col", by = "site")` for a multi-environment trial.
+  Each grid is scored on its own.
+
+## Minor Changes
+
+- Designs whose `row`/`col` columns are not numeric, or where two plots share a coordinate, now fail
+  with a message naming the problem.
 
 ## Bug Fixes
 
+- Design metrics are now built from each plot's `row`/`col` coordinates rather than the order of the
+  rows in the data frame. Designs generated with `objective_function_piepho()` should be regenerated.
+- Multi-site designs are no longer scored as one pooled grid, which discarded plots whose coordinates
+  collided and counted adjacencies between sites. Use `grid_factors$by` to name the grouping column.
+- `objective_function_piepho()` now scores evenness of distribution per grid and reports each grid
+  separately. A grid with no treatment replicated within it contributes `0` rather than `Inf`.
+- `calculate_efficiency_factor()` now errors for a design whose treatment contrasts are not
+  estimable, instead of returning an impossible value above 1. The row-column model gained an
+  intercept, which does not change results that were already valid.
+- `summary()` no longer errors on designs that cannot be placed on a single grid; the affected
+  diagnostics report why they are unavailable instead.
+- `calculate_nb()` no longer errors on designs with missing plots when `pair_mapping` is not
+  supplied.
+- `calculate_adjacency_score()` now recycles a single `ring_weights` value across every entry of
+  `ring_dists`, so the default is usable with more than one ring.
 - `swap_all = TRUE` no longer changes the replication of a design when an earlier level has
   unbalanced a swap group mid-search. Only treatments with matching replication are exchanged.
 

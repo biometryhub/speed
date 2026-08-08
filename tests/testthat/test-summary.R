@@ -1,6 +1,16 @@
 # Tests for summary.design / print.summary.design (Phase 3: Structure +
 # Optimisation + flags). Evaluation metrics are covered separately.
 
+# The `grid` argument the evaluation helpers take: a grid_indices() list - one
+# entry per grid - or the reason there is no grid at all. summary.design() builds
+# it inline, once per call; tests calling a helper directly need the same value.
+grid_or_reason <- function(df, rc = "row", cc = "col", by = NULL) {
+  return(tryCatch(
+    grid_indices(df, row_column = rc, col_column = cc, by = by),
+    speed_grid_error = function(e) return(e$reason)
+  ))
+}
+
 simple_design <- function(iterations = 200, seed = 42) {
   d <- data.frame(
     row = rep(1:4, times = 3),
@@ -119,8 +129,7 @@ test_that("score components are faithful for non-default objectives (piepho)", {
     quiet = TRUE
   )
   sc <- summary(r)$per_level[[1]]$score
-  # Piepho exposes four additive components that sum to its score - the bug this
-  # fixes was the old adjacency+balance recompute not matching the piepho score.
+  # Piepho exposes four additive components, which must sum to its score.
   expect_named(
     sc$components,
     c("neighbour_balance", "even_distribution", "balance", "adjacency")
@@ -296,9 +305,12 @@ test_that("buffers are excluded from summary() and print() entirely", {
 })
 
 test_that("neighbour balance is unaffected by buffers (KNOWN_ISSUES.md #1a)", {
-  # add_buffers("edge") shifts row/col by 1; .neighbour_balance() must use the
-  # (offset-invariant) layout$nrow/ncol rather than max(row)/max(col), or it
-  # reshapes the treatment grid with the wrong dimensions.
+  # add_buffers("edge") shifts row/col by 1. The grid is built from the
+  # coordinates, so the offset just leaves an empty leading row and column,
+  # which contribute no pairs. "edge" only offsets - it inserts no gap between
+  # the design's own plots - so the counts must match the unbuffered design
+  # exactly. (A "row" or "block" buffer does insert a gap, and there the counts
+  # are expected to differ: plots either side of a buffer are not neighbours.)
   d <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
@@ -640,16 +652,12 @@ test_that("efficiency is opt-in and guarded", {
   expect_true(is.finite(on$value))
 
   # Guard: < 3 treatments returns NA with a reason rather than erroring.
-  two <- .efficiency_factor(
-    data.frame(
-      row = rep(1:2, 2),
-      col = rep(1:2, each = 2),
-      treatment = rep(c("A", "B"), 2)
-    ),
-    "treatment",
-    "row",
-    "col"
+  d2 <- data.frame(
+    row = rep(1:2, 2),
+    col = rep(1:2, each = 2),
+    treatment = rep(c("A", "B"), 2)
   )
+  two <- .efficiency_factor(d2, "treatment", "row", "col", grid_or_reason(d2))
   expect_false(two$available)
 })
 
@@ -727,21 +735,44 @@ test_that("neighbour balance separates self-adjacency from distinct-pair counts"
   expect_true(nb$min_pair_count >= 0)
   expect_true(nb$self_adjacent >= 0)
 
-  # Cross-check directly against create_pair_mapping()/calculate_nb() over all
-  # 6 possible pairs for this 3-treatment design.
-  dm <- matrix(r$design_df$treatment, nrow = 4, ncol = 3)
-  pm <- create_pair_mapping(r$design_df$treatment)
-  raw <- calculate_nb(dm, pm)
-  all_counts <- setNames(rep(0L, length(unique(pm))), unique(pm))
-  all_counts[names(raw$nb)] <- raw$nb
-  self <- c("A,A", "B,B", "C,C")
-  distinct <- setdiff(names(all_counts), self)
+  # Cross-check by walking the (row, col) coordinates directly. Deliberately NOT
+  # matrix(treatment, nrow, ncol): reshaping is what the implementation must
+  # avoid, so an expectation built that way would only confirm itself.
+  coords <- r$design_df
+  rr <- as.numeric(as.character(coords$row))
+  cc <- as.numeric(as.character(coords$col))
+  trt <- as.character(coords$treatment)
+  at <- function(i, j) {
+    k <- which(rr == i & cc == j)
+    if (length(k) == 1) trt[k] else NA_character_
+  }
+  pm_levels <- sort(unique(trt))
+  counts <- list()
+  for (k in seq_along(trt)) {
+    for (nb_ij in list(c(rr[k], cc[k] + 1), c(rr[k] + 1, cc[k]))) {
+      other <- at(nb_ij[1], nb_ij[2])
+      if (!is.na(other)) {
+        key <- paste(sort(c(trt[k], other)), collapse = ",")
+        prev <- counts[[key]]
+        counts[[key]] <- if (is.null(prev)) 1L else prev + 1L
+      }
+    }
+  }
+  self_keys <- paste(pm_levels, pm_levels, sep = ",")
+  all_pairs <- combn(pm_levels, 2, function(p) paste(p, collapse = ","))
+  get <- function(k) if (is.null(counts[[k]])) 0L else counts[[k]]
+  self_total <- sum(vapply(self_keys, get, integer(1)))
+  pair_counts <- vapply(all_pairs, get, integer(1))
 
-  expect_equal(nb$self_adjacent, sum(all_counts[self]))
-  expect_equal(nb$min_pair_count, min(all_counts[distinct]))
-  expect_equal(nb$max_pair_count, max(all_counts[distinct]))
-  expect_equal(nb$pair_var, var(all_counts[distinct]))
-  expect_equal(nb$n_zero_pairs, sum(all_counts[distinct] == 0))
+  expect_equal(nb$self_adjacent, self_total)
+  expect_equal(nb$min_pair_count, min(pair_counts))
+  expect_equal(nb$max_pair_count, max(pair_counts))
+  expect_equal(nb$pair_var, var(pair_counts))
+  expect_equal(nb$n_zero_pairs, sum(pair_counts == 0))
+
+  # The design is 4x3, so a column-major reshape would disagree - which is the
+  # whole point of the coordinate-based grid.
+  expect_equal(nb$self_adjacent, calculate_adjacency_score(coords, "treatment"))
 })
 
 test_that("a non-zero self-adjacency count is highlighted in the printed output", {
@@ -892,6 +923,285 @@ test_that("designs without a row/column grid summarise and print without a grid"
   expect_match(out, "Neighbour:\\s+no row/column factors")
 })
 
+test_that("grid_index() conditions carry the reason summary() reports", {
+  # summary() reports `reason` in place of a metric it cannot compute, so every
+  # condition class must supply one.
+  ok <- data.frame(row = c(1, 1, 2, 2), col = c(1, 2, 1, 2), treatment = "A")
+  expect_false(is.character(grid_or_reason(ok)))
+
+  # A genuine hole (missing plot) is still a single grid - coordinates stay
+  # unique, so the metrics must not refuse it.
+  expect_false(is.character(grid_or_reason(ok[-2, ])))
+
+  # Factor coordinates whose level order is lexical are still fine.
+  lex <- data.frame(
+    row = factor(c(1, 2, 10)),
+    col = factor(c(1, 1, 1)),
+    treatment = "A"
+  )
+  expect_false(is.character(grid_or_reason(lex)))
+
+  expect_equal(grid_or_reason(ok, "nope"), "no row/column factors")
+  expect_match(
+    grid_or_reason(data.frame(row = c("A", "B"), col = c(1, 1))),
+    "labels are not numeric"
+  )
+  expect_match(
+    grid_or_reason(data.frame(row = c(0, 1), col = c(1, 1))),
+    "not positive whole numbers"
+  )
+  expect_match(
+    grid_or_reason(ok[c(1, 1, 2), ]),
+    "duplicate .row./.col. coordinates"
+  )
+})
+
+test_that("multi-site (MET) designs summarise instead of erroring", {
+  # initialise_design_df(designs = ) reuses row/col per site, so a MET design has
+  # duplicate coordinates and cannot be placed on one grid. Every grid metric is
+  # wrong for it (they pool sites that share no edge), so all must report a
+  # reason. Before this gate, summary() errored outright.
+  met <- initialise_design_df(
+    items = rep(LETTERS[1:3], 6),
+    designs = list(
+      a = list(nrows = 3, ncols = 2),
+      b = list(nrows = 3, ncols = 4)
+    )
+  )
+  expect_true(anyDuplicated(met[c("row", "col")]) > 0)
+
+  r <- speed(
+    met,
+    swap = "treatment",
+    swap_within = "site",
+    spatial_factors = ~ row + col + site,
+    optimise_params = optim_params(adj_weight = 0),
+    iterations = 50,
+    seed = 1,
+    quiet = TRUE
+  )
+  s <- expect_no_error(summary(r, efficiency = TRUE))
+
+  # No single nrow x ncol describes two grids of different shapes.
+  expect_false(s$layout$has_grid)
+  expect_match(s$layout$grid_reason, "multi-site")
+  expect_true(is.na(s$layout$nrow))
+  expect_equal(s$layout$n_plots, 18)
+
+  e <- s$per_level[[1]]$evaluation
+  for (metric in c("neighbour", "replicate_span", "efficiency")) {
+    expect_false(e[[metric]]$available, info = metric)
+    expect_match(e[[metric]]$reason, "duplicate", info = metric)
+  }
+
+  # Non-grid metrics still work - only the grid ones are withheld.
+  expect_equal(s$per_level[[1]]$n_treatments, 3)
+
+  out <- capture_output(print(s))
+  expect_match(out, "Layout:\\s+18 plots")
+  expect_no_match(out, "rows x")
+  expect_match(out, "Neighbour:\\s+duplicate")
+})
+
+test_that("efficiency is withheld rather than reported above 1 for MET designs", {
+  # An efficiency factor is a property of one experiment's information matrix,
+  # so a multi-site frame has no single answer. Nothing about the arithmetic
+  # stops it being computed - duplicate coordinates just pool the sites into one
+  # row/column model - so the refusal has to be explicit. Before it, this
+  # returned a value above 1, impossible for an efficiency factor.
+  met <- initialise_design_df(
+    items = rep(LETTERS[1:3], 6),
+    designs = list(
+      a = list(nrows = 3, ncols = 2),
+      b = list(nrows = 3, ncols = 4)
+    )
+  )
+  expect_error(
+    calculate_efficiency_factor(met, treatment),
+    class = "speed_grid_duplicate"
+  )
+  gate <- .efficiency_factor(
+    met,
+    "treatment",
+    "row",
+    "col",
+    grid_or_reason(met)
+  )
+  expect_false(gate$available)
+  expect_match(gate$reason, "duplicate")
+})
+
+test_that("a MET design reports one efficiency per site and never a pooled one", {
+  set.seed(1)
+  d <- rbind(
+    data.frame(
+      site = "a",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = sample(rep(LETTERS[1:6], 2))
+    ),
+    data.frame(
+      site = "b",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = sample(rep(LETTERS[1:6], 2))
+    )
+  )
+  r <- speed(
+    d,
+    swap = "treatment",
+    swap_within = "site",
+    spatial_factors = ~ row + col + site,
+    grid_factors = list(dim1 = "row", dim2 = "col", by = "site"),
+    iterations = 100,
+    seed = 42,
+    quiet = TRUE
+  )
+  s <- summary(r, efficiency = TRUE)
+
+  # The grouping is recorded, not guessed from the column name.
+  expect_equal(r$metadata$grid_by, "site")
+  expect_false(s$layout$has_grid)
+  expect_equal(s$layout$n_grids, 2L)
+  expect_match(s$layout$grid_reason, "2 grids")
+  # nrow/ncol stay NA: no single shape describes a design spanning two grids.
+  expect_true(is.na(s$layout$nrow))
+
+  ef <- s$per_level[[1]]$evaluation$efficiency
+  expect_named(ef$per_grid, c("a", "b"))
+  expect_equal(ef$grid_by, "site")
+  expect_null(ef$value) # no pooled value, ever
+  for (one in ef$per_grid) {
+    expect_true(one$available)
+    expect_lte(one$value, 1)
+  }
+  # Each site's value is that site scored on its own.
+  expect_equal(
+    ef$per_grid$a$value,
+    calculate_efficiency_factor(
+      r$design_df[r$design_df$site == "a", ],
+      treatment
+    )
+  )
+
+  out <- capture_output(print(s))
+  expect_match(out, "per `site`")
+
+  # Spans pool sites if computed naively - two sites' row 3 are not one plot
+  # apart - so they are withheld with a reason instead.
+  spans <- s$per_level[[1]]$evaluation$replicate_span
+  expect_false(spans$available)
+  expect_match(spans$reason, "spans 2 grids")
+})
+
+test_that("a site that cannot support an efficiency factor reports only for itself", {
+  # Site b puts each treatment in one column, so its treatment contrasts are
+  # confounded with the column effects. That must not withhold site a's value.
+  d <- rbind(
+    data.frame(
+      site = "a",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = c("A", "B", "C", "D", "C", "D", "A", "B", "B", "A", "D", "C")
+    ),
+    data.frame(
+      site = "b",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = rep(c("A", "B", "C"), each = 4)
+    )
+  )
+  grid <- grid_or_reason(d, by = "site")
+  ef <- .efficiency_factor(d, "treatment", "row", "col", grid)
+
+  expect_true(ef$per_grid$a$available)
+  expect_false(ef$per_grid$b$available)
+  expect_match(ef$per_grid$b$reason, "not estimable")
+  # `available` is TRUE overall because at least one site reported.
+  expect_true(ef$available)
+})
+
+test_that("neighbour balance sums across grids rather than pooling them", {
+  set.seed(3)
+  d <- rbind(
+    data.frame(
+      site = "a",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = sample(rep(LETTERS[1:6], 2))
+    ),
+    data.frame(
+      site = "b",
+      expand.grid(row = 1:4, col = 1:3),
+      treatment = sample(rep(LETTERS[1:6], 2))
+    )
+  )
+  both <- .neighbour_balance(
+    d,
+    "treatment",
+    "row",
+    "col",
+    grid_or_reason(d, by = "site")
+  )
+  expect_true(both$available)
+
+  # The self-adjacency count is an edge count, so it is exactly the sum of the
+  # per-site counts - no edge crosses a site boundary.
+  per_site <- vapply(
+    split(d, d$site),
+    function(s) {
+      return(.neighbour_balance(
+        s,
+        "treatment",
+        "row",
+        "col",
+        grid_or_reason(s)
+      )$self_adjacent)
+    },
+    numeric(1)
+  )
+  expect_equal(both$self_adjacent, sum(per_site))
+})
+
+test_that("non-numeric row/col labels are reported, not coerced silently", {
+  d <- data.frame(
+    row = rep(c("A", "B", "C"), each = 4),
+    col = rep(c("w", "x", "y", "z"), 3),
+    treatment = rep(LETTERS[1:4], 3)
+  )
+  r <- speed(
+    d,
+    swap = "treatment",
+    spatial_factors = ~ row + col,
+    optimise_params = optim_params(adj_weight = 0),
+    iterations = 50,
+    seed = 1,
+    quiet = TRUE
+  )
+
+  # Previously this errored from build_design_matrix(), and .replicate_spans()
+  # leaked two "NAs introduced by coercion" warnings on the way.
+  s <- expect_no_warning(expect_no_error(summary(r)))
+
+  expect_false(s$layout$has_grid)
+  e <- s$per_level[[1]]$evaluation
+  expect_match(e$neighbour$reason, "labels are not numeric")
+  expect_match(e$replicate_span$reason, "labels are not numeric")
+})
+
+test_that("split-plot designs keep their grid metrics at every level", {
+  # The gate must not withhold metrics from a legitimate hierarchical design:
+  # a split-plot shares one grid, and both levels' plots have unique
+  # coordinates, so nothing here spans multiple grids.
+  s <- summary(split_plot_design(), efficiency = TRUE)
+
+  expect_true(s$layout$has_grid)
+  expect_true(is.na(s$layout$grid_reason))
+  expect_equal(c(s$layout$nrow, s$layout$ncol), c(6, 4))
+
+  expect_named(s$per_level, c("wp", "sp"))
+  for (lv in c("wp", "sp")) {
+    e <- s$per_level[[lv]]$evaluation
+    expect_true(e$neighbour$available, info = lv)
+    expect_true(e$replicate_span$available, info = lv)
+  }
+})
+
 test_that("the disconnected flag names the affected levels for hierarchical designs", {
   s <- summary(split_plot_design())
   s$flags$disconnected <- c("wp", "sp")
@@ -938,13 +1248,14 @@ test_that("buffer removal drops the unused factor level from a factor swap colum
 test_that("evaluation helpers return a reason instead of erroring on unmet assumptions", {
   no_grid <- data.frame(a = 1:3, treatment = c("A", "B", "C"))
 
-  rs <- .replicate_spans(no_grid, "treatment", "row", "col")
+  ng <- grid_or_reason(no_grid)
+  rs <- .replicate_spans(no_grid, "treatment", "row", "col", ng)
   expect_false(rs$available)
   expect_equal(rs$reason, "no row/column factors")
 
-  ef <- .efficiency_factor(no_grid, "treatment", "row", "col")
+  ef <- .efficiency_factor(no_grid, "treatment", "row", "col", ng)
   expect_false(ef$available)
-  expect_equal(ef$reason, "requires a row/column grid")
+  expect_equal(ef$reason, "no row/column factors")
 
   # A contrast needs two treatments to be a contrast.
   one <- .design_connectedness(
@@ -982,15 +1293,54 @@ test_that(".design_connectedness is trivially connected with no nuisance factors
 })
 
 test_that(".efficiency_factor reports a reason when the computation fails", {
-  # A 1x1 "grid" leaves no row/column effects to fit, so
-  # calculate_efficiency_factor() errors; the wrapper must absorb that.
-  degenerate <- data.frame(
-    row = rep(1, 3),
-    col = rep(1, 3),
-    treatment = c("A", "B", "C")
+  # The wrapper must absorb an error from the underlying metric rather than
+  # propagate it. Mocked rather than provoked with a degenerate design, because a
+  # design degenerate enough to fail the metric (e.g. a 1x1 grid, three plots
+  # sharing one coordinate) is rejected by grid_index() first, leaving this
+  # backstop untested.
+  d <- data.frame(
+    row = rep(1:2, 3),
+    col = rep(1:3, each = 2),
+    treatment = rep(c("A", "B", "C"), 2)
   )
-  ef <- .efficiency_factor(degenerate, "treatment", "row", "col")
+  grid <- grid_or_reason(d)
+  expect_false(is.character(grid))
+
+  local_mocked_bindings(
+    calculate_efficiency_factor = function(...) stop("cannot compute")
+  )
+  ef <- .efficiency_factor(d, "treatment", "row", "col", grid)
 
   expect_false(ef$available)
   expect_equal(ef$reason, "could not be computed for this design")
+})
+
+test_that("neighbour balance reads coordinates, not the data frame order", {
+  # A 3x8 design optimised to a genuine zero self-adjacency. A column-major
+  # reshape of a row-major frame scrambles it and invents adjacencies, so this
+  # is the regression test for that class of bug: the reported figure must
+  # agree with the objective's own adjacency score for the same design.
+  d <- speed(
+    initialise_design_df(items = rep(LETTERS[1:6], 4), nrows = 3, ncols = 8),
+    swap = "treatment",
+    iterations = 3000,
+    seed = 11,
+    quiet = TRUE
+  )
+  nb <- summary(d)$per_level[[1]]$evaluation$neighbour
+
+  expect_equal(nb$self_adjacent, 0)
+  expect_equal(
+    nb$self_adjacent,
+    calculate_adjacency_score(d$design_df, "treatment")
+  )
+
+  # Row order must not matter: the same design with its rows reversed is the
+  # same field layout, and must report the same neighbour balance.
+  reversed <- d
+  reversed$design_df <- d$design_df[rev(seq_len(nrow(d$design_df))), ]
+  expect_equal(
+    summary(reversed)$per_level[[1]]$evaluation$neighbour,
+    nb
+  )
 })

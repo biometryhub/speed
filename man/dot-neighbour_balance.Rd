@@ -4,7 +4,13 @@
 \alias{.neighbour_balance}
 \title{Neighbour-balance diagnostics}
 \usage{
-.neighbour_balance(df, swap, nrow, ncol)
+.neighbour_balance(df, swap, rc, cc, grid)
+}
+\arguments{
+\item{rc, cc}{Row and column column names.}
+
+\item{grid}{A \code{\link[=grid_index]{grid_index()}} list, reused as the \code{\link[=build_design_matrix]{build_design_matrix()}}
+index, or a character reason there is no grid.}
 }
 \description{
 Builds the treatment grid and counts how often each treatment pair ends up
@@ -20,11 +26,13 @@ zero self-adjacency is the desirable outcome the optimiser works towards,
 whereas a distinct pair that never neighbours is an imbalance. Lumping them
 together hides self-adjacency behind the same \verb{min 0} as the harmless case.
 
-Takes \code{nrow}/\code{ncol} from the caller's \code{layout} (counted via
-\code{length(unique(...))}) rather than deriving them from \code{max(row)}/\code{max(col)}:
-buffer plots (\code{add_buffers()}) can shift row/col numbering so it no longer
-starts at 1, which would otherwise reshape the grid with the wrong
-dimensions. Assumes \code{rc}/\code{cc} are present in \code{df}; callers should check
-\code{has_grid} first (see \code{summary.design()}).
+The grid comes from \code{\link[=build_design_matrix]{build_design_matrix()}}, which places each plot at its own
+\code{rc}/\code{cc} coordinates, so the counts describe the layout whatever order \code{df}
+is in. Coordinates are read as-is, so plots separated by a buffer row or
+column (\code{add_buffers()} offsets and scales them) keep that separation and are
+not counted as neighbours.
+
+A design that cannot be placed on one grid is reported as unavailable rather
+than propagating \code{\link[=grid_index]{grid_index()}}'s error out of \code{summary()}.
 }
 \keyword{internal}
