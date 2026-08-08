@@ -106,11 +106,12 @@
   cooling_rate,
   random_initialisation,
   adj_weight,
-  bal_weight
+  bal_weight,
+  stop_at_optimal
 ) {
   verify_positive_whole_number(swap_count)
   verify_non_negative_whole(start_temp)
-  verify_boolean(adaptive_swaps, swap_all_blocks)
+  verify_boolean(adaptive_swaps, swap_all_blocks, stop_at_optimal)
   verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
   verify_numeric(adj_weight, bal_weight)
 
@@ -196,47 +197,24 @@
   }
 }
 
-#' Verify the `grid_factors` argument
+#' Verify the `by` element of `grid_factors`
 #'
 #' @description
-#' `grid_factors` must be a single list naming the two grid axes, because
-#' [infer_row_col()] resolves one pair of axes for the whole design - they order
-#' the data frame and are recorded in the design's metadata. A per-level list
-#' (`list(wp = list(dim1 = ...), sp = ...)`) therefore cannot be honoured here;
-#' without this check it reaches `grid_factors$dim1` as `NULL` and fails with an
-#' uninformative "missing value where TRUE/FALSE needed". Use the `optimise`
-#' argument to vary grid factors between levels.
+#' `grid_factors` is a plain list, so a mistyped `by` would be ignored and every
+#' grid silently pooled. Checked before any optimisation happens.
+#'
+#' @inheritParams speed
 #'
 #' @rdname verify
 #'
 #' @keywords internal
-.verify_grid_factors <- function(grid_factors) {
-  malformed <- !is.list(grid_factors) ||
-    !all(c("dim1", "dim2") %in% names(grid_factors)) ||
-    !all(vapply(
-      grid_factors[c("dim1", "dim2")],
-      function(d) return(is.character(d) && length(d) == 1),
-      logical(1)
-    ))
-
-  if (malformed) {
-    stop(
-      "`grid_factors` must be a list with `dim1` and `dim2`, each naming a",
-      " single column, e.g. `list(dim1 = \"row\", dim2 = \"col\")`.",
-      if (
-        is.list(grid_factors) &&
-          length(grid_factors) &&
-          is.list(grid_factors[[1]])
-      ) {
-        paste0(
-          "\nTo use different grid factors for each level of a hierarchical",
-          " design, set them per level via the `optimise` argument instead."
-        )
-      } else {
-        ""
-      },
-      call. = FALSE
-    )
+.verify_grid_by <- function(data, grid_factors) {
+  grid_by <- grid_factors$by
+  if (!is.null(grid_by)) {
+    if (!is.character(grid_by) || length(grid_by) != 1) {
+      data_type_error("grid_factors$by", "a single column name")
+    }
+    verify_column_exists(grid_by, data, "grid grouping column")
   }
 
   return(invisible(NULL))

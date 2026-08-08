@@ -4,10 +4,12 @@
 \alias{.efficiency_factor}
 \title{A-efficiency factor (opt-in wrapper)}
 \usage{
-.efficiency_factor(df, swap, rc, cc)
+.efficiency_factor(df, swap, rc, cc, grid)
 }
 \arguments{
 \item{rc, cc}{Row and column column names.}
+
+\item{grid}{A \code{\link[=grid_index]{grid_index()}} list, or a character reason there is no grid.}
 }
 \description{
 Thin guarded wrapper over \code{\link[=calculate_efficiency_factor]{calculate_efficiency_factor()}} (a row--column model

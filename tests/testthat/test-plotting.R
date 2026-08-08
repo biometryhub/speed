@@ -511,6 +511,7 @@ test_that("plot_progress handles simple design optimization results", {
     swap_within = "1",
     spatial_factors = ~ row + col,
     iterations = 500,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
     seed = 42,
     quiet = TRUE
   )
@@ -544,6 +545,7 @@ test_that("plot_progress handles different iteration lengths", {
     swap_within = "1",
     spatial_factors = ~ row + col,
     iterations = 50,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
     seed = 42,
     quiet = TRUE
   )
@@ -555,6 +557,7 @@ test_that("plot_progress handles different iteration lengths", {
     swap_within = "1",
     spatial_factors = ~ row + col,
     iterations = 1000,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
     seed = 42,
     quiet = TRUE
   )
@@ -728,6 +731,7 @@ test_that("plot_progress generates expected plot elements", {
     swap_within = "1",
     spatial_factors = ~ row + col,
     iterations = 100,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
     seed = 42,
     quiet = TRUE
   )

@@ -130,7 +130,14 @@ test_that("adjacency_score_vec applies per-ring weights", {
 })
 
 test_that("adjacency_score_vec rejects mismatched dists/weights", {
+  # A length-one `weights` is recycled across every ring, so the scalar default
+  # stays usable with a multi-ring `dists`. Any other mismatch is still an error.
   expect_error(adjacency_score_vec(
+    matrix(1, 2, 2),
+    dists = c(1, 2, 3),
+    weights = c(1, 2)
+  ))
+  expect_no_error(adjacency_score_vec(
     matrix(1, 2, 2),
     dists = c(1, 2),
     weights = 1

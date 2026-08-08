@@ -13,6 +13,8 @@ objective_function_piepho(
   pair_mapping = NULL,
   row_column = "row",
   col_column = "col",
+  by = NULL,
+  grid_index = NULL,
   ...
 )
 }
@@ -32,6 +34,12 @@ objective_function_piepho(
 \item{row_column}{Name of column representing the row of the design (default: "row")}
 
 \item{col_column}{Name of column representing the column of the design (default: "col")}
+
+\item{by, grid_index}{Optional grouping of plots into separate grids; see
+\code{\link[=calculate_adjacency_score]{calculate_adjacency_score()}}. Neighbour balance sums across grids, while
+evenness of distribution is scored \strong{per grid} and the scores summed,
+reported both in total and per grid. A grid with no treatment replicated
+inside it contributes \code{0}.}
 
 \item{...}{Extra parameters passed from \link{speed}}
 }
