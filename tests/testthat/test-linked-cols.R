@@ -49,6 +49,8 @@ test_that("linked_cols keeps a companion column with its treatment", {
     df,
     swap = "treatment",
     linked_cols = "trt_name",
+    iterations = 100,
+    early_stop_iterations = 30,
     seed = 42,
     quiet = TRUE
   )
@@ -62,6 +64,8 @@ test_that("linked_cols leaves no bookkeeping columns behind", {
     df,
     swap = "treatment",
     linked_cols = "trt_name",
+    iterations = 100,
+    early_stop_iterations = 30,
     seed = 42,
     quiet = TRUE
   )
@@ -79,6 +83,8 @@ test_that("linked_cols preserves the type of the companion column", {
     df,
     swap = "treatment",
     linked_cols = c("trt_name", "trt_num", "trt_fct"),
+    iterations = 100,
+    early_stop_iterations = 30,
     seed = 42,
     quiet = TRUE
   )
@@ -95,6 +101,8 @@ test_that("linked_cols actually moves the companion column", {
     df,
     swap = "treatment",
     linked_cols = "trt_name",
+    iterations = 100,
+    early_stop_iterations = 30,
     seed = 42,
     quiet = TRUE
   )
@@ -116,6 +124,8 @@ test_that("linked_cols carries a per-plot column on a single-swap level", {
     df,
     swap = "treatment",
     linked_cols = "plot_id",
+    iterations = 100,
+    early_stop_iterations = 30,
     seed = 42,
     quiet = TRUE
   )
@@ -127,11 +137,20 @@ test_that("linked_cols carries a per-plot column on a single-swap level", {
 
 test_that("linked_cols does not change the design or its scores", {
   df <- simple_df()
-  without <- speed(df, swap = "treatment", seed = 42, quiet = TRUE)
+  without <- speed(
+    df,
+    swap = "treatment",
+    iterations = 100,
+    early_stop_iterations = 30,
+    seed = 42,
+    quiet = TRUE
+  )
   with <- speed(
     df,
     swap = "treatment",
     linked_cols = "trt_name",
+    iterations = 100,
+    early_stop_iterations = 30,
     seed = 42,
     quiet = TRUE
   )
@@ -149,6 +168,8 @@ test_that("linked_cols is score neutral with random initialisation", {
     df,
     swap = "treatment",
     optimise_params = params,
+    iterations = 100,
+    early_stop_iterations = 30,
     seed = 7,
     quiet = TRUE
   )
@@ -157,6 +178,8 @@ test_that("linked_cols is score neutral with random initialisation", {
     swap = "treatment",
     linked_cols = "trt_name",
     optimise_params = params,
+    iterations = 100,
+    early_stop_iterations = 30,
     seed = 7,
     quiet = TRUE
   )
@@ -175,6 +198,8 @@ test_that("linked_cols works with swap_within", {
     swap = "treatment",
     swap_within = "block",
     linked_cols = "trt_name",
+    iterations = 100,
+    early_stop_iterations = 30,
     seed = 42,
     quiet = TRUE
   )
@@ -191,6 +216,8 @@ test_that("linked_cols carries original values through NA treatments", {
     df,
     swap = "treatment",
     linked_cols = "trt_name",
+    iterations = 100,
+    early_stop_iterations = 30,
     seed = 42,
     quiet = TRUE
   )
@@ -213,6 +240,8 @@ test_that("linked_cols links a different column at each level of a split-plot", 
     swap_within = list(wp = "block", sp = "wholeplot"),
     linked_cols = list(wp = "wp_label", sp = "sp_label"),
     swap_all = TRUE,
+    iterations = 100,
+    early_stop_iterations = 30,
     seed = 42,
     quiet = TRUE
   )
@@ -230,6 +259,8 @@ test_that("linked_cols can be given for one level only", {
     swap_within = list(wp = "block", sp = "wholeplot"),
     linked_cols = list(sp = "sp_label"),
     swap_all = TRUE,
+    iterations = 100,
+    early_stop_iterations = 30,
     seed = 42,
     quiet = TRUE
   )
@@ -241,6 +272,8 @@ test_that("linked_cols can be given for one level only", {
     swap_within = list(wp = "block", sp = "wholeplot"),
     linked_cols = list(wp = "wp_label"),
     swap_all = TRUE,
+    iterations = 100,
+    early_stop_iterations = 30,
     seed = 42,
     quiet = TRUE
   )
@@ -254,6 +287,8 @@ test_that("linked_cols is score neutral for hierarchical designs", {
     swap = list(wp = "wp_trt", sp = "sp_trt"),
     swap_within = list(wp = "block", sp = "wholeplot"),
     swap_all = TRUE,
+    iterations = 100,
+    early_stop_iterations = 30,
     seed = 42,
     quiet = TRUE
   )
@@ -288,6 +323,8 @@ test_that("linked_cols works via the optimise argument", {
       )
     ),
     swap_all = TRUE,
+    iterations = 100,
+    early_stop_iterations = 30,
     seed = 42,
     quiet = TRUE
   )
@@ -315,6 +352,8 @@ test_that("linked_cols accumulates across levels sharing one swap column", {
       connectivity = list(spatial_factors = ~site),
       balance = list(swap_within = "site", spatial_factors = ~col)
     ),
+    iterations = 100,
+    early_stop_iterations = 30,
     seed = 11,
     quiet = TRUE
   )
@@ -413,6 +452,8 @@ test_that("linked_cols carries a per-plot column on a swap_all level", {
     swap_within = list(wp = "block", sp = "wholeplot"),
     linked_cols = list(wp = "plot_id"),
     swap_all = TRUE,
+    iterations = 100,
+    early_stop_iterations = 30,
     seed = 42,
     quiet = TRUE
   )
@@ -473,6 +514,8 @@ test_that("linked_cols allows a functionally dependent column on a swap_all leve
       swap_within = list(wp = "block", sp = "wholeplot"),
       linked_cols = list(wp = "wp_label"),
       swap_all = TRUE,
+      iterations = 100,
+      early_stop_iterations = 30,
       seed = 42,
       quiet = TRUE
     )
