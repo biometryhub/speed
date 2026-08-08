@@ -104,13 +104,19 @@ test_that("summary score components are programmatically accessible", {
   s <- summary(simple_design())
   sc <- s$per_level[[1]]$score
 
-  expect_named(sc, c("initial", "final", "components"))
+  expect_named(sc, c("initial", "final", "optimal", "components"))
   # The default objective decomposes into adjacency + balance.
   expect_named(sc$components, c("adjacency", "balance"))
   # The components sum to the final score (faithful decomposition).
   expect_equal(sum(sc$components), sc$final)
   # The level's final score matches the overall design score for a simple design.
   expect_equal(sc$final, s$score)
+})
+
+test_that("summary reports the optimal score", {
+  s <- summary(simple_design())
+  expect_equal(s$per_level[[1]]$score$optimal, 1)
+  expect_output(print(s), regexp = "\\nOptimal:\\s+1\\s+\\(reached\\)\\n")
 })
 
 test_that("score components are faithful for non-default objectives (piepho)", {
@@ -220,7 +226,7 @@ test_that("print.summary.design shows per-level blocks and a total for hierarchi
 
 test_that("print.summary.design returns the object invisibly", {
   s <- summary(simple_design())
-  expect_identical(print(s), s)
+  capture_output(expect_identical(print(s), s))
 })
 
 test_that("print.summary.design colours section headings and convergence status", {

@@ -39,7 +39,8 @@
   cooling_rate,
   random_initialisation,
   adj_weight,
-  bal_weight
+  bal_weight,
+  stop_at_optimal
 )
 
 .verify_swap_all_replication(data, optimise, dummy_group = NULL)
@@ -72,7 +73,9 @@ with names matching \code{swap}.}
 
 \item{early_stop_iterations}{Number of iterations without improvement before
 early stopping (default: 2000). For hierarchical designs, can be a named
-list with names matching \code{swap}.}
+list with names matching \code{swap}. Optimisation also stops as soon as a level
+reaches the lowest score its layout allows, which is only applicable for the
+default \code{\link[=objective_function]{objective_function()}}; see \link[=summary.design]{summary()}.}
 
 \item{quiet}{Logical; if TRUE, suppresses progress messages (default: FALSE)}
 

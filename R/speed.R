@@ -36,7 +36,9 @@
 #'   with names matching `swap`.
 #' @param early_stop_iterations Number of iterations without improvement before
 #'   early stopping (default: 2000). For hierarchical designs, can be a named
-#'   list with names matching `swap`.
+#'   list with names matching `swap`. Optimisation also stops as soon as a level
+#'   reaches the lowest score its layout allows, which is only applicable for the
+#'   default [objective_function()]; see [summary()][summary.design()].
 #' @param obj_function Objective function used to calculate score (lower is
 #'   better) (default: [objective_function()]). For hierarchical designs, can
 #'   be a named list with names matching `swap`.
@@ -290,6 +292,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   # Sequential optimisation for each hierarchy level
   all_scores <- list()
   all_temperatures <- list()
+  all_optimal_scores <- list()
   total_iterations <- 0  # TODO: Track total iterations across all levels
 
   # Set seed for reproducibility
@@ -303,6 +306,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     swap_all_blocks <- optimise_params$swap_all_blocks
     adj_weight <- optimise_params$adj_weight
     bal_weight <- optimise_params$bal_weight
+    stop_at_optimal <- optimise_params$stop_at_optimal
     spatial_cols <- all.vars(opt$spatial_factors)
 
     # Calculate initial score for this level
@@ -313,6 +317,11 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     if (!is.numeric(current_score)) {
       stop("`score` from `objective_function` must be numeric.")
     }
+
+    # Lower bound on the score for this level; `NA` when none can be derived
+    optimal_score <- .optimal_score(current_design, opt$swap, spatial_cols, opt$obj_function,
+                                    adj_weight = adj_weight, bal_weight = bal_weight, ...)
+    all_optimal_scores[[level]] <- optimal_score
 
     best_score_obj <- current_score_obj
     best_score <- current_score
@@ -325,6 +334,14 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     for (iter in 1:opt$iterations) {
       scores[iter] <- current_score
       temperatures[iter] <- temp
+
+      # break once optimal
+      if (stop_at_optimal && !is.na(optimal_score) && best_score <= optimal_score + 1e-9) {
+        if (!quiet) cat("Optimal score reached at iteration", iter, "for level", level, "\n")
+        scores <- scores[1:iter]
+        temperatures <- temperatures[1:iter]
+        break
+      }
 
       if (optimise_params$adaptive_swaps) {
         current_swap_count <- max(1, round(swap_count * temp / start_temp))
@@ -420,7 +437,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       cooling_rate     = optimise_params$cooling_rate,
       obj_function     = opt$obj_function,
       final_score      = score_obj$score,
-      final_components = score_obj$components
+      final_components = score_obj$components,
+      optimal_score    = all_optimal_scores[[level]]
     )
   }
 

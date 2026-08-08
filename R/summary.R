@@ -89,7 +89,7 @@
 #'     `block_spread`, `efficiency`, `neighbour`; each a list with an
 #'     `available` flag and either its value(s) or a `reason` it wasn't
 #'     computed.
-#'   - `score` - `initial`, `final`, `components`.
+#'   - `score` - `initial`, `final`, `optimal` (`NA` when not applicable), `components`.
 #'   - `optim` - `objective`, `start_temp`, `cooling_rate`,
 #'     `iterations_requested`, `iterations_run`, `stopped_early`.
 #' - **score** - the overall optimised score (summed across levels for a
@@ -274,6 +274,7 @@ summary.design <- function(
       score = list(
         initial = initial,
         final = final,
+        optimal = pm$optimal_score %||% NA_real_,
         components = pm$final_components
       ),
       optim = list(
@@ -1114,6 +1115,16 @@ print.summary.design <- function(x, ...) {
       )
     }
   }
+
+  if (!is.na(s$optimal %||% NA_real_)) {
+    reached <- if (s$final <= s$optimal + 1e-9) {
+      crayon::green("(reached)")
+    } else {
+      "(not reached)"
+    }
+    cat(lab("Optimal:"), fmt_num(s$optimal), "  ", reached, "\n", sep = "")
+  }
+
   # Whether the run converged (stopped early) or hit the iteration cap is the
   # single most useful signal here, so it's colour-highlighted either way.
   stop_reason <- if (o$stopped_early) {

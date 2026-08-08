@@ -191,6 +191,95 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
   return(sum(score))
 }
 
+#' Smallest Achievable Balance Score
+#'
+#' @description
+#' Lower bound on [calculate_balance_score()] for any arrangement of `swap`.
+#' Each level of a spatial factor holds a fixed number of plots, and the
+#' variance of the treatment counts within it is smallest when those plots are
+#' split as evenly as possible across the `t` treatments. For a level of `n`
+#' plots, the remainder, `rem` is `n %% t`, that minimum has the closed
+#' form `rem * (t - rem) / (t * (t - 1))`.
+#'
+#' @inheritParams objective_function_signature
+#'
+#' @return A single non-negative numeric value.
+#'
+#' @seealso [calculate_balance_score()]
+#'
+#' @keywords internal
+.balance_score_min <- function(layout_df, swap, spatial_cols) {
+  mins <- vapply(
+    spatial_cols,
+    function(el) {
+      counts <- table(layout_df[[el]], layout_df[[swap]])
+      n_treatments <- ncol(counts)
+      if (n_treatments < 2) {
+        return(0)
+      }
+
+      remainders <- rowSums(counts) %% n_treatments
+      return(sum(
+        remainders *
+          (n_treatments - remainders) /
+          (n_treatments * (n_treatments - 1))
+      ))
+    },
+    numeric(1)
+  )
+  return(sum(mins))
+}
+
+#' Smallest Achievable Score for the Default Objective
+#'
+#' @description
+#' Lower bound of [objective_function()] for any arrangement of `swap` in this
+#' layout: the adjacency component is zero (for simplicity and non zero are
+#' mostly impractical) and the balance component is [.balance_score_min()].
+#' Because it is a bound rather than an attained value, an unattainable bound
+#' is never reached, leaving the run unchanged.
+#'
+#' Returns `NA_real_` when no bound can be derived: a non-default objective, a
+#' `relationship` matrix or any negative weights, `adj_weight`, `bal_weight`,
+#' `ring_weights`.
+#'
+#' @inheritParams objective_function_signature
+#' @inheritParams objective_function
+#' @param obj_function The objective function used for this level.
+#' @param ... Extra arguments for the objective function, as passed to [speed()].
+#'   `relationship` and `ring_weights` are read from here.
+#'
+#' @return A single numeric lower bound, or `NA_real_` when cannot be derived.
+#'
+#' @seealso [objective_function()], [.balance_score_min()]
+#'
+#' @keywords internal
+.optimal_score <- function(
+  layout_df,
+  swap,
+  spatial_cols,
+  obj_function,
+  adj_weight = 1,
+  bal_weight = 1,
+  ...
+) {
+  dots <- list(...)
+  is_boundable <- isTRUE(
+    identical(obj_function, objective_function) &&
+      is.null(dots$relationship) &&
+      all(dots$ring_weights >= 0) &&
+      adj_weight >= 0 &&
+      bal_weight >= 0
+  )
+  if (!is_boundable) {
+    return(NA_real_)
+  }
+
+  bal_min <- .balance_score_min(layout_df, swap, spatial_cols)
+  # round as `objective_function()` does
+  return(round(bal_weight * bal_min, 10))
+}
+
 #' Objective Function with Metric from Piepho
 #'
 #' @description
