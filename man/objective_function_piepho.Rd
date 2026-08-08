@@ -36,13 +36,10 @@ objective_function_piepho(
 \item{col_column}{Name of column representing the column of the design (default: "col")}
 
 \item{by, grid_index}{Optional grouping of plots into separate grids; see
-\code{\link[=calculate_adjacency_score]{calculate_adjacency_score()}}. Neighbour balance counts edges, so it sums
-across grids. Evenness of distribution measures how far apart a treatment's
-replicates are, and there is no distance between plots at different sites,
-so it is scored \strong{per grid} and the scores summed - reported both in total
-and per grid, and identical to optimising each grid on its own, since a swap
-moves plots within one grid. A grid with no treatment replicated inside it
-has no evenness to measure and contributes \code{0}.}
+\code{\link[=calculate_adjacency_score]{calculate_adjacency_score()}}. Neighbour balance sums across grids, while
+evenness of distribution is scored \strong{per grid} and the scores summed,
+reported both in total and per grid. A grid with no treatment replicated
+inside it contributes \code{0}.}
 
 \item{...}{Extra parameters passed from \link{speed}}
 }

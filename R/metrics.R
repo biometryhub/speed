@@ -203,13 +203,10 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #' @param design A data frame representing the spatial information of the design
 #' @param current_score_obj A named list containing the current score
 #' @param by,grid_index Optional grouping of plots into separate grids; see
-#'   [calculate_adjacency_score()]. Neighbour balance counts edges, so it sums
-#'   across grids. Evenness of distribution measures how far apart a treatment's
-#'   replicates are, and there is no distance between plots at different sites,
-#'   so it is scored **per grid** and the scores summed - reported both in total
-#'   and per grid, and identical to optimising each grid on its own, since a swap
-#'   moves plots within one grid. A grid with no treatment replicated inside it
-#'   has no evenness to measure and contributes `0`.
+#'   [calculate_adjacency_score()]. Neighbour balance sums across grids, while
+#'   evenness of distribution is scored **per grid** and the scores summed,
+#'   reported both in total and per grid. A grid with no treatment replicated
+#'   inside it contributes `0`.
 #'
 #' @examples
 #' design_df <- initialise_design_df(
@@ -248,16 +245,13 @@ objective_function_piepho <- function(design,
                                       by = NULL,
                                       grid_index = NULL,
                                       ...) {
-  # `by`/`grid_index` are documented on calculate_adjacency_score(); evenness is
-  # scored per grid and the scores summed. See the loop below.
+  # `by`/`grid_index` are documented on calculate_adjacency_score()
   if (is.null(grid_index)) {
     grid_index <- grid_indices(design, row_column, col_column, by = by)
   }
 
-  # Every grid is scored on its own. A spanning tree measures distance between
-  # plots, and there is no distance between plots at different sites: pooling
-  # them either treats two sites' (1, 1) as the same point or invents a distance
-  # across the join.
+  # Each grid is scored on its own: there is no distance between plots at
+  # different sites, so a pooled spanning tree would be meaningless.
   ed <- list()
   ed_scores <- setNames(numeric(length(grid_index)), names(grid_index))
   nb_counts <- list()
@@ -276,11 +270,8 @@ objective_function_piepho <- function(design,
       current_score_obj$ed[[nm]],
       swapped_items
     )
-    # A grid with nothing replicated inside it has no spanning tree to measure,
-    # so evenness of distribution does not apply there: it contributes 0 rather
-    # than 1/0, which would make the whole score `Inf` and leave the optimiser
-    # with nothing to compare. Replication is fixed for the run, so a grid is
-    # either in or out of this component for the whole run.
+    # A grid with nothing replicated has no spanning tree, so it contributes 0
+    # rather than 1/0, which would make the whole score `Inf`.
     ed_scores[[nm]] <- if (length(ed[[nm]]) == 0L) {
       0
     } else {
@@ -290,10 +281,8 @@ objective_function_piepho <- function(design,
     nb_counts[[nm]] <- unlist(calculate_nb(design_matrix, pair_mapping)$nb)
   }
 
-  # The per-grid scores are summed rather than pooled into one reciprocal. Both
-  # give the same optimisation - a swap moves plots within one grid, so it
-  # changes only that grid's term - but summing keeps ED scaling with adjacency,
-  # which also sums per grid, instead of shrinking as sites are added.
+  # Summed rather than pooled into one reciprocal, so ED scales with adjacency -
+  # which also sums per grid - instead of shrinking as sites are added.
   ed_score <- sum(ed_scores)
 
   # Neighbour balance counts edges and no edge crosses a grid boundary, so the
@@ -322,10 +311,8 @@ objective_function_piepho <- function(design,
     grid_index = grid_index
   )
 
-  # Per-grid evenness is reported alongside the total, never instead of it: the
-  # values are not comparable *between* grids - a 3-replicate spanning tree is
-  # longer than a 2-replicate one whatever the spread - so they are shown side
-  # by side rather than ranked or averaged.
+  # Reported alongside the total, not instead of it: per-grid values are not
+  # comparable between grids, so they are never ranked or averaged.
   components <- c(
     neighbour_balance = nb_score,
     even_distribution = ed_score,
@@ -797,12 +784,9 @@ calculate_efficiency_factor <- function(
 ) {
   item <- as.character(substitute(item))
 
-  # An efficiency factor is a property of one experiment's information matrix,
-  # and there is no meaningful way to combine several. A multi-site frame does
-  # not error of its own accord here - duplicate coordinates just pool the sites
-  # into one row/column model, which returns a value above 1 - so validate the
-  # coordinates explicitly rather than letting that through. Report one value
-  # per site instead, as `summary()` does.
+  # An efficiency factor is a property of one experiment, and several cannot be
+  # combined. Validated explicitly because pooled sites otherwise return a value
+  # above 1 rather than erroring; `summary()` reports one value per site.
   grid_index(design_df, row_column, col_column)
 
   # Design parameters
@@ -828,15 +812,11 @@ calculate_efficiency_factor <- function(
   Z_row[cbind(in_row, rows[in_row])] <- 1
   Z_col[cbind(in_col, cols[in_col])] <- 1
 
-  # Intercept, then row and column design matrices. The intercept belongs to the
-  # nuisance space on its own account - the row-column model has a mean - and it
-  # is also what makes the estimability test below exact. Without it the mean is
-  # left inside the treatment term (X's rows sum to 1), so `A_RC` keeps a
-  # non-null direction that is neither a contrast nor orthogonal to one, and no
-  # rank test on it distinguishes "all contrasts estimable" from "some are not".
-  # Adding it does not change the reported value for a design that is estimable:
-  # verified against both published designs (0.834, 0.827) and against pairwise
-  # contrast variances taken from the full model's Moore-Penrose inverse.
+  # Intercept, then row and column design matrices. The row-column model has a
+  # mean, and including it is what makes the estimability test below exact:
+  # without it the mean stays inside the treatment term (X's rows sum to 1) and
+  # no rank test on `A_RC` can separate estimable contrasts from inestimable
+  # ones. Reported values for estimable designs are unchanged.
   Z <- cbind(1, Z_row, Z_col)
 
   # Check if Z^TZ is invertible
@@ -856,19 +836,13 @@ calculate_efficiency_factor <- function(
   I_n <- diag(n_plots)
   A_RC <- t(X) %*% (I_n - P_Z) %*% X
 
-  # With the intercept eliminated, A_RC's null space contains the all-ones
-  # direction, so rank n_treatments - 1 means exactly "every treatment contrast
-  # is estimable" and anything less means some are not. Where they are not,
-  # pseudo_inverse() drops the null directions and the surviving pairwise
-  # variances still average to something finite, so the formula returns a
-  # plausible-looking number - typically above 1, which is impossible - instead
-  # of failing. Two distinct designs reach here: one with too few residual
-  # degrees of freedom, and one where treatment is aliased with a row or column
-  # effect despite having degrees of freedom to spare. Rank catches both;
-  # counting degrees of freedom catches only the first. The tolerance matches
-  # pseudo_inverse()'s, so the gate and the inverse cannot disagree about which
-  # directions are null. (`qr()` is not used: its default tolerance is relative
-  # and reports full rank for a matrix whose eigenvalues are 2, 9e-16, 6e-16.)
+  # Rank n_treatments - 1 means every treatment contrast is estimable. Without
+  # this gate pseudo_inverse() drops the null directions and returns a
+  # plausible-looking value above 1 instead of failing. Rank catches both
+  # aliasing and too few residual degrees of freedom; counting degrees of
+  # freedom catches only the latter. The tolerance matches pseudo_inverse()'s so
+  # the two cannot disagree, and `qr()` is unusable here - its relative default
+  # reports full rank for eigenvalues 2, 9e-16, 6e-16.
   if (sum(svd(A_RC)$d > 1e-10) != n_treatments - 1) {
     stop(structure(
       class = c(

@@ -191,39 +191,22 @@ speed <- function(data,
     }
   }
 
+  # `by` groups plots into separate grids (a multi-environment trial)
+  .verify_grid_by(data, grid_factors)
+  grid_by <- grid_factors$by
+
   # Infer row and column columns
   inferred <- infer_row_col(data, grid_factors, quiet)
   row_column <- inferred$row
   col_column <- inferred$col
-  # `by` groups plots into separate grids (a multi-environment trial). Validated
-  # here rather than left to fail later: `grid_factors` is a plain list, so a
-  # mistyped name would otherwise be silently ignored and every site pooled.
-  grid_by <- grid_factors$by
-  if (!is.null(grid_by)) {
-    if (!is.character(grid_by) || length(grid_by) != 1) {
-      stop(
-        "`grid_factors$by` must be a single column name.",
-        call. = FALSE
-      )
-    }
-    if (!grid_by %in% names(data)) {
-      stop(
-        "`grid_factors$by` is \"",
-        grid_by,
-        "\", which is not a column in the design.",
-        call. = FALSE
-      )
-    }
-  }
 
   # convert to factors
   factored <- to_factor(data)
   data <- factored$df
 
   if (inferred$inferred) {
-    # Row order no longer affects any metric - grids are built from each plot's
-    # coordinates - but generate_neighbour(), random_initialise(), print() and
-    # autoplot() may still rely on it, so the sort stays until that is checked.
+    # Metrics are built from each plot's coordinates now, but neighbour
+    # generation and plotting may still rely on row order, so the sort stays.
     data <- data[do.call(order, data[c(row_column, col_column)]), ]
     # Only reset row labels for base data frames; tibbles are positional and
     # warn on `rownames<-`, and nothing downstream reads the design's row names.
@@ -290,11 +273,9 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   current_design <- layout_df
   best_design <- current_design
 
-  # Only the treatment column changes during annealing, so the validated grid
-  # index is invariant for the whole run and is built once here rather than every
-  # iteration. `NULL` on failure keeps this lazy: a design whose coordinates
-  # cannot form a grid still runs if its objective never needs one, and still
-  # errors from build_design_matrix() if it does.
+  # Only the treatment column moves during annealing, so build the index once.
+  # `NULL` on failure defers to build_design_matrix(), so a design that cannot
+  # form a grid still runs if its objective never needs one.
   dots <- list(...)
   grid_idx <- tryCatch(
     grid_indices(
@@ -303,7 +284,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       dots$col_column %||% "col",
       by = dots$grid_by
     ),
-    error = function(e) return(NULL)
+    speed_grid_error = function(e) return(NULL)
   )
 
   # Sequential optimisation for each hierarchy level
@@ -449,8 +430,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     levels     = hierarchy_levels,
     row_column = .dots$row_column %||% "row",
     col_column = .dots$col_column %||% "col",
-    # NULL for a single-grid design; the column separating grids otherwise, so
-    # summary() can recover the grouping instead of guessing it from a name.
+    # NULL for a single-grid design, so summary() need not guess the grouping
     grid_by    = .dots$grid_by,
     per_level  = per_level_meta
   )

@@ -274,9 +274,7 @@ calculate_adjacency_score <- function(
   }
 
   # Adjacency counts edges, and no edge crosses a grid boundary, so summing per
-  # grid is exact rather than an approximation. Verified on a two-site design:
-  # 20 + 30 = 50, against 60 when the sites are pooled into one grid - the extra
-  # 10 being adjacencies between plots at different sites.
+  # grid is exact rather than an approximation.
   totals <- vapply(
     grid_index,
     function(g) {

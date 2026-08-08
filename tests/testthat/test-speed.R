@@ -1417,6 +1417,35 @@ test_that("speed runs with grid_factors", {
   expect_equal(result$score, 1)
 })
 
+test_that("`grid_factors$by` is checked before optimising", {
+  test_data <- data.frame(
+    lane = rep(1:5, times = 4),
+    position = rep(1:4, each = 5),
+    treatment = rep(LETTERS[1:4], 5)
+  )
+
+  speed_by <- function(by) {
+    return(speed(
+      data = test_data,
+      swap = "treatment",
+      spatial_factors = ~ lane + position,
+      grid_factors = list(dim1 = "lane", dim2 = "position", by = by),
+      iterations = 10,
+      seed = 42,
+      quiet = TRUE
+    ))
+  }
+
+  # A mistyped column would otherwise be ignored and every grid pooled
+  expect_error(speed_by("site"), "not found in", fixed = TRUE)
+  expect_error(
+    speed_by(c("site", "block")),
+    "must be a single column name",
+    fixed = TRUE
+  )
+  expect_error(speed_by(1), "must be a single column name", fixed = TRUE)
+})
+
 test_that("speed handles MET", {
   # 5 sites, 100 treatments, 7 total reps
   # 5x28x5

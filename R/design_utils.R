@@ -932,9 +932,9 @@ initialize_design_df <- initialise_design_df
 #'
 #' @keywords internal
 grid_index <- function(df, row_column = "row", col_column = "col") {
-  # Checked before coercion: absent columns would otherwise reach max() as
-  # empty vectors and yield -Inf dimensions with a warning, rather than saying
-  # what is wrong. A design with no grid at all reaches here from speed().
+  # Checked before coercion: absent columns would otherwise reach max() as empty
+  # vectors and yield -Inf dimensions with a warning, rather than saying what is
+  # wrong.
   missing_cols <- setdiff(c(row_column, col_column), names(df))
   if (length(missing_cols)) {
     .grid_stop(
@@ -1102,9 +1102,8 @@ build_design_matrix <- function(
   if (is.null(index)) {
     index <- grid_index(df, row_column, col_column)
   } else if (!identical(index$n, nrow(df))) {
-    # Catches an index built for a different design only when the plot count
-    # differs; a same-length index with different coordinates is not detectable
-    # here, so callers still own keeping the two in step.
+    # Only catches a mismatched index when the plot count differs; callers still
+    # own keeping index and design in step.
     stop(
       "`index` was built for ",
       index$n,

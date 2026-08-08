@@ -141,12 +141,10 @@ summary.design <- function(
   want_neighbour <- is.null(neighbour) || isTRUE(neighbour)
 
   # The one coordinate validation for the whole summary: `grid` is either a
-  # `grid_index()` list or the reason there isn't one, and every grid metric
-  # below takes it rather than re-deriving it once per level.
+  # `grid_index()` list or the reason there isn't one.
   #
-  # `has_grid` therefore means "reportable as one grid", not merely "row/col
-  # columns exist": a design with duplicate coordinates spans several grids of
-  # possibly different shapes, so no single `nrow` x `ncol` describes it.
+  # `has_grid` means "reportable as one grid", not merely "row/col columns
+  # exist": duplicate coordinates span several grids of differing shapes.
   grid <- tryCatch(
     grid_indices(df, row_column = rc, col_column = cc, by = meta$grid_by),
     speed_grid_error = function(e) return(e$reason)
@@ -964,8 +962,7 @@ print.summary.design <- function(x, ...) {
 #' @keywords internal
 .efficiency_factor <- function(df, swap, rc, cc, grid) {
   # Not just a guard against erroring: on duplicate coordinates
-  # calculate_efficiency_factor() pools the grids and silently returns a value
-  # above 1, which is impossible for an efficiency factor.
+  # calculate_efficiency_factor() pools the grids and returns an impossible >1.
   if (is.character(grid)) {
     return(list(available = FALSE, reason = grid))
   }
@@ -1002,12 +999,10 @@ print.summary.design <- function(x, ...) {
     return(one(df))
   }
 
-  # One value per grid, never summed or averaged. An efficiency factor is a
-  # property of a single experiment's information matrix: averaging per-grid
-  # values gives a different quantity from the combined analysis, and the
-  # combined analysis is not identified anyway - it depends on residual variance
-  # ratios that are unknown at design time. Each grid is gated on its own rank,
-  # so one unreplicated site reports its reason without withholding the others.
+  # One value per grid, never summed or averaged: averaging gives a different
+  # quantity from the combined analysis, which is not identified at design time
+  # anyway. Each grid is gated on its own rank, so one unreplicated site reports
+  # its reason without withholding the others.
   per_grid <- lapply(grid, function(g) return(one(df[g$rows, , drop = FALSE])))
   return(list(
     available = any(vapply(per_grid, function(x) x$available, logical(1))),
@@ -1047,10 +1042,9 @@ print.summary.design <- function(x, ...) {
   if (is.character(grid)) {
     return(list(available = FALSE, reason = grid))
   }
-  # One pair mapping for the whole design, so every grid contributes to the same
-  # set of pairs and a pair absent from one site is still counted as zero rather
-  # than dropped. Counts sum across grids: an adjacency is an edge, and no edge
-  # crosses a grid boundary.
+  # One pair mapping for the whole design, so a pair absent from one site counts
+  # as zero rather than being dropped. Counts sum across grids: no edge crosses
+  # a grid boundary.
   pair_mapping <- create_pair_mapping(df[[swap]])
   all_pairs <- unique(pair_mapping)
   counts <- setNames(rep(0L, length(all_pairs)), all_pairs)
