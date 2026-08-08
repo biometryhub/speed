@@ -44,6 +44,22 @@
 #'   be a named list with names matching `swap`.
 #' @param swap_all Logical; Whether to swap all matching items or a single item
 #'   at a time (default: FALSE)
+#' @param linked_cols Character vector of column names that should travel with
+#'   the `swap` column, for example a `variety_name` label belonging to a
+#'   numeric `variety` code. These columns are rearranged alongside `swap` and
+#'   returned in the optimised order, keeping their original type and position.
+#'   They take no part in scoring. For hierarchical designs, provide a named
+#'   list with names matching `swap` to link different columns at different
+#'   levels, e.g.
+#'   `list(wp = "wholeplot_label", sp = "subplot_label")`. A bare character
+#'   vector applies to every level, so in a hierarchical design it is only
+#'   valid when every level swaps the same column, as in a multi-environment
+#'   trial; levels swapping different columns need the named list, because a
+#'   column can only travel with one `swap` column. Columns used as `swap`,
+#'   `swap_within` or spatial factors cannot be linked. On a level with
+#'   `swap_all = TRUE` whole treatment groups move at once, so a linked column
+#'   with more than one value per treatment travels with its treatment group
+#'   rather than being paired plot for plot (default: `NULL`).
 #' @param optimise_params Parameters used to control the behaviour of
 #'   simulated annealing algorithm. See [optim_params()] for more details.
 #' @param optimise A list of named arguments describing optimising parameters;
@@ -104,6 +120,11 @@
 #' # Optimise the design
 #' result <- speed(df, swap = "treatment", seed = 42)
 #' autoplot(result)
+#'
+#' # Keep a label column travelling with its treatment
+#' df$treatment_name <- paste("Variety", df$treatment)
+#' result <- speed(df, swap = "treatment", linked_cols = "treatment_name", seed = 42)
+#' head(result$design_df)
 #'
 #' # Hierarchical split-plot design
 #' df_split <- data.frame(
@@ -173,6 +194,7 @@ speed <- function(data,
                   early_stop_iterations = 2000,
                   obj_function = objective_function,
                   swap_all = FALSE,
+                  linked_cols = NULL,
                   optimise = NULL,
                   optimise_params = optim_params(),
                   quiet = FALSE,
@@ -202,9 +224,39 @@ speed <- function(data,
   row_column <- inferred$row
   col_column <- inferred$col
 
+  # prepare inputs (needed up front to resolve `linked_cols` for each level)
+  optimise <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
+                                 early_stop_iterations, obj_function, swap_all, optimise_params,
+                                 linked_cols, optimise, inferred$inferred)
+
+  # Set linked columns aside before the search; they take no part in scoring, and leaving
+  # them out of the loop avoids copying them on every iteration
+  .verify_linked_cols(data, optimise, linked_cols)
+  linked_map <- .linked_col_map(optimise)
+  origin_cols <- .origin_col_names(linked_map)
+  input_col_order <- names(data)
+  linked_values <- NULL
+  if (length(linked_map) > 0) {
+    linked_values <- data[names(linked_map)]
+    data[names(linked_map)] <- NULL
+  }
+
   # convert to factors
   factored <- to_factor(data)
   data <- factored$df
+
+  # Provenance index per swap column, stamped in input row order and before the sort
+  # below, so it refers to the rows as the user passed them. Integer, and added after
+  # `to_factor()`, so it never enters `factored$input_types`.
+  for (level in names(optimise)) {
+    swap_col <- optimise[[level]]$swap
+    if (swap_col %in% names(origin_cols)) {
+      optimise[[level]]$origin_col <- unname(origin_cols[[swap_col]])
+    }
+  }
+  for (origin_col in origin_cols) {
+    data[[origin_col]] <- seq_len(nrow(data))
+  }
 
   if (inferred$inferred) {
     # Metrics are built from each plot's coordinates now, but neighbour
@@ -220,11 +272,6 @@ speed <- function(data,
   # dummy group for swapping within whole design
   dummy_group <- paste0("dummy_", as.integer(Sys.time()))
   data[[dummy_group]] <- factor(rep(1, nrow(data)))
-
-  # prepare inputs
-  optimise <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
-                                 early_stop_iterations, obj_function, swap_all, optimise_params, optimise,
-                                 inferred$inferred)
 
   # Handle swap_within for each level
   for (level in names(optimise)) {
@@ -252,6 +299,23 @@ speed <- function(data,
   # object argument, re-invoking speed() recursively.
   design$metadata$call <- call
   design$design_df[[dummy_group]] <- NULL
+
+  # Bring linked columns forward in the optimised order, then drop the bookkeeping
+  if (length(linked_map) > 0) {
+    for (col in names(linked_map)) {
+      origin_col <- origin_cols[[linked_map[[col]]]]
+      design$design_df[[col]] <- linked_values[[col]][design$design_df[[origin_col]]]
+    }
+    for (origin_col in origin_cols) {
+      design$design_df[[origin_col]] <- NULL
+    }
+    # Re-attached columns land at the right hand end, so restore the input order
+    design$design_df <- design$design_df[c(
+      intersect(input_col_order, names(design$design_df)),
+      setdiff(names(design$design_df), input_col_order)
+    )]
+  }
+
   design$design_df <- to_types(design$design_df, factored$input_types)
 
   # to print deprecate warning at the end
@@ -329,6 +393,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     scores <- numeric(opt$iterations)
     temperatures <- numeric(opt$iterations)
     last_improvement_iter <- 0
+    frozen_groups <- character(0)
 
     # Optimisation loop for this level
     for (iter in 1:opt$iterations) {
@@ -353,7 +418,11 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
       # Generate new design by swapping treatments at this level
       new_design <- generate_neighbour(current_design, opt$swap, opt$swap_within, current_swap_count,
-                                       current_swap_all_blocks, opt$swap_all)
+                                       current_swap_all_blocks, opt$swap_all, opt$origin_col)
+
+      if (length(new_design$frozen)) {
+        frozen_groups <- union(frozen_groups, new_design$frozen)
+      }
 
       # Calculate new score
       new_score_obj <- opt$obj_function(new_design$design,opt$swap, spatial_cols, adj_weight = adj_weight,
@@ -402,6 +471,21 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
         }
         break
       }
+    }
+
+    # `swap_all` only exchanges equally replicated treatments, so a group where no two
+    # share a replication can never swap. The search still runs, so say so rather than
+    # returning those groups silently unchanged.
+    if (length(frozen_groups)) {
+      warning(
+        "No treatments could be swapped",
+        if (length(optimise) > 1) paste0(" at level `", level, "`") else "",
+        " within `", opt$swap_within, "` ", paste0(sort(frozen_groups), collapse = ", "),
+        ", because `swap_all = TRUE` only exchanges treatments with equal replication",
+        " and no two treatments there share a replication count.",
+        " Those groups were left unchanged.",
+        call. = FALSE
+      )
     }
 
     all_scores[[level]] <- scores

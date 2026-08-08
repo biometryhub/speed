@@ -9,6 +9,11 @@
 #' @param swap_all_blocks Whether to perform swaps in all blocks or just one
 #' @param swap_all Whether to swap all matching items or a single item at a time
 #'   (default: FALSE)
+#' @param origin_col Name of an internal integer column recording, for each
+#'   plot, the input row the current `swap` value came from. Moved in lockstep
+#'   with the `swap` column so that columns named in `linked_cols` can be
+#'   reordered after the search. `NULL` (default) disables the tracking
+#'   entirely, leaving behaviour unchanged.
 #'
 #' @return A list with the updated design after swapping and information about
 #'   swapped items
@@ -20,18 +25,20 @@ generate_neighbour <- function(design,
                                swap_within,
                                swap_count = getOption("speed.swap_count", 1),
                                swap_all_blocks = getOption("speed.swap_all_blocks", FALSE),
-                               swap_all = FALSE) {
+                               swap_all = FALSE,
+                               origin_col = NULL) {
   if (swap_all) {
-    return(generate_multi_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks))
+    return(generate_multi_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks, origin_col))
   } else {
-    return(generate_single_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks))
+    return(generate_single_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks, origin_col))
   }
 }
 
 #' Generate neighbour for simple (non-hierarchical) designs
 #' @keywords internal
 # fmt: skip
-generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks) {
+generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks,
+                                           origin_col = NULL) {
   new_design <- design
 
   # Get unique blocks
@@ -78,6 +85,10 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
         # Perform the swap only if we have valid treatments to swap
         if (!is.null(to_be_swapped)) {
           new_design[[swap]][rev(swap_pair)] <- to_be_swapped
+          if (!is.null(origin_col)) {
+            # Exact 2-element exchange: the provenance index follows its treatment
+            new_design[[origin_col]][rev(swap_pair)] <- new_design[[origin_col]][swap_pair]
+          }
           swapped_items[swapped_idx:(swapped_idx + 1)] <- to_be_swapped
           swapped_idx <- swapped_idx + 2
         }
@@ -91,7 +102,8 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
 #' Generate neighbour for sequential or hierarchical designs
 #' @keywords internal
 # fmt: skip
-generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks) {
+generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks,
+                                          origin_col = NULL) {
   new_design <- design
 
   # Get unique groups for this level
@@ -107,6 +119,9 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
 
   swapped_idx <- 1
   swapped_items <- character(2 * swap_count * length(groups_to_swap))
+
+  # Groups holding no exchangeable pair, reported so the caller can warn once
+  frozen <- character(0)
 
   # Perform swaps in selected groups
   for (group in groups_to_swap) {
@@ -137,6 +152,7 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
 
           # No two treatments share a replication, so nothing can be exchanged
           if (length(replications) == 0) {
+            frozen <- c(frozen, group)
             next
           }
 
@@ -158,6 +174,13 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
         plots_2 <- which(group_filter & new_design[[swap]] == swap_pair[2])
 
         # Swap all instances of these treatments
+        if (!is.null(origin_col)) {
+          # The swap pair is drawn from treatments with equal replication, so the two
+          # plot sets are the same size and their provenance indices exchange one for one
+          origins_1 <- new_design[[origin_col]][plots_1]
+          new_design[[origin_col]][plots_1] <- new_design[[origin_col]][plots_2]
+          new_design[[origin_col]][plots_2] <- origins_1
+        }
         new_design[[swap]][plots_1] <- swap_pair[2]
         new_design[[swap]][plots_2] <- swap_pair[1]
 
@@ -168,7 +191,8 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
     }
   }
 
-  return(list(design = new_design, swapped_items = swapped_items[1:(swapped_idx - 1)]))
+  return(list(design = new_design, swapped_items = swapped_items[1:(swapped_idx - 1)],
+              frozen = unique(frozen)))
 }
 
 #' Infer 'row' and 'col' with Patterns
@@ -578,7 +602,7 @@ initialise_multiple_designs_df <- function(items, designs, design_col) {
 #'
 #' @keywords internal
 # fmt: skip
-shuffle_items <- function(design, swap, swap_within, seed = NULL) {
+shuffle_items <- function(design, swap, swap_within, seed = NULL, origin_col = NULL) {
   if (!is.null(seed)) {
     set.seed(seed)
   }
@@ -586,7 +610,13 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
   for (i in levels(design[[swap_within]])) {
     swap_within_filter <- design[[swap_within]] == i & !is.na(design[[swap_within]])
     items <- design[swap_within_filter, ][[swap]]
-    design[swap_within_filter, ][[swap]] <- sample(items)
+    # `sample(items)` is `items[sample.int(length(items))]`, so drawing the permutation
+    # explicitly consumes exactly the same random numbers and leaves seeds reproducible
+    perm <- sample.int(length(items))
+    design[swap_within_filter, ][[swap]] <- items[perm]
+    if (!is.null(origin_col)) {
+      design[swap_within_filter, ][[origin_col]] <- design[swap_within_filter, ][[origin_col]][perm]
+    }
   }
 
   return(design)
@@ -638,7 +668,8 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
         shuffled_design,
         opt$swap,
         opt$swap_within,
-        seed + i - 1
+        seed + i - 1,
+        opt$origin_col
       )
     }
 

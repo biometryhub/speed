@@ -4,7 +4,7 @@
 \alias{shuffle_items}
 \title{Shuffle Items in A Group}
 \usage{
-shuffle_items(design, swap, swap_within, seed = NULL)
+shuffle_items(design, swap, swap_within, seed = NULL, origin_col = NULL)
 }
 \arguments{
 \item{design}{Data frame containing the current design}
@@ -17,6 +17,12 @@ treatments, or named list for hierarchical designs}
 
 \item{seed}{A numeric value for random seed. If provided, it ensures
 reproducibility of results (default: \code{NULL}).}
+
+\item{origin_col}{Name of an internal integer column recording, for each
+plot, the input row the current \code{swap} value came from. Moved in lockstep
+with the \code{swap} column so that columns named in \code{linked_cols} can be
+reordered after the search. \code{NULL} (default) disables the tracking
+entirely, leaving behaviour unchanged.}
 }
 \value{
 A data frame with the items shuffled

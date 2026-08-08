@@ -93,9 +93,95 @@
   }
 }
 
+#' Verify linked columns
+#'
+#' @description
+#' Checks the columns named in `linked_cols` after they have been merged into
+#' the per-level `optimise` list, so all three input shapes are covered by one
+#' set of rules.
+#'
+#' @rdname verify
+#'
+#' @param optimise Per-level `optimise` list as built by [create_speed_input()].
+#'
+#' @keywords internal
+.verify_linked_cols <- function(data, optimise, linked_cols = NULL) {
+  if (is.list(linked_cols) && !is.null(names(linked_cols))) {
+    unknown <- setdiff(names(linked_cols), names(optimise))
+    if (length(unknown) > 0) {
+      stop(
+        "`linked_cols` has no matching level for ",
+        paste0("'", unknown, "'", collapse = ", "),
+        ". Available levels: ",
+        paste0("'", names(optimise), "'", collapse = ", "),
+        ".",
+        call. = FALSE
+      )
+    }
+  }
+
+  # Columns taking part in the optimisation cannot also travel as passengers
+  reserved <- unique(unlist(lapply(optimise, function(opt) {
+    c(
+      opt$swap,
+      opt$swap_within,
+      all.vars(opt$spatial_factors),
+      unlist(opt$grid_factors)
+    )
+  })))
+
+  owner <- character(0)
+  for (level in names(optimise)) {
+    opt <- optimise[[level]]
+    cols <- opt$linked_cols
+    if (length(cols) == 0) {
+      next
+    }
+
+    if (!is.character(cols)) {
+      stop(
+        "`linked_cols` must be a character vector of column names.",
+        call. = FALSE
+      )
+    }
+
+    for (col in cols) {
+      verify_column_exists(col, data, "linked column")
+
+      if (col %in% reserved) {
+        stop(
+          "`linked_cols` column '",
+          col,
+          "' is already used as a swap, swap_within or spatial ",
+          "factor column. Linked columns must be separate from the columns being optimised.",
+          call. = FALSE
+        )
+      }
+
+      if (col %in% names(owner) && owner[[col]] != opt$swap) {
+        stop(
+          "`linked_cols` column '",
+          col,
+          "' is linked to both '",
+          owner[[col]],
+          "' and '",
+          opt$swap,
+          "'. A column can only travel with one swap column.",
+          call. = FALSE
+        )
+      }
+      owner[[col]] <- opt$swap
+    }
+  }
+
+  return(invisible(NULL))
+}
+
 #' Verify Optimization Parameters for `speed`
 #'
 #' @rdname verify
+#'
+#' @inheritParams optim_params
 #'
 #' @keywords internal
 .verify_optim_params <- function(

@@ -3,6 +3,7 @@
 \name{.verify_speed_inputs}
 \alias{.verify_speed_inputs}
 \alias{.verify_hierarchical_inputs}
+\alias{.verify_linked_cols}
 \alias{.verify_optim_params}
 \alias{.verify_swap_all_replication}
 \alias{.verify_grid_by}
@@ -30,6 +31,8 @@
   quiet,
   seed
 )
+
+.verify_linked_cols(data, optimise, linked_cols = NULL)
 
 .verify_optim_params(
   swap_count,
@@ -86,8 +89,55 @@ reproducibility of results (default: \code{NULL}).}
 better) (default: \code{\link[=objective_function]{objective_function()}}). For hierarchical designs, can
 be a named list with names matching \code{swap}.}
 
-\item{optimise}{A list of named arguments describing optimising parameters;
-see more in example.}
+\item{optimise}{Per-level \code{optimise} list as built by \code{\link[=create_speed_input]{create_speed_input()}}.}
+
+\item{linked_cols}{Character vector of column names that should travel with
+the \code{swap} column, for example a \code{variety_name} label belonging to a
+numeric \code{variety} code. These columns are rearranged alongside \code{swap} and
+returned in the optimised order, keeping their original type and position.
+They take no part in scoring. For hierarchical designs, provide a named
+list with names matching \code{swap} to link different columns at different
+levels, e.g.
+\code{list(wp = "wholeplot_label", sp = "subplot_label")}. A bare character
+vector applies to every level, so in a hierarchical design it is only
+valid when every level swaps the same column, as in a multi-environment
+trial; levels swapping different columns need the named list, because a
+column can only travel with one \code{swap} column. Columns used as \code{swap},
+\code{swap_within} or spatial factors cannot be linked. On a level with
+\code{swap_all = TRUE} whole treatment groups move at once, so a linked column
+with more than one value per treatment travels with its treatment group
+rather than being paired plot for plot (default: \code{NULL}).}
+
+\item{swap_count}{Number of treatment swaps per iteration (default: 1).}
+
+\item{swap_all_blocks}{Logical; if \code{TRUE}, performs swaps in all blocks at each iteration (default: \code{FALSE}).}
+
+\item{adaptive_swaps}{Logical; if \code{TRUE}, adjusts swap parameters based on temperature (default: \code{FALSE}).}
+
+\item{start_temp}{Starting temperature for simulated annealing (default: 100). A higher start temperature
+allows the algorithm to accept worse solutions early on, encouraging exploration of the solution space and
+helping to avoid local optima. Lower values make the algorithm greedier from the start, which can speed up
+convergence but increases the risk of getting stuck in a poor solution. A good starting temperature allows
+moderately worse solutions to be accepted with a probability of 70-90\% at the beginning of the optimisation.}
+
+\item{cooling_rate}{Rate at which temperature decreases for simulated annealing (default: 0.99). This
+controls how quickly the algorithm shifts from exploration to exploitation. The temperature is updated at
+each iteration by multiplying it by this rate: \code{T_i = start_temp * cooling_rate^i}. A higher cooling rate
+(e.g. 0.995-0.999) results in slower cooling and a longer exploration phase, which is generally better for
+complex or noisy optimisation landscapes. Lower values (e.g. 0.95-0.98) cool quickly, leading to faster
+convergence but greater risk of premature convergence to a suboptimal design.}
+
+\item{random_initialisation}{Number of times to randomly shuffle items within \code{swap_within}; the design with
+the best score is used as an initial design (default: 0).}
+
+\item{adj_weight}{Weight for adjacency score (default: 1).}
+
+\item{bal_weight}{Weight for balance score (default: 1).}
+
+\item{stop_at_optimal}{Logical; if \code{TRUE}, stops the level as soon as the best score reaches the lowest score
+its layout allows (default: \code{TRUE}). The bound is only derivable for the default \code{\link[=objective_function]{objective_function()}}
+with non-negative weights and no \code{relationship} matrix; otherwise the level runs to its usual stopping
+rules regardless of this setting.}
 
 \item{dummy_group}{Name of the internal placeholder column used for a level
 with no \code{swap_within} boundary, so it can be described as the whole design.}
@@ -106,6 +156,10 @@ sites share coordinates is refused rather than silently pooled.}
 }
 \description{
 Verify inputs for the \code{speed} function.
+
+Checks the columns named in \code{linked_cols} after they have been merged into
+the per-level \code{optimise} list, so all three input shapes are covered by one
+set of rules.
 
 \code{swap_all = TRUE} proposes a move by exchanging \emph{every} plot holding one
 treatment with \emph{every} plot holding another. That is a rearrangement of the
