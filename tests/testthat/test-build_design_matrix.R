@@ -305,6 +305,56 @@ test_that("grid_indices() returns one index per grid", {
   expect_error(grid_indices(d, by = "nope"), class = "speed_grid_missing_by")
 })
 
+test_that("grid_index() reports why a design cannot be gridded", {
+  ok <- expand.grid(row = 1:2, col = 1:2)
+
+  nonnumeric <- ok
+  nonnumeric$row <- c("a", "b", "c", "d")
+  expect_error(grid_index(nonnumeric), class = "speed_grid_nonnumeric")
+
+  # Coordinates index a matrix directly, so both zero and fractional fail
+  below_one <- ok
+  below_one$row <- c(0L, 1L, 2L, 3L)
+  expect_error(grid_index(below_one), class = "speed_grid_notinteger")
+
+  fractional <- ok
+  fractional$col <- c(1.5, 2.5, 3.5, 4.5)
+  expect_error(grid_index(fractional), class = "speed_grid_notinteger")
+})
+
+test_that("every grid failure carries a `speed_grid_error` and a reason", {
+  # speed_hierarchical() and summary() both dispatch on the parent class rather
+  # than the specific one, so each condition must carry it and a `reason`.
+  ok <- expand.grid(row = 1:2, col = 1:2)
+
+  nonnumeric <- ok
+  nonnumeric$row <- c("a", "b", "c", "d")
+  fractional <- ok
+  fractional$col <- c(1.5, 2.5, 3.5, 4.5)
+  duplicated_coords <- rbind(ok, ok)
+
+  cases <- list(
+    missing = data.frame(lane = 1:4),
+    nonnumeric = nonnumeric,
+    notinteger = fractional,
+    duplicate = duplicated_coords
+  )
+
+  for (nm in names(cases)) {
+    err <- tryCatch(grid_index(cases[[nm]]), speed_grid_error = function(e) {
+      return(e)
+    })
+    expect_s3_class(err, "speed_grid_error")
+    expect_type(err$reason, "character")
+    expect_gt(nchar(err$reason), 0)
+  }
+
+  expect_error(
+    grid_indices(ok, by = "nope"),
+    class = "speed_grid_error"
+  )
+})
+
 test_that("speed() scores identically whether or not the index is hoisted", {
   # The hoist is a performance change only; guard against it becoming a
   # behaviour change. objective_function_piepho() builds a grid every iteration,
@@ -370,6 +420,15 @@ test_that("grid_index() names a missing coordinate column", {
   # the absent columns reach max() as empty vectors and give -Inf dimensions.
   d <- data.frame(a = 1:4, b = 1:4, treatment = LETTERS[1:4])
 
-  expect_error(grid_index(d), "no `row` or `col` column")
-  expect_error(grid_index(d, "row", "b"), "no `row` column")
+  expect_error(
+    grid_index(d),
+    "no `row` or `col` column",
+    class = "speed_grid_missing"
+  )
+  # Only one of the pair missing is still a missing-column failure
+  expect_error(
+    grid_index(d, "row", "b"),
+    "no `row` column",
+    class = "speed_grid_missing"
+  )
 })
