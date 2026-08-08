@@ -31,6 +31,7 @@
 <url><loc>https://biometryhub.github.io/speed/reference/create_buffers.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/create_pair_mapping.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/create_speed_input.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/dot-balance_score_min.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-block_spread.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-calculate_ed_3_reps.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-calculate_nb.html</loc></url>
@@ -43,6 +44,7 @@
 <url><loc>https://biometryhub.github.io/speed/reference/dot-is_light_colour.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-neighbour_balance.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-objective_name.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/dot-optimal_score.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-prep_dots.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-print_level_evaluation.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/dot-print_level_optim.html</loc></url>

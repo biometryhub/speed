@@ -171,7 +171,7 @@ str(factorial_result)
       ..$ col_column: chr "col"
       ..$ grid_by   : NULL
       ..$ per_level :List of 1
-      .. ..$ single treatment within block:List of 11
+      .. ..$ single treatment within block:List of 12
       .. .. ..$ swap            : chr "treatment"
       .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
       .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv>
@@ -186,6 +186,7 @@ str(factorial_result)
       .. .. ..$ final_score     : num 36.8
       .. .. ..$ final_components: Named num [1:2] 9.43 27.39
       .. .. .. ..- attr(*, "names")= chr [1:2] "main" "interaction"
+      .. .. ..$ optimal_score   : num NA
       ..$ call      : language speed(data = factorial_design, swap = "treatment", swap_within = "block",      spatial_factors = ~row + col, iter| __truncated__ ...
      - attr(*, "class")= chr [1:2] "design" "list"
 

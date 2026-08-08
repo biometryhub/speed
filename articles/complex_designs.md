@@ -463,9 +463,7 @@ ribd_result <- speed(ribd_df,
     row and col are used as row and column, respectively.
 
     Optimising level: single treatment within replicate
-    Level: single treatment within replicate Iteration: 1000 Score: 1.8 Best: 1.8 Since Improvement: 527
-    Level: single treatment within replicate Iteration: 2000 Score: 1.8 Best: 1.8 Since Improvement: 1527
-    Early stopping at iteration 2473 for level single treatment within replicate 
+    Optimal score reached at iteration 474 for level single treatment within replicate 
 
 #### Output of the Optimisation
 
@@ -477,7 +475,7 @@ ribd_result
     Optimised Experimental Design
     ----------------------------
     Score: 1.8
-    Iterations Run: 2474
+    Iterations Run: 474
     Stopped Early: TRUE
     Treatments: V1, V2, V3, V4, V5, V6
     Seed: 42 
@@ -495,9 +493,9 @@ str(ribd_result)
       ..$ block    : int [1:18] 1 2 3 4 5 6 1 2 3 4 ...
       ..$ treatment: chr [1:18] "V3" "V2" "V1" "V4" ...
      $ score         : num 1.8
-     $ scores        : num [1:2474] 9 7.4 5.8 6.8 5.4 4.6 4.2 4.2 4.2 4.2 ...
-     $ temperatures  : num [1:2474] 100 99 98 97 96.1 ...
-     $ iterations_run: num 2474
+     $ scores        : num [1:474] 9 7.4 5.8 6.8 5.4 4.6 4.2 4.2 4.2 4.2 ...
+     $ temperatures  : num [1:474] 100 99 98 97 96.1 ...
+     $ iterations_run: num 474
      $ stopped_early : logi TRUE
      $ treatments    : chr [1:6] "V1" "V2" "V3" "V4" ...
      $ seed          : num 42
@@ -507,10 +505,10 @@ str(ribd_result)
       ..$ col_column: chr "col"
       ..$ grid_by   : NULL
       ..$ per_level :List of 1
-      .. ..$ single treatment within replicate:List of 11
+      .. ..$ single treatment within replicate:List of 12
       .. .. ..$ swap            : chr "treatment"
       .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x559fd91d28b0>
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55c94e864d78>
       .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
       .. .. ..$ adj_weight      : num 1
       .. .. ..$ bal_weight      : num 1
@@ -522,6 +520,7 @@ str(ribd_result)
       .. .. ..$ final_score     : num 1.8
       .. .. ..$ final_components: Named num [1:2] 0 1.8
       .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      .. .. ..$ optimal_score   : num 1.8
       ..$ call      : language speed(data = ribd_df, swap = "treatment", swap_within = "replicate", seed = 42)
      - attr(*, "class")= chr [1:2] "design" "list"
 
@@ -644,9 +643,7 @@ prep_result <- speed(prep_design,
 
     Optimising level: single entry within whole design
     Level: single entry within whole design Iteration: 1000 Score: 2.993939 Best: 2.993939 Since Improvement: 5
-    Level: single entry within whole design Iteration: 2000 Score: 2.913131 Best: 2.913131 Since Improvement: 818
-    Level: single entry within whole design Iteration: 3000 Score: 2.913131 Best: 2.913131 Since Improvement: 1818
-    Early stopping at iteration 3182 for level single entry within whole design 
+    Optimal score reached at iteration 1183 for level single entry within whole design 
 
 #### Output of the Optimisation
 
@@ -658,7 +655,7 @@ prep_result
     Optimised Experimental Design
     ----------------------------
     Score: 2.913131
-    Iterations Run: 3183
+    Iterations Run: 1183
     Stopped Early: TRUE
     Treatments: V1, V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22, V23, V24, V25, V26, V27, V28, V29, V30, V31, V32, V33, V34, V35, V36, V37, V38, V39, V40, V41, V42, V43, V44, V45, V46, V47, V48, V49, V50, V51, V52, V53, V54, V55, V56, V57, V58, V59, V60, V61, V62, V63, V64, V65, V66, V67, V68, V69, V70, V71, V72, V73, V74, V75, V76, V77, V78, V79, V80, V81, V82, V83, V84, V85, V86, V87, V88, V89, V90, V91, V92, V93, V94, V95, V96, V97, V98, V99, V100
     Seed: 42 
@@ -676,9 +673,9 @@ str(prep_result)
       ..$ entry     : chr [1:140] "V100" "V16" "V38" "V37" ...
       ..$ duplicated: logi [1:140] TRUE TRUE TRUE TRUE TRUE TRUE ...
      $ score         : num 2.91
-     $ scores        : num [1:3183] 4.53 4.49 4.45 4.37 4.37 ...
-     $ temperatures  : num [1:3183] 100 99 98 97 96.1 ...
-     $ iterations_run: num 3183
+     $ scores        : num [1:1183] 4.53 4.49 4.45 4.37 4.37 ...
+     $ temperatures  : num [1:1183] 100 99 98 97 96.1 ...
+     $ iterations_run: num 1183
      $ stopped_early : logi TRUE
      $ treatments    : chr [1:100] "V1" "V2" "V3" "V4" ...
      $ seed          : num 42
@@ -688,7 +685,7 @@ str(prep_result)
       ..$ col_column: chr "col"
       ..$ grid_by   : NULL
       ..$ per_level :List of 1
-      .. ..$ single entry within whole design:List of 11
+      .. ..$ single entry within whole design:List of 12
       .. .. ..$ swap            : chr "entry"
       .. .. ..$ spatial_factors :Class 'formula'  language ~block + row + col
       .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv>
@@ -703,6 +700,7 @@ str(prep_result)
       .. .. ..$ final_score     : num 2.91
       .. .. ..$ final_components: Named num [1:2] 0 2.91
       .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      .. .. ..$ optimal_score   : num 2.91
       ..$ call      : language speed(data = prep_design, swap = "entry", spatial_factors = ~block + row +      col, seed = 42)
      - attr(*, "class")= chr [1:2] "design" "list"
 

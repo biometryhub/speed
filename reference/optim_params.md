@@ -14,7 +14,8 @@ optim_params(
   cooling_rate = 0.99,
   random_initialisation = 0,
   adj_weight = 1,
-  bal_weight = 1
+  bal_weight = 1,
+  stop_at_optimal = TRUE
 )
 ```
 
@@ -69,6 +70,15 @@ optim_params(
 - bal_weight:
 
   Weight for balance score (default: 1).
+
+- stop_at_optimal:
+
+  Logical; if `TRUE`, stops the level as soon as the best score reaches
+  the lowest score its layout allows (default: `TRUE`). The bound is
+  only derivable for the default
+  [`objective_function()`](https://biometryhub.github.io/speed/reference/objective_functions.md)
+  with non-negative weights and no `relationship` matrix; otherwise the
+  level runs to its usual stopping rules regardless of this setting.
 
 ## Value
 

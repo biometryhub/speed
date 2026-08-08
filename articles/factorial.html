@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.11</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -220,7 +220,7 @@ Seed: 112 </code></pre>
   ..$ col_column: chr "col"
   ..$ grid_by   : NULL
   ..$ per_level :List of 1
-  .. ..$ single treatment within block:List of 11
+  .. ..$ single treatment within block:List of 12
   .. .. ..$ swap            : chr "treatment"
   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
   .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: R_GlobalEnv&gt;
@@ -235,6 +235,7 @@ Seed: 112 </code></pre>
   .. .. ..$ final_score     : num 36.8
   .. .. ..$ final_components: Named num [1:2] 9.43 27.39
   .. .. .. ..- attr(*, "names")= chr [1:2] "main" "interaction"
+  .. .. ..$ optimal_score   : num NA
   ..$ call      : language speed(data = factorial_design, swap = "treatment", swap_within = "block",      spatial_factors = ~row + col, iter| __truncated__ ...
  - attr(*, "class")= chr [1:2] "design" "list"</code></pre>
 </div>

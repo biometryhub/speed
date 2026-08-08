@@ -108,9 +108,7 @@ result <- speed(df,
                 seed = 42)
 #> row and col are used as row and column, respectively.
 #> Optimising level: single treatment within block 
-#> Level: single treatment within block Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 
-#> Level: single treatment within block Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 
-#> Early stopping at iteration 2457 for level single treatment within block 
+#> Optimal score reached at iteration 458 for level single treatment within block 
 
 # Plot the design with block boundaries
 autoplot(result)

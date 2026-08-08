@@ -96,9 +96,7 @@ crd_result <- speed(crd_design,
     row and col are used as row and column, respectively.
 
     Optimising level: single treatment within whole design
-    Level: single treatment within whole design Iteration: 1000 Score: 2.285714 Best: 2.285714 Since Improvement: 271
-    Level: single treatment within whole design Iteration: 2000 Score: 2.285714 Best: 2.285714 Since Improvement: 1271
-    Early stopping at iteration 2729 for level single treatment within whole design 
+    Optimal score reached at iteration 730 for level single treatment within whole design 
 
 ``` r
 
@@ -108,7 +106,7 @@ crd_result
     Optimised Experimental Design
     ----------------------------
     Score: 2.285714
-    Iterations Run: 2730
+    Iterations Run: 730
     Stopped Early: TRUE
     Treatments: T1, T2, T3, T4, T5, T6, T7, T8
     Seed: 42 
@@ -141,9 +139,9 @@ str(crd_result)
       .. .. ..$ row: chr [1:8] "row=1" "row=2" "row=3" "row=4" ...
       .. .. ..$ col: chr [1:4] "col=1" "col=2" "col=3" "col=4"
      $ score         : num 2.29
-     $ scores        : num [1:2730] 40 36.3 32.4 28.3 24.1 ...
-     $ temperatures  : num [1:2730] 100 99 98 97 96.1 ...
-     $ iterations_run: num 2730
+     $ scores        : num [1:730] 40 36.3 32.4 28.3 24.1 ...
+     $ temperatures  : num [1:730] 100 99 98 97 96.1 ...
+     $ iterations_run: num 730
      $ stopped_early : logi TRUE
      $ treatments    : chr [1:8] "T1" "T2" "T3" "T4" ...
      $ seed          : num 42
@@ -153,10 +151,10 @@ str(crd_result)
       ..$ col_column: chr "col"
       ..$ grid_by   : NULL
       ..$ per_level :List of 1
-      .. ..$ single treatment within whole design:List of 11
+      .. ..$ single treatment within whole design:List of 12
       .. .. ..$ swap            : chr "treatment"
       .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x556b3a12cbb0>
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55842cac7388>
       .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
       .. .. ..$ adj_weight      : num 1
       .. .. ..$ bal_weight      : num 1
@@ -168,6 +166,7 @@ str(crd_result)
       .. .. ..$ final_score     : num 2.29
       .. .. ..$ final_components: Named num [1:2] 0 2.29
       .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      .. .. ..$ optimal_score   : num 2.29
       ..$ call      : language speed(data = crd_design, swap = "treatment", seed = 42)
      - attr(*, "class")= chr [1:2] "design" "list"
 
@@ -220,7 +219,8 @@ summary(crd_result)
     Score:        2.2857  (initial 40 -> final 2.2857)
                   adjacency  0
                   balance    2.2857
-    Iterations:   2,730 / 10,000 (stopped early)
+    Optimal:      2.2857  (reached)
+    Iterations:   730 / 10,000 (stopped early)
     Temperature:  start 100, cooling 0.99
 
     Evaluation
@@ -284,7 +284,8 @@ summary(crd_result, efficiency = TRUE)
     Score:        2.2857  (initial 40 -> final 2.2857)
                   adjacency  0
                   balance    2.2857
-    Iterations:   2,730 / 10,000 (stopped early)
+    Optimal:      2.2857  (reached)
+    Iterations:   730 / 10,000 (stopped early)
     Temperature:  start 100, cooling 0.99
 
     Evaluation
@@ -310,6 +311,9 @@ s$per_level[[1]]$score
     [1] 40
 
     $final
+    [1] 2.285714
+
+    $optimal
     [1] 2.285714
 
     $components
@@ -375,9 +379,7 @@ rcbd_result <- speed(rcbd_design,
     row and col are used as row and column, respectively.
 
     Optimising level: single treatment within block
-    Level: single treatment within block Iteration: 1000 Score: 1.6 Best: 1.6 Since Improvement: 672
-    Level: single treatment within block Iteration: 2000 Score: 1.6 Best: 1.6 Since Improvement: 1672
-    Early stopping at iteration 2328 for level single treatment within block 
+    Optimal score reached at iteration 329 for level single treatment within block 
 
 ``` r
 
@@ -387,7 +389,7 @@ rcbd_result
     Optimised Experimental Design
     ----------------------------
     Score: 1.6
-    Iterations Run: 2329
+    Iterations Run: 329
     Stopped Early: TRUE
     Treatments: V1, V2, V3, V4, V5, V6
     Seed: 42 
@@ -414,9 +416,9 @@ str(rcbd_result)
       .. .. ..$ row: chr [1:4] "row=1" "row=2" "row=3" "row=4"
       .. .. ..$ col: chr [1:6] "col=1" "col=2" "col=3" "col=4" ...
      $ score         : num 1.6
-     $ scores        : num [1:2329] 34 29.6 25.2 21.6 18.4 16.2 13 12.2 8.6 10.4 ...
-     $ temperatures  : num [1:2329] 100 99 98 97 96.1 ...
-     $ iterations_run: num 2329
+     $ scores        : num [1:329] 34 29.6 25.2 21.6 18.4 16.2 13 12.2 8.6 10.4 ...
+     $ temperatures  : num [1:329] 100 99 98 97 96.1 ...
+     $ iterations_run: num 329
      $ stopped_early : logi TRUE
      $ treatments    : chr [1:6] "V1" "V2" "V3" "V4" ...
      $ seed          : num 42
@@ -426,10 +428,10 @@ str(rcbd_result)
       ..$ col_column: chr "col"
       ..$ grid_by   : NULL
       ..$ per_level :List of 1
-      .. ..$ single treatment within block:List of 11
+      .. ..$ single treatment within block:List of 12
       .. .. ..$ swap            : chr "treatment"
       .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x556b34d35e48>
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55842821c1b0>
       .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
       .. .. ..$ adj_weight      : num 1
       .. .. ..$ bal_weight      : num 1
@@ -441,6 +443,7 @@ str(rcbd_result)
       .. .. ..$ final_score     : num 1.6
       .. .. ..$ final_components: Named num [1:2] 0 1.6
       .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      .. .. ..$ optimal_score   : num 1.6
       ..$ call      : language speed(data = rcbd_design, swap = "treatment", swap_within = "block", seed = 42)
      - attr(*, "class")= chr [1:2] "design" "list"
 
@@ -566,10 +569,10 @@ str(latin_square_result)
       ..$ col_column: chr "col"
       ..$ grid_by   : NULL
       ..$ per_level :List of 1
-      .. ..$ single treatment within whole design:List of 11
+      .. ..$ single treatment within whole design:List of 12
       .. .. ..$ swap            : chr "treatment"
       .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x556b3b8ed5f8>
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55842bb9ed78>
       .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
       .. .. ..$ adj_weight      : num 1
       .. .. ..$ bal_weight      : num 1
@@ -581,6 +584,7 @@ str(latin_square_result)
       .. .. ..$ final_score     : num 0
       .. .. ..$ final_components: Named num [1:2] 0 0
       .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      .. .. ..$ optimal_score   : num 0
       ..$ call      : language speed(data = latin_square_design, swap = "treatment", seed = 42)
      - attr(*, "class")= chr [1:2] "design" "list"
 
@@ -751,10 +755,10 @@ str(split_plot_result)
       ..$ col_column: chr "col"
       ..$ grid_by   : NULL
       ..$ per_level :List of 2
-      .. ..$ wp:List of 11
+      .. ..$ wp:List of 12
       .. .. ..$ swap            : chr "wholeplot_treatment"
       .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x556b345f76b8>
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55842d6401d8>
       .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
       .. .. ..$ adj_weight      : num 1
       .. .. ..$ bal_weight      : num 1
@@ -766,10 +770,11 @@ str(split_plot_result)
       .. .. ..$ final_score     : num 100
       .. .. ..$ final_components: Named num [1:2] 36 64
       .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
-      .. ..$ sp:List of 11
+      .. .. ..$ optimal_score   : num 4
+      .. ..$ sp:List of 12
       .. .. ..$ swap            : chr "subplot_treatment"
       .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x556b345f76b8>
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55842d6401d8>
       .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
       .. .. ..$ adj_weight      : num 1
       .. .. ..$ bal_weight      : num 1
@@ -781,6 +786,7 @@ str(split_plot_result)
       .. .. ..$ final_score     : num 0
       .. .. ..$ final_components: Named num [1:2] 0 0
       .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      .. .. ..$ optimal_score   : num 0
       ..$ call      : language speed(data = split_plot_design, optimise = optimise, seed = 42)
      - attr(*, "class")= chr [1:2] "design" "list"
 
