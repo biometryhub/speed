@@ -98,12 +98,15 @@ returned in the optimised order, keeping their original type and position.
 They take no part in scoring. For hierarchical designs, provide a named
 list with names matching \code{swap} to link different columns at different
 levels, e.g.
-\code{list(wp = "wholeplot_label", sp = "subplot_label")}; a bare character
-vector applies to every level. Columns used as \code{swap}, \code{swap_within} or
-spatial factors cannot be linked. On a level with \code{swap_all = TRUE} whole
-treatment groups move at once, so a linked column with more than one value
-per treatment travels with its treatment group rather than being paired
-plot for plot (default: \code{NULL}).}
+\code{list(wp = "wholeplot_label", sp = "subplot_label")}. A bare character
+vector applies to every level, so in a hierarchical design it is only
+valid when every level swaps the same column, as in a multi-environment
+trial; levels swapping different columns need the named list, because a
+column can only travel with one \code{swap} column. Columns used as \code{swap},
+\code{swap_within} or spatial factors cannot be linked. On a level with
+\code{swap_all = TRUE} whole treatment groups move at once, so a linked column
+with more than one value per treatment travels with its treatment group
+rather than being paired plot for plot (default: \code{NULL}).}
 
 \item{swap_count}{Number of treatment swaps per iteration (default: 1).}
 
@@ -130,6 +133,11 @@ the best score is used as an initial design (default: 0).}
 \item{adj_weight}{Weight for adjacency score (default: 1).}
 
 \item{bal_weight}{Weight for balance score (default: 1).}
+
+\item{stop_at_optimal}{Logical; if \code{TRUE}, stops the level as soon as the best score reaches the lowest score
+its layout allows (default: \code{TRUE}). The bound is only derivable for the default \code{\link[=objective_function]{objective_function()}}
+with non-negative weights and no \code{relationship} matrix; otherwise the level runs to its usual stopping
+rules regardless of this setting.}
 
 \item{dummy_group}{Name of the internal placeholder column used for a level
 with no \code{swap_within} boundary, so it can be described as the whole design.}

@@ -51,12 +51,15 @@
 #'   They take no part in scoring. For hierarchical designs, provide a named
 #'   list with names matching `swap` to link different columns at different
 #'   levels, e.g.
-#'   `list(wp = "wholeplot_label", sp = "subplot_label")`; a bare character
-#'   vector applies to every level. Columns used as `swap`, `swap_within` or
-#'   spatial factors cannot be linked. On a level with `swap_all = TRUE` whole
-#'   treatment groups move at once, so a linked column with more than one value
-#'   per treatment travels with its treatment group rather than being paired
-#'   plot for plot (default: `NULL`).
+#'   `list(wp = "wholeplot_label", sp = "subplot_label")`. A bare character
+#'   vector applies to every level, so in a hierarchical design it is only
+#'   valid when every level swaps the same column, as in a multi-environment
+#'   trial; levels swapping different columns need the named list, because a
+#'   column can only travel with one `swap` column. Columns used as `swap`,
+#'   `swap_within` or spatial factors cannot be linked. On a level with
+#'   `swap_all = TRUE` whole treatment groups move at once, so a linked column
+#'   with more than one value per treatment travels with its treatment group
+#'   rather than being paired plot for plot (default: `NULL`).
 #' @param optimise_params Parameters used to control the behaviour of
 #'   simulated annealing algorithm. See [optim_params()] for more details.
 #' @param optimise A list of named arguments describing optimising parameters;

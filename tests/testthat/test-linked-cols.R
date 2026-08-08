@@ -389,7 +389,6 @@ test_that("linked_cols rejects an unknown level name", {
 test_that("linked_cols rejects one column linked to two swap columns", {
   df <- split_plot_df()
 
-  # swap_all = FALSE so the functional dependence check does not fire first
   expect_error(
     speed(
       df,
