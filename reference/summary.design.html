@@ -110,7 +110,12 @@ See Details for more information.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list of class <code>"summary.design"</code>:</p><ul><li><p><strong>hierarchical</strong> - <code>TRUE</code> for a multi-level (e.g. split-plot) design.</p></li>
-<li><p><strong>layout</strong> - <code>n_plots</code>, <code>nrow</code>, <code>ncol</code>, <code>row_column</code>, <code>col_column</code>, <code>has_grid</code>.</p></li>
+<li><p><strong>layout</strong> - <code>n_plots</code>, <code>nrow</code>, <code>ncol</code>, <code>row_column</code>, <code>col_column</code>,
+<code>has_grid</code> (<code>TRUE</code> when the design is reportable as a single grid), and
+<code>grid_reason</code> (why not, or <code>NA</code>). <code>nrow</code>/<code>ncol</code> count the rows and columns
+the design <em>occupies</em>, so a design with a gap in its coordinates (a missing
+plot, or a removed buffer) reports fewer than the coordinates span. Both are
+<code>NA</code> unless <code>has_grid</code>.</p></li>
 <li><p><strong>levels</strong> - character vector of level names (e.g. <code>"wp"</code>/<code>"sp"</code>; a single
 name for a simple design).</p></li>
 <li><p><strong>per_level</strong> - one element per level (named by <code>levels</code>), each a list with:</p><ul><li><p><code>swap</code>, <code>n_treatments</code>, <code>treatments</code>.</p></li>
@@ -224,8 +229,8 @@ omitted.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Blk. spread:  no block factor</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Repl. span:   worst-case 2 (row), 1 (col) across 3 replicated treatment(s)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Efficiency:   not requested (set efficiency = TRUE)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Self-adj.:    <span style="color: #BB00BB;">2 like-treatment adjacencies</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Neighbour:    min 5, max 5 over 3 pairs (variance 0)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Self-adj.:    none</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Neighbour:    min 5, max 6 over 3 pairs (variance 0.3333)</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Opt in to the (heavier) A-efficiency factor</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">design</span>, efficiency <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
@@ -260,8 +265,8 @@ omitted.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Blk. spread:  no block factor</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Repl. span:   worst-case 2 (row), 1 (col) across 3 replicated treatment(s)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Efficiency:   0.9375 (A-efficiency, row-column model)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Self-adj.:    <span style="color: #BB00BB;">2 like-treatment adjacencies</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Neighbour:    min 5, max 5 over 3 pairs (variance 0)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Self-adj.:    none</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Neighbour:    min 5, max 6 over 3 pairs (variance 0.3333)</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

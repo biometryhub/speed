@@ -60,6 +60,14 @@ speed(
   calculating adjacency score, `dim1` for row and `dim2` for column.
   (default: `list(dim1 = "row", dim2 = "col")`).
 
+  An optional third element, `by`, names a column that groups plots into
+  *separate* grids - a multi-environment trial, where each site reuses
+  the same `row`/`col` numbering. Each grid is then scored on its own
+  and the adjacency counts summed, so no adjacency is counted between
+  plots at different sites, e.g.
+  `list(dim1 = "row", dim2 = "col", by = "site")`. Without it, a design
+  whose sites share coordinates is refused rather than silently pooled.
+
 - iterations:
 
   Maximum number of iterations for the simulated annealing algorithm
@@ -134,6 +142,15 @@ A list containing:
 - **seed** - Random seed used for reproducibility of the design. If not
   set in the function, the seed is set to the third element of
   `.Random.seed`.
+
+- **metadata** - A list describing how the design was produced: the
+  captured `call`, the ordered `levels`, the resolved `row_column` /
+  `col_column` names, and a `per_level` list recording each level's swap
+  variable, spatial factors, adjacency/balance weights, requested
+  iterations, starting temperature, cooling rate, objective function and
+  achieved score. Used by
+  [summary()](https://biometryhub.github.io/speed/reference/summary.design.md)
+  to recompute per-level evaluation metrics.
 
 ## Details
 

@@ -15,6 +15,8 @@ objective_function_piepho(
   pair_mapping = NULL,
   row_column = "row",
   col_column = "col",
+  by = NULL,
+  grid_index = NULL,
   ...
 )
 ```
@@ -54,6 +56,15 @@ objective_function_piepho(
 
   Name of column representing the column of the design (default: "col")
 
+- by, grid_index:
+
+  Optional grouping of plots into separate grids; see
+  [`calculate_adjacency_score()`](https://biometryhub.github.io/speed/reference/calculate_adjacency_score.md).
+  Neighbour balance sums across grids, while evenness of distribution is
+  scored **per grid** and the scores summed, reported both in total and
+  per grid. A grid with no treatment replicated inside it contributes
+  `0`.
+
 - ...:
 
   Extra parameters passed from
@@ -64,7 +75,11 @@ objective_function_piepho(
 A function which returns a named list of numeric values with one
 required name `score` representing the score of the design (lower is
 better) with a signature `function(design_df, swap, spatial_cols, ...)`.
-See signature details in
+An objective may optionally return a `components` element: a named
+numeric vector of the additive pieces that sum to `score` (e.g.
+`c(adjacency = ..., balance = ...)`). When present,
+[`summary.design()`](https://biometryhub.github.io/speed/reference/summary.design.md)
+reports this as a faithful score decomposition. See signature details in
 [objective_function_signature](https://biometryhub.github.io/speed/reference/objective_functions.md).
 
 ## References
@@ -94,45 +109,51 @@ objective_function_piepho(design_df, "treatment", c("row", "col"), pair_mapping 
 #> [1] 16.36667
 #> 
 #> $ed
-#> $ed$`2`
-#> $ed$`2`$msts
-#> $ed$`2`$msts$`2`
+#> $ed$`1`
+#> $ed$`1`$`2`
+#> $ed$`1`$`2`$msts
+#> $ed$`1`$`2`$msts$`2`
 #> [1] 1
 #> 
 #> 
-#> $ed$`2`$min_mst
+#> $ed$`1`$`2`$min_mst
 #> [1] 1
 #> 
-#> $ed$`2`$min_items
+#> $ed$`1`$`2`$min_items
 #> [1] "2"
 #> 
 #> 
-#> $ed$`4`
-#> $ed$`4`$msts
-#> $ed$`4`$msts$`3`
+#> $ed$`1`$`4`
+#> $ed$`1`$`4`$msts
+#> $ed$`1`$`4`$msts$`3`
 #> [1] 3
 #> 
 #> 
-#> $ed$`4`$min_mst
+#> $ed$`1`$`4`$min_mst
 #> [1] 3
 #> 
-#> $ed$`4`$min_items
+#> $ed$`1`$`4`$min_items
 #> [1] "3"
 #> 
 #> 
-#> $ed$`3`
-#> $ed$`3`$msts
-#> $ed$`3`$msts$`1`
+#> $ed$`1`$`3`
+#> $ed$`1`$`3`$msts
+#> $ed$`1`$`3`$msts$`1`
 #> [1] 2
 #> 
 #> 
-#> $ed$`3`$min_mst
+#> $ed$`1`$`3`$min_mst
 #> [1] 2
 #> 
-#> $ed$`3`$min_items
+#> $ed$`1`$`3`$min_items
 #> [1] "1"
 #> 
 #> 
+#> 
+#> 
+#> $ed_per_grid
+#>         1 
+#> 0.1666667 
 #> 
 #> $bal
 #> [1] 8
@@ -142,7 +163,6 @@ objective_function_piepho(design_df, "treatment", c("row", "col"), pair_mapping 
 #> 
 #> $nb
 #> $nb$nb
-#> sorted_pairs
 #> 1,1 1,2 1,3 2,2 2,3 3,3 
 #>   2   1   2   1   2   4 
 #> 
@@ -155,6 +175,10 @@ objective_function_piepho(design_df, "treatment", c("row", "col"), pair_mapping 
 #> $nb$var
 #> [1] 1.2
 #> 
+#> 
+#> $components
+#> neighbour_balance even_distribution           balance         adjacency 
+#>         1.2000000         0.1666667         8.0000000         7.0000000 
 #> 
 # usage in speed, speed(..., obj_function = objective_function_piepho, pair_mapping = pair_mapping)
 ```

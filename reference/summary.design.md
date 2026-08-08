@@ -65,7 +65,11 @@ A list of class `"summary.design"`:
 - **hierarchical** - `TRUE` for a multi-level (e.g. split-plot) design.
 
 - **layout** - `n_plots`, `nrow`, `ncol`, `row_column`, `col_column`,
-  `has_grid`.
+  `has_grid` (`TRUE` when the design is reportable as a single grid),
+  and `grid_reason` (why not, or `NA`). `nrow`/`ncol` count the rows and
+  columns the design *occupies*, so a design with a gap in its
+  coordinates (a missing plot, or a removed buffer) reports fewer than
+  the coordinates span. Both are `NA` unless `has_grid`.
 
 - **levels** - character vector of level names (e.g. `"wp"`/`"sp"`; a
   single name for a simple design).
@@ -209,8 +213,8 @@ summary(design)
 #> Blk. spread:  no block factor
 #> Repl. span:   worst-case 2 (row), 1 (col) across 3 replicated treatment(s)
 #> Efficiency:   not requested (set efficiency = TRUE)
-#> Self-adj.:    2 like-treatment adjacencies
-#> Neighbour:    min 5, max 5 over 3 pairs (variance 0)
+#> Self-adj.:    none
+#> Neighbour:    min 5, max 6 over 3 pairs (variance 0.3333)
 
 # Opt in to the (heavier) A-efficiency factor
 summary(design, efficiency = TRUE)
@@ -245,6 +249,6 @@ summary(design, efficiency = TRUE)
 #> Blk. spread:  no block factor
 #> Repl. span:   worst-case 2 (row), 1 (col) across 3 replicated treatment(s)
 #> Efficiency:   0.9375 (A-efficiency, row-column model)
-#> Self-adj.:    2 like-treatment adjacencies
-#> Neighbour:    min 5, max 5 over 3 pairs (variance 0)
+#> Self-adj.:    none
+#> Neighbour:    min 5, max 6 over 3 pairs (variance 0.3333)
 ```

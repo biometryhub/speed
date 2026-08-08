@@ -74,6 +74,10 @@ treatments <- with(expand.grid(treatment_a, treatment_b), paste(Var1, Var2, sep 
 df <- initialise_design_df(treatments, 24, 3, 8, 3)
 objective_function_factorial(df, "treatment", c("row", "col", "block"))
 #> $score
-#> [1] 723
+#> [1] 729
+#> 
+#> $components
+#>        main interaction 
+#>         720           9 
 #> 
 ```

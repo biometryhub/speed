@@ -8,7 +8,9 @@ and the design that comes back is not the design that went in. Error before
 any optimisation happens rather than silently altering replication.
 Called on the resolved optimise list, so it covers simple, legacy
 hierarchical and optimise =  calls alike, including levels that set
-swap_all individually."><meta property="og:description" content="Verify inputs for the speed function.
+swap_all individually.
+grid_factors is a plain list, so a mistyped by would be ignored and every
+grid silently pooled. Checked before any optimisation happens."><meta property="og:description" content="Verify inputs for the speed function.
 swap_all = TRUE proposes a move by exchanging every plot holding one
 treatment with every plot holding another. That is a rearrangement of the
 design only when both treatments occupy the same number of plots within the
@@ -17,7 +19,9 @@ and the design that comes back is not the design that went in. Error before
 any optimisation happens rather than silently altering replication.
 Called on the resolved optimise list, so it covers simple, legacy
 hierarchical and optimise =  calls alike, including levels that set
-swap_all individually."></head><body>
+swap_all individually.
+grid_factors is a plain list, so a mistyped by would be ignored and every
+grid silently pooled. Checked before any optimisation happens."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -25,7 +29,7 @@ swap_all individually."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,7 +60,7 @@ swap_all individually."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Verify Inputs for <code>speed</code></h1>
-      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/v0.0.9/R/verify_utils.R" class="external-link"><code>R/verify_utils.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/R/verify_utils.R" class="external-link"><code>R/verify_utils.R</code></a></small>
       <div class="d-none name"><code>verify.Rd</code></div>
     </div>
 
@@ -71,6 +75,8 @@ any optimisation happens rather than silently altering replication.</p>
 <p>Called on the resolved <code>optimise</code> list, so it covers simple, legacy
 hierarchical and <code>optimise = </code> calls alike, including levels that set
 <code>swap_all</code> individually.</p>
+<p><code>grid_factors</code> is a plain list, so a mistyped <code>by</code> would be ignored and every
+grid silently pooled. Checked before any optimisation happens.</p>
     </div>
 
     <div class="section level2">
@@ -109,7 +115,9 @@ hierarchical and <code>optimise = </code> calls alike, including levels that set
 <span>  <span class="va">bal_weight</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">.verify_swap_all_replication</span><span class="op">(</span><span class="va">data</span>, <span class="va">optimise</span>, dummy_group <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">.verify_swap_all_replication</span><span class="op">(</span><span class="va">data</span>, <span class="va">optimise</span>, dummy_group <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">.verify_grid_by</span><span class="op">(</span><span class="va">data</span>, <span class="va">grid_factors</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -178,6 +186,19 @@ see more in example.</p></dd>
 <dt id="arg-dummy-group">dummy_group<a class="anchor" aria-label="anchor" href="#arg-dummy-group"></a></dt>
 <dd><p>Name of the internal placeholder column used for a level
 with no <code>swap_within</code> boundary, so it can be described as the whole design.</p></dd>
+
+
+<dt id="arg-grid-factors">grid_factors<a class="anchor" aria-label="anchor" href="#arg-grid-factors"></a></dt>
+<dd><p>A named list specifying grid factors to construct a
+matrix for calculating adjacency score, <code>dim1</code> for row and <code>dim2</code> for
+column. (default: <code>list(dim1 = "row", dim2 = "col")</code>).</p>
+<p>An optional third element, <code>by</code>, names a column that groups plots into
+<em>separate</em> grids - a multi-environment trial, where each site reuses the
+same <code>row</code>/<code>col</code> numbering. Each grid is then scored on its own and the
+adjacency counts summed, so no adjacency is counted between plots at
+different sites, e.g.
+<code>list(dim1 = "row", dim2 = "col", by = "site")</code>. Without it, a design whose
+sites share coordinates is refused rather than silently pooled.</p></dd>
 
 </dl></div>
 

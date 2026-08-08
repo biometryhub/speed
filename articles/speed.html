@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,9 +62,9 @@
       <h1>Common Agricultural Experimental Designs with speed</h1>
 
       <p class="author">Sam Rogers</p>
-      <p class="date">2026-08-07</p>
+      <p class="date">2026-08-08</p>
 
-      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/v0.0.9/vignettes/speed.qmd" class="external-link"><code>vignettes/speed.qmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/vignettes/speed.qmd" class="external-link"><code>vignettes/speed.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
     </div>
 
@@ -81,10 +81,6 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://biometryhub.github.io/speed/">speed</a></span><span class="op">)</span></span></code></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>A newer version of speed is available on GitHub (installed: 0.0.9, available: 0.0.10).
-Update with: devtools::install_github("biometryhub/speed")</code></pre>
-</div>
 </div>
 </section><section class="section level2"><h2 id="completely-randomised-design-crd">Completely Randomised Design (CRD)<a class="anchor" aria-label="anchor" href="#completely-randomised-design-crd"></a>
 </h2>
@@ -105,7 +101,7 @@ Update with: devtools::install_github("biometryhub/speed")</code></pre>
 </h3>
 <p>In agricultural contexts, even completely randomised designs benefit from spatial optimisation to minimise treatment clustering and neighbour effects. Firstly we will initialise a data frame representing the design and visualise it. This design has 4 replicates of 8 treatments or <code>items</code>, with 8 rows and 4 columns.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Initialise data frame</span></span>
 <span><span class="va">crd_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/initialise_design_df.html">initialise_design_df</a></span><span class="op">(</span>items <span class="op">=</span> <span class="fl">8</span>, nrows <span class="op">=</span> <span class="fl">8</span>, ncols <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">crd_design</span><span class="op">)</span></span></code></pre></div>
@@ -132,7 +128,7 @@ Update with: devtools::install_github("biometryhub/speed")</code></pre>
 </h4>
 <p>The main <code><a href="../reference/speed.html">speed()</a></code> function performs the optimisation. It has been set up with sensible defaults to allow application to a wide variety of situations. In this case, we only need to provide the design data frame for it to operate on, the column name of the data frame to use for the treatments, and a seed for reproducibility.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">crd_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span><span class="va">crd_design</span>, </span>
 <span>                    swap <span class="op">=</span> <span class="st">"treatment"</span>,</span>
 <span>                    seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
@@ -145,7 +141,7 @@ Level: single treatment within whole design Iteration: 1000 Score: 2.285714 Best
 Level: single treatment within whole design Iteration: 2000 Score: 2.285714 Best: 2.285714 Since Improvement: 1271
 Early stopping at iteration 2729 for level single treatment within whole design </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">crd_result</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Optimised Experimental Design
@@ -159,12 +155,12 @@ Seed: 42 </code></pre>
 </div>
 </section><section class="level3"><h4 id="output-of-the-optimisation">Output of the Optimisation<a class="anchor" aria-label="anchor" href="#output-of-the-optimisation"></a>
 </h4>
-<p>The printed output from the returned design object shows the final optimisation score (lower is better), the number of iterations taken to reach that result, if the iterations stopped early due to lack of improvement, the treatments present in the design, and the seed. The output object contains some additional components, which can be seen below:</p>
+<p>The printed output from the returned design object gives a quick identity check: the final optimisation score (lower is better), how many iterations were run and whether it stopped early, the treatments, and the seed. For a fuller, statistically meaningful evaluation of the design - layout, replication, score decomposition, connectedness and more - use <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> (see <a href="#evaluating-a-design">Evaluating a Design</a>). The output object contains some additional components, which can be seen below:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">crd_result</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>List of 8
+<pre><code>List of 9
  $ design_df     :Classes 'design' and 'data.frame':    32 obs. of  3 variables:
   ..$ row      : int [1:32] 1 1 1 1 2 2 2 2 3 3 ...
   ..$ col      : int [1:32] 1 2 3 4 1 2 3 4 1 2 ...
@@ -182,6 +178,28 @@ Seed: 42 </code></pre>
  $ stopped_early : logi TRUE
  $ treatments    : chr [1:8] "T1" "T2" "T3" "T4" ...
  $ seed          : num 42
+ $ metadata      :List of 6
+  ..$ levels    : chr "single treatment within whole design"
+  ..$ row_column: chr "row"
+  ..$ col_column: chr "col"
+  ..$ grid_by   : NULL
+  ..$ per_level :List of 1
+  .. ..$ single treatment within whole design:List of 11
+  .. .. ..$ swap            : chr "treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: 0x556b3a12cbb0&gt;
+  .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
+  .. .. ..$ adj_weight      : num 1
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 10000
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.99
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+    row_column = "row", col_column = "col", ...)
+  .. .. ..$ final_score     : num 2.29
+  .. .. ..$ final_components: Named num [1:2] 0 2.29
+  .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+  ..$ call      : language speed(data = crd_design, swap = "treatment", seed = 42)
  - attr(*, "class")= chr [1:2] "design" "list"</code></pre>
 </div>
 </div>
@@ -189,7 +207,7 @@ Seed: 42 </code></pre>
 </h4>
 <p>The final step is to visualise the optimised design. The plot below displays the spatial arrangement of treatments after optimisation, allowing you to easily check for clustering, spatial trends, or other patterns that may affect your experiment. A well-randomised and spatially efficient design will show treatments distributed evenly across the field, helping to minimise neighbour effects and maximise the reliability of your results.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">crd_result</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
@@ -199,7 +217,117 @@ Seed: 42 </code></pre>
 </div>
 </div>
 <p>A nicely randomised<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;Note that this design is not a true randomised design, as &lt;code&gt;speed&lt;/code&gt; performs restricted randomisation and this design has been optimised to reduce neighbour effects. However, it can still be considered a Completely Randomised Design as it does not account for any blocking or other sources of variation.&lt;/p&gt;"><sup>1</sup></a> and spatially optimal design!</p>
-</section></section></section><section class="section level2"><h2 id="randomised-complete-block-design-rcbd">Randomised Complete Block Design (RCBD)<a class="anchor" aria-label="anchor" href="#randomised-complete-block-design-rcbd"></a>
+</section></section></section><section class="section level2"><h2 id="evaluating-a-design">Evaluating a Design<a class="anchor" aria-label="anchor" href="#evaluating-a-design"></a>
+</h2>
+<p><code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> tells you <em>what</em> a design is; <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> helps you <em>evaluate and defend</em> it. Calling <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> on any design object reports a set of structural and evaluation metrics:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">crd_result</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Design Summary
+==============
+
+Structure
+---------
+Layout:       8 rows x 4 cols (32 plots)
+Treatments:   8
+Replication:  4 each
+Spatial:      row (8), col (4)
+
+Optimisation
+------------
+Seed:         42
+Objective:    objective_function
+Score:        2.2857  (initial 40 -&gt; final 2.2857)
+              adjacency  0
+              balance    2.2857
+Iterations:   2,730 / 10,000 (stopped early)
+Temperature:  start 100, cooling 0.99
+
+Evaluation
+----------
+Connected:    connected - treatment estimable given row + col [model (row + col)]
+Concurrence:  no block factor
+Blk. spread:  no block factor
+Repl. span:   worst-case 2 (row), 2 (col) across 8 replicated treatment(s)
+Efficiency:   not requested (set efficiency = TRUE)
+Self-adj.:    none
+Neighbour:    min 0, max 5 over 28 pairs (variance 1.9048), 4 never adjacent</code></pre>
+</div>
+</div>
+<p>The output is organised into sections:</p>
+<ul>
+<li>
+<strong>Structure</strong> – the layout, the number of treatments and their replication, and the spatial factors with their numbers of levels.</li>
+<li>
+<strong>Optimisation</strong> – the objective used, the final score decomposed into its <strong>adjacency</strong> and <strong>balance</strong> components (each already weighted, so they sum to the final score), the initial-to-final score, the iterations run and the temperature schedule.</li>
+<li>
+<strong>Evaluation</strong> – design-quality diagnostics:
+<ul>
+<li>
+<strong>Connectedness</strong> – whether treatment effects are estimable. Fits <code>lm(~ &lt;spatial factors + block&gt; + treatment)</code> and checks for aliased treatment terms; the nuisance side of the model adjusts to whatever the design is stratified by (row/col, and a block factor when present).</li>
+<li>
+<strong>Concurrence</strong> – for <em>incomplete</em> block designs, how often pairs of treatments share a block (constant concurrences indicate a balanced incomplete-block design). It is skipped for complete designs such as RCBD and split-plots, where it carries no information.</li>
+<li>
+<strong>Replicate span</strong> – the smallest spatial separation between replicates of a treatment; small values flag replicates sitting close together.</li>
+</ul>
+</li>
+</ul>
+<p>Any issues – a design that ran to its iteration cap, unequal replication, or a disconnected design – are surfaced as <strong>Flags</strong> at the top.</p>
+<p>Some metrics are opt-in or context-dependent. The A-efficiency factor (a row–column model metric) is computed only when you ask for it:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">crd_result</span>, efficiency <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Design Summary
+==============
+
+Structure
+---------
+Layout:       8 rows x 4 cols (32 plots)
+Treatments:   8
+Replication:  4 each
+Spatial:      row (8), col (4)
+
+Optimisation
+------------
+Seed:         42
+Objective:    objective_function
+Score:        2.2857  (initial 40 -&gt; final 2.2857)
+              adjacency  0
+              balance    2.2857
+Iterations:   2,730 / 10,000 (stopped early)
+Temperature:  start 100, cooling 0.99
+
+Evaluation
+----------
+Connected:    connected - treatment estimable given row + col [model (row + col)]
+Concurrence:  no block factor
+Blk. spread:  no block factor
+Repl. span:   worst-case 2 (row), 2 (col) across 8 replicated treatment(s)
+Efficiency:   0.8232 (A-efficiency, row-column model)
+Self-adj.:    none
+Neighbour:    min 0, max 5 over 28 pairs (variance 1.9048), 4 never adjacent</code></pre>
+</div>
+</div>
+<p>The returned summary is also a list, so individual metrics can be pulled out programmatically:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">crd_result</span><span class="op">)</span></span>
+<span><span class="va">s</span><span class="op">$</span><span class="va">per_level</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">score</span></span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$initial
+[1] 40
+
+$final
+[1] 2.285714
+
+$components
+adjacency   balance
+ 0.000000  2.285714 </code></pre>
+</div>
+</div>
+</section><section class="section level2"><h2 id="randomised-complete-block-design-rcbd">Randomised Complete Block Design (RCBD)<a class="anchor" aria-label="anchor" href="#randomised-complete-block-design-rcbd"></a>
 </h2>
 <section class="level2"><h3 id="overview-1">Overview<a class="anchor" aria-label="anchor" href="#overview-1"></a>
 </h3>
@@ -218,7 +346,7 @@ Seed: 42 </code></pre>
 </h3>
 <p>Here we initialise a data frame for a design with 4 blocks and 6 treatments, arranged in 4 rows and 6 columns. Note that we can specify treatments in the <code>items</code> argument.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rcbd_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/initialise_design_df.html">initialise_design_df</a></span><span class="op">(</span>items <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"V"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span>, nrows <span class="op">=</span> <span class="fl">4</span>, ncols <span class="op">=</span> <span class="fl">6</span>, block_nrows <span class="op">=</span> <span class="fl">1</span>, block_ncols <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">rcbd_design</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -243,7 +371,7 @@ Seed: 42 </code></pre>
 <section class="level3"><h4 id="performing-the-optimisation-1">Performing the Optimisation<a class="anchor" aria-label="anchor" href="#performing-the-optimisation-1"></a>
 </h4>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rcbd_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span><span class="va">rcbd_design</span>, </span>
 <span>                     swap <span class="op">=</span> <span class="st">"treatment"</span>,</span>
 <span>                     swap_within <span class="op">=</span> <span class="st">"block"</span>,</span>
@@ -257,7 +385,7 @@ Level: single treatment within block Iteration: 1000 Score: 1.6 Best: 1.6 Since 
 Level: single treatment within block Iteration: 2000 Score: 1.6 Best: 1.6 Since Improvement: 1672
 Early stopping at iteration 2328 for level single treatment within block </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rcbd_result</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Optimised Experimental Design
@@ -272,10 +400,10 @@ Seed: 42 </code></pre>
 </section><section class="level3"><h4 id="output-of-the-optimisation-1">Output of the Optimisation<a class="anchor" aria-label="anchor" href="#output-of-the-optimisation-1"></a>
 </h4>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">rcbd_result</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>List of 8
+<pre><code>List of 9
  $ design_df     :Classes 'design' and 'data.frame':    24 obs. of  6 variables:
   ..$ row      : int [1:24] 1 1 1 1 1 1 2 2 2 2 ...
   ..$ col      : int [1:24] 1 2 3 4 5 6 1 2 3 4 ...
@@ -296,13 +424,35 @@ Seed: 42 </code></pre>
  $ stopped_early : logi TRUE
  $ treatments    : chr [1:6] "V1" "V2" "V3" "V4" ...
  $ seed          : num 42
+ $ metadata      :List of 6
+  ..$ levels    : chr "single treatment within block"
+  ..$ row_column: chr "row"
+  ..$ col_column: chr "col"
+  ..$ grid_by   : NULL
+  ..$ per_level :List of 1
+  .. ..$ single treatment within block:List of 11
+  .. .. ..$ swap            : chr "treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: 0x556b34d35e48&gt;
+  .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
+  .. .. ..$ adj_weight      : num 1
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 10000
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.99
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+    row_column = "row", col_column = "col", ...)
+  .. .. ..$ final_score     : num 1.6
+  .. .. ..$ final_components: Named num [1:2] 0 1.6
+  .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+  ..$ call      : language speed(data = rcbd_design, swap = "treatment", swap_within = "block", seed = 42)
  - attr(*, "class")= chr [1:2] "design" "list"</code></pre>
 </div>
 </div>
 </section><section class="level3"><h4 id="visualise-the-output-1">Visualise the Output<a class="anchor" aria-label="anchor" href="#visualise-the-output-1"></a>
 </h4>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">rcbd_result</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
@@ -334,7 +484,7 @@ Seed: 42 </code></pre>
 </h3>
 <p>Here we initialise a 5 × 5 Latin square with 5 treatments.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">latin_square_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/initialise_design_df.html">initialise_design_df</a></span><span class="op">(</span>items <span class="op">=</span> <span class="fl">5</span>, nrows <span class="op">=</span> <span class="fl">5</span>, ncols <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">latin_square_design</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -360,7 +510,7 @@ Seed: 42 </code></pre>
 </h4>
 <p>Because of the spatial optimisation algorithm built into <code>speed</code>, with default optimization parameters and enough iterations, it should arrive at a Latin square design in cases where the number of rows, columns, treatments and replicates are all equal such as this.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">latin_square_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span><span class="va">latin_square_design</span>, </span>
 <span>                             swap <span class="op">=</span> <span class="st">"treatment"</span>,</span>
 <span>                             seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
@@ -372,7 +522,7 @@ Seed: 42 </code></pre>
 Level: single treatment within whole design Iteration: 1000 Score: 1 Best: 1 Since Improvement: 308
 Early stopping at iteration 1040 for level single treatment within whole design </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">latin_square_result</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Optimised Experimental Design
@@ -388,10 +538,10 @@ Seed: 42 </code></pre>
 </h4>
 <p>Note that the final score of zero shows that the algorithm has found a perfect Latin Square solution.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">latin_square_result</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>List of 8
+<pre><code>List of 9
  $ design_df     :Classes 'design' and 'data.frame':    25 obs. of  3 variables:
   ..$ row      : int [1:25] 1 1 1 1 1 2 2 2 2 2 ...
   ..$ col      : int [1:25] 1 2 3 4 5 1 2 3 4 5 ...
@@ -409,13 +559,35 @@ Seed: 42 </code></pre>
  $ stopped_early : logi TRUE
  $ treatments    : chr [1:5] "T1" "T2" "T3" "T4" ...
  $ seed          : num 42
+ $ metadata      :List of 6
+  ..$ levels    : chr "single treatment within whole design"
+  ..$ row_column: chr "row"
+  ..$ col_column: chr "col"
+  ..$ grid_by   : NULL
+  ..$ per_level :List of 1
+  .. ..$ single treatment within whole design:List of 11
+  .. .. ..$ swap            : chr "treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: 0x556b3b8ed5f8&gt;
+  .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
+  .. .. ..$ adj_weight      : num 1
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 10000
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.99
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+    row_column = "row", col_column = "col", ...)
+  .. .. ..$ final_score     : num 0
+  .. .. ..$ final_components: Named num [1:2] 0 0
+  .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+  ..$ call      : language speed(data = latin_square_design, swap = "treatment", seed = 42)
  - attr(*, "class")= chr [1:2] "design" "list"</code></pre>
 </div>
 </div>
 </section><section class="level3"><h4 id="visualise-the-output-2">Visualise the Output<a class="anchor" aria-label="anchor" href="#visualise-the-output-2"></a>
 </h4>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">latin_square_result</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
@@ -449,7 +621,7 @@ Seed: 42 </code></pre>
 </h3>
 <p>Now we can create a data frame representing a split plot design. We can build it with <code><a href="../reference/initialise_split_design_df.html">initialise_split_design_df()</a></code> by passing a <code>splits</code> list - one entry per nested level, each describing the size of one unit and the treatments to allocate to it.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">splits</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  subplot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>items <span class="op">=</span> <span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span>, nrows <span class="op">=</span> <span class="fl">1</span>, ncols <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
 <span>  wholeplot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>items <span class="op">=</span> <span class="va">LETTERS</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>, nrows <span class="op">=</span> <span class="fl">1</span>, ncols <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
@@ -492,7 +664,7 @@ Seed: 42 </code></pre>
 </blockquote>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">optimise</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  wp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>swap <span class="op">=</span> <span class="st">"wholeplot_treatment"</span>, swap_within <span class="op">=</span> <span class="st">"block"</span>, swap_all <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
 <span>  sp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>swap <span class="op">=</span> <span class="st">"subplot_treatment"</span>, swap_within <span class="op">=</span> <span class="st">"wholeplot"</span><span class="op">)</span></span>
@@ -510,7 +682,7 @@ Early stopping at iteration 2000 for level wp
 Optimising level: sp
 Early stopping at iteration 570 for level sp </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">split_plot_result</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Optimised Experimental Design
@@ -528,10 +700,10 @@ Seed: 42 </code></pre>
 </h4>
 <p>The output shows optimisation results for the design. The score and iterations are combined for the entire design, while the treatments, and stopping criteria are reported separately for each level, allowing you to assess the quality of optimisation at each hierarchy level.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb40"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">split_plot_result</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>List of 8
+<pre><code>List of 9
  $ design_df     :Classes 'design' and 'data.frame':    48 obs. of  7 variables:
   ..$ row                : int [1:48] 1 1 1 1 2 2 2 2 3 3 ...
   ..$ col                : int [1:48] 1 2 3 4 1 2 3 4 1 2 ...
@@ -560,13 +732,50 @@ Seed: 42 </code></pre>
   ..$ wp: chr [1:3] "A" "B" "C"
   ..$ sp: chr [1:4] "a" "b" "c" "d"
  $ seed          : num 42
+ $ metadata      :List of 6
+  ..$ levels    : chr [1:2] "wp" "sp"
+  ..$ row_column: chr "row"
+  ..$ col_column: chr "col"
+  ..$ grid_by   : NULL
+  ..$ per_level :List of 2
+  .. ..$ wp:List of 11
+  .. .. ..$ swap            : chr "wholeplot_treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: 0x556b345f76b8&gt;
+  .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
+  .. .. ..$ adj_weight      : num 1
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 10000
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.99
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+    row_column = "row", col_column = "col", ...)
+  .. .. ..$ final_score     : num 100
+  .. .. ..$ final_components: Named num [1:2] 36 64
+  .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+  .. ..$ sp:List of 11
+  .. .. ..$ swap            : chr "subplot_treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: 0x556b345f76b8&gt;
+  .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
+  .. .. ..$ adj_weight      : num 1
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 10000
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.99
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+    row_column = "row", col_column = "col", ...)
+  .. .. ..$ final_score     : num 0
+  .. .. ..$ final_components: Named num [1:2] 0 0
+  .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+  ..$ call      : language speed(data = split_plot_design, optimise = optimise, seed = 42)
  - attr(*, "class")= chr [1:2] "design" "list"</code></pre>
 </div>
 </div>
 </section><section class="level3"><h4 id="visualise-the-output-3">Visualise the Output<a class="anchor" aria-label="anchor" href="#visualise-the-output-3"></a>
 </h4>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb42"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb47"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">split_plot_result</span>, treatments <span class="op">=</span> <span class="st">"wholeplot_treatment"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
@@ -574,7 +783,7 @@ Seed: 42 </code></pre>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb43"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb48"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">split_plot_result</span>, treatments <span class="op">=</span> <span class="st">"subplot_treatment"</span>, block <span class="op">=</span> <span class="st">"wholeplot"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>

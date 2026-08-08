@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,7 +38,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>CLAUDE.md</h1>
-      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/v0.0.9/CLAUDE.md" class="external-link"><code>CLAUDE.md</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/CLAUDE.md" class="external-link"><code>CLAUDE.md</code></a></small>
     </div>
 
 <div id="claudemd" class="section level1">
@@ -79,6 +79,7 @@
 <p><code>R CMD check</code> is also enforced in CI on macOS / Windows / Ubuntu against R devel, release, and oldrel-1 (<code>.github/workflows/R-CMD-check.yaml</code>).</p>
 <p>Code formatting is handled by <a href="https://posit-dev.github.io/air/" class="external-link">Air</a> - see <code>air.toml</code> (80-col, 2-space indent). Per <code>CONTRIBUTING.md</code>, do <strong>not</strong> restyle code that is unrelated to your PR.</p>
 <p>User-facing changes should add a bullet to the top of <code>NEWS.md</code>. NEWS entries should be kept concise, with just a short 1-2 sentence summary of the changes, not paragraphs of explanation. If a change is related to a GitHub issue, it can be referenced just by number in parentheses e.g. (#1), but do not reference GitHub issues unless it’s certain that they are related.</p>
+<p>Within a release, sections must appear in the order <strong>Major Changes</strong>, <strong>Minor Changes</strong>, <strong>Bug Fixes</strong> - regardless of how many entries each holds. Omit a section entirely if it is empty.</p>
 </div>
 <div class="section level2">
 <h2 id="architecture">Architecture<a class="anchor" aria-label="anchor" href="#architecture"></a></h2>

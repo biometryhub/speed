@@ -1,5 +1,55 @@
 # Changelog
 
+## speed 0.0.10
+
+### Major Changes
+
+- Added a [`summary()`](https://rdrr.io/r/base/summary.html) method for
+  `"design"` objects, reporting structure and replication, a decomposed
+  optimisation score, and design-quality diagnostics.
+  ([\#73](https://github.com/biometryhub/speed/issues/73))
+- `grid_factors` gains an optional `by` element naming the column that
+  separates a design into several grids,
+  e.g. `list(dim1 = "row", dim2 = "col", by = "site")` for a
+  multi-environment trial. Each grid is scored on its own.
+
+### Minor Changes
+
+- Designs whose `row`/`col` columns are not numeric, or where two plots
+  share a coordinate, now fail with a message naming the problem.
+
+### Bug Fixes
+
+- Design metrics are now built from each plot’s `row`/`col` coordinates
+  rather than the order of the rows in the data frame. Designs generated
+  with
+  [`objective_function_piepho()`](https://biometryhub.github.io/speed/reference/objective_function_piepho.md)
+  should be regenerated.
+- Multi-site designs are no longer scored as one pooled grid, which
+  discarded plots whose coordinates collided and counted adjacencies
+  between sites. Use `grid_factors$by` to name the grouping column.
+- [`objective_function_piepho()`](https://biometryhub.github.io/speed/reference/objective_function_piepho.md)
+  now scores evenness of distribution per grid and reports each grid
+  separately. A grid with no treatment replicated within it contributes
+  `0` rather than `Inf`.
+- [`calculate_efficiency_factor()`](https://biometryhub.github.io/speed/reference/calculate_efficiency_factor.md)
+  now errors for a design whose treatment contrasts are not estimable,
+  instead of returning an impossible value above 1. The row-column model
+  gained an intercept, which does not change results that were already
+  valid.
+- [`summary()`](https://rdrr.io/r/base/summary.html) no longer errors on
+  designs that cannot be placed on a single grid; the affected
+  diagnostics report why they are unavailable instead.
+- [`calculate_nb()`](https://biometryhub.github.io/speed/reference/calculate_nb.md)
+  no longer errors on designs with missing plots when `pair_mapping` is
+  not supplied.
+- [`calculate_adjacency_score()`](https://biometryhub.github.io/speed/reference/calculate_adjacency_score.md)
+  now recycles a single `ring_weights` value across every entry of
+  `ring_dists`, so the default is usable with more than one ring.
+- `swap_all = TRUE` no longer changes the replication of a design when
+  an earlier level has unbalanced a swap group mid-search. Only
+  treatments with matching replication are exchanged.
+
 ## speed 0.0.9
 
 ### Major Changes
@@ -13,29 +63,20 @@
 ### Bug Fixes
 
 - [`speed()`](https://biometryhub.github.io/speed/reference/speed.md)
-  now errors when `swap_all = TRUE` is used on a design whose treatments
-  are unequally replicated within a swap group, instead of silently
-  changing the replication. Such a swap exchanges every plot of one
-  treatment with every plot of another, so when the two treatments
-  occupy different numbers of plots they exchange replication counts and
-  the returned design is not a rearrangement of the input. Designs with
-  equal within-group replication, which is what `swap_all` is intended
-  for, are unaffected.
+  now errors when `swap_all = TRUE` is used on a design with unequal
+  within-group replication, instead of silently swapping treatments with
+  different replication counts.
 - [`speed()`](https://biometryhub.github.io/speed/reference/speed.md) no
-  longer returns numeric and integer columns as their factor level
-  codes; a `treatment` column of `c(10, 100, 30, 9)` was previously
-  returned as `c(2, 4, 3, 1)`. Numeric `row` and `col` values other than
-  `1:n` were affected in the same way.
+  longer returns numeric/integer columns (e.g. `treatment`, `row`,
+  `col`) as their internal factor level codes instead of their original
+  values.
 - [`speed()`](https://biometryhub.github.io/speed/reference/speed.md) no
   longer emits a “Setting row names on a tibble is deprecated” warning
-  when passed a tibble; row labels are now only reset for base data
-  frames.
+  when passed a tibble.
 - [`speed()`](https://biometryhub.github.io/speed/reference/speed.md)
-  now accepts designs with `vctrs`-backed columns that report a
-  multi-class [`class()`](https://rdrr.io/r/base/class.html) (such as
-  the tables produced by the `edibble` package). Previously these failed
-  with “first argument has length \> 1” when restoring column types;
-  such columns are now restored as `character`.
+  now accepts designs with `vctrs`-backed multi-class columns (e.g. from
+  the `edibble` package) instead of erroring; such columns are now
+  returned as `character`.
 
 ## speed 0.0.8
 

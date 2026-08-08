@@ -18,13 +18,6 @@ the `speed` package.
 ``` r
 
 library(speed)
-```
-
-    A newer version of speed is available on GitHub (installed: 0.0.9, available: 0.0.10).
-    Update with: devtools::install_github("biometryhub/speed")
-
-``` r
-
 library(patchwork) # For combining plots
 ```
 
@@ -494,7 +487,7 @@ ribd_result
 str(ribd_result)
 ```
 
-    List of 8
+    List of 9
      $ design_df     :Classes 'design' and 'data.frame':    18 obs. of  5 variables:
       ..$ row      : int [1:18] 1 1 1 1 1 1 2 2 2 2 ...
       ..$ col      : int [1:18] 1 2 3 4 5 6 1 2 3 4 ...
@@ -508,6 +501,28 @@ str(ribd_result)
      $ stopped_early : logi TRUE
      $ treatments    : chr [1:6] "V1" "V2" "V3" "V4" ...
      $ seed          : num 42
+     $ metadata      :List of 6
+      ..$ levels    : chr "single treatment within replicate"
+      ..$ row_column: chr "row"
+      ..$ col_column: chr "col"
+      ..$ grid_by   : NULL
+      ..$ per_level :List of 1
+      .. ..$ single treatment within replicate:List of 11
+      .. .. ..$ swap            : chr "treatment"
+      .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x559fd91d28b0>
+      .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
+      .. .. ..$ adj_weight      : num 1
+      .. .. ..$ bal_weight      : num 1
+      .. .. ..$ iterations      : num 10000
+      .. .. ..$ start_temp      : num 100
+      .. .. ..$ cooling_rate    : num 0.99
+      .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+        row_column = "row", col_column = "col", ...)
+      .. .. ..$ final_score     : num 1.8
+      .. .. ..$ final_components: Named num [1:2] 0 1.8
+      .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      ..$ call      : language speed(data = ribd_df, swap = "treatment", swap_within = "replicate", seed = 42)
      - attr(*, "class")= chr [1:2] "design" "list"
 
 #### Visualise the Output
@@ -653,7 +668,7 @@ prep_result
 str(prep_result)
 ```
 
-    List of 8
+    List of 9
      $ design_df     :Classes 'design' and 'data.frame':    140 obs. of  5 variables:
       ..$ row       : int [1:140] 1 1 1 1 1 1 1 1 1 1 ...
       ..$ col       : int [1:140] 1 2 3 4 5 6 7 8 9 10 ...
@@ -667,6 +682,28 @@ str(prep_result)
      $ stopped_early : logi TRUE
      $ treatments    : chr [1:100] "V1" "V2" "V3" "V4" ...
      $ seed          : num 42
+     $ metadata      :List of 6
+      ..$ levels    : chr "single entry within whole design"
+      ..$ row_column: chr "row"
+      ..$ col_column: chr "col"
+      ..$ grid_by   : NULL
+      ..$ per_level :List of 1
+      .. ..$ single entry within whole design:List of 11
+      .. .. ..$ swap            : chr "entry"
+      .. .. ..$ spatial_factors :Class 'formula'  language ~block + row + col
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv>
+      .. .. ..$ spatial_cols    : chr [1:3] "block" "row" "col"
+      .. .. ..$ adj_weight      : num 1
+      .. .. ..$ bal_weight      : num 1
+      .. .. ..$ iterations      : num 10000
+      .. .. ..$ start_temp      : num 100
+      .. .. ..$ cooling_rate    : num 0.99
+      .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+        row_column = "row", col_column = "col", ...)
+      .. .. ..$ final_score     : num 2.91
+      .. .. ..$ final_components: Named num [1:2] 0 2.91
+      .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+      ..$ call      : language speed(data = prep_design, swap = "entry", spatial_factors = ~block + row +      col, seed = 42)
      - attr(*, "class")= chr [1:2] "design" "list"
 
 Ideally here we would also like to see an even distribution of the

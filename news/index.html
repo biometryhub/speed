@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,9 +38,39 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/biometryhub/speed/blob/v0.0.9/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/biometryhub/speed/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.0.10" id="speed-0010">speed 0.0.10<a class="anchor" aria-label="anchor" href="#speed-0010"></a></h2>
+<div class="section level3">
+<h3 id="major-changes-0-0-10">Major Changes<a class="anchor" aria-label="anchor" href="#major-changes-0-0-10"></a></h3>
+<ul><li>Added a <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> method for <code>"design"</code> objects, reporting structure and replication, a decomposed optimisation score, and design-quality diagnostics. (<a href="https://github.com/biometryhub/speed/issues/73" class="external-link">#73</a>)</li>
+<li>
+<code>grid_factors</code> gains an optional <code>by</code> element naming the column that separates a design into several grids, e.g. <code>list(dim1 = "row", dim2 = "col", by = "site")</code> for a multi-environment trial. Each grid is scored on its own.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="minor-changes-0-0-10">Minor Changes<a class="anchor" aria-label="anchor" href="#minor-changes-0-0-10"></a></h3>
+<ul><li>Designs whose <code>row</code>/<code>col</code> columns are not numeric, or where two plots share a coordinate, now fail with a message naming the problem.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-0-10">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-0-10"></a></h3>
+<ul><li>Design metrics are now built from each plot’s <code>row</code>/<code>col</code> coordinates rather than the order of the rows in the data frame. Designs generated with <code><a href="../reference/objective_function_piepho.html">objective_function_piepho()</a></code> should be regenerated.</li>
+<li>Multi-site designs are no longer scored as one pooled grid, which discarded plots whose coordinates collided and counted adjacencies between sites. Use <code>grid_factors$by</code> to name the grouping column.</li>
+<li>
+<code><a href="../reference/objective_function_piepho.html">objective_function_piepho()</a></code> now scores evenness of distribution per grid and reports each grid separately. A grid with no treatment replicated within it contributes <code>0</code> rather than <code>Inf</code>.</li>
+<li>
+<code><a href="../reference/calculate_efficiency_factor.html">calculate_efficiency_factor()</a></code> now errors for a design whose treatment contrasts are not estimable, instead of returning an impossible value above 1. The row-column model gained an intercept, which does not change results that were already valid.</li>
+<li>
+<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> no longer errors on designs that cannot be placed on a single grid; the affected diagnostics report why they are unavailable instead.</li>
+<li>
+<code><a href="../reference/calculate_nb.html">calculate_nb()</a></code> no longer errors on designs with missing plots when <code>pair_mapping</code> is not supplied.</li>
+<li>
+<code><a href="../reference/calculate_adjacency_score.html">calculate_adjacency_score()</a></code> now recycles a single <code>ring_weights</code> value across every entry of <code>ring_dists</code>, so the default is usable with more than one ring.</li>
+<li>
+<code>swap_all = TRUE</code> no longer changes the replication of a design when an earlier level has unbalanced a swap group mid-search. Only treatments with matching replication are exchanged.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.0.9" id="speed-009">speed 0.0.9<a class="anchor" aria-label="anchor" href="#speed-009"></a></h2>
 <div class="section level3">
@@ -50,13 +80,13 @@
 <div class="section level3">
 <h3 id="bug-fixes-0-0-9">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-0-9"></a></h3>
 <ul><li>
-<code><a href="../reference/speed.html">speed()</a></code> now errors when <code>swap_all = TRUE</code> is used on a design whose treatments are unequally replicated within a swap group, instead of silently changing the replication. Such a swap exchanges every plot of one treatment with every plot of another, so when the two treatments occupy different numbers of plots they exchange replication counts and the returned design is not a rearrangement of the input. Designs with equal within-group replication, which is what <code>swap_all</code> is intended for, are unaffected.</li>
+<code><a href="../reference/speed.html">speed()</a></code> now errors when <code>swap_all = TRUE</code> is used on a design with unequal within-group replication, instead of silently swapping treatments with different replication counts.</li>
 <li>
-<code><a href="../reference/speed.html">speed()</a></code> no longer returns numeric and integer columns as their factor level codes; a <code>treatment</code> column of <code>c(10, 100, 30, 9)</code> was previously returned as <code>c(2, 4, 3, 1)</code>. Numeric <code>row</code> and <code>col</code> values other than <code>1:n</code> were affected in the same way.</li>
+<code><a href="../reference/speed.html">speed()</a></code> no longer returns numeric/integer columns (e.g. <code>treatment</code>, <code>row</code>, <code>col</code>) as their internal factor level codes instead of their original values.</li>
 <li>
-<code><a href="../reference/speed.html">speed()</a></code> no longer emits a “Setting row names on a tibble is deprecated” warning when passed a tibble; row labels are now only reset for base data frames.</li>
+<code><a href="../reference/speed.html">speed()</a></code> no longer emits a “Setting row names on a tibble is deprecated” warning when passed a tibble.</li>
 <li>
-<code><a href="../reference/speed.html">speed()</a></code> now accepts designs with <code>vctrs</code>-backed columns that report a multi-class <code><a href="https://rdrr.io/r/base/class.html" class="external-link">class()</a></code> (such as the tables produced by the <code>edibble</code> package). Previously these failed with “first argument has length &gt; 1” when restoring column types; such columns are now restored as <code>character</code>.</li>
+<code><a href="../reference/speed.html">speed()</a></code> now accepts designs with <code>vctrs</code>-backed multi-class columns (e.g. from the <code>edibble</code> package) instead of erroring; such columns are now returned as <code>character</code>.</li>
 </ul></div>
 </div>
     <div class="section level2">

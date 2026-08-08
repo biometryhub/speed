@@ -9,7 +9,7 @@ assumptions are not met.
 ## Usage
 
 ``` r
-.efficiency_factor(df, swap, rc, cc)
+.efficiency_factor(df, swap, rc, cc, grid)
 ```
 
 ## Arguments
@@ -17,3 +17,9 @@ assumptions are not met.
 - rc, cc:
 
   Row and column column names.
+
+- grid:
+
+  A
+  [`grid_index()`](https://biometryhub.github.io/speed/reference/grid_index.md)
+  list, or a character reason there is no grid.

@@ -14,6 +14,9 @@ Called on the resolved `optimise` list, so it covers simple, legacy
 hierarchical and `optimise = ` calls alike, including levels that set
 `swap_all` individually.
 
+`grid_factors` is a plain list, so a mistyped `by` would be ignored and
+every grid silently pooled. Checked before any optimisation happens.
+
 ## Usage
 
 ``` r
@@ -52,6 +55,8 @@ hierarchical and `optimise = ` calls alike, including levels that set
 )
 
 .verify_swap_all_replication(data, optimise, dummy_group = NULL)
+
+.verify_grid_by(data, grid_factors)
 ```
 
 ## Arguments
@@ -120,3 +125,17 @@ hierarchical and `optimise = ` calls alike, including levels that set
 
   Name of the internal placeholder column used for a level with no
   `swap_within` boundary, so it can be described as the whole design.
+
+- grid_factors:
+
+  A named list specifying grid factors to construct a matrix for
+  calculating adjacency score, `dim1` for row and `dim2` for column.
+  (default: `list(dim1 = "row", dim2 = "col")`).
+
+  An optional third element, `by`, names a column that groups plots into
+  *separate* grids - a multi-environment trial, where each site reuses
+  the same `row`/`col` numbering. Each grid is then scored on its own
+  and the adjacency counts summed, so no adjacency is counted between
+  plots at different sites, e.g.
+  `list(dim1 = "row", dim2 = "col", by = "site")`. Without it, a design
+  whose sites share coordinates is refused rather than silently pooled.

@@ -50,6 +50,14 @@ create_speed_input(
   calculating adjacency score, `dim1` for row and `dim2` for column.
   (default: `list(dim1 = "row", dim2 = "col")`).
 
+  An optional third element, `by`, names a column that groups plots into
+  *separate* grids - a multi-environment trial, where each site reuses
+  the same `row`/`col` numbering. Each grid is then scored on its own
+  and the adjacency counts summed, so no adjacency is counted between
+  plots at different sites, e.g.
+  `list(dim1 = "row", dim2 = "col", by = "site")`. Without it, a design
+  whose sites share coordinates is refused rather than silently pooled.
+
 - iterations:
 
   Maximum number of iterations for the simulated annealing algorithm

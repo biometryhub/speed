@@ -60,9 +60,22 @@ recording a zero.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">.neighbour_balance</span><span class="op">(</span><span class="va">df</span>, <span class="va">swap</span>, <span class="va">nrow</span>, <span class="va">ncol</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">.neighbour_balance</span><span class="op">(</span><span class="va">df</span>, <span class="va">swap</span>, <span class="va">rc</span>, <span class="va">cc</span>, <span class="va">grid</span><span class="op">)</span></span></code></pre></div>
     </div>
 
+    <div class="section level2">
+    <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
+
+
+<dl><dt id="arg-rc-cc">rc, cc<a class="anchor" aria-label="anchor" href="#arg-rc-cc"></a></dt>
+<dd><p>Row and column column names.</p></dd>
+
+
+<dt id="arg-grid">grid<a class="anchor" aria-label="anchor" href="#arg-grid"></a></dt>
+<dd><p>A <code><a href="grid_index.html">grid_index()</a></code> list, reused as the <code><a href="build_design_matrix.html">build_design_matrix()</a></code>
+index, or a character reason there is no grid.</p></dd>
+
+</dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Self-pairs (a treatment beside another plot of itself) are reported
@@ -70,12 +83,13 @@ separately from distinct treatment pairs, because they mean opposite things:
 zero self-adjacency is the desirable outcome the optimiser works towards,
 whereas a distinct pair that never neighbours is an imbalance. Lumping them
 together hides self-adjacency behind the same <code>min 0</code> as the harmless case.</p>
-<p>Takes <code>nrow</code>/<code>ncol</code> from the caller's <code>layout</code> (counted via
-<code>length(unique(...))</code>) rather than deriving them from <code>max(row)</code>/<code>max(col)</code>:
-buffer plots (<code><a href="add_buffers.html">add_buffers()</a></code>) can shift row/col numbering so it no longer
-starts at 1, which would otherwise reshape the grid with the wrong
-dimensions. Assumes <code>rc</code>/<code>cc</code> are present in <code>df</code>; callers should check
-<code>has_grid</code> first (see <code><a href="summary.design.html">summary.design()</a></code>).</p>
+<p>The grid comes from <code><a href="build_design_matrix.html">build_design_matrix()</a></code>, which places each plot at its own
+<code>rc</code>/<code>cc</code> coordinates, so the counts describe the layout whatever order <code>df</code>
+is in. Coordinates are read as-is, so plots separated by a buffer row or
+column (<code><a href="add_buffers.html">add_buffers()</a></code> offsets and scales them) keep that separation and are
+not counted as neighbours.</p>
+<p>A design that cannot be placed on one grid is reported as unavailable rather
+than propagating <code><a href="grid_index.html">grid_index()</a></code>'s error out of <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

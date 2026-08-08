@@ -23,7 +23,9 @@ calculate_adjacency_score(
   ring_dists = 1,
   ring_weights = 1,
   ring_type = c("manhattan", "chebyshev"),
-  relationship = NULL
+  relationship = NULL,
+  by = NULL,
+  grid_index = NULL
 )
 ```
 
@@ -71,6 +73,26 @@ calculate_adjacency_score(
   raw matrix through
   [`prep_relationship()`](https://biometryhub.github.io/speed/reference/prep_relationship.md)
   first; the score functions consume only the prepped form.
+
+- by:
+
+  Optional column name grouping plots into separate grids (e.g. `"site"`
+  for a multi-environment trial). Each grid is scored on its own and the
+  counts summed, so no adjacency is counted between plots at different
+  sites. `NULL` (default) treats the design as a single grid, which
+  errors if two plots share a coordinate.
+
+- grid_index:
+
+  Optional pre-built list of indices from
+  [`grid_indices()`](https://biometryhub.github.io/speed/reference/grid_indices.md),
+  passed to
+  [`build_design_matrix()`](https://biometryhub.github.io/speed/reference/build_design_matrix.md)
+  to skip coordinate validation.
+  [`speed()`](https://biometryhub.github.io/speed/reference/speed.md)
+  supplies one so the annealing loop does not revalidate every
+  iteration; leave it `NULL` for a one-off call. Supplying it ignores
+  `by`, which the indices already encode.
 
 ## Value
 

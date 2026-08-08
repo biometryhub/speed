@@ -12,13 +12,6 @@ informative.
 ``` r
 
 library(speed)
-```
-
-    A newer version of speed is available on GitHub (installed: 0.0.9, available: 0.0.10).
-    Update with: devtools::install_github("biometryhub/speed")
-
-``` r
-
 library(patchwork)
 ```
 
@@ -149,7 +142,7 @@ balance/adjacency patterns of the main effects.
 str(factorial_result)
 ```
 
-    List of 8
+    List of 9
      $ design_df     :Classes 'design' and 'data.frame':    72 obs. of  8 variables:
       ..$ row        : int [1:72] 1 1 1 2 2 2 3 3 3 4 ...
       ..$ col        : int [1:72] 1 2 3 1 2 3 1 2 3 1 ...
@@ -172,6 +165,28 @@ str(factorial_result)
      $ stopped_early : logi TRUE
      $ treatments    : chr [1:24] "A1-B1" "A1-B2" "A1-B3" "A2-B1" ...
      $ seed          : num 112
+     $ metadata      :List of 6
+      ..$ levels    : chr "single treatment within block"
+      ..$ row_column: chr "row"
+      ..$ col_column: chr "col"
+      ..$ grid_by   : NULL
+      ..$ per_level :List of 1
+      .. ..$ single treatment within block:List of 11
+      .. .. ..$ swap            : chr "treatment"
+      .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
+      .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv>
+      .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
+      .. .. ..$ adj_weight      : num 1
+      .. .. ..$ bal_weight      : num 1
+      .. .. ..$ iterations      : num 2e+05
+      .. .. ..$ start_temp      : num 100
+      .. .. ..$ cooling_rate    : num 0.999
+      .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, interaction_weight = 1, main_weight = 1,
+        factorial_separator = "-", ...)
+      .. .. ..$ final_score     : num 36.8
+      .. .. ..$ final_components: Named num [1:2] 9.43 27.39
+      .. .. .. ..- attr(*, "names")= chr [1:2] "main" "interaction"
+      ..$ call      : language speed(data = factorial_design, swap = "treatment", swap_within = "block",      spatial_factors = ~row + col, iter| __truncated__ ...
      - attr(*, "class")= chr [1:2] "design" "list"
 
 #### Visualise the Output

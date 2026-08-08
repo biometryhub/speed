@@ -11,7 +11,7 @@ across spatial factors. Works with regular or irregular spatial designs."></head
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +42,7 @@ across spatial factors. Works with regular or irregular spatial designs."></head
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Optimise Experimental Design Layout Using Simulated Annealing</h1>
-      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/v0.0.9/R/speed.R" class="external-link"><code>R/speed.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/R/speed.R" class="external-link"><code>R/speed.R</code></a></small>
       <div class="d-none name"><code>speed.Rd</code></div>
     </div>
 
@@ -106,7 +106,14 @@ consider for balance (default: <code>~row + col</code>).</p></dd>
 <dt id="arg-grid-factors">grid_factors<a class="anchor" aria-label="anchor" href="#arg-grid-factors"></a></dt>
 <dd><p>A named list specifying grid factors to construct a
 matrix for calculating adjacency score, <code>dim1</code> for row and <code>dim2</code> for
-column. (default: <code>list(dim1 = "row", dim2 = "col")</code>).</p></dd>
+column. (default: <code>list(dim1 = "row", dim2 = "col")</code>).</p>
+<p>An optional third element, <code>by</code>, names a column that groups plots into
+<em>separate</em> grids - a multi-environment trial, where each site reuses the
+same <code>row</code>/<code>col</code> numbering. Each grid is then scored on its own and the
+adjacency counts summed, so no adjacency is counted between plots at
+different sites, e.g.
+<code>list(dim1 = "row", dim2 = "col", by = "site")</code>. Without it, a design whose
+sites share coordinates is refused rather than silently pooled.</p></dd>
 
 
 <dt id="arg-iterations">iterations<a class="anchor" aria-label="anchor" href="#arg-iterations"></a></dt>
@@ -169,6 +176,12 @@ named list of score vectors (for hierarchical designs)</p></li>
 named list of treatment vectors (for hierarchical designs)</p></li>
 <li><p><strong>seed</strong> - Random seed used for reproducibility of the design. If not set
 in the function, the seed is set to the third element of <code>.Random.seed</code>.</p></li>
+<li><p><strong>metadata</strong> - A list describing how the design was produced: the captured
+<code>call</code>, the ordered <code>levels</code>, the resolved <code>row_column</code> / <code>col_column</code>
+names, and a <code>per_level</code> list recording each level's swap variable,
+spatial factors, adjacency/balance weights, requested iterations, starting
+temperature, cooling rate, objective function and achieved score. Used by
+<a href="summary.design.html">summary()</a> to recompute per-level evaluation metrics.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

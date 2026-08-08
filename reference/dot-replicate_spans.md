@@ -9,7 +9,7 @@ small worst-case span flags replicates that sit close together.
 ## Usage
 
 ``` r
-.replicate_spans(df, swap, rc, cc)
+.replicate_spans(df, swap, rc, cc, grid)
 ```
 
 ## Arguments
@@ -25,6 +25,12 @@ small worst-case span flags replicates that sit close together.
 - rc, cc:
 
   Row and column column names.
+
+- grid:
+
+  A
+  [`grid_index()`](https://biometryhub.github.io/speed/reference/grid_index.md)
+  list, or a character reason there is no grid.
 
 ## Details
 

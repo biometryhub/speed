@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,9 +62,9 @@
       <h1>Multi-Environment Trials with speed</h1>
 
       <p class="author">Wasin Pipattungsakul</p>
-      <p class="date">2026-08-07</p>
+      <p class="date">2026-08-08</p>
 
-      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/v0.0.9/vignettes/met.qmd" class="external-link"><code>vignettes/met.qmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/vignettes/met.qmd" class="external-link"><code>vignettes/met.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
     </div>
 
@@ -81,10 +81,6 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://biometryhub.github.io/speed/">speed</a></span><span class="op">)</span></span></code></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>A newer version of speed is available on GitHub (installed: 0.0.9, available: 0.0.10).
-Update with: devtools::install_github("biometryhub/speed")</code></pre>
-</div>
 </div>
 </section><section class="level2"><h3 id="when-to-use">When to Use<a class="anchor" aria-label="anchor" href="#when-to-use"></a>
 </h3>
@@ -106,7 +102,7 @@ Update with: devtools::install_github("biometryhub/speed")</code></pre>
 </h3>
 <p>Now we can create a data frame representing a MET design. Note that we can specify different dimensions for each site in the <code>designs</code> argument.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">all_treatments</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">50</span>, <span class="fl">7</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">51</span><span class="op">:</span><span class="fl">57</span>, <span class="fl">8</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">met_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/initialise_design_df.html">initialise_design_df</a></span><span class="op">(</span></span>
 <span>  items <span class="op">=</span> <span class="va">all_treatments</span>,</span>
@@ -134,7 +130,7 @@ Update with: devtools::install_github("biometryhub/speed")</code></pre>
 </div>
 </div>
 <div class="cell">
-<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">met_design</span><span class="op">$</span><span class="va">block</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">met_design</span><span class="op">$</span><span class="va">block</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plot_layout</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span>, <span class="va">fill</span><span class="op">)</span> <span class="op">{</span></span>
@@ -168,8 +164,9 @@ Update with: devtools::install_github("biometryhub/speed")</code></pre>
 </section><section class="level2"><h3 id="performing-the-optimisation">Performing the Optimisation<a class="anchor" aria-label="anchor" href="#performing-the-optimisation"></a>
 </h3>
 <p>For MET designs, we use lists of named arguments to specify the hierarchical structure. The <code>optimise</code> parameter defines what to optimise and constraints at each level.</p>
+<p>Each site numbers its rows and columns from 1, so several plots share the same <code>row</code>/<code>col</code> pair. A MET is not one grid but several, which share a treatment set and never share an edge. Tell <code><a href="../reference/speed.html">speed()</a></code> which column separates them with the <code>by</code> element of <code>grid_factors</code>:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">optimise</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  connectivity <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>spatial_factors <span class="op">=</span> <span class="op">~</span><span class="va">site</span><span class="op">)</span>,</span>
 <span>  balance <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>swap_within <span class="op">=</span> <span class="st">"site"</span>, spatial_factors <span class="op">=</span> <span class="op">~</span> <span class="va">site_col</span> <span class="op">+</span> <span class="va">site_block</span><span class="op">)</span></span>
@@ -180,6 +177,7 @@ Update with: devtools::install_github("biometryhub/speed")</code></pre>
 <span>  swap <span class="op">=</span> <span class="st">"treatment"</span>,</span>
 <span>  early_stop_iterations <span class="op">=</span> <span class="fl">5000</span>,</span>
 <span>  optimise <span class="op">=</span> <span class="va">optimise</span>,</span>
+<span>  grid_factors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>dim1 <span class="op">=</span> <span class="st">"row"</span>, dim2 <span class="op">=</span> <span class="st">"col"</span>, by <span class="op">=</span> <span class="st">"site"</span><span class="op">)</span>,</span>
 <span>  optimise_params <span class="op">=</span> <span class="fu"><a href="../reference/optim_params.html">optim_params</a></span><span class="op">(</span>random_initialisation <span class="op">=</span> <span class="cn">TRUE</span>, adj_weight <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">112</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -210,7 +208,7 @@ Level: balance Iteration: 8000 Score: 7.49812 Best: 7.49812 Since Improvement: 3
 Level: balance Iteration: 9000 Score: 7.49812 Best: 7.49812 Since Improvement: 4536
 Early stopping at iteration 9464 for level balance </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">met_result</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Optimised Experimental Design
@@ -224,14 +222,15 @@ Treatments:
 Seed: 112 </code></pre>
 </div>
 </div>
+<p>Each site is then scored on its own and the results combined, so no two plots at different sites are ever treated as neighbours. Without <code>by</code>, a design whose sites reuse coordinates is refused rather than silently pooled - the grid-based diagnostics would otherwise describe a layout that does not exist.</p>
 </section><section class="level2"><h3 id="output-of-the-optimisation">Output of the Optimisation<a class="anchor" aria-label="anchor" href="#output-of-the-optimisation"></a>
 </h3>
 <p>The output shows optimisation results for the design. The score and iterations are combined for the entire design, while the treatments, and stopping criteria are reported separately for each level, allowing you to assess the quality of optimisation at each hierarchy level.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">met_result</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>List of 8
+<pre><code>List of 9
  $ design_df     :'data.frame': 406 obs. of  9 variables:
   ..$ row       : int [1:406] 1 1 1 1 1 1 1 1 1 1 ...
   ..$ col       : int [1:406] 1 1 1 1 1 2 2 2 2 2 ...
@@ -256,12 +255,49 @@ Seed: 112 </code></pre>
   ..$ connectivity: chr [1:57] "1" "2" "3" "4" ...
   ..$ balance     : chr [1:57] "1" "2" "3" "4" ...
  $ seed          : num 112
+ $ metadata      :List of 6
+  ..$ levels    : chr [1:2] "connectivity" "balance"
+  ..$ row_column: chr "row"
+  ..$ col_column: chr "col"
+  ..$ grid_by   : chr "site"
+  ..$ per_level :List of 2
+  .. ..$ connectivity:List of 11
+  .. .. ..$ swap            : chr "treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~site
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: R_GlobalEnv&gt;
+  .. .. ..$ spatial_cols    : chr "site"
+  .. .. ..$ adj_weight      : num 0
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 10000
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.99
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+    row_column = "row", col_column = "col", ...)
+  .. .. ..$ final_score     : num 0.77
+  .. .. ..$ final_components: Named num [1:2] 0 0.77
+  .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+  .. ..$ balance     :List of 11
+  .. .. ..$ swap            : chr "treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~site_col + site_block
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: R_GlobalEnv&gt;
+  .. .. ..$ spatial_cols    : chr [1:2] "site_col" "site_block"
+  .. .. ..$ adj_weight      : num 0
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 10000
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.99
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+    row_column = "row", col_column = "col", ...)
+  .. .. ..$ final_score     : num 7.5
+  .. .. ..$ final_components: Named num [1:2] 0 7.5
+  .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+  ..$ call      : language speed(data = met_design, swap = "treatment", grid_factors = list(dim1 = "row",      dim2 = "col", by = "site"), e| __truncated__ ...
  - attr(*, "class")= chr [1:2] "design" "list"</code></pre>
 </div>
 </div>
 <p>No duplicated treatments along any row, column, or block.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">check_no_dupes</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">treatment</span>, <span class="va">df</span><span class="op">$</span><span class="va">site_col</span><span class="op">)</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">""</span>, <span class="st">", "</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">treatment</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">site</span>, <span class="va">df</span><span class="op">$</span><span class="va">row</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">""</span>, <span class="st">", "</span><span class="op">)</span></span>
@@ -277,7 +313,7 @@ Seed: 112 </code></pre>
 </section><section class="level2"><h3 id="visualise-the-output">Visualise the Output<a class="anchor" aria-label="anchor" href="#visualise-the-output"></a>
 </h3>
 <div class="cell">
-<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html" class="external-link">plot_layout</a></span><span class="op">(</span><span class="va">met_result</span><span class="op">$</span><span class="va">design_df</span>, <span class="st">"treatment"</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
 </details><div class="cell-output-display">
@@ -294,7 +330,7 @@ Seed: 112 </code></pre>
 </h3>
 <p>Now we can create a data frame representing a MET design. Note that we can specify different dimensions for each site in the <code>designs</code> argument.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fixed_treatments</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">54</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="va">non_fixed_treatments</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">50</span>, <span class="fl">5</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">51</span><span class="op">:</span><span class="fl">54</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">met_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/initialise_design_df.html">initialise_design_df</a></span><span class="op">(</span></span>
@@ -331,7 +367,7 @@ Seed: 112 </code></pre>
 </div>
 </div>
 <div class="cell">
-<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">met_design</span><span class="op">$</span><span class="va">block</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">met_design</span><span class="op">$</span><span class="va">block</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html" class="external-link">plot_layout</a></span><span class="op">(</span><span class="va">met_design</span>, <span class="st">"block"</span><span class="op">)</span></span></code></pre></div>
 </details><div class="cell-output-display">
@@ -345,7 +381,7 @@ Seed: 112 </code></pre>
 </h3>
 <p>For MET designs, we use lists of named arguments to specify the hierarchical structure. The <code>optimise</code> parameter defines what to optimise and constraints at each level.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">optimise</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  connectivity <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>swap_within <span class="op">=</span> <span class="st">"allocation"</span>, spatial_factors <span class="op">=</span> <span class="op">~</span><span class="va">site</span><span class="op">)</span>,</span>
 <span>  balance <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>swap_within <span class="op">=</span> <span class="st">"site"</span>, spatial_factors <span class="op">=</span> <span class="op">~</span> <span class="va">site_col</span> <span class="op">+</span> <span class="va">site_block</span><span class="op">)</span></span>
@@ -357,6 +393,7 @@ Seed: 112 </code></pre>
 <span>  early_stop_iterations <span class="op">=</span> <span class="fl">10000</span>,</span>
 <span>  iterations <span class="op">=</span> <span class="fl">50000</span>,</span>
 <span>  optimise <span class="op">=</span> <span class="va">optimise</span>,</span>
+<span>  grid_factors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>dim1 <span class="op">=</span> <span class="st">"row"</span>, dim2 <span class="op">=</span> <span class="st">"col"</span>, by <span class="op">=</span> <span class="st">"site"</span><span class="op">)</span>,</span>
 <span>  optimise_params <span class="op">=</span> <span class="fu"><a href="../reference/optim_params.html">optim_params</a></span><span class="op">(</span>random_initialisation <span class="op">=</span> <span class="fl">10</span>, adj_weight <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">112</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -418,7 +455,7 @@ Level: balance Iteration: 36000 Score: 6.838574 Best: 6.838574 Since Improvement
 Level: balance Iteration: 37000 Score: 6.838574 Best: 6.838574 Since Improvement: 9274
 Early stopping at iteration 37726 for level balance </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">met_result</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Optimised Experimental Design
@@ -436,10 +473,10 @@ Seed: 112 </code></pre>
 </h3>
 <p>The output shows optimisation results for the design. The score and iterations are combined for the entire design, while the treatments, and stopping criteria are reported separately for each level, allowing you to assess the quality of optimisation at each hierarchy level.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">met_result</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>List of 8
+<pre><code>List of 9
  $ design_df     :'data.frame': 428 obs. of  10 variables:
   ..$ row       : int [1:428] 1 1 1 1 1 1 1 1 1 1 ...
   ..$ col       : int [1:428] 1 1 1 1 1 2 2 2 2 2 ...
@@ -465,12 +502,49 @@ Seed: 112 </code></pre>
   ..$ connectivity: chr [1:54] "1" "2" "3" "4" ...
   ..$ balance     : chr [1:54] "1" "2" "3" "4" ...
  $ seed          : num 112
+ $ metadata      :List of 6
+  ..$ levels    : chr [1:2] "connectivity" "balance"
+  ..$ row_column: chr "row"
+  ..$ col_column: chr "col"
+  ..$ grid_by   : chr "site"
+  ..$ per_level :List of 2
+  .. ..$ connectivity:List of 11
+  .. .. ..$ swap            : chr "treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~site
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: R_GlobalEnv&gt;
+  .. .. ..$ spatial_cols    : chr "site"
+  .. .. ..$ adj_weight      : num 0
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 50000
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.99
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+    row_column = "row", col_column = "col", ...)
+  .. .. ..$ final_score     : num 0.632
+  .. .. ..$ final_components: Named num [1:2] 0 0.632
+  .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+  .. ..$ balance     :List of 11
+  .. .. ..$ swap            : chr "treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~site_col + site_block
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: R_GlobalEnv&gt;
+  .. .. ..$ spatial_cols    : chr [1:2] "site_col" "site_block"
+  .. .. ..$ adj_weight      : num 0
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 50000
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.99
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+    row_column = "row", col_column = "col", ...)
+  .. .. ..$ final_score     : num 6.84
+  .. .. ..$ final_components: Named num [1:2] 0 6.84
+  .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+  ..$ call      : language speed(data = met_design, swap = "treatment", grid_factors = list(dim1 = "row",      dim2 = "col", by = "site"), i| __truncated__ ...
  - attr(*, "class")= chr [1:2] "design" "list"</code></pre>
 </div>
 </div>
 <p>No duplicated treatments along any row, column, or block.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="va">met_result</span><span class="op">$</span><span class="va">design_df</span></span>
 <span><span class="fu">check_no_dupes</span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -479,13 +553,13 @@ Seed: 112 </code></pre>
 </div>
 <p>Site “a” maintains 3 replicates and no missing treatments in any other sites.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">treatment_count</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">treatment</span>, <span class="va">df</span><span class="op">$</span><span class="va">site</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">treatment_count</span><span class="op">[</span>, <span class="st">"a"</span><span class="op">]</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">treatment_count</span><span class="op">[</span>, <span class="st">"a"</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 3 3</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">treatment_count</span><span class="op">[</span>, <span class="op">-</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">treatment_count</span><span class="op">[</span>, <span class="op">-</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 1 2</code></pre>
@@ -494,7 +568,7 @@ Seed: 112 </code></pre>
 </section><section class="level2"><h3 id="visualise-the-output-1">Visualise the Output<a class="anchor" aria-label="anchor" href="#visualise-the-output-1"></a>
 </h3>
 <div class="cell">
-<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html" class="external-link">plot_layout</a></span><span class="op">(</span><span class="va">met_result</span><span class="op">$</span><span class="va">design_df</span>, <span class="st">"treatment"</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
 </details><div class="cell-output-display">
@@ -524,7 +598,7 @@ Seed: 112 </code></pre>
 </blockquote>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># prepare treatments</span></span>
 <span><span class="va">fixed_treatments</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">3</span><span class="op">)</span>,</span>
@@ -582,7 +656,7 @@ Seed: 112 </code></pre>
 </div>
 </div>
 <div class="cell">
-<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">met_design</span><span class="op">$</span><span class="va">block</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">met_design</span><span class="op">$</span><span class="va">block</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html" class="external-link">plot_layout</a></span><span class="op">(</span><span class="va">met_design</span>, <span class="st">"block"</span><span class="op">)</span></span></code></pre></div>
 </details><div class="cell-output-display">
@@ -596,7 +670,7 @@ Seed: 112 </code></pre>
 </h3>
 <p>For MET designs, we use lists of named arguments to specify the hierarchical structure. The <code>optimise</code> parameter defines what to optimise and constraints at each level.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">optimise</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  connectivity <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>swap_within <span class="op">=</span> <span class="st">"allocation"</span>, spatial_factors <span class="op">=</span> <span class="op">~</span><span class="va">site</span><span class="op">)</span>,</span>
 <span>  balance <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>swap_within <span class="op">=</span> <span class="st">"site"</span>, spatial_factors <span class="op">=</span> <span class="op">~</span> <span class="va">site_col</span> <span class="op">+</span> <span class="va">site_block</span><span class="op">)</span></span>
@@ -608,6 +682,7 @@ Seed: 112 </code></pre>
 <span>  early_stop_iterations <span class="op">=</span> <span class="fl">8000</span>,</span>
 <span>  iterations <span class="op">=</span> <span class="fl">50000</span>,</span>
 <span>  optimise <span class="op">=</span> <span class="va">optimise</span>,</span>
+<span>  grid_factors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>dim1 <span class="op">=</span> <span class="st">"row"</span>, dim2 <span class="op">=</span> <span class="st">"col"</span>, by <span class="op">=</span> <span class="st">"site"</span><span class="op">)</span>,</span>
 <span>  optimise_params <span class="op">=</span> <span class="fu"><a href="../reference/optim_params.html">optim_params</a></span><span class="op">(</span>random_initialisation <span class="op">=</span> <span class="fl">30</span>, adj_weight <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">112</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -672,7 +747,7 @@ Level: balance Iteration: 32000 Score: 6.984699 Best: 6.984699 Since Improvement
 Level: balance Iteration: 33000 Score: 6.984699 Best: 6.984699 Since Improvement: 7363
 Early stopping at iteration 33637 for level balance </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb39"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">met_result</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Optimised Experimental Design
@@ -690,10 +765,10 @@ Seed: 112 </code></pre>
 </h3>
 <p>The output shows optimisation results for the design. The score and iterations are combined for the entire design, while the treatments, and stopping criteria are reported separately for each level, allowing you to assess the quality of optimisation at each hierarchy level.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb41"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">met_result</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>List of 8
+<pre><code>List of 9
  $ design_df     :'data.frame': 428 obs. of  10 variables:
   ..$ row       : int [1:428] 1 1 1 1 1 1 1 1 1 1 ...
   ..$ col       : int [1:428] 1 1 1 1 1 2 2 2 2 2 ...
@@ -719,12 +794,49 @@ Seed: 112 </code></pre>
   ..$ connectivity: chr [1:61] "1" "2" "3" "4" ...
   ..$ balance     : chr [1:61] "1" "2" "3" "4" ...
  $ seed          : num 112
+ $ metadata      :List of 6
+  ..$ levels    : chr [1:2] "connectivity" "balance"
+  ..$ row_column: chr "row"
+  ..$ col_column: chr "col"
+  ..$ grid_by   : chr "site"
+  ..$ per_level :List of 2
+  .. ..$ connectivity:List of 11
+  .. .. ..$ swap            : chr "treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~site
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: R_GlobalEnv&gt;
+  .. .. ..$ spatial_cols    : chr "site"
+  .. .. ..$ adj_weight      : num 0
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 50000
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.99
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+    row_column = "row", col_column = "col", ...)
+  .. .. ..$ final_score     : num 1.89
+  .. .. ..$ final_components: Named num [1:2] 0 1.89
+  .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+  .. ..$ balance     :List of 11
+  .. .. ..$ swap            : chr "treatment"
+  .. .. ..$ spatial_factors :Class 'formula'  language ~site_col + site_block
+  .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: R_GlobalEnv&gt;
+  .. .. ..$ spatial_cols    : chr [1:2] "site_col" "site_block"
+  .. .. ..$ adj_weight      : num 0
+  .. .. ..$ bal_weight      : num 1
+  .. .. ..$ iterations      : num 50000
+  .. .. ..$ start_temp      : num 100
+  .. .. ..$ cooling_rate    : num 0.99
+  .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
+    row_column = "row", col_column = "col", ...)
+  .. .. ..$ final_score     : num 6.98
+  .. .. ..$ final_components: Named num [1:2] 0 6.98
+  .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+  ..$ call      : language speed(data = met_design, swap = "treatment", grid_factors = list(dim1 = "row",      dim2 = "col", by = "site"), i| __truncated__ ...
  - attr(*, "class")= chr [1:2] "design" "list"</code></pre>
 </div>
 </div>
 <p>No duplicated treatments along any row, column, or block.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb43"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="va">met_result</span><span class="op">$</span><span class="va">design_df</span></span>
 <span><span class="fu">check_no_dupes</span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -733,7 +845,7 @@ Seed: 112 </code></pre>
 </div>
 <p>All sites maintain pre-allocated treatments.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb45"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">treatment_count</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">site</span>, <span class="va">df</span><span class="op">$</span><span class="va">treatment</span><span class="op">)</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">site</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">fixed_treatments</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">treatment_count</span><span class="op">[</span><span class="va">site</span>, <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">fixed_treatments</span><span class="op">[[</span><span class="va">site</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>, drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span><span class="op">)</span></span>
@@ -759,7 +871,7 @@ Seed: 112 </code></pre>
 </section><section class="level2"><h3 id="visualise-the-output-2">Visualise the Output<a class="anchor" aria-label="anchor" href="#visualise-the-output-2"></a>
 </h3>
 <div class="cell">
-<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb47"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span><span class="op">$</span><span class="va">treatment</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">treatment</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html" class="external-link">plot_layout</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"treatment"</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
@@ -772,7 +884,7 @@ Seed: 112 </code></pre>
 </div>
 <p>The placements of common pre-allocated treatments.</p>
 <div class="cell">
-<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb48"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb47"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span><span class="op">$</span><span class="va">treatment</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">treatment</span> <span class="op">&lt;</span> <span class="fl">4</span>, <span class="va">df</span><span class="op">$</span><span class="va">treatment</span>, <span class="cn">NA</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html" class="external-link">plot_layout</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"treatment"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_text.html" class="external-link">geom_text</a></span><span class="op">(</span></span>
