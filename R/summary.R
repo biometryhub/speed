@@ -73,7 +73,12 @@
 #'
 #' @returns A list of class `"summary.design"`:
 #' - **hierarchical** - `TRUE` for a multi-level (e.g. split-plot) design.
-#' - **layout** - `n_plots`, `nrow`, `ncol`, `row_column`, `col_column`, `has_grid`.
+#' - **layout** - `n_plots`, `nrow`, `ncol`, `row_column`, `col_column`,
+#'   `has_grid` (`TRUE` when the design is reportable as a single grid), and
+#'   `grid_reason` (why not, or `NA`). `nrow`/`ncol` count the rows and columns
+#'   the design *occupies*, so a design with a gap in its coordinates (a missing
+#'   plot, or a removed buffer) reports fewer than the coordinates span. Both are
+#'   `NA` unless `has_grid`.
 #' - **levels** - character vector of level names (e.g. `"wp"`/`"sp"`; a single
 #'   name for a simple design).
 #' - **per_level** - one element per level (named by `levels`), each a list with:
@@ -135,14 +140,35 @@ summary.design <- function(
 
   want_neighbour <- is.null(neighbour) || isTRUE(neighbour)
 
-  has_grid <- all(c(rc, cc) %in% names(df))
+  # The one coordinate validation for the whole summary: `grid` is either a
+  # `grid_index()` list or the reason there isn't one.
+  #
+  # `has_grid` means "reportable as one grid", not merely "row/col columns
+  # exist": duplicate coordinates span several grids of differing shapes.
+  grid <- tryCatch(
+    grid_indices(df, row_column = rc, col_column = cc, by = meta$grid_by),
+    speed_grid_error = function(e) return(e$reason)
+  )
+  # A multi-environment trial occupies several grids that share a treatment set
+  # and never share an edge, so no single `nrow` x `ncol` describes it.
+  n_grids <- if (is.character(grid)) NA_integer_ else length(grid)
+  has_grid <- !is.character(grid) && n_grids == 1L
   layout <- list(
     n_plots = nrow(df),
     nrow = if (has_grid) length(unique(df[[rc]])) else NA_integer_,
     ncol = if (has_grid) length(unique(df[[cc]])) else NA_integer_,
     row_column = rc,
     col_column = cc,
-    has_grid = has_grid
+    has_grid = has_grid,
+    n_grids = n_grids,
+    grid_by = meta$grid_by,
+    grid_reason = if (has_grid) {
+      NA_character_
+    } else if (is.character(grid)) {
+      grid
+    } else {
+      sprintf("%d grids, grouped by `%s`", n_grids, meta$grid_by)
+    }
   )
 
   per_level <- lapply(levels, function(lv) {
@@ -190,7 +216,7 @@ summary.design <- function(
 
     # --- Evaluation metrics ---
     evaluation <- list(
-      replicate_span = .replicate_spans(df, swap, rc, cc),
+      replicate_span = .replicate_spans(df, swap, rc, cc, grid),
       connectedness = if (isFALSE(connectedness)) {
         list(
           available = FALSE,
@@ -222,19 +248,19 @@ summary.design <- function(
         .block_spread(df, swap, block)
       },
       efficiency = if (isTRUE(efficiency)) {
-        .efficiency_factor(df, swap, rc, cc)
+        .efficiency_factor(df, swap, rc, cc, grid)
       } else {
         list(
           available = FALSE,
           reason = "not requested (set efficiency = TRUE)"
         )
       },
+      # A design that cannot be gridded reports `grid`'s reason rather than
+      # erroring.
       neighbour = if (!want_neighbour) {
         list(available = FALSE, reason = "not requested (neighbour = FALSE)")
-      } else if (!has_grid) {
-        list(available = FALSE, reason = "no row/column factors")
       } else {
-        .neighbour_balance(df, swap, layout$nrow, layout$ncol)
+        .neighbour_balance(df, swap, rc, cc, grid)
       }
     )
 
@@ -538,9 +564,30 @@ print.summary.design <- function(x, ...) {
     cat(lab("Repl. span:"), rs$reason, "\n", sep = "")
   }
 
-  # Efficiency
+  # Efficiency. A multi-grid design reports one value per grid and no total:
+  # there is no meaningful way to combine them (see `.efficiency_factor()`).
   ef <- e$efficiency
-  if (isTRUE(ef$available)) {
+  if (!is.null(ef$per_grid)) {
+    cat(
+      lab("Efficiency:"),
+      sprintf(
+        "per %s (A-efficiency, row-column model)\n",
+        if (is.null(ef$grid_by)) "grid" else paste0("`", ef$grid_by, "`")
+      ),
+      sep = ""
+    )
+    for (nm in names(ef$per_grid)) {
+      one <- ef$per_grid[[nm]]
+      cat(
+        "    ",
+        format(nm, width = max(nchar(names(ef$per_grid)))),
+        "  ",
+        if (isTRUE(one$available)) fmt_num(one$value) else one$reason,
+        "\n",
+        sep = ""
+      )
+    }
+  } else if (isTRUE(ef$available)) {
     cat(
       lab("Efficiency:"),
       fmt_num(ef$value),
@@ -678,10 +725,23 @@ print.summary.design <- function(x, ...) {
 #' @param df Design data frame.
 #' @param swap Treatment column name.
 #' @param rc,cc Row and column column names.
+#' @param grid A [grid_index()] list, or a character reason there is no grid.
 #' @keywords internal
-.replicate_spans <- function(df, swap, rc, cc) {
-  if (!all(c(rc, cc) %in% names(df))) {
-    return(list(available = FALSE, reason = "no row/column factors"))
+.replicate_spans <- function(df, swap, rc, cc, grid) {
+  # Spans are distances within one grid; across grids they are meaningless
+  # (two sites' row 3 are not one plot apart), so refuse rather than pool.
+  if (is.character(grid)) {
+    return(list(available = FALSE, reason = grid))
+  }
+  if (length(grid) > 1L) {
+    return(list(
+      available = FALSE,
+      reason = sprintf(
+        "design spans %d grids (grouped by `%s`)",
+        length(grid),
+        attr(grid, "by")
+      )
+    ))
   }
   span1 <- function(x) {
     if (length(x) < 2) {
@@ -899,30 +959,57 @@ print.summary.design <- function(x, ...) {
 #' reason rather than erroring when its assumptions are not met.
 #'
 #' @param rc,cc Row and column column names.
+#' @param grid A [grid_index()] list, or a character reason there is no grid.
 #' @keywords internal
-.efficiency_factor <- function(df, swap, rc, cc) {
-  if (!all(c(rc, cc) %in% names(df))) {
-    return(list(available = FALSE, reason = "requires a row/column grid"))
+.efficiency_factor <- function(df, swap, rc, cc, grid) {
+  # Not just a guard against erroring: on duplicate coordinates
+  # calculate_efficiency_factor() pools the grids and returns an impossible >1.
+  if (is.character(grid)) {
+    return(list(available = FALSE, reason = grid))
   }
   if (length(unique(df[[swap]])) < 3) {
     return(list(available = FALSE, reason = "requires >= 3 treatments"))
   }
-  ef <- tryCatch(
-    eval(bquote(calculate_efficiency_factor(
-      df,
-      .(as.name(swap)),
-      row_column = rc,
-      col_column = cc
-    ))),
-    error = function(e) return(NULL)
-  )
-  if (is.null(ef) || !is.finite(ef)) {
-    return(list(
-      available = FALSE,
-      reason = "could not be computed for this design"
-    ))
+
+  one <- function(sub) {
+    ef <- tryCatch(
+      eval(bquote(calculate_efficiency_factor(
+        sub,
+        .(as.name(swap)),
+        row_column = rc,
+        col_column = cc
+      ))),
+      # A rank failure is a property of the design, so it carries its own
+      # reason; anything else is unexpected and gets the generic one.
+      speed_efficiency_error = function(e) return(e$reason),
+      error = function(e) return(NULL)
+    )
+    if (is.character(ef)) {
+      return(list(available = FALSE, reason = ef))
+    }
+    if (is.null(ef) || !is.finite(ef)) {
+      return(list(
+        available = FALSE,
+        reason = "could not be computed for this design"
+      ))
+    }
+    return(list(available = TRUE, value = ef))
   }
-  return(list(available = TRUE, value = ef))
+
+  if (length(grid) == 1L) {
+    return(one(df))
+  }
+
+  # One value per grid, never summed or averaged: averaging gives a different
+  # quantity from the combined analysis, which is not identified at design time
+  # anyway. Each grid is gated on its own rank, so one unreplicated site reports
+  # its reason without withholding the others.
+  per_grid <- lapply(grid, function(g) return(one(df[g$rows, , drop = FALSE])))
+  return(list(
+    available = any(vapply(per_grid, function(x) x$available, logical(1))),
+    per_grid = per_grid,
+    grid_by = attr(grid, "by")
+  ))
 }
 
 #' Neighbour-balance diagnostics
@@ -939,22 +1026,40 @@ print.summary.design <- function(x, ...) {
 #' whereas a distinct pair that never neighbours is an imbalance. Lumping them
 #' together hides self-adjacency behind the same `min 0` as the harmless case.
 #'
-#' Takes `nrow`/`ncol` from the caller's `layout` (counted via
-#' `length(unique(...))`) rather than deriving them from `max(row)`/`max(col)`:
-#' buffer plots (`add_buffers()`) can shift row/col numbering so it no longer
-#' starts at 1, which would otherwise reshape the grid with the wrong
-#' dimensions. Assumes `rc`/`cc` are present in `df`; callers should check
-#' `has_grid` first (see `summary.design()`).
+#' The grid comes from [build_design_matrix()], which places each plot at its own
+#' `rc`/`cc` coordinates, so the counts describe the layout whatever order `df`
+#' is in. Coordinates are read as-is, so plots separated by a buffer row or
+#' column (`add_buffers()` offsets and scales them) keep that separation and are
+#' not counted as neighbours.
 #'
+#' A design that cannot be placed on one grid is reported as unavailable rather
+#' than propagating [grid_index()]'s error out of `summary()`.
+#'
+#' @param rc,cc Row and column column names.
+#' @param grid A [grid_index()] list, reused as the [build_design_matrix()]
+#'   index, or a character reason there is no grid.
 #' @keywords internal
-.neighbour_balance <- function(df, swap, nrow, ncol) {
-  dm <- matrix(df[[swap]], nrow = nrow, ncol = ncol)
+.neighbour_balance <- function(df, swap, rc, cc, grid) {
+  if (is.character(grid)) {
+    return(list(available = FALSE, reason = grid))
+  }
+  # One pair mapping for the whole design, so a pair absent from one site counts
+  # as zero rather than being dropped. Counts sum across grids: no edge crosses
+  # a grid boundary.
   pair_mapping <- create_pair_mapping(df[[swap]])
-  nb <- calculate_nb(dm, pair_mapping)
-
   all_pairs <- unique(pair_mapping)
   counts <- setNames(rep(0L, length(all_pairs)), all_pairs)
-  counts[names(nb$nb)] <- nb$nb
+  for (g in grid) {
+    dm <- build_design_matrix(
+      df[g$rows, , drop = FALSE],
+      swap,
+      row_column = rc,
+      col_column = cc,
+      index = g$index
+    )
+    nb <- calculate_nb(dm, pair_mapping)
+    counts[names(nb$nb)] <- counts[names(nb$nb)] + nb$nb
+  }
 
   # create_pair_mapping() keys are "trt1,trt2"; a self-pair repeats the level.
   parts <- strsplit(names(counts), ",", fixed = TRUE)

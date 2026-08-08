@@ -5,6 +5,7 @@
 \alias{.verify_hierarchical_inputs}
 \alias{.verify_optim_params}
 \alias{.verify_swap_all_replication}
+\alias{.verify_grid_by}
 \title{Verify Inputs for \code{speed}}
 \usage{
 .verify_speed_inputs(
@@ -43,6 +44,8 @@
 )
 
 .verify_swap_all_replication(data, optimise, dummy_group = NULL)
+
+.verify_grid_by(data, grid_factors)
 }
 \arguments{
 \item{data}{A data frame containing the experimental design with spatial
@@ -88,6 +91,18 @@ see more in example.}
 
 \item{dummy_group}{Name of the internal placeholder column used for a level
 with no \code{swap_within} boundary, so it can be described as the whole design.}
+
+\item{grid_factors}{A named list specifying grid factors to construct a
+matrix for calculating adjacency score, \code{dim1} for row and \code{dim2} for
+column. (default: \code{list(dim1 = "row", dim2 = "col")}).
+
+An optional third element, \code{by}, names a column that groups plots into
+\emph{separate} grids - a multi-environment trial, where each site reuses the
+same \code{row}/\code{col} numbering. Each grid is then scored on its own and the
+adjacency counts summed, so no adjacency is counted between plots at
+different sites, e.g.
+\code{list(dim1 = "row", dim2 = "col", by = "site")}. Without it, a design whose
+sites share coordinates is refused rather than silently pooled.}
 }
 \description{
 Verify inputs for the \code{speed} function.
@@ -102,5 +117,8 @@ any optimisation happens rather than silently altering replication.
 Called on the resolved \code{optimise} list, so it covers simple, legacy
 hierarchical and \verb{optimise = } calls alike, including levels that set
 \code{swap_all} individually.
+
+\code{grid_factors} is a plain list, so a mistyped \code{by} would be ignored and every
+grid silently pooled. Checked before any optimisation happens.
 }
 \keyword{internal}

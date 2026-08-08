@@ -58,6 +58,8 @@ Per `CONTRIBUTING.md`, do **not** restyle code that is unrelated to your PR.
 
 User-facing changes should add a bullet to the top of `NEWS.md`. NEWS entries should be kept concise, with just a short 1-2 sentence summary of the changes, not paragraphs of explanation. If a change is related to a GitHub issue, it can be referenced just by number in parentheses e.g. (#1), but do not reference GitHub issues unless it's certain that they are related.
 
+Within a release, sections must appear in the order **Major Changes**, **Minor Changes**, **Bug Fixes** - regardless of how many entries each holds. Omit a section entirely if it is empty.
+
 ## Architecture
 
 ### Entry point and control flow

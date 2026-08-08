@@ -23,6 +23,14 @@
 #' @param grid_factors A named list specifying grid factors to construct a
 #'   matrix for calculating adjacency score, `dim1` for row and `dim2` for
 #'   column. (default: `list(dim1 = "row", dim2 = "col")`).
+#'
+#'   An optional third element, `by`, names a column that groups plots into
+#'   *separate* grids - a multi-environment trial, where each site reuses the
+#'   same `row`/`col` numbering. Each grid is then scored on its own and the
+#'   adjacency counts summed, so no adjacency is counted between plots at
+#'   different sites, e.g.
+#'   `list(dim1 = "row", dim2 = "col", by = "site")`. Without it, a design whose
+#'   sites share coordinates is refused rather than silently pooled.
 #' @param iterations Maximum number of iterations for the simulated annealing
 #'   algorithm (default: 10000). For hierarchical designs, can be a named list
 #'   with names matching `swap`.
@@ -185,6 +193,10 @@ speed <- function(data,
     }
   }
 
+  # `by` groups plots into separate grids (a multi-environment trial)
+  .verify_grid_by(data, grid_factors)
+  grid_by <- grid_factors$by
+
   # Infer row and column columns
   inferred <- infer_row_col(data, grid_factors, quiet)
   row_column <- inferred$row
@@ -195,7 +207,8 @@ speed <- function(data,
   data <- factored$df
 
   if (inferred$inferred) {
-    # Sort the data frame to start with to ensure consistency in calculating the adjacency later
+    # Metrics are built from each plot's coordinates now, but neighbour
+    # generation and plotting may still rely on row order, so the sort stays.
     data <- data[do.call(order, data[c(row_column, col_column)]), ]
     # Only reset row labels for base data frames; tibbles are positional and
     # warn on `rownames<-`, and nothing downstream reads the design's row names.
@@ -231,7 +244,8 @@ speed <- function(data,
 
   design <- do.call(speed_hierarchical, c(
     list(data = data, optimise = optimise, quiet = quiet, seed = seed,
-         row_column = row_column, col_column = col_column),
+         row_column = row_column, col_column = col_column,
+         grid_by = grid_by),
     dots
   ))
   # Set here, not passed through do.call(): do.call would evaluate a language
@@ -261,6 +275,20 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   current_design <- layout_df
   best_design <- current_design
 
+  # Only the treatment column moves during annealing, so build the index once.
+  # `NULL` on failure defers to build_design_matrix(), so a design that cannot
+  # form a grid still runs if its objective never needs one.
+  dots <- list(...)
+  grid_idx <- tryCatch(
+    grid_indices(
+      current_design,
+      dots$row_column %||% "row",
+      dots$col_column %||% "col",
+      by = dots$grid_by
+    ),
+    speed_grid_error = function(e) return(NULL)
+  )
+
   # Sequential optimisation for each hierarchy level
   all_scores <- list()
   all_temperatures <- list()
@@ -283,7 +311,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
     # Calculate initial score for this level
     current_score_obj <- opt$obj_function(current_design, opt$swap, spatial_cols, adj_weight = adj_weight,
-                                          bal_weight = bal_weight, ...)
+                                          bal_weight = bal_weight, grid_index = grid_idx, ...)
     current_score <- current_score_obj$score
 
     if (!is.numeric(current_score)) {
@@ -330,7 +358,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       # Calculate new score
       new_score_obj <- opt$obj_function(new_design$design,opt$swap, spatial_cols, adj_weight = adj_weight,
                                         bal_weight = bal_weight, current_score_obj = current_score_obj,
-                                        swapped_items = new_design$swapped_items, ...)
+                                        swapped_items = new_design$swapped_items, grid_index = grid_idx, ...)
       new_score <- new_score_obj$score
 
       # Decide whether to accept the new design
@@ -396,7 +424,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     # report faithful score components.
     treatments[[level]] <- stringi::stri_sort(unique(as.vector(best_design[[opt$swap]])), numeric = TRUE)
     score_obj <- opt$obj_function(best_design, opt$swap, spatial_cols, adj_weight = adj_weight,
-                                  bal_weight = bal_weight, ...)
+                                  bal_weight = bal_weight, grid_index = grid_idx, ...)
     level_scores[level] <- score_obj$score
     per_level_meta[[level]] <- list(
       swap             = opt$swap,
@@ -420,6 +448,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     levels     = hierarchy_levels,
     row_column = .dots$row_column %||% "row",
     col_column = .dots$col_column %||% "col",
+    # NULL for a single-grid design, so summary() need not guess the grouping
+    grid_by    = .dots$grid_by,
     per_level  = per_level_meta
   )
 
