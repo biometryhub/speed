@@ -1,0 +1,4 @@
+# `expect_snapshot()` rewrites these on every test run and testthat writes LF.
+# Without this, a checkout on Windows (core.autocrlf=true) converts them to
+# CRLF and each run then reports them as modified with no content change.
+tests/testthat/_snaps/*.md text eol=lf

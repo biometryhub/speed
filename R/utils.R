@@ -214,7 +214,7 @@ create_speed_input <- function(
         # (one pair of axes is resolved for the whole design), so this arm is
         # only reachable by calling `create_speed_input()` directly.
         grid_factors = if (is.list(grid_factors[[1]])) {
-          grid_factors[[optimise_name]] %||% .DEFAULT$grid_factors # nocov
+          grid_factors[[optimise_name]] %||% .DEFAULT$grid_factors
         } else {
           grid_factors
         },

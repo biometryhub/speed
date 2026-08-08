@@ -1,4 +1,5 @@
 test_that("speed:::.onAttach does not print message when versions match", {
+  rlang::local_interactive(TRUE)
   local_mocked_bindings(
     get_package_version = function(pkg) package_version("0.1.0"),
     read_lines_wrapper = function(url, warn = FALSE) {
@@ -11,6 +12,7 @@ test_that("speed:::.onAttach does not print message when versions match", {
 })
 
 test_that("speed:::.onAttach prints message when newer version is available", {
+  rlang::local_interactive(TRUE)
   local_mocked_bindings(
     get_package_version = function(pkg) package_version("0.1.0"),
     read_lines_wrapper = function(url, warn = FALSE) {
@@ -31,6 +33,7 @@ test_that("speed:::.onAttach prints message when newer version is available", {
 })
 
 test_that("speed:::.onAttach does not print message when local version is newer", {
+  rlang::local_interactive(TRUE)
   local_mocked_bindings(
     get_package_version = function(pkg) package_version("0.3.0"),
     read_lines_wrapper = function(url, warn = FALSE) {
@@ -43,6 +46,7 @@ test_that("speed:::.onAttach does not print message when local version is newer"
 })
 
 test_that("speed:::.onAttach silently fails on network error", {
+  rlang::local_interactive(TRUE)
   local_mocked_bindings(
     get_package_version = function(pkg) package_version("0.1.0"),
     read_lines_wrapper = function(url, warn = FALSE) {
@@ -55,6 +59,7 @@ test_that("speed:::.onAttach silently fails on network error", {
 })
 
 test_that("speed:::.onAttach handles malformed DESCRIPTION file", {
+  rlang::local_interactive(TRUE)
   local_mocked_bindings(
     get_package_version = function(pkg) package_version("0.1.0"),
     read_lines_wrapper = function(url, warn = FALSE) {
@@ -67,6 +72,7 @@ test_that("speed:::.onAttach handles malformed DESCRIPTION file", {
 })
 
 test_that("speed:::.onAttach handles empty remote response", {
+  rlang::local_interactive(TRUE)
   local_mocked_bindings(
     get_package_version = function(pkg) package_version("0.1.0"),
     read_lines_wrapper = function(url, warn = FALSE) character(0)
@@ -77,6 +83,7 @@ test_that("speed:::.onAttach handles empty remote response", {
 })
 
 test_that("speed:::.onAttach detects version with multiple components", {
+  rlang::local_interactive(TRUE)
   local_mocked_bindings(
     get_package_version = function(pkg) package_version("1.2.3"),
     read_lines_wrapper = function(url, warn = FALSE) {
@@ -92,6 +99,7 @@ test_that("speed:::.onAttach detects version with multiple components", {
 })
 
 test_that("speed:::.onAttach detects major version difference", {
+  rlang::local_interactive(TRUE)
   local_mocked_bindings(
     get_package_version = function(pkg) package_version("0.9.9"),
     read_lines_wrapper = function(url, warn = FALSE) {
@@ -107,6 +115,7 @@ test_that("speed:::.onAttach detects major version difference", {
 })
 
 test_that("speed:::.onAttach message includes update instructions", {
+  rlang::local_interactive(TRUE)
   local_mocked_bindings(
     get_package_version = function(pkg) package_version("1.0.0"),
     read_lines_wrapper = function(url, warn = FALSE) {
@@ -130,4 +139,56 @@ test_that("speed:::.onAttach message includes update instructions", {
   msg <- capture_messages(speed:::.onAttach("test", "speed"))
   expect_true(grepl("1.0.0", msg))
   expect_true(grepl("1.1.0", msg))
+})
+
+test_that(".onAttach skips the version check when not interactive", {
+  called <- FALSE
+  local_mocked_bindings(
+    read_lines_wrapper = function(url, warn = FALSE) {
+      called <<- TRUE
+      character(0)
+    }
+  )
+
+  # testthat runs non-interactively, so nothing should reach the network
+  expect_silent(speed:::.onAttach("test", "speed"))
+  expect_false(called)
+})
+
+test_that(".onAttach skips the version check when SPEED_NO_VERSION_CHECK is set", {
+  rlang::local_interactive(TRUE)
+  withr::local_envvar(SPEED_NO_VERSION_CHECK = "1")
+  called <- FALSE
+  local_mocked_bindings(
+    get_package_version = function(pkg) package_version("0.1.0"),
+    read_lines_wrapper = function(url, warn = FALSE) {
+      called <<- TRUE
+      c("Package: speed", "Version: 9.9.9")
+    }
+  )
+
+  # A newer version is available, but the opt-out must suppress the check
+  expect_silent(speed:::.onAttach("test", "speed"))
+  expect_false(called)
+})
+
+test_that("get_package_version reads the installed version", {
+  # The real accessor; every other test here mocks it away.
+  version <- speed:::get_package_version("speed")
+
+  expect_s3_class(version, "package_version")
+  expect_equal(version, utils::packageVersion("speed"))
+})
+
+test_that("read_lines_wrapper reads a connection without leaking its timeout", {
+  path <- withr::local_tempfile()
+  writeLines(c("Package: speed", "Version: 9.9.9"), path)
+  before <- getOption("timeout")
+
+  expect_equal(
+    speed:::read_lines_wrapper(path, warn = FALSE),
+    c("Package: speed", "Version: 9.9.9")
+  )
+  # the shortened timeout is for the version check only, not the session
+  expect_equal(getOption("timeout"), before)
 })

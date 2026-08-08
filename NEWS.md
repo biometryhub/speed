@@ -6,6 +6,18 @@
   default `objective_function()`. This can be turned off per level with `optim_params(stop_at_optimal =
   FALSE)`. `summary()` now reports the lower bound score alongside the achieved one.
 
+## Minor Changes
+
+- The startup check for a newer version on GitHub now only runs in interactive sessions, so scripts and
+  `R CMD check` no longer make a network call when the package is attached. Set the
+  `SPEED_NO_VERSION_CHECK` environment variable to turn it off entirely.
+
+## Bug Fixes
+
+- `speed()` now errors with a clear message when `grid_factors` is malformed, instead of failing
+  with "missing value where TRUE/FALSE needed". Per-level grid factors point to the `optimise`
+  argument.
+
 # speed 0.0.10
 
 ## Major Changes
@@ -41,12 +53,6 @@
   `ring_dists`, so the default is usable with more than one ring.
 - `swap_all = TRUE` no longer changes the replication of a design when an earlier level has
   unbalanced a swap group mid-search. Only treatments with matching replication are exchanged.
-
-## Bug Fixes
-
-- `speed()` now errors with a clear message when `grid_factors` is malformed, instead of failing
-  with "missing value where TRUE/FALSE needed". Per-level grid factors point to the `optimise`
-  argument.
 
 # speed 0.0.9
 

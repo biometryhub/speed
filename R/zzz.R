@@ -1,4 +1,12 @@
 .onAttach <- function(libname, pkgname) {
+  # The message is only useful interactively, so scripts, test workers and
+  # `R CMD check` should not reach out to GitHub on attach. Setting
+  # `SPEED_NO_VERSION_CHECK` to any non-empty value opts out entirely.
+  no_check <- nzchar(Sys.getenv("SPEED_NO_VERSION_CHECK"))
+  if (!rlang::is_interactive() || no_check) {
+    return(invisible(NULL))
+  }
+
   tryCatch(
     {
       # Get the GitHub raw URL for the DESCRIPTION file
@@ -35,13 +43,20 @@
       # Silently fail - no output if there's any error
     }
   )
+
+  return(invisible(NULL))
 }
 
 # Wrapper functions for easier mocking in tests
 get_package_version <- function(pkg) {
-  utils::packageVersion(pkg)
+  return(utils::packageVersion(pkg))
 }
 
 read_lines_wrapper <- function(con, warn = TRUE) {
-  base::readLines(con, warn = warn)
+  # Bound how long attaching the package can block on the network; the default
+  # of 60s is far too long for a cosmetic version check.
+  old <- options(timeout = 2)
+  on.exit(options(old), add = TRUE)
+
+  return(base::readLines(con, warn = warn))
 }

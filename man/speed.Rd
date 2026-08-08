@@ -174,9 +174,19 @@ df_initial$site_row <- paste(df_initial$site, df_initial$row, sep = "_")
 df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
 df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
 
+# A short budget keeps the example quick; raise it for a real design.
 optimise <- list(
-  connectivity = list(spatial_factors = ~site),
-  balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+  connectivity = list(
+    spatial_factors = ~site,
+    iterations = 500,
+    early_stop_iterations = 100
+  ),
+  balance = list(
+    swap_within = "site",
+    spatial_factors = ~ site_col + site_block,
+    iterations = 500,
+    early_stop_iterations = 100
+  )
 )
 
 result <- speed(

@@ -17,6 +17,16 @@ mixed_groups <- data.frame(
   treatment = factor(rep(c("A", "B"), 4))
 )
 
+# A partially replicated group: A and B appear twice, C and D three times. Two
+# replication classes, each holding a pair, so a class has to be chosen before
+# the pair is drawn.
+prep_group <- data.frame(
+  row = rep(1:5, each = 2),
+  col = rep(1:2, 5),
+  block = factor(rep(1, 10)),
+  treatment = factor(c("A", "A", "B", "B", "C", "C", "C", "D", "D", "D"))
+)
+
 test_that("a single swap is abandoned when the group holds one treatment", {
   # Both plots drawn from a uniform group always match, and there is no
   # different treatment to substitute, so the swap must be a no-op rather than
@@ -85,4 +95,49 @@ test_that("a multi swap skips groups with fewer than two treatments", {
 
   expect_identical(res$design$treatment, uniform_groups$treatment)
   expect_true(all(res$swapped_items == ""))
+})
+
+test_that("a multi swap only exchanges equally replicated treatments", {
+  # A multi swap moves every plot of one treatment to another, so pairing
+  # treatments of different replication would change the design's replication.
+  before <- table(prep_group$treatment)
+
+  for (seed in 1:20) {
+    set.seed(seed)
+    res <- generate_multi_swap_neighbour(
+      prep_group,
+      "treatment",
+      "block",
+      1,
+      TRUE
+    )
+
+    expect_equal(table(res$design$treatment), before)
+  }
+})
+
+test_that("a multi swap draws from both replication classes", {
+  # Both classes are exchangeable here, so neither may be stranded - the pair
+  # is drawn from whichever class was chosen.
+  levels_ <- levels(prep_group$treatment)
+  pairs <- character(0)
+
+  for (seed in 1:20) {
+    set.seed(seed)
+    res <- generate_multi_swap_neighbour(
+      prep_group,
+      "treatment",
+      "block",
+      1,
+      TRUE
+    )
+
+    # `swapped_items` records factor codes rather than labels
+    swapped <- res$swapped_items[res$swapped_items != ""]
+    pairs <- c(pairs, paste(sort(levels_[as.integer(swapped)]), collapse = ""))
+  }
+
+  # A/B are the two-plot class and C/D the three-plot class; a pair spanning
+  # the two, such as "AC", would change the design's replication
+  expect_setequal(pairs, c("AB", "CD"))
 })

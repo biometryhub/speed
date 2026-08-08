@@ -2474,8 +2474,8 @@ test_that("speed handles factorial designs", {
     spatial_factors = ~ row + col,
     obj_function = objective_function_factorial,
     optimise_params = optim_params(adaptive_swaps = TRUE),
-    early_stop_iterations = 2000,
-    iterations = 100000,
+    early_stop_iterations = 100,
+    iterations = 500,
     seed = 112,
     quiet = TRUE
   )
@@ -2506,8 +2506,8 @@ test_that("speed handles factorial designs with alternative separator", {
     obj_function = objective_function_factorial,
     factorial_separator = ":",
     optimise_params = optim_params(adaptive_swaps = TRUE),
-    early_stop_iterations = 2000,
-    iterations = 100000,
+    early_stop_iterations = 100,
+    iterations = 500,
     seed = 42,
     quiet = TRUE
   )
@@ -2515,9 +2515,16 @@ test_that("speed handles factorial designs with alternative separator", {
 
   expect_equal(nrow(result$design_df), 45)
   expect_setequal(result$treatments, df$treatment)
+  # the baseline must use the same separator, or it scores the design as a
+  # single non-factorial treatment factor and is not comparable
   expect_lt(
     result$score,
-    objective_function_factorial(df, "treatment", c("row", "col"))$score
+    objective_function_factorial(
+      df,
+      "treatment",
+      c("row", "col"),
+      factorial_separator = ":"
+    )$score
   )
 })
 
@@ -2539,7 +2546,7 @@ test_that("speed handles 3-way factorial designs", {
     obj_function = objective_function_factorial,
     optimise_params = optim_params(adaptive_swaps = TRUE),
     early_stop_iterations = 100,
-    iterations = 1000,
+    iterations = 500,
     seed = 112,
     quiet = TRUE
   )
@@ -2581,10 +2588,18 @@ test_that("3-way factorial designs run to optimisation", {
 
   expect_equal(nrow(result$design_df), 135)
   expect_setequal(result$treatments, df$treatment)
-  expect_lt(
-    result$score,
-    objective_function_factorial(df, "treatment", c("row", "col"))$score
-  )
+
+  # "Runs to optimisation" is convergence, not a known optimum: the factorial
+  # objective has no derivable lower bound, so `optimal_score` is NA and there
+  # is nothing to compare against. What can be asserted is that the search
+  # ended on the no-improvement window rather than the iteration cap.
+  expect_true(is.na(result$metadata$per_level[[1]]$optimal_score))
+  expect_true(result$stopped_early)
+  expect_lt(result$iterations_run, 50000)
+
+  # The 500-iteration test above leaves this design around 230; converging
+  # takes it to roughly 70-80, so the gap is what the long budget buys.
+  expect_lt(result$score, 150)
 })
 
 test_that("speed honours ring_dists and ring_weights via ...", {

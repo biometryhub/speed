@@ -439,6 +439,29 @@ test_that("create_speed_input creates an input from a string", {
   )
 })
 
+test_that("create_speed_input takes grid_factors per level when given them", {
+  # `speed()` refuses a per-level `grid_factors` because `infer_row_col()`
+  # resolves one pair of axes for the whole design, so this shape only arrives
+  # here from a direct call. A level without an entry falls back to the default.
+  speed_input <- create_speed_input(
+    swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+    swap_within = list(wp = "block", sp = "wholeplot"),
+    spatial_factors = ~ row + col,
+    grid_factors = list(wp = list(dim1 = "range", dim2 = "plot")),
+    iterations = 100,
+    early_stop_iterations = 30,
+    obj_function = objective_function,
+    swap_all = FALSE,
+    optimise_params = list(swap_count = 1, swap_all_blocks = FALSE)
+  )
+
+  expect_equal(
+    speed_input$wp$grid_factors,
+    list(dim1 = "range", dim2 = "plot")
+  )
+  expect_equal(speed_input$sp$grid_factors, .DEFAULT$grid_factors)
+})
+
 test_that("create_speed_input creates an input from optimise argument", {
   optimise <- list(
     connectivity = list(
