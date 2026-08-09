@@ -74,9 +74,20 @@ withr::with_dir(vig_dir, {
 
 # Record what each `.qmd` was generated from, so staleness is detectable. Kept
 # in data-raw/ rather than vignettes/ so it does not ship in the tarball.
+#
+# CR bytes are stripped before hashing: with `core.autocrlf=true` a Windows
+# working tree holds CRLF where git stores LF, so hashing the file as-is would
+# record a manifest that only ever matches on the platform that wrote it.
+# `check-vignettes-current.R` must strip them the same way.
 hashes <- vapply(
   file.path(vig_dir, orig),
-  function(f) tools::md5sum(f)[[1]],
+  function(f) {
+    bytes <- readBin(f, "raw", file.size(f))
+    tmp <- tempfile()
+    on.exit(unlink(tmp), add = TRUE)
+    writeBin(bytes[bytes != as.raw(13L)], tmp)
+    return(unname(tools::md5sum(tmp)[[1]]))
+  },
   character(1)
 )
 writeLines(

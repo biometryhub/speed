@@ -38,7 +38,15 @@ for (f in orig) {
     problems <- c(problems, sprintf("%s is not in the manifest", f))
     next
   }
-  got <- tools::md5sum(file.path(vig_dir, f))[[1]]
+  # Strip CR before hashing, matching how `precompute-vignettes.R` wrote the
+  # manifest - otherwise a CRLF working tree never matches an LF checkout.
+  src <- file.path(vig_dir, f)
+  bytes <- readBin(src, "raw", file.size(src))
+  tmp <- tempfile()
+  writeBin(bytes[bytes != as.raw(13L)], tmp)
+  got <- unname(tools::md5sum(tmp)[[1]])
+  unlink(tmp)
+
   if (!identical(unname(got), unname(want[[f]]))) {
     problems <- c(
       problems,
