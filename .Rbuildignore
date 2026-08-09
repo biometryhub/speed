@@ -29,3 +29,5 @@ CLAUDE.md
 .claude
 Rplots.pdf
 ^\.gitattributes$
+^data-raw$
+\.qmd\.orig$

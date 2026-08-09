@@ -10,6 +10,21 @@ name: R-CMD-check.yaml
 permissions: read-all
 
 jobs:
+  # The vignettes are pre-computed into plain markdown (see
+  # data-raw/precompute-vignettes.R), so nothing here re-runs their R code.
+  # Guard against a `.qmd.orig` being edited without regenerating the `.qmd`.
+  vignettes-current:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Check pre-computed vignettes are up to date
+        run: Rscript data-raw/check-vignettes-current.R
+
   R-CMD-check:
     runs-on: ${{ matrix.config.os }}
 
