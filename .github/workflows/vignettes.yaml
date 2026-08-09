@@ -9,8 +9,8 @@
 # Runs weekly, on demand, and on any change to the vignette sources.
 on:
   schedule:
-    # Mondays, 05:00 UTC
-    - cron: "0 5 * * 1"
+    # Mondays, 17:00 UTC
+    - cron: "0 17 * * 1"
   workflow_dispatch:
   push:
     paths:
