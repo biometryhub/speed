@@ -51,7 +51,6 @@ test_that("initialise_design_df works with blocking", {
   expect_equal(sort(design_df$row), sort(rep(1:nrows, ncols)))
   expect_equal(sort(design_df$col), sort(rep(1:ncols, nrows)))
 
-  # check each block
   for (block in unique(design_df$block)) {
     expect_setequal(design_df$treatment[design_df$block == block], 1:8)
   }
@@ -95,7 +94,6 @@ test_that("initialise_design_df works with blocking with different items", {
   expect_equal(sort(design_df$row), sort(rep(1:nrows, ncols)))
   expect_equal(sort(design_df$col), sort(rep(1:ncols, nrows)))
 
-  # check each block
   for (block in unique(design_df$block)) {
     expect_equal(
       length(unique(design_df$treatment[design_df$block == block])),
@@ -124,12 +122,10 @@ test_that("initialise_design_df converts single numeric to treatment labels", {
   # Check that treatments are converted to "T1", "T2", "T3"
   expect_equal(result$treatment, rep(c("T1", "T2", "T3"), times = 3))
 
-  # Test with different numbers
   result2 <- initialise_design_df(items = 2, nrows = 2, ncols = 2)
   expected_treatments2 <- c("T1", "T2", "T1", "T2")
   expect_equal(result2$treatment, expected_treatments2)
 
-  # Test with single item
   result3 <- initialise_design_df(items = 1, nrows = 2, ncols = 2)
   expected_treatments3 <- c("T1", "T1", "T1", "T1")
   expect_equal(result3$treatment, expected_treatments3)

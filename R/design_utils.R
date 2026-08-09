@@ -190,9 +190,8 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
 #' @keywords internal
 # fmt: skip
 infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "col"), quiet = FALSE) {
-  # Callers reaching this directly may not have been through
-  # `.verify_grid_factors()`; fall back to the name patterns below rather than
-  # indexing a malformed `grid_factors`.
+  # Direct callers bypass `.verify_grid_factors()`, so fall back to the name
+  # patterns below rather than indexing a malformed `grid_factors`.
   named_dims <- is.list(grid_factors) &&
     all(c("dim1", "dim2") %in% names(grid_factors)) &&
     all(lengths(grid_factors[c("dim1", "dim2")]) == 1)

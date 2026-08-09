@@ -1,9 +1,8 @@
 # Fail if a pre-computed vignette is stale.
 #
-# The shipped `vignettes/*.qmd` are generated from `vignettes/*.qmd.orig` by
-# `data-raw/precompute-vignettes.R`. Nothing forces that script to be re-run, so
-# an edited `.orig` can silently ship alongside a stale `.qmd`. This compares
-# each source against the hashes recorded when the `.qmd` was last generated.
+# Nothing forces `data-raw/precompute-vignettes.R` to be re-run, so an edited
+# `.qmd.orig` can silently ship alongside a stale `.qmd`. Compare each source
+# against the hash recorded when the `.qmd` was last generated.
 #
 #     Rscript data-raw/check-vignettes-current.R
 

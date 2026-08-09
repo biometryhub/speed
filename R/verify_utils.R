@@ -200,13 +200,9 @@
 #' Verify the `grid_factors` argument
 #'
 #' @description
-#' `grid_factors` must be a single list naming the two grid axes, because
-#' [infer_row_col()] resolves one pair of axes for the whole design - they order
-#' the data frame and are recorded in the design's metadata. A per-level list
-#' (`list(wp = list(dim1 = ...), sp = ...)`) therefore cannot be honoured here;
-#' without this check it reaches `grid_factors$dim1` as `NULL` and fails with an
-#' uninformative "missing value where TRUE/FALSE needed". Use the `optimise`
-#' argument to vary grid factors between levels.
+#' `grid_factors` must be a single list naming the two grid axes, since
+#' [infer_row_col()] resolves one pair of axes for the whole design. Use the
+#' `optimise` argument to vary grid factors between levels.
 #'
 #' @rdname verify
 #'

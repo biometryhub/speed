@@ -1,4 +1,3 @@
-# Test pseudo_inverse function
 test_that("pseudo_inverse calculates Moore-Penrose inverse correctly", {
   # Test with a well-conditioned matrix
   A <- matrix(c(1, 2, 3, 4), nrow = 2, ncol = 2)
@@ -7,7 +6,6 @@ test_that("pseudo_inverse calculates Moore-Penrose inverse correctly", {
   # Check that A * A_inv * A = A (approximately)
   expect_equal(A %*% A_inv %*% A, A, tolerance = 1e-10)
 
-  # Check dimensions
   expect_equal(dim(A_inv), c(2, 2))
 
   # Agrees with solve() when the matrix is invertible, which is why
@@ -19,7 +17,6 @@ test_that("pseudo_inverse handles singular matrices", {
   # Test with a rank-deficient matrix (singular)
   singular_matrix <- matrix(c(1, 2, 2, 4), nrow = 2, ncol = 2)
 
-  # This should not throw an error but handle the rank deficiency
   result <- pseudo_inverse(singular_matrix)
   expect_true(is.matrix(result))
   expect_equal(dim(result), c(2, 2))
@@ -29,7 +26,6 @@ test_that("pseudo_inverse throws error for zero matrix", {
   # Test with a zero matrix (rank 0)
   zero_matrix <- matrix(0, nrow = 2, ncol = 2)
 
-  # This should throw an error with specific message
   expect_error(
     pseudo_inverse(zero_matrix),
     "zero_matrix has rank 0 - design may be invalid"
@@ -72,7 +68,6 @@ test_that("pseudo_inverse respects tolerance parameter", {
   expect_true(is.matrix(result_small_tol))
 })
 
-# Test env_add_one function
 test_that("env_add_one adds to existing key", {
   env <- new.env()
   env$test_key <- 5
@@ -93,11 +88,9 @@ test_that("env_add_one creates new key with value 1", {
 test_that("env_add_one works with different key types", {
   env <- new.env()
 
-  # Test with character key
   env_add_one(env, "char_key")
   expect_equal(env$char_key, 1)
 
-  # Test incrementing
   env_add_one(env, "char_key")
   expect_equal(env$char_key, 2)
 })
@@ -155,8 +148,7 @@ test_that("infer_row_col can infer row and column", {
 
 test_that("infer_row_col reports the columns it inferred from name patterns", {
   # `grid_factors` names `col`, which is absent, so both axes fall through to
-  # the name patterns - a different branch to the announcement made when
-  # `grid_factors` matches outright.
+  # the name patterns rather than being matched outright.
   expect_message(
     inferred <- infer_row_col(
       data.frame(row = rep(1:4, each = 5), range = rep(1:4, times = 5)),
@@ -172,9 +164,8 @@ test_that("infer_row_col reports the columns it inferred from name patterns", {
 })
 
 test_that("infer_row_col falls back to patterns when grid_factors is malformed", {
-  # Direct callers bypass `.verify_grid_factors()`, so a malformed argument must
-  # not be indexed - it used to fail with "missing value where TRUE/FALSE
-  # needed".
+  # Direct callers bypass `.verify_grid_factors()`, so a malformed argument
+  # must not be indexed.
   df <- data.frame(row = rep(1:4, each = 5), col = rep(1:4, times = 5))
 
   for (bad in list(
@@ -298,26 +289,6 @@ test_that("to_factor/to_types handle multi-class (vctrs-style) columns", {
   expect_equal(typed_data$numeric_col, test_data$numeric_col)
 })
 
-# test_that("parse_swap_formula parses with defaults", {
-#   swap <- ~ single(treatment)
-#   parsed <- parse_swap_formula(swap)
-#
-#   expect_equal(parsed, list(
-#     "single treatment within whole design" = list("single", "treatment", c("row", "col"), "1")
-#   ))
-# })
-
-# test_that("parse_swap_formula parses with multiple terms", {
-#   swap <- ~ single(treatment) + all(sub_treatment, a_row + a_col, block) + single(z, a + b + c, d)
-#   parsed <- parse_swap_formula(swap)
-#
-#   expect_equal(parsed, list(
-#     "single treatment within whole design" = list("single", "treatment", c("row", "col"), "1"),
-#     "all sub_treatment within block" = list("all", "sub_treatment", c("a_row", "a_col"), "block"),
-#     "single z within d" = list("single", "z", c("a", "b", "c"), "d")
-#   ))
-# })
-
 test_that("create_speed_input creates an input from a named list", {
   speed_input <- create_speed_input(
     swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
@@ -440,9 +411,8 @@ test_that("create_speed_input creates an input from a string", {
 })
 
 test_that("create_speed_input takes grid_factors per level when given them", {
-  # `speed()` refuses a per-level `grid_factors` because `infer_row_col()`
-  # resolves one pair of axes for the whole design, so this shape only arrives
-  # here from a direct call. A level without an entry falls back to the default.
+  # `speed()` refuses a per-level `grid_factors`, so this shape only arrives
+  # from a direct call. A level without an entry falls back to the default.
   speed_input <- create_speed_input(
     swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
     swap_within = list(wp = "block", sp = "wholeplot"),

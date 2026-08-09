@@ -10,9 +10,8 @@ name: R-CMD-check.yaml
 permissions: read-all
 
 jobs:
-  # The vignettes are pre-computed into plain markdown (see
-  # data-raw/precompute-vignettes.R), so nothing here re-runs their R code.
-  # Guard against a `.qmd.orig` being edited without regenerating the `.qmd`.
+  # The vignettes are pre-computed into plain markdown, so nothing here re-runs
+  # their R code. Guard against an edited `.qmd.orig` with a stale `.qmd`.
   vignettes-current:
     runs-on: ubuntu-latest
     steps:

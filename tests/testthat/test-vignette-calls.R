@@ -1,11 +1,7 @@
-# The vignettes are pre-computed (see data-raw/precompute-vignettes.R), so their
-# code is no longer executed by `R CMD check` on any platform. That saves
-# several minutes per run, but it means an argument rename could land without
-# anything noticing until someone regenerates the vignettes.
-#
-# These mirror the distinctive call shapes from each vignette on a tiny budget.
-# They are not about design quality - only that the call still works - so the
-# iteration counts are deliberately far below what the vignettes use.
+# The vignettes are pre-computed, so `R CMD check` no longer runs their code and
+# an argument rename could land unnoticed. These mirror each vignette's
+# distinctive call shapes on a tiny budget - they check only that the call still
+# works, not that the design is any good.
 
 test_that("speed.qmd call shapes still work", {
   crd_design <- initialise_design_df(items = 8, nrows = 8, ncols = 4)

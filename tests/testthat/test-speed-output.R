@@ -1,9 +1,7 @@
 # What a design prints and plots: `autoplot()`, progress/quiet messaging
 # and `print.design()`.
 
-# Test autoplot with factor columns
 test_that("autoplot handles factor row and column inputs", {
-  # Sample data with factor row and col
   test_data <- data.frame(
     row = factor(rep(1:5, times = 4)),
     col = factor(rep(1:4, each = 5)),
@@ -19,7 +17,6 @@ test_that("autoplot handles factor row and column inputs", {
     quiet = TRUE
   )
 
-  # Should not error when plotting with factor columns
   expect_no_error({
     autoplot(result)
   })
@@ -31,7 +28,6 @@ test_that("autoplot handles factor row and column inputs", {
 })
 
 test_that("autoplot handles factor row only", {
-  # Sample data with factor row but numeric col
   test_data <- data.frame(
     row = factor(rep(1:5, times = 4)),
     col = rep(1:4, each = 5),
@@ -47,7 +43,6 @@ test_that("autoplot handles factor row only", {
     quiet = TRUE
   )
 
-  # Should not error when plotting with factor row
   expect_no_error({
     plot <- autoplot(result)
   })
@@ -59,7 +54,6 @@ test_that("autoplot handles factor row only", {
 })
 
 test_that("autoplot handles factor column only", {
-  # Sample data with numeric row but factor col
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = factor(rep(1:4, each = 5)),
@@ -75,7 +69,6 @@ test_that("autoplot handles factor column only", {
     quiet = TRUE
   )
 
-  # Should not error when plotting with factor column
   expect_no_error({
     plot <- autoplot(result)
   })
@@ -87,7 +80,6 @@ test_that("autoplot handles factor column only", {
 })
 
 test_that("autoplot handles factor columns with blocks", {
-  # Sample data with factor row/col and blocks
   test_data <- data.frame(
     row = factor(rep(1:6, each = 4)),
     col = factor(rep(1:4, times = 6)),
@@ -105,7 +97,6 @@ test_that("autoplot handles factor columns with blocks", {
     quiet = TRUE
   )
 
-  # Should not error when plotting with factor columns and blocks
   expect_no_error({
     plot <- autoplot(result)
   })
@@ -117,7 +108,6 @@ test_that("autoplot handles factor columns with blocks", {
 })
 
 test_that("autoplot handles factor columns with custom column names", {
-  # Sample data with custom column names that are factors
   test_data <- data.frame(
     Row = factor(rep(1:5, times = 4)),
     Column = factor(rep(1:4, each = 5)),
@@ -133,7 +123,6 @@ test_that("autoplot handles factor columns with custom column names", {
     quiet = TRUE
   )
 
-  # Should not error when plotting with custom factor column names
   expect_no_error({
     plot <- autoplot(result, row = Row, column = Column, treatments = trt)
   })
@@ -173,7 +162,6 @@ test_that("speed reports non-numeric row/col labels clearly", {
 })
 
 test_that("autoplot handles mixed factor and numeric columns in hierarchical designs", {
-  # Hierarchical design with mixed factor/numeric columns
   df_split <- data.frame(
     row = factor(rep(1:12, times = 6)),
     col = rep(1:6, each = 12), # Keep col as numeric
@@ -196,7 +184,6 @@ test_that("autoplot handles mixed factor and numeric columns in hierarchical des
     quiet = TRUE
   )
 
-  # Should not error with mixed factor/numeric in hierarchical design
   expect_no_error({
     plot_wp <- autoplot(result, treatments = "wholeplot_treatment")
     plot_sp <- autoplot(result, treatments = "subplot_treatment")
@@ -212,7 +199,6 @@ test_that("autoplot handles mixed factor and numeric columns in hierarchical des
 })
 
 test_that("autoplot error handling with missing columns still works with factors", {
-  # Test that error handling works even when some columns are factors
   test_data <- data.frame(
     row = factor(rep(1:5, times = 4)),
     col = factor(rep(1:4, each = 5)),
@@ -228,7 +214,6 @@ test_that("autoplot error handling with missing columns still works with factors
     quiet = TRUE
   )
 
-  # Should give helpful error when specifying non-existent column
   expect_error(
     autoplot(result, row = nonexistent_row),
     "'nonexistent_row' not found"
@@ -245,9 +230,7 @@ test_that("autoplot error handling with missing columns still works with factors
   )
 })
 
-# Test autoplot legend parameter
 test_that("autoplot legend parameter controls legend visibility", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:3, each = 3),
     col = rep(1:3, times = 3),
@@ -263,22 +246,17 @@ test_that("autoplot legend parameter controls legend visibility", {
     quiet = TRUE
   )
 
-  # Test default behavior (legend = FALSE)
   plot_no_legend <- autoplot(result)
   expect_contains(class(plot_no_legend), "ggplot")
 
-  # Check that legend is hidden by default
   plot_build <- ggplot2::ggplot_build(plot_no_legend)
   expect_equal(plot_no_legend$theme$legend.position, "none")
 
-  # Test with legend = TRUE
   plot_with_legend <- autoplot(result, legend = TRUE)
   expect_contains(class(plot_with_legend), "ggplot")
 
-  # Check that legend is shown when legend = TRUE
   expect_equal(plot_with_legend$theme$legend.position, "right")
 
-  # Test visual regression for both cases
   vdiffr::expect_doppelganger(
     "autoplot_no_legend",
     autoplot(result, legend = FALSE)
@@ -289,9 +267,7 @@ test_that("autoplot legend parameter controls legend visibility", {
   )
 })
 
-# Test autoplot legend parameter with hierarchical designs
 test_that("autoplot legend parameter works with hierarchical designs", {
-  # Hierarchical split-plot design
   df_split <- data.frame(
     row = rep(1:6, each = 4),
     col = rep(1:4, times = 6),
@@ -311,7 +287,6 @@ test_that("autoplot legend parameter works with hierarchical designs", {
     quiet = TRUE
   )
 
-  # Test with wholeplot treatments
   plot_wp_no_legend <- autoplot(
     result,
     treatments = "wholeplot_treatment",
@@ -326,11 +301,9 @@ test_that("autoplot legend parameter works with hierarchical designs", {
   expect_contains(class(plot_wp_no_legend), "ggplot")
   expect_contains(class(plot_wp_with_legend), "ggplot")
 
-  # Check legend visibility
   expect_equal(plot_wp_no_legend$theme$legend.position, "none")
   expect_equal(plot_wp_with_legend$theme$legend.position, "right")
 
-  # Test with subplot treatments
   plot_sp_no_legend <- autoplot(
     result,
     treatments = "subplot_treatment",
@@ -345,11 +318,9 @@ test_that("autoplot legend parameter works with hierarchical designs", {
   expect_contains(class(plot_sp_no_legend), "ggplot")
   expect_contains(class(plot_sp_with_legend), "ggplot")
 
-  # Check legend visibility
   expect_equal(plot_sp_no_legend$theme$legend.position, "none")
   expect_equal(plot_sp_with_legend$theme$legend.position, "right")
 
-  # Test visual regression
   vdiffr::expect_doppelganger(
     "autoplot_hierarchical_no_legend",
     plot_wp_no_legend
@@ -360,16 +331,13 @@ test_that("autoplot legend parameter works with hierarchical designs", {
   )
 })
 
-# Test progress output for simple designs
 test_that("speed prints progress output when quiet=FALSE for simple designs", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
     treatment = rep(LETTERS[1:3], 4)
   )
 
-  # Capture output with quiet=FALSE and enough iterations to trigger progress output
   expect_snapshot(
     result <- speed(
       data = test_data,
@@ -383,18 +351,10 @@ test_that("speed prints progress output when quiet=FALSE for simple designs", {
     )
   )
 
-  # Check that progress messages are printed
-  # expect_match(output, "Iteration: 1000")
-  # expect_match(output, "Score:")
-  # expect_match(output, "Best:")
-  # expect_match(output, "Since Improvement:")
-
-  # Check that the function still works correctly
   expect_s3_class(result, "design")
   expect_true(is.numeric(result$score))
 })
 
-# Test early stopping output for simple designs
 test_that("speed prints early stopping message when quiet=FALSE for simple designs", {
   # Sample data that will likely converge quickly (already optimal)
   test_data <- data.frame(
@@ -403,7 +363,6 @@ test_that("speed prints early stopping message when quiet=FALSE for simple desig
     treatment = LETTERS[1:4] # Already well-distributed
   )
 
-  # Capture output with early stopping likely to occur
   expect_message(
     output <- capture_output(
       result <- speed(
@@ -421,17 +380,13 @@ test_that("speed prints early stopping message when quiet=FALSE for simple desig
     "row and col are used as row and column, respectively"
   )
 
-  # Check that early stopping message is printed
   expect_match(output, "Early stopping at iteration")
 
-  # Verify that early stopping actually occurred
   expect_true(result$stopped_early)
   expect_lt(result$iterations_run, 1000)
 })
 
-# Test progress output for hierarchical designs
 test_that("speed prints progress output when quiet=FALSE for hierarchical designs", {
-  # Hierarchical split-plot design
   df_split <- data.frame(
     row = rep(1:6, each = 4),
     col = rep(1:4, times = 6),
@@ -440,7 +395,6 @@ test_that("speed prints progress output when quiet=FALSE for hierarchical design
     block = rep(1:2, each = 12)
   )
 
-  # Capture output with quiet=FALSE and enough iterations to trigger progress output
   expect_snapshot(
     result <- speed(
       df_split,
@@ -454,25 +408,11 @@ test_that("speed prints progress output when quiet=FALSE for hierarchical design
     )
   )
 
-  # Check that hierarchical level messages are printed
-  # expect_match(output, "Optimising level: wp")
-  # expect_match(output, "Optimising level: sp")
-
-  # Check that progress messages include level information
-  # expect_match(output$stdout, "Level: wp")
-  # expect_match(output$stdout, "Level: sp")
-  # expect_match(output$stdout, "Iteration: 1000")
-  # expect_match(output$stdout, "Score:")
-  # expect_match(output$stdout, "Best:")
-  # expect_match(output$stdout, "Since Improvement:")
-
-  # Check that the function still works correctly
   expect_s3_class(result, "design")
   expect_true(is.list(result$scores))
   expect_true(is.list(result$treatments))
 })
 
-# Test early stopping output for hierarchical designs
 test_that("speed prints early stopping messages when quiet=FALSE for hierarchical designs", {
   # Simple hierarchical design that will likely converge quickly
   df_split <- data.frame(
@@ -483,7 +423,6 @@ test_that("speed prints early stopping messages when quiet=FALSE for hierarchica
     block = rep(1:2, each = 12)
   )
 
-  # Capture output with early stopping likely to occur
   expect_message(
     output <- capture_output(
       result <- speed(
@@ -500,24 +439,19 @@ test_that("speed prints early stopping messages when quiet=FALSE for hierarchica
     "row and col are used as row and column, respectively"
   )
 
-  # Check that early stopping messages are printed with level information
   expect_match(output, "Early stopping at iteration .* for level wp")
   expect_match(output, "Early stopping at iteration .* for level sp")
 
-  # Verify that early stopping actually occurred for at least one level
   expect_true(any(result$stopped_early))
 })
 
-# Test that quiet=TRUE suppresses all output
 test_that("speed produces no output when quiet=TRUE", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
     treatment = rep(LETTERS[1:3], 4)
   )
 
-  # Capture output with quiet=TRUE
   output <- capture_output(
     result <- speed(
       data = test_data,
@@ -530,18 +464,14 @@ test_that("speed produces no output when quiet=TRUE", {
     )
   )
 
-  # Check that no output is produced
   expect_equal(nchar(output), 0)
   expect_equal(nchar(output), 0)
 
-  # Check that the function still works correctly
   expect_s3_class(result, "design")
   expect_true(is.numeric(result$score))
 })
 
-# Test that quiet=TRUE suppresses output in hierarchical designs
 test_that("speed produces no output when quiet=TRUE for hierarchical designs", {
-  # Hierarchical split-plot design
   df_split <- data.frame(
     row = rep(1:6, each = 4),
     col = rep(1:4, times = 6),
@@ -550,7 +480,6 @@ test_that("speed produces no output when quiet=TRUE for hierarchical designs", {
     block = rep(1:2, each = 12)
   )
 
-  # Capture output with quiet=TRUE
   output <- capture_output(
     result <- speed(
       df_split,
@@ -563,26 +492,21 @@ test_that("speed produces no output when quiet=TRUE for hierarchical designs", {
     ) # Should suppress all output
   )
 
-  # Check that no output is produced
   expect_equal(nchar(output), 0)
   expect_equal(nchar(output), 0)
 
-  # Check that the function still works correctly
   expect_s3_class(result, "design")
   expect_true(is.list(result$scores))
   expect_true(is.list(result$treatments))
 })
 
-# Test progress output frequency (every 1000 iterations)
 test_that("speed prints progress output at correct intervals", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
     treatment = rep(LETTERS[1:4], 5)
   )
 
-  # Capture output with enough iterations to trigger multiple progress outputs
   expect_message(
     output <- capture_output(
       result <- speed(
@@ -599,21 +523,17 @@ test_that("speed prints progress output at correct intervals", {
     "row and col are used as row and column, respectively"
   )
 
-  # Count occurrences of "Iteration:" to verify frequency
   iteration_matches <- regmatches(output, gregexpr("Iteration:", output))[[1]]
 
   # Should have progress output at iterations 1000, 2000, 3000 (3 total)
   # Plus potentially early stopping message, so at least 3
   expect_gte(length(iteration_matches), 2)
 
-  # Check specific iteration numbers are present
   expect_match(output, "Iteration: 1000")
   expect_match(output, "Iteration: 2000")
 })
 
-# Test print.design method
 test_that("print.design works for simple designs", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
@@ -630,10 +550,8 @@ test_that("print.design works for simple designs", {
     quiet = TRUE
   )
 
-  # Capture print output
   output <- capture_output(print(result))
 
-  # Check that the printed output contains expected elements
   expect_match(output, "Optimised Experimental Design")
   expect_match(output, "Score:")
   expect_match(output, "Iterations Run:")
@@ -641,22 +559,18 @@ test_that("print.design works for simple designs", {
   expect_match(output, "Treatments:")
   expect_match(output, "Seed:")
 
-  # Check specific values
   expect_match(output, paste("Score:", result$score))
   expect_match(output, paste("Iterations Run:", result$iterations_run))
   expect_match(output, paste("Stopped Early:", result$stopped_early))
   expect_match(output, paste("Seed:", result$seed))
 
-  # Check treatments are displayed correctly for simple design
   expected_treatments <- paste(result$treatments, collapse = ", ")
   expect_match(output, paste("Treatments:", expected_treatments))
 
-  # Verify invisible return
   expect_identical(print(result), result)
 })
 
 test_that("print.design works for hierarchical designs", {
-  # Hierarchical split-plot design
   df_split <- data.frame(
     row = rep(1:6, each = 4),
     col = rep(1:4, times = 6),
@@ -675,10 +589,8 @@ test_that("print.design works for hierarchical designs", {
     quiet = TRUE
   )
 
-  # Capture print output
   output <- capture_output(print.design(result))
 
-  # Check that the printed output contains expected elements
   expect_match(output, "Optimised Experimental Design")
   expect_match(output, "Score:")
   expect_match(output, "Iterations Run:")
@@ -686,11 +598,9 @@ test_that("print.design works for hierarchical designs", {
   expect_match(output, "Treatments:")
   expect_match(output, "Seed:")
 
-  # Check hierarchical-specific formatting
   expect_match(output, "wp:") # Level name should be shown
   expect_match(output, "sp:") # Level name should be shown
 
-  # Check that treatments for each level are displayed
   for (level_name in names(result$treatments)) {
     expected_treatments <- paste(
       result$treatments[[level_name]],
@@ -699,15 +609,12 @@ test_that("print.design works for hierarchical designs", {
     expect_match(output, paste0(level_name, ": ", expected_treatments))
   }
 
-  # Verify stopped_early is shown correctly for hierarchical (should show both levels)
   expect_match(output, "Stopped Early:")
 
-  # Verify invisible return
   expect_identical(print(result), result)
 })
 
 test_that("print.design handles different stopped_early formats", {
-  # Test with simple design where stopped_early is logical
   test_data <- data.frame(
     row = rep(1:3, times = 3),
     col = rep(1:3, each = 3),
@@ -727,7 +634,6 @@ test_that("print.design handles different stopped_early formats", {
   output_simple <- capture_output(print(result_simple))
   expect_match(output_simple, "Stopped Early: (TRUE|FALSE)")
 
-  # Test with hierarchical design where stopped_early is named logical vector
   df_split <- data.frame(
     row = rep(1:4, each = 3),
     col = rep(1:3, times = 4),
@@ -752,7 +658,6 @@ test_that("print.design handles different stopped_early formats", {
 })
 
 test_that("print.design displays correct treatment counts and names", {
-  # Test with different numbers of treatments
   test_data_few <- data.frame(
     row = rep(1:4, times = 2),
     col = rep(1:2, each = 4),
@@ -786,17 +691,14 @@ test_that("print.design displays correct treatment counts and names", {
     quiet = TRUE
   )
 
-  # Test few treatments
   output_few <- capture_output(print(result_few))
   expect_match(output_few, "A, B") # Should show both treatments
 
-  # Test many treatments
   output_many <- capture_output(print(result_many))
   expect_match(output_many, "A, B, C, D, E, F") # Should show all treatments
 })
 
 test_that("print.design works with extra arguments via ...", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:3, times = 3),
     col = rep(1:3, each = 3),
@@ -813,12 +715,10 @@ test_that("print.design works with extra arguments via ...", {
     quiet = TRUE
   )
 
-  # Should not error with extra arguments (though they're not used)
   expect_no_error({
     print(result, extra_param = "test")
   })
 
-  # Output should still be correct
   output <- capture_output(print(result, unused_param = 123))
   expect_match(output, "Optimised Experimental Design")
 })

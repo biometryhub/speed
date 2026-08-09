@@ -1,8 +1,6 @@
 # Multi-level designs: split-plot, split-split plot, strip plot and MET.
 
-# Test split plots
 test_that("speed handles split plot designs", {
-  # Hierarchical split-plot design
   df_split <- data.frame(
     row = rep(1:12, each = 4),
     col = rep(1:4, times = 12),
@@ -22,9 +20,7 @@ test_that("speed handles split plot designs", {
     quiet = TRUE
   )
 
-  # Check the result
   expect_s3_class(result, "design")
-  # Check values
   expect_equal(result$score, 100)
   expect_equal(result$iterations_run, 1726)
   expect_equal(result$stopped_early, c(wp = TRUE, sp = TRUE))
@@ -39,9 +35,7 @@ test_that("speed handles split plot designs", {
   )
 })
 
-# Test split-split plots
 test_that("speed handles split-split plot designs", {
-  # Hierarchical split-split plot design
   df_split_split <- data.frame(
     row = rep(1:16, each = 9),
     col = rep(1:9, times = 16),
@@ -68,10 +62,8 @@ test_that("speed handles split-split plot designs", {
     quiet = TRUE
   )
 
-  # Check the result
   expect_s3_class(result, "design")
 
-  # Check output structure
   expect_named(
     result,
     c(
@@ -87,7 +79,6 @@ test_that("speed handles split-split plot designs", {
     )
   )
 
-  # Check data types
   expect_true(is.data.frame(result$design_df))
   expect_true(is.numeric(result$score))
   expect_true(is.list(result$scores))
@@ -96,30 +87,25 @@ test_that("speed handles split-split plot designs", {
   expect_true(is.logical(result$stopped_early))
   expect_true(is.list(result$treatments))
 
-  # Check hierarchical structure
   expect_named(result$scores, c("wp", "sp", "ssp"))
   expect_named(result$temperatures, c("wp", "sp", "ssp"))
   expect_named(result$stopped_early, c("wp", "sp", "ssp"))
   expect_named(result$treatments, c("wp", "sp", "ssp"))
 
-  # Check output dimensions
   expect_equal(nrow(result$design_df), 144) # 16 rows × 9 cols
   expect_equal(ncol(result$design_df), 8) # All columns preserved
   expect_equal(length(result$scores), 3)
   expect_equal(sapply(result$scores, length), c(wp = 229, sp = 201, ssp = 1000))
 
-  # Check numerical output
   expect_equal(result$score, 497)
   expect_equal(result$iterations_run, 1430)
   expect_equal(result$stopped_early, c(wp = TRUE, sp = TRUE, ssp = FALSE))
   expect_equal(result$seed, 42)
 
-  # Check treatment levels are preserved
   expect_equal(result$treatments$wp, c("A", "B", "C"))
   expect_equal(result$treatments$sp, c("a", "b", "c", "d"))
   expect_equal(result$treatments$ssp, c("x", "y", "z"))
 
-  # Test visualization for each level
   vdiffr::expect_doppelganger(
     "speed_split_split_wp",
     autoplot(result, treatments = "wholeplot_treatment")
@@ -134,7 +120,6 @@ test_that("speed handles split-split plot designs", {
   )
 })
 
-# Test strip plots
 test_that("speed handles strip plot designs", {
   df_strip <- data.frame(
     row = rep(1:12, each = 6), # 12 rows total (4 rows per block x 6 blocks)
@@ -156,10 +141,8 @@ test_that("speed handles strip plot designs", {
     quiet = TRUE
   )
 
-  # Check the result
   expect_s3_class(result, "design")
 
-  # Check output structure
   expect_named(
     result,
     c(
@@ -175,7 +158,6 @@ test_that("speed handles strip plot designs", {
     )
   )
 
-  # Check data types
   expect_true(is.data.frame(result$design_df))
   expect_true(is.numeric(result$score))
   expect_true(is.list(result$scores))
@@ -184,29 +166,24 @@ test_that("speed handles strip plot designs", {
   expect_true(is.logical(result$stopped_early))
   expect_true(is.list(result$treatments))
 
-  # Check hierarchical structure
   expect_named(result$scores, c("ht", "vt"))
   expect_named(result$temperatures, c("ht", "vt"))
   expect_named(result$stopped_early, c("ht", "vt"))
   expect_named(result$treatments, c("ht", "vt"))
 
-  # Check output dimensions
   expect_equal(nrow(result$design_df), 72) # 16 rows × 9 cols
   expect_equal(ncol(result$design_df), 6) # All columns preserved
   expect_equal(length(result$scores), 2)
   expect_equal(sapply(result$scores, length), c(ht = 232, vt = 369))
 
-  # Check numerical output
   expect_equal(result$score, 145)
   expect_equal(result$iterations_run, 601)
   expect_equal(result$stopped_early, c(ht = TRUE, vt = TRUE))
   expect_equal(result$seed, 42)
 
-  # Check treatment levels are preserved
   expect_equal(result$treatments$ht, c("a", "b", "c", "d"))
   expect_equal(result$treatments$vt, c("A", "B", "C"))
 
-  # Test visualization for each level
   vdiffr::expect_doppelganger(
     "speed_strip_ht",
     autoplot(result, treatments = "horizontal_treatment")

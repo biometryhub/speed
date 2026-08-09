@@ -131,10 +131,9 @@ test_that("3-way factorial designs run to optimisation", {
   expect_equal(nrow(result$design_df), 135)
   expect_setequal(result$treatments, df$treatment)
 
-  # "Runs to optimisation" is convergence, not a known optimum: the factorial
-  # objective has no derivable lower bound, so `optimal_score` is NA and there
-  # is nothing to compare against. What can be asserted is that the search
-  # ended on the no-improvement window rather than the iteration cap.
+  # The factorial objective has no derivable lower bound, so `optimal_score` is
+  # NA; convergence is instead shown by stopping on the no-improvement window
+  # rather than the iteration cap.
   expect_true(is.na(result$metadata$per_level[[1]]$optimal_score))
   expect_true(result$stopped_early)
   expect_lt(result$iterations_run, 50000)

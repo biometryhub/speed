@@ -1,19 +1,13 @@
 # Pre-compute the vignettes.
 #
-# The vignettes run substantial optimisations - rendering them all takes several
-# minutes, and `R CMD build` and `R CMD check` each render them again, so CI
-# pays that cost twice on every platform. Instead the executable sources live in
-# `vignettes/*.qmd.orig` and are knitted here into plain `vignettes/*.qmd` with
-# the results already embedded. What ships contains no R chunks, so building and
-# checking the vignettes is a markdown-to-HTML pass.
+# The executable sources live in `vignettes/*.qmd.orig` and are knitted here
+# into plain `vignettes/*.qmd` with the results embedded, so what ships has no R
+# chunks and `R CMD build`/`check` only do a markdown-to-HTML pass.
 #
-# Run this from the package root after changing any `.qmd.orig`, then commit the
-# regenerated `.qmd` files, `vignettes/figures/` and `vignette-hashes.txt`:
+# Run from the package root after changing any `.qmd.orig`, then commit the
+# regenerated `.qmd`, `vignettes/figures/` and `vignette-hashes.txt`:
 #
 #     Rscript data-raw/precompute-vignettes.R
-#
-# `data-raw/check-vignettes-current.R` fails if a `.qmd` is stale, so CI catches
-# a forgotten re-run.
 
 pkgload::load_all(quiet = TRUE)
 
@@ -73,11 +67,8 @@ withr::with_dir(vig_dir, {
 })
 
 # Record what each `.qmd` was generated from, so staleness is detectable. Kept
-# in data-raw/ rather than vignettes/ so it does not ship in the tarball.
-#
-# CR bytes are stripped before hashing: with `core.autocrlf=true` a Windows
-# working tree holds CRLF where git stores LF, so hashing the file as-is would
-# record a manifest that only ever matches on the platform that wrote it.
+# in data-raw/ rather than vignettes/ so it does not ship in the tarball. CR
+# bytes are stripped so a CRLF working tree hashes the same as an LF checkout;
 # `check-vignettes-current.R` must strip them the same way.
 hashes <- vapply(
   file.path(vig_dir, orig),

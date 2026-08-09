@@ -1,12 +1,8 @@
 # Executes the real vignette sources across the full platform matrix.
 #
-# The vignettes that ship are pre-computed (data-raw/precompute-vignettes.R), so
-# R-CMD-check.yaml never runs their R code - that is what keeps it fast. This
-# workflow is where that coverage comes back: it renders `vignettes/*.qmd.orig`
-# for real on every OS/R combination, so a platform-specific breakage still
-# surfaces. It just does not sit on the critical path of every push.
-#
-# Runs weekly, on demand, and on any change to the vignette sources.
+# The vignettes that ship are pre-computed, so R-CMD-check.yaml never runs their
+# R code. This restores that coverage without sitting on the critical path of
+# every push: weekly, on demand, and on any change to the vignette sources.
 on:
   schedule:
     # Mondays, 17:00 UTC

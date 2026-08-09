@@ -8,15 +8,13 @@
 
 ## Minor Changes
 
-- The startup check for a newer version on GitHub now only runs in interactive sessions, so scripts and
-  `R CMD check` no longer make a network call when the package is attached. Set the
-  `SPEED_NO_VERSION_CHECK` environment variable to turn it off entirely.
+- The startup version check now only runs in interactive sessions. Set the `SPEED_NO_VERSION_CHECK`
+  environment variable to disable it entirely.
 
 ## Bug Fixes
 
-- `speed()` now errors with a clear message when `grid_factors` is malformed, instead of failing
-  with "missing value where TRUE/FALSE needed". Per-level grid factors point to the `optimise`
-  argument.
+- `speed()` now gives a clear error when `grid_factors` is malformed, instead of failing with
+  "missing value where TRUE/FALSE needed".
 
 # speed 0.0.10
 

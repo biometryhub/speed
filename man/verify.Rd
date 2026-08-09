@@ -121,13 +121,9 @@ Called on the resolved \code{optimise} list, so it covers simple, legacy
 hierarchical and \verb{optimise = } calls alike, including levels that set
 \code{swap_all} individually.
 
-\code{grid_factors} must be a single list naming the two grid axes, because
-\code{\link[=infer_row_col]{infer_row_col()}} resolves one pair of axes for the whole design - they order
-the data frame and are recorded in the design's metadata. A per-level list
-(\code{list(wp = list(dim1 = ...), sp = ...)}) therefore cannot be honoured here;
-without this check it reaches \code{grid_factors$dim1} as \code{NULL} and fails with an
-uninformative "missing value where TRUE/FALSE needed". Use the \code{optimise}
-argument to vary grid factors between levels.
+\code{grid_factors} must be a single list naming the two grid axes, since
+\code{\link[=infer_row_col]{infer_row_col()}} resolves one pair of axes for the whole design. Use the
+\code{optimise} argument to vary grid factors between levels.
 
 \code{grid_factors} is a plain list, so a mistyped \code{by} would be ignored and every
 grid silently pooled. Checked before any optimisation happens.

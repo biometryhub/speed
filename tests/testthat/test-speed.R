@@ -2,9 +2,7 @@
 # seeds and value round-tripping. Layout, hierarchy, factorial and output
 # tests live in the sibling test-speed-*.R files.
 
-# Test 1: Check if the function runs without errors
 test_that("speed runs without errors", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
@@ -22,9 +20,7 @@ test_that("speed runs without errors", {
   expect_s3_class(result, "design")
 })
 
-# Test 2: Validate output structure
 test_that("speed returns correct output structure", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
@@ -56,7 +52,6 @@ test_that("speed returns correct output structure", {
     )
   )
 
-  # Check data types
   expect_true(is.data.frame(result$design_df))
   expect_true(is.numeric(result$score))
   expect_true(is.numeric(result$scores))
@@ -64,7 +59,6 @@ test_that("speed returns correct output structure", {
   expect_true(is.logical(result$stopped_early))
   expect_true(is.character(result$treatments))
 
-  # Check values
   expect_equal(nrow(result$design_df), 20)
   expect_equal(ncol(result$design_df), 3)
   expect_equal(result$score, 1)
@@ -77,9 +71,7 @@ test_that("speed returns correct output structure", {
   vdiffr::expect_doppelganger("speed_small", autoplot(result))
 })
 
-# Test 3: Check input validation for missing columns
 test_that("speed throws error for missing columns", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
@@ -98,9 +90,7 @@ test_that("speed throws error for missing columns", {
   )
 })
 
-# Test 4: Check input validation for invalid spatial factors
 test_that("speed throws error for invalid spatial factors", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
@@ -119,9 +109,7 @@ test_that("speed throws error for invalid spatial factors", {
   )
 })
 
-# Test 5: Check early stopping behaviour
 test_that("speed stops early when no improvement", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
@@ -309,9 +297,7 @@ test_that("speed does not stop on the optimal score (NA) for negative weights", 
   expect_lt(result$score, 20)
 })
 
-# Test 6: Check reproducibility with seed
 test_that("speed produces reproducible results with seed", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
@@ -339,9 +325,7 @@ test_that("speed produces reproducible results with seed", {
   vdiffr::expect_doppelganger("speed_seed", autoplot(result1))
 })
 
-# Test 7: Check behaviour with swap_within boundaries
 test_that("speed respects swap_within boundaries", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
@@ -359,7 +343,6 @@ test_that("speed respects swap_within boundaries", {
     quiet = TRUE
   )
 
-  # Ensure treatments are swapped only within blocks
   block1_treatments <- unique(result$design_df$treatment[
     result$design_df$block == 1
   ])
@@ -375,7 +358,6 @@ test_that("speed respects swap_within boundaries", {
 })
 
 test_that("speed runs with random initialisation", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
@@ -420,7 +402,6 @@ test_that("speed runs with random initialisation", {
     )
   )
 
-  # Check data types
   expect_true(is.data.frame(result_random$design_df))
   expect_true(is.numeric(result_random$score))
   expect_true(is.numeric(result_random$scores))
@@ -428,7 +409,6 @@ test_that("speed runs with random initialisation", {
   expect_true(is.logical(result_random$stopped_early))
   expect_true(is.character(result_random$treatments))
 
-  # Check values
   expect_equal(nrow(result_random$design_df), 20)
   expect_equal(ncol(result_random$design_df), 3)
   expect_equal(result_random$score, 1)
@@ -445,7 +425,6 @@ test_that("speed runs with random initialisation", {
 })
 
 test_that("speed runs a with variation of row and column columns", {
-  # Sample data for testing
   test_data <- data.frame(
     Row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
@@ -561,7 +540,6 @@ test_that("`grid_factors$by` is checked before optimising", {
 })
 
 test_that("speed runs without seed", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
@@ -578,16 +556,13 @@ test_that("speed runs without seed", {
   expect_s3_class(result, "design")
 })
 
-# Test automatic seed generation in simple designs
 test_that("speed generates seed automatically from .Random.seed[3] when seed=NULL for simple designs", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
     treatment = rep(LETTERS[1:3], 4)
   )
 
-  # Run speed with seed=NULL (default)
   result <- speed(
     data = test_data,
     swap = "treatment",
@@ -598,7 +573,6 @@ test_that("speed generates seed automatically from .Random.seed[3] when seed=NUL
     quiet = TRUE
   )
 
-  # Check that a seed was generated and stored
   expect_true(is.numeric(result$seed))
   expect_true(length(result$seed) == 1)
   expect_false(is.na(result$seed))
@@ -607,7 +581,6 @@ test_that("speed generates seed automatically from .Random.seed[3] when seed=NUL
   # (This is a reasonable but not strict test since .Random.seed[3] can vary widely)
   expect_true(is.finite(result$seed))
 
-  # Test that the generated seed produces reproducible results
   generated_seed <- result$seed
 
   result_with_generated_seed <- speed(
@@ -620,14 +593,11 @@ test_that("speed generates seed automatically from .Random.seed[3] when seed=NUL
     quiet = TRUE
   )
 
-  # Results should be identical when using the auto-generated seed
   expect_equal(result$design_df, result_with_generated_seed$design_df)
   expect_equal(result$seed, result_with_generated_seed$seed)
 })
 
-# Test automatic seed generation in hierarchical designs
 test_that("speed generates seed automatically from .Random.seed[3] when seed=NULL for hierarchical designs", {
-  # Hierarchical split-plot design
   df_split <- data.frame(
     row = rep(1:9, each = 3),
     col = rep(1:3, times = 9),
@@ -636,7 +606,6 @@ test_that("speed generates seed automatically from .Random.seed[3] when seed=NUL
     block = rep(1:3, each = 9)
   )
 
-  # Run hierarchical speed with seed=NULL (default)
   result <- speed(
     df_split,
     swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
@@ -647,7 +616,6 @@ test_that("speed generates seed automatically from .Random.seed[3] when seed=NUL
     quiet = TRUE
   )
 
-  # Check that a seed was generated and stored
   expect_true(is.numeric(result$seed))
   expect_true(length(result$seed) == 1)
   expect_false(is.na(result$seed))
@@ -655,7 +623,6 @@ test_that("speed generates seed automatically from .Random.seed[3] when seed=NUL
   # The seed should be within the range of possible .Random.seed[3] values
   expect_true(is.finite(result$seed))
 
-  # Test that the generated seed produces reproducible results
   generated_seed <- result$seed
 
   result_with_generated_seed <- speed(
@@ -668,26 +635,21 @@ test_that("speed generates seed automatically from .Random.seed[3] when seed=NUL
     quiet = TRUE
   )
 
-  # Results should be identical when using the auto-generated seed
   expect_equal(result$design_df, result_with_generated_seed$design_df)
   expect_equal(result$seed, result_with_generated_seed$seed)
 
-  # Check hierarchical structure is preserved
   expect_true(is.list(result$scores))
   expect_true(is.list(result$temperatures))
   expect_true(is.list(result$treatments))
 })
 
-# Test that different runs without seed produce different results (non-deterministic behavior)
 test_that("speed produces different results when seed=NULL across different runs", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
     treatment = rep(LETTERS[1:4], each = 5)
   )
 
-  # Run speed multiple times without setting seed
   result1 <- speed(
     data = test_data,
     swap = "treatment",
@@ -698,7 +660,6 @@ test_that("speed produces different results when seed=NULL across different runs
     quiet = TRUE
   )
 
-  # Advance the random number generator state
   set.seed(NULL) # Reset to use current time
   dummy <- runif(10) # Advance the state
 
@@ -712,10 +673,8 @@ test_that("speed produces different results when seed=NULL across different runs
     quiet = TRUE
   )
 
-  # Seeds should be different (with very high probability)
   expect_false(identical(result1$seed, result2$seed))
 
-  # Results should be different (with very high probability due to different seeds)
   # Note: There's a tiny chance they could be the same by coincidence, but extremely unlikely
   expect_false(identical(
     result1$design_df$treatment,
@@ -724,7 +683,6 @@ test_that("speed produces different results when seed=NULL across different runs
 })
 
 test_that("speed runs with n random initialisation", {
-  # Sample data for testing
   df <- expand.grid(col = 1:4, row = 1:5)
   df$treatment <- LETTERS[1:4]
   initial_score <- objective_function(df, "treatment", c("row", "col"))$score
@@ -746,7 +704,6 @@ test_that("speed runs with n random initialisation", {
 })
 
 test_that("speed runs with legacy options(speed.{option})", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
@@ -763,7 +720,6 @@ test_that("speed runs with legacy options(speed.{option})", {
     quiet = TRUE
   )
 
-  # expect deprecated warning
   withr::with_options(
     list(speed.random_initialisation = TRUE),
     suppressWarnings(expect_warning(
@@ -1017,8 +973,7 @@ test_that("speed rejects a malformed grid_factors with an actionable message", {
 
 test_that("speed points at `optimise` for per-level grid factors", {
   # `infer_row_col()` resolves one pair of axes for the whole design, so a
-  # per-level `grid_factors` cannot be honoured on the legacy hierarchical
-  # shape. It used to fail with "missing value where TRUE/FALSE needed".
+  # per-level `grid_factors` cannot be honoured on the legacy hierarchical shape.
   test_data <- data.frame(
     range = rep(1:6, each = 4),
     plot = rep(1:4, times = 6),
@@ -1046,9 +1001,8 @@ test_that("speed points at `optimise` for per-level grid factors", {
 })
 
 test_that("random_initialise returns immediately on a zero score", {
-  # A score of 0 is optimal, so the remaining random starts are skipped. Zeroing
-  # both weights makes the objective identically 0, which exercises that early
-  # return without depending on a shuffle happening to find a perfect layout.
+  # Zeroing both weights makes the objective identically 0, so the early return
+  # is exercised without relying on a shuffle finding a perfect layout.
   test_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),

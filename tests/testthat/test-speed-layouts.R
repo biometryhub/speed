@@ -1,9 +1,7 @@
 # `speed()` over particular field layouts - large, blocked, irregular and
 # unevenly replicated designs.
 
-# Test 8: Irregular layout with missing plots
 test_that("speed handles irregular layouts with missing plots", {
-  # skip()
   irregular_data <- data.frame(
     row = rep(1:4, each = 3),
     col = rep(1:3, times = 4),
@@ -22,7 +20,6 @@ test_that("speed handles irregular layouts with missing plots", {
   )
   expect_s3_class(result, "design")
 
-  # Check values
   expect_identical(
     which(is.na(result$design_df$treatment)),
     which(is.na(irregular_data$treatment))
@@ -33,7 +30,6 @@ test_that("speed handles irregular layouts with missing plots", {
   vdiffr::expect_doppelganger("speed_missing_plots", autoplot(result))
 })
 
-# Test 9: Multiple spatial factors
 test_that("speed handles multiple spatial factors", {
   multi_factor_data <- data.frame(
     row = rep(1:5, each = 5),
@@ -55,7 +51,6 @@ test_that("speed handles multiple spatial factors", {
   vdiffr::expect_doppelganger("speed_multi_spatial_factors", autoplot(result))
 })
 
-# Test 11: Non-uniform treatment distribution
 test_that("speed handles non-uniform treatment distributions", {
   non_uniform_data <- data.frame(
     row = rep(1:8, each = 9),
@@ -73,7 +68,6 @@ test_that("speed handles non-uniform treatment distributions", {
   )
   expect_s3_class(result, "design")
 
-  # Check values
   expect_equal(result$stopped_early, TRUE)
 
   expect_equal(result$score, 14)
@@ -82,7 +76,6 @@ test_that("speed handles non-uniform treatment distributions", {
   vdiffr::expect_doppelganger("speed_non_uniform", autoplot(result))
 })
 
-# Test 12: Custom objective function
 test_that("speed works with a custom objective function", {
   custom_obj_function <- function(adj_weight = 0.5, bal_weight = 2) {
     function(design, swap, spatial_cols, ...) {
@@ -96,7 +89,6 @@ test_that("speed works with a custom objective function", {
     col = rep(1:4, times = 4),
     treatment = rep(LETTERS[1:4], 4)
   )
-  # skip()  # Test not working
   result <- speed(
     data = custom_obj_data,
     swap = "treatment",
@@ -108,7 +100,6 @@ test_that("speed works with a custom objective function", {
   )
   expect_s3_class(result, "design")
 
-  # Check values
   expect_equal(result$score, 0)
   expect_equal(result$iterations_run, 742)
   expect_equal(result$stopped_early, TRUE)
@@ -116,7 +107,6 @@ test_that("speed works with a custom objective function", {
   vdiffr::expect_doppelganger("speed_custom_obj_func", autoplot(result))
 })
 
-# Test 10: Large grid layout
 test_that("speed handles large grid layouts", {
   large_grid_data <- data.frame(
     row = rep(1:20, each = 20),
@@ -136,7 +126,6 @@ test_that("speed handles large grid layouts", {
   vdiffr::expect_doppelganger("speed_large_grid", autoplot(result))
 })
 
-# Test 15: Large layout with blocking
 test_that("speed handles large layouts with blocking", {
   large_blocked_data <- data.frame(
     row = rep(1:16, each = 16),
@@ -156,8 +145,6 @@ test_that("speed handles large layouts with blocking", {
   )
   expect_s3_class(result, "design")
 
-  # Check values
-  # expect_equal(result$score, 4.2667, tolerance = 0.0001)
   expect_equal(result$iterations_run, 5000)
   expect_equal(result$stopped_early, FALSE)
 
@@ -166,20 +153,16 @@ test_that("speed handles large layouts with blocking", {
   vdiffr::expect_doppelganger("speed_large_blocks", autoplot(result))
 })
 
-# Test 16: Check large irregular layout
 test_that("speed handles irregular layouts with 400 unique plots", {
-  # skip()
   irregular_large_data <- data.frame(
     row = rep(1:20, each = 20),
     col = rep(1:20, times = 20),
     treatment = rep(LETTERS[1:10], 40)
   )
 
-  # Remove random plots
   set.seed(123)
   irregular_large_data$treatment[sample(1:nrow(irregular_large_data), 50)] <- NA
 
-  # Optimise the design
   result <- speed(
     data = irregular_large_data,
     swap = "treatment",
@@ -189,10 +172,7 @@ test_that("speed handles irregular layouts with 400 unique plots", {
     quiet = TRUE
   )
 
-  # Check the result
   expect_s3_class(result, "design")
-  # Check values
-  # expect_equal(result$score, 12.3333, tolerance = 0.0001)
   expect_equal(result$iterations_run, 4000)
   expect_equal(result$stopped_early, FALSE)
 
@@ -204,7 +184,6 @@ test_that("speed handles irregular layouts with 400 unique plots", {
   vdiffr::expect_doppelganger("speed_large_missing", autoplot(result))
 })
 
-# Test 16: Check large irregular layout
 test_that("speed handles irregular layouts with a clump of missing plots", {
   # Clumped missing plots
   irregular_large_data <- data.frame(
@@ -219,7 +198,6 @@ test_that("speed handles irregular layouts with a clump of missing plots", {
     "treatment"
   ] <- NA
 
-  # Optimise the design
   result <- speed(
     data = irregular_large_data,
     swap = "treatment",
@@ -229,10 +207,7 @@ test_that("speed handles irregular layouts with a clump of missing plots", {
     quiet = TRUE
   )
 
-  # Check the result
   expect_s3_class(result, "design")
-  # Check values
-  # expect_equal(result$score, 13.69, tolerance = 0.0001)
   expect_equal(result$iterations_run, 4000)
   expect_equal(result$stopped_early, FALSE)
 
@@ -244,7 +219,6 @@ test_that("speed handles irregular layouts with a clump of missing plots", {
   vdiffr::expect_doppelganger("speed_large_missing_clump", autoplot(result))
 })
 
-# Test 16: Check large irregular layout
 test_that("speed handles irregular layouts with L shaped plots", {
   # Large section of missing plots
   irregular_large_data <- data.frame(
@@ -259,7 +233,6 @@ test_that("speed handles irregular layouts with L shaped plots", {
     "treatment"
   ] <- NA
 
-  # Optimise the design
   result <- speed(
     data = irregular_large_data,
     swap = "treatment",
@@ -269,10 +242,7 @@ test_that("speed handles irregular layouts with L shaped plots", {
     quiet = TRUE
   )
 
-  # Check the result
   expect_s3_class(result, "design")
-  # Check values
-  # expect_equal(result$score, 13.69, tolerance = 0.0001)
   expect_equal(result$iterations_run, 4000)
   expect_equal(result$stopped_early, FALSE)
 
@@ -286,9 +256,7 @@ test_that("speed handles irregular layouts with L shaped plots", {
 
 # Test cases from Jules_example_cases.R
 
-# Test: 2D blocking with rowBlocks and colBlocks
 test_that("speed handles 2D blocking with row and column blocks", {
-  # Create data frame in a single call
   dat_2d_blocking <- data.frame(
     row = rep(1:20, each = 20),
     col = rep(1:20, 20),
@@ -339,9 +307,7 @@ test_that("speed handles 2D blocking with row and column blocks", {
   )
 })
 
-# Test: RCBD with multiple treatment reps in rows and columns
 test_that("speed handles RCBD with multiple treatment reps", {
-  # Create data frame in a single call
   dat_rcbd <- data.frame(
     row = rep(1:25, each = 20),
     col = rep(1:20, 25),
@@ -381,11 +347,9 @@ test_that("speed handles RCBD with multiple treatment reps", {
   )
 })
 
-# Test: Partial replication design
 test_that("speed handles partial replication designs", {
   set.seed(456) # For reproducible random sampling
 
-  # Create data frame in a single call for partial rep design
   treats <- sample(paste("V", 1:150, sep = ""), 150, replace = FALSE)
   trep <- sample(treats, 50, replace = FALSE)
   tunrep <- treats[!(treats %in% trep)]
@@ -433,9 +397,7 @@ test_that("speed handles partial replication designs", {
   )
 })
 
-# Test: Large RCBD with 500 varieties
 test_that("speed handles large RCBD with 500 treatments", {
-  # Create data frame in a single call for large design
   dat_large <- data.frame(
     row = rep(1:50, times = 40),
     col = rep(1:40, each = 50),

@@ -17,9 +17,8 @@ mixed_groups <- data.frame(
   treatment = factor(rep(c("A", "B"), 4))
 )
 
-# A partially replicated group: A and B appear twice, C and D three times. Two
-# replication classes, each holding a pair, so a class has to be chosen before
-# the pair is drawn.
+# A partially replicated group: A and B appear twice, C and D three times, so a
+# replication class must be chosen before the pair is drawn.
 prep_group <- data.frame(
   row = rep(1:5, each = 2),
   col = rep(1:2, 5),
@@ -28,9 +27,8 @@ prep_group <- data.frame(
 )
 
 test_that("a single swap is abandoned when the group holds one treatment", {
-  # Both plots drawn from a uniform group always match, and there is no
-  # different treatment to substitute, so the swap must be a no-op rather than
-  # writing a corrupted pair back into the design.
+  # No different treatment exists to substitute, so it must be a no-op rather
+  # than writing a corrupted pair back into the design.
   res <- generate_single_swap_neighbour(
     uniform_groups,
     "treatment",
@@ -44,8 +42,6 @@ test_that("a single swap is abandoned when the group holds one treatment", {
 })
 
 test_that("a single swap still proceeds when the group has two treatments", {
-  # The counterpart to the test above: same code path up to the "are they the
-  # same?" check, but here a substitute exists.
   res <- generate_single_swap_neighbour(
     mixed_groups,
     "treatment",
@@ -99,7 +95,7 @@ test_that("a multi swap skips groups with fewer than two treatments", {
 
 test_that("a multi swap only exchanges equally replicated treatments", {
   # A multi swap moves every plot of one treatment to another, so pairing
-  # treatments of different replication would change the design's replication.
+  # unequal replication would change the design.
   before <- table(prep_group$treatment)
 
   for (seed in 1:20) {
@@ -117,8 +113,6 @@ test_that("a multi swap only exchanges equally replicated treatments", {
 })
 
 test_that("a multi swap draws from both replication classes", {
-  # Both classes are exchangeable here, so neither may be stranded - the pair
-  # is drawn from whichever class was chosen.
   levels_ <- levels(prep_group$treatment)
   pairs <- character(0)
 
@@ -138,6 +132,6 @@ test_that("a multi swap draws from both replication classes", {
   }
 
   # A/B are the two-plot class and C/D the three-plot class; a pair spanning
-  # the two, such as "AC", would change the design's replication
+  # them, such as "AC", would change the design's replication
   expect_setequal(pairs, c("AB", "CD"))
 })

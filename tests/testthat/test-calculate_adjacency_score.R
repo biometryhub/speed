@@ -123,7 +123,6 @@ test_that("adjacency_score_vec applies per-ring weights", {
   )
   ring_2_only <- weighted - unweighted
 
-  # check if there are matches
   expect_true(any(ring_2_only > 0))
   # ring 2 contribution is scaled by (10 - 1) = 9 per matching neighbour
   expect_true(all(ring_2_only %% 9 == 0))
