@@ -141,7 +141,7 @@
 #' df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
 #' df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
 #'
-#' # A short budget keeps the example quick; raise it for a real design.
+#' # Low iterations keeps the example quick; raise it for a real design.
 #' optimise <- list(
 #'   connectivity = list(
 #'     spatial_factors = ~site,
