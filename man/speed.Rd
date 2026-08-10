@@ -43,7 +43,15 @@ consider for balance (default: \code{~row + col}).}
 
 \item{grid_factors}{A named list specifying grid factors to construct a
 matrix for calculating adjacency score, \code{dim1} for row and \code{dim2} for
-column. (default: \code{list(dim1 = "row", dim2 = "col")}).}
+column. (default: \code{list(dim1 = "row", dim2 = "col")}).
+
+An optional third element, \code{by}, names a column that groups plots into
+\emph{separate} grids - a multi-environment trial, where each site reuses the
+same \code{row}/\code{col} numbering. Each grid is then scored on its own and the
+adjacency counts summed, so no adjacency is counted between plots at
+different sites, e.g.
+\code{list(dim1 = "row", dim2 = "col", by = "site")}. Without it, a design whose
+sites share coordinates is refused rather than silently pooled.}
 
 \item{iterations}{Maximum number of iterations for the simulated annealing
 algorithm (default: 10000). For hierarchical designs, can be a named list
@@ -51,7 +59,9 @@ with names matching \code{swap}.}
 
 \item{early_stop_iterations}{Number of iterations without improvement before
 early stopping (default: 2000). For hierarchical designs, can be a named
-list with names matching \code{swap}.}
+list with names matching \code{swap}. Optimisation also stops as soon as a level
+reaches the lowest score its layout allows, which is only applicable for the
+default \code{\link[=objective_function]{objective_function()}}; see \link[=summary.design]{summary()}.}
 
 \item{obj_function}{Objective function used to calculate score (lower is
 better) (default: \code{\link[=objective_function]{objective_function()}}). For hierarchical designs, can
@@ -88,6 +98,12 @@ named list of score vectors (for hierarchical designs)
 named list of treatment vectors (for hierarchical designs)
 \item \strong{seed} - Random seed used for reproducibility of the design. If not set
 in the function, the seed is set to the third element of \code{.Random.seed}.
+\item \strong{metadata} - A list describing how the design was produced: the captured
+\code{call}, the ordered \code{levels}, the resolved \code{row_column} / \code{col_column}
+names, and a \code{per_level} list recording each level's swap variable,
+spatial factors, adjacency/balance weights, requested iterations, starting
+temperature, cooling rate, objective function and achieved score. Used by
+\link[=summary.design]{summary()} to recompute per-level evaluation metrics.
 }
 }
 \description{

@@ -265,7 +265,8 @@
 
     Code
       result <- speed(data = test_data, swap = "treatment", swap_within = "1",
-        spatial_factors = ~ row + col, iterations = 2000, seed = 42, quiet = FALSE)
+        spatial_factors = ~ row + col, iterations = 2000, optimise_params = optim_params(
+          stop_at_optimal = FALSE), seed = 42, quiet = FALSE)
     Message
       row and col are used as row and column, respectively.
     Output
@@ -279,7 +280,8 @@
     Code
       result <- speed(df_split, swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
       swap_within = list(wp = "block", sp = "wholeplot_treatment"), spatial_factors = ~
-       row + col, iterations = list(wp = 1500, sp = 1500), seed = 42, quiet = FALSE)
+       row + col, iterations = list(wp = 1500, sp = 1500), optimise_params = optim_params(
+        stop_at_optimal = FALSE), seed = 42, quiet = FALSE)
     Message
       row and col are used as row and column, respectively.
     Output

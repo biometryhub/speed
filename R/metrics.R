@@ -58,7 +58,14 @@ objective_function <- function(layout_df,
   ring_args <- list(...)
   ring_args <- ring_args[intersect(
     names(ring_args),
-    c("ring_dists", "ring_weights", "ring_type", "relationship")
+    c(
+      "ring_dists",
+      "ring_weights",
+      "ring_type",
+      "relationship",
+      "by",
+      "grid_index"
+    )
   )]
   adj_score <- ifelse(adj_weight != 0,
     do.call(
@@ -74,7 +81,11 @@ objective_function <- function(layout_df,
   )
 
   return(list(
-    score = round(adj_weight * adj_score + bal_weight * bal_score, 10)
+    score = round(adj_weight * adj_score + bal_weight * bal_score, 10),
+    components = c(
+      adjacency = adj_weight * adj_score,
+      balance   = bal_weight * bal_score
+    )
   ))
 }
 
@@ -138,7 +149,13 @@ objective_function_factorial <- function(layout_df,
     subtreatment_scores <- 0
   }
 
-  return(list(score = main_weight * sum(subtreatment_scores) + interaction_weight * treatment_score))
+  return(list(
+    score = main_weight * sum(subtreatment_scores) + interaction_weight * treatment_score,
+    components = c(
+      main        = main_weight * sum(subtreatment_scores),
+      interaction = interaction_weight * treatment_score
+    )
+  ))
 }
 
 #' Calculate Balance Score for Experimental Design
@@ -174,6 +191,95 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
   return(sum(score))
 }
 
+#' Smallest Achievable Balance Score
+#'
+#' @description
+#' Lower bound on [calculate_balance_score()] for any arrangement of `swap`.
+#' Each level of a spatial factor holds a fixed number of plots, and the
+#' variance of the treatment counts within it is smallest when those plots are
+#' split as evenly as possible across the `t` treatments. For a level of `n`
+#' plots, the remainder, `rem` is `n %% t`, that minimum has the closed
+#' form `rem * (t - rem) / (t * (t - 1))`.
+#'
+#' @inheritParams objective_function_signature
+#'
+#' @return A single non-negative numeric value.
+#'
+#' @seealso [calculate_balance_score()]
+#'
+#' @keywords internal
+.balance_score_min <- function(layout_df, swap, spatial_cols) {
+  mins <- vapply(
+    spatial_cols,
+    function(el) {
+      counts <- table(layout_df[[el]], layout_df[[swap]])
+      n_treatments <- ncol(counts)
+      if (n_treatments < 2) {
+        return(0)
+      }
+
+      remainders <- rowSums(counts) %% n_treatments
+      return(sum(
+        remainders *
+          (n_treatments - remainders) /
+          (n_treatments * (n_treatments - 1))
+      ))
+    },
+    numeric(1)
+  )
+  return(sum(mins))
+}
+
+#' Smallest Achievable Score for the Default Objective
+#'
+#' @description
+#' Lower bound of [objective_function()] for any arrangement of `swap` in this
+#' layout: the adjacency component is zero (for simplicity and non zero are
+#' mostly impractical) and the balance component is [.balance_score_min()].
+#' Because it is a bound rather than an attained value, an unattainable bound
+#' is never reached, leaving the run unchanged.
+#'
+#' Returns `NA_real_` when no bound can be derived: a non-default objective, a
+#' `relationship` matrix or any negative weights, `adj_weight`, `bal_weight`,
+#' `ring_weights`.
+#'
+#' @inheritParams objective_function_signature
+#' @inheritParams objective_function
+#' @param obj_function The objective function used for this level.
+#' @param ... Extra arguments for the objective function, as passed to [speed()].
+#'   `relationship` and `ring_weights` are read from here.
+#'
+#' @return A single numeric lower bound, or `NA_real_` when cannot be derived.
+#'
+#' @seealso [objective_function()], [.balance_score_min()]
+#'
+#' @keywords internal
+.optimal_score <- function(
+  layout_df,
+  swap,
+  spatial_cols,
+  obj_function,
+  adj_weight = 1,
+  bal_weight = 1,
+  ...
+) {
+  dots <- list(...)
+  is_boundable <- isTRUE(
+    identical(obj_function, objective_function) &&
+      is.null(dots$relationship) &&
+      all(dots$ring_weights >= 0) &&
+      adj_weight >= 0 &&
+      bal_weight >= 0
+  )
+  if (!is_boundable) {
+    return(NA_real_)
+  }
+
+  bal_min <- .balance_score_min(layout_df, swap, spatial_cols)
+  # round as `objective_function()` does
+  return(round(bal_weight * bal_min, 10))
+}
+
 #' Objective Function with Metric from Piepho
 #'
 #' @description
@@ -206,6 +312,11 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #'   the layout following Piepho et al. (2021); see [calculate_nb] for the rule.
 #' @param self_adj_weight Weight applied to the number of same-item adjacencies (default: 1). Use 0 to
 #'   score ED and NB alone.
+#' @param by,grid_index Optional grouping of plots into separate grids; see
+#'   [calculate_adjacency_score()]. Neighbour balance sums across grids, while
+#'   evenness of distribution is scored **per grid** and the scores summed,
+#'   reported both in total and per grid. A grid with no treatment replicated
+#'   inside it contributes `0`.
 #'
 #' @examples
 #' design_df <- initialise_design_df(
@@ -219,9 +330,10 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #' # usage in speed, speed(..., obj_function = objective_function_piepho, pair_mapping = pair_mapping)
 #'
 #' @return A named list with the required element `score`, the score of the design (lower is better),
-#'   alongside the `ed` and `nb` components it was built from. The `ed` element is fed back as
-#'   `current_score_obj` on the next call so that MST lengths need only be recomputed for the items that
-#'   moved; see [objective_function_signature] for the full contract.
+#'   alongside the `ed` and `nb` components it was built from and a `components` element giving the
+#'   additive pieces that sum to `score`, which [summary.design()] reports as a score decomposition. The
+#'   `ed` element is fed back as `current_score_obj` on the next call so that MST lengths need only be
+#'   recomputed for the items that moved; see [objective_function_signature] for the full contract.
 #'
 #' @references Piepho, H. P., Michel, V., & Williams, E. (2018). Neighbor balance and evenness of
 #'   distribution of treatment replications in row-column designs. Biometrical Journal, 60(6),
@@ -246,25 +358,96 @@ objective_function_piepho <- function(design,
                                       col_column = "col",
                                       nb_directions = "auto",
                                       self_adj_weight = 1,
+                                      by = NULL,
+                                      grid_index = NULL,
                                       ...) {
-  design_matrix <- matrix(
-    design[[swap]],
-    nrow = max(as_numeric_factor(design[[row_column]]), na.rm = TRUE),
-    ncol = max(as_numeric_factor(design[[col_column]]), na.rm = TRUE)
+  # `by`/`grid_index` are documented on calculate_adjacency_score()
+  if (is.null(grid_index)) {
+    grid_index <- grid_indices(design, row_column, col_column, by = by)
+  }
+
+  # Each grid is scored on its own: there is no distance between plots at
+  # different sites, so a pooled spanning tree would be meaningless.
+  ed <- list()
+  ed_scores <- setNames(numeric(length(grid_index)), names(grid_index))
+  nb_counts <- list()
+  self_adj <- setNames(numeric(length(grid_index)), names(grid_index))
+
+  for (nm in names(grid_index)) {
+    g <- grid_index[[nm]]
+    design_matrix <- build_design_matrix(
+      design[g$rows, , drop = FALSE],
+      swap,
+      row_column = row_column,
+      col_column = col_column,
+      index = g$index
+    )
+    ed[[nm]] <- calculate_ed(
+      design_matrix,
+      current_score_obj$ed[[nm]],
+      swapped_items
+    )
+    # A grid with nothing replicated has no spanning tree, so it contributes 0
+    # rather than 1/0, which would make the whole score `Inf`.
+    ed_scores[[nm]] <- if (is.finite(ed[[nm]]$inv_total_mst)) {
+      ed[[nm]]$inv_total_mst
+    } else {
+      0
+    }
+    nb_grid <- calculate_nb(
+      design_matrix,
+      pair_mapping,
+      directions = nb_directions
+    )
+    nb_counts[[nm]] <- nb_grid$nb
+    self_adj[[nm]] <- nb_grid$self_adjacencies
+  }
+
+  # Summed rather than pooled into one reciprocal, so ED scales with the number
+  # of grids instead of shrinking as sites are added.
+  ed_score <- sum(ed_scores)
+
+  # Neighbour balance counts edges and no edge crosses a grid boundary, so the
+  # counts sum across grids before the variance is taken.
+  all_pairs <- unique(unlist(lapply(nb_counts, names)))
+  totals <- setNames(numeric(length(all_pairs)), all_pairs)
+  for (counts in nb_counts) {
+    totals[names(counts)] <- totals[names(counts)] + counts
+  }
+  max_nb <- max(totals)
+  self_adjacencies <- sum(self_adj)
+  nb <- list(
+    nb = totals,
+    max_nb = max_nb,
+    max_pairs = names(totals)[totals == max_nb],
+    # var() of a single pair is NA; such a design is trivially balanced
+    var = if (length(totals) > 1L) var(totals) else 0,
+    s2 = sum(totals * (totals - 1) / 2),
+    self_adjacencies = self_adjacencies
   )
+  nb_score <- nb$var
+  self_adj_score <- self_adj_weight * self_adjacencies
 
-  ed <- calculate_ed(design_matrix, current_score_obj$ed, swapped_items)
-  ed_score <- if (is.finite(ed$inv_total_mst)) ed$inv_total_mst else 0
-
-  nb <- calculate_nb(design_matrix, pair_mapping, directions = nb_directions)
+  # Reported alongside the total, not instead of it: per-grid values are not
+  # comparable between grids, so they are never ranked or averaged.
+  components <- c(
+    neighbour_balance = nb_score,
+    even_distribution = ed_score,
+    self_adjacency    = self_adj_score
+  )
+  if (length(grid_index) > 1) {
+    components <- c(
+      components,
+      setNames(ed_scores, paste0("even_distribution_", names(ed_scores)))
+    )
+  }
 
   return(list(
-    score = round(
-      nb$var + ed_score + self_adj_weight * nb$self_adjacencies,
-      10
-    ),
+    score = round(nb_score + ed_score + self_adj_score, 10),
     ed = ed,
-    nb = nb
+    ed_per_grid = ed_scores,
+    nb = nb,
+    components = components
   ))
 }
 
@@ -730,58 +913,90 @@ create_pair_mapping <- function(items) {
 #'
 #' @param design_df A data frame containing the experimental design with spatial coordinates
 #' @param item A column name of the items in the design (e.g., `treatment`, `variety`, `genotype`, etc)
+#' @param row_column Name of the column giving the row of the design (default: "row")
+#' @param col_column Name of the column giving the column of the design (default: "col")
 #'
 #' @examples
+#' # `initialise_design_df()` fills `items` down columns, so the literal below is
+#' # column-major; the grid it produces is
+#' #   a b d c
+#' #   e a f b
+#' #   c f e d
 #' df_design <- initialise_design_df(c(
-#'   "a", "b", "d", "c",
-#'   "e", "a", "f", "b",
-#'   "c", "f", "e", "d"
+#'   "a", "e", "c",
+#'   "b", "a", "f",
+#'   "d", "f", "e",
+#'   "c", "b", "d"
 #' ), 3, 4)
 #'
 #' calculate_efficiency_factor(df_design, "treatment")
 #'
-#' @return A numeric value representing the efficiency factor of the design. Higher values indicate more efficient designs.
+#' # Not every design can support the estimate. Here each treatment fills one
+#' # grid row, so the treatment differences cannot be separated from the row
+#' # effects and there is no efficiency factor to report:
+#' #   a a a a
+#' #   b b b b
+#' #   c c c c
+#' confounded <- initialise_design_df(rep(c("a", "b", "c"), 4), 3, 4)
+#' try(calculate_efficiency_factor(confounded, "treatment"))
+#'
+#' @return A numeric value representing the efficiency factor of the design,
+#'   between 0 and 1. Higher values indicate more efficient designs.
+#'
+#'   Errors with a `speed_efficiency_rank` condition if the design cannot support
+#'   the estimate - that is, if some treatment contrast is not estimable once row
+#'   and column effects are eliminated, whether because too few residual degrees
+#'   of freedom remain or because a treatment is confounded with a row or column.
+#'   Such a design has no efficiency factor; before this check the formula
+#'   returned a plausible-looking value, usually above 1.
 #'
 #' @references Piepho, H. P., Williams, E., & Michel, V. (2015). Nonresolvable Row-Column Designs with an Even
 #'   Distribution of Treatment Replications. Journal of Agricultural, Biological, and Environmental Statistics,
 #'   21, 227-242 (2016). <https://doi.org/10.1007/s13253-015-0241-2>
 #'
 #' @export
-calculate_efficiency_factor <- function(design_df, item) {
+calculate_efficiency_factor <- function(
+  design_df,
+  item,
+  row_column = "row",
+  col_column = "col"
+) {
   item <- as.character(substitute(item))
+
+  # An efficiency factor is a property of one experiment, and several cannot be
+  # combined. Validated explicitly because pooled sites otherwise return a value
+  # above 1 rather than erroring; `summary()` reports one value per site.
+  grid_index(design_df, row_column, col_column)
 
   # Design parameters
   encoded_items <- as.integer(as.factor(design_df[[item]]))
   n_treatments <- length(unique(encoded_items))
-  n_rows <- max(as_numeric_factor(design_df$row), na.rm = TRUE)
-  n_cols <- max(as_numeric_factor(design_df$col), na.rm = TRUE)
+  rows <- as_numeric_factor(design_df[[row_column]])
+  cols <- as_numeric_factor(design_df[[col_column]])
+  n_rows <- max(rows, na.rm = TRUE)
+  n_cols <- max(cols, na.rm = TRUE)
   n_plots <- nrow(design_df)
 
   # Create design matrix X for treatments
   X <- matrix(0, nrow = n_plots, ncol = n_treatments)
-  for (i in 1:n_plots) {
-    X[i, encoded_items[i]] <- 1
-  }
+  X[cbind(seq_len(n_plots), encoded_items)] <- 1
 
-  # Create design matrix Z for rows and columns
-  # Row and col effects (excluding last row and col to avoid singularity)
+  # Create design matrix Z for rows and columns, indexed by each plot's own
+  # coordinates so the row ordering of `design_df` does not matter. Row and col
+  # effects exclude the last row and col to avoid singularity.
   Z_row <- matrix(0, nrow = n_plots, ncol = n_rows - 1)
   Z_col <- matrix(0, nrow = n_plots, ncol = n_cols - 1)
-  plot_index <- 1
-  for (i in 1:n_rows) {
-    for (j in 1:n_cols) {
-      if (i < n_rows) {
-        Z_row[plot_index, i] <- 1
-      }
-      if (j < n_cols) {
-        Z_col[plot_index, j] <- 1
-      }
-      plot_index <- plot_index + 1
-    }
-  }
+  in_row <- which(rows < n_rows)
+  in_col <- which(cols < n_cols)
+  Z_row[cbind(in_row, rows[in_row])] <- 1
+  Z_col[cbind(in_col, cols[in_col])] <- 1
 
-  # Combine row and column design matrices
-  Z <- cbind(Z_row, Z_col)
+  # Intercept, then row and column design matrices. The row-column model has a
+  # mean, and including it is what makes the estimability test below exact:
+  # without it the mean stays inside the treatment term (X's rows sum to 1) and
+  # no rank test on `A_RC` can separate estimable contrasts from inestimable
+  # ones. Reported values for estimable designs are unchanged.
+  Z <- cbind(1, Z_row, Z_col)
 
   # Check if Z^TZ is invertible
   ZtZ <- t(Z) %*% Z
@@ -799,6 +1014,37 @@ calculate_efficiency_factor <- function(design_df, item) {
   P_Z <- Z %*% ZtZ_inv %*% t(Z)
   I_n <- diag(n_plots)
   A_RC <- t(X) %*% (I_n - P_Z) %*% X
+
+  # Rank n_treatments - 1 means every treatment contrast is estimable. Without
+  # this gate pseudo_inverse() drops the null directions and returns a
+  # plausible-looking value above 1 instead of failing. Rank catches both
+  # aliasing and too few residual degrees of freedom; counting degrees of
+  # freedom catches only the latter. The tolerance matches pseudo_inverse()'s so
+  # the two cannot disagree, and `qr()` is unusable here - its relative default
+  # reports full rank for eigenvalues 2, 9e-16, 6e-16.
+  if (sum(svd(A_RC)$d > 1e-10) != n_treatments - 1) {
+    stop(structure(
+      class = c(
+        "speed_efficiency_rank",
+        "speed_efficiency_error",
+        "error",
+        "condition"
+      ),
+      list(
+        message = paste0(
+          "Not all treatment contrasts are estimable after eliminating ",
+          "`",
+          row_column,
+          "` and `",
+          col_column,
+          "` effects, so this design ",
+          "cannot support an efficiency factor."
+        ),
+        reason = "treatment contrasts not estimable given row + col",
+        call = NULL
+      )
+    ))
+  }
 
   # Calculate Moore-Penrose inverse of A_RC, variance matrix
   V <- pseudo_inverse(A_RC)

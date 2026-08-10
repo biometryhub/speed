@@ -2,6 +2,8 @@
 
 S3method(autoplot,design)
 S3method(print,design)
+S3method(print,summary.design)
+S3method(summary,design)
 export(add_buffers)
 export(autoplot)
 export(calculate_adjacency_score)

@@ -106,11 +106,12 @@
   cooling_rate,
   random_initialisation,
   adj_weight,
-  bal_weight
+  bal_weight,
+  stop_at_optimal
 ) {
   verify_positive_whole_number(swap_count)
   verify_non_negative_whole(start_temp)
-  verify_boolean(adaptive_swaps, swap_all_blocks)
+  verify_boolean(adaptive_swaps, swap_all_blocks, stop_at_optimal)
   verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
   verify_numeric(adj_weight, bal_weight)
 
@@ -194,6 +195,29 @@
       call. = FALSE
     )
   }
+}
+
+#' Verify the `by` element of `grid_factors`
+#'
+#' @description
+#' `grid_factors` is a plain list, so a mistyped `by` would be ignored and every
+#' grid silently pooled. Checked before any optimisation happens.
+#'
+#' @inheritParams speed
+#'
+#' @rdname verify
+#'
+#' @keywords internal
+.verify_grid_by <- function(data, grid_factors) {
+  grid_by <- grid_factors$by
+  if (!is.null(grid_by)) {
+    if (!is.character(grid_by) || length(grid_by) != 1) {
+      data_type_error("grid_factors$by", "a single column name")
+    }
+    verify_column_exists(grid_by, data, "grid grouping column")
+  }
+
+  return(invisible(NULL))
 }
 
 

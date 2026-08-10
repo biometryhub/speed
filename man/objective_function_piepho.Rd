@@ -15,6 +15,8 @@ objective_function_piepho(
   col_column = "col",
   nb_directions = "auto",
   self_adj_weight = 1,
+  by = NULL,
+  grid_index = NULL,
   ...
 )
 }
@@ -43,13 +45,20 @@ the layout following Piepho et al. (2021); see \link{calculate_nb} for the rule.
 \item{self_adj_weight}{Weight applied to the number of same-item adjacencies (default: 1). Use 0 to
 score ED and NB alone.}
 
+\item{by, grid_index}{Optional grouping of plots into separate grids; see
+\code{\link[=calculate_adjacency_score]{calculate_adjacency_score()}}. Neighbour balance sums across grids, while
+evenness of distribution is scored \strong{per grid} and the scores summed,
+reported both in total and per grid. A grid with no treatment replicated
+inside it contributes \code{0}.}
+
 \item{...}{Extra parameters passed from \link{speed}}
 }
 \value{
 A named list with the required element \code{score}, the score of the design (lower is better),
-alongside the \code{ed} and \code{nb} components it was built from. The \code{ed} element is fed back as
-\code{current_score_obj} on the next call so that MST lengths need only be recomputed for the items that
-moved; see \link{objective_function_signature} for the full contract.
+alongside the \code{ed} and \code{nb} components it was built from and a \code{components} element giving the
+additive pieces that sum to \code{score}, which \code{\link[=summary.design]{summary.design()}} reports as a score decomposition. The
+\code{ed} element is fed back as \code{current_score_obj} on the next call so that MST lengths need only be
+recomputed for the items that moved; see \link{objective_function_signature} for the full contract.
 }
 \description{
 An objective function combining the even distribution (ED) and neighbour balance (NB) criteria of
