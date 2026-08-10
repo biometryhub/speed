@@ -201,8 +201,9 @@
 #'
 #' @description
 #' `grid_factors` must be a single list naming the two grid axes, since
-#' [infer_row_col()] resolves one pair of axes for the whole design. Use the
-#' `optimise` argument to vary grid factors between levels.
+#' [infer_row_col()] resolves one pair of axes for the whole design. The axes
+#' cannot vary between levels of a hierarchical design; `by` is what splits a
+#' design into separate grids.
 #'
 #' @rdname verify
 #'
@@ -226,8 +227,11 @@
           is.list(grid_factors[[1]])
       ) {
         paste0(
-          "\nTo use different grid factors for each level of a hierarchical",
-          " design, set them per level via the `optimise` argument instead."
+          "\nGrid axes apply to the whole design and cannot be set per level of",
+          " a hierarchical design. To score parts of the design as separate",
+          " grids, such as the sites of a multi-environment trial, name the",
+          " grouping column with `by`, e.g. `list(dim1 = \"row\",",
+          " dim2 = \"col\", by = \"site\")`."
         )
       } else {
         ""

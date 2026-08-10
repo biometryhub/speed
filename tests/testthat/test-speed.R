@@ -971,7 +971,7 @@ test_that("speed rejects a malformed grid_factors with an actionable message", {
   )
 })
 
-test_that("speed points at `optimise` for per-level grid factors", {
+test_that("speed rejects per-level grid factors and points at `by`", {
   # `infer_row_col()` resolves one pair of axes for the whole design, so a
   # per-level `grid_factors` cannot be honoured on the legacy hierarchical shape.
   test_data <- data.frame(
@@ -982,7 +982,7 @@ test_that("speed points at `optimise` for per-level grid factors", {
     block = rep(1:2, each = 12)
   )
 
-  expect_error(
+  err <- expect_error(
     speed(
       test_data,
       swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
@@ -996,7 +996,14 @@ test_that("speed points at `optimise` for per-level grid factors", {
       seed = 1,
       quiet = TRUE
     ),
-    "set them per level via the `optimise` argument"
+    "cannot be set per level"
+  )
+
+  # `by` is the mechanism that does split a design into separate grids
+  expect_match(
+    conditionMessage(err),
+    "name the grouping column with `by`",
+    fixed = TRUE
   )
 })
 

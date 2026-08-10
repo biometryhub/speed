@@ -22,7 +22,9 @@
 #'   consider for balance (default: `~row + col`).
 #' @param grid_factors A named list specifying grid factors to construct a
 #'   matrix for calculating adjacency score, `dim1` for row and `dim2` for
-#'   column. (default: `list(dim1 = "row", dim2 = "col")`).
+#'   column. (default: `list(dim1 = "row", dim2 = "col")`). The axes apply to
+#'   the whole design, so unlike `swap` they cannot be set per level of a
+#'   hierarchical design.
 #'
 #'   An optional third element, `by`, names a column that groups plots into
 #'   *separate* grids - a multi-environment trial, where each site reuses the

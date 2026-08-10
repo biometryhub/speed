@@ -43,7 +43,9 @@ consider for balance (default: \code{~row + col}).}
 
 \item{grid_factors}{A named list specifying grid factors to construct a
 matrix for calculating adjacency score, \code{dim1} for row and \code{dim2} for
-column. (default: \code{list(dim1 = "row", dim2 = "col")}).
+column. (default: \code{list(dim1 = "row", dim2 = "col")}). The axes apply to
+the whole design, so unlike \code{swap} they cannot be set per level of a
+hierarchical design.
 
 An optional third element, \code{by}, names a column that groups plots into
 \emph{separate} grids - a multi-environment trial, where each site reuses the
@@ -174,7 +176,7 @@ df_initial$site_row <- paste(df_initial$site, df_initial$row, sep = "_")
 df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
 df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
 
-# A short budget keeps the example quick; raise it for a real design.
+# Low iterations keeps the example quick; raise it for a real design.
 optimise <- list(
   connectivity = list(
     spatial_factors = ~site,
