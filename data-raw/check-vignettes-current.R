@@ -52,6 +52,21 @@ for (f in orig) {
       sprintf("%s changed since %s was generated", f, basename(qmd))
     )
   }
+
+  # A fresh hash says nothing about whether the render is well formed. knitr
+  # emits unfenced source if its markdown hooks were never installed, which
+  # leaves every chunk as prose, so require the chunks to come back as code.
+  has_chunks <- any(grepl("^```\\{", readLines(src, warn = FALSE)))
+  if (has_chunks && !any(grepl("^```", readLines(qmd, warn = FALSE)))) {
+    problems <- c(
+      problems,
+      sprintf(
+        "%s has chunks but %s has no fenced code blocks",
+        f,
+        basename(qmd)
+      )
+    )
+  }
 }
 
 missing <- setdiff(names(want), orig)

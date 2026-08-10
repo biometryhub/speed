@@ -20,6 +20,11 @@ if (!length(orig)) {
   stop("No .qmd.orig sources found in vignettes/")
 }
 
+# Must come before any `knit_hooks$set()` below: `knit()` installs the markdown
+# hooks only while the hooks are still untouched, so customising one first left
+# every chunk unfenced and joined onto the next.
+knitr::render_markdown()
+
 # Quarto marks a figure cross-referenceable with `#| label: fig-*`. knitr would
 # collapse the chunk to a bare `![](path)` and the label - and any `@fig-`
 # reference to it - would be lost, so emit Quarto's figure syntax instead.

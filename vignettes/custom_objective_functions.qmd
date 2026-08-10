@@ -1,7 +1,7 @@
 ---
 title: "Custom Objective Functions and Advanced Options for Optimisation in speed"
 author: "Sam Rogers"
-date: "2026-08-09"
+date: "2026-08-10"
 output:
   html_document:
     toc: true
@@ -29,7 +29,10 @@ While the `speed` package provides a range of excellent default optimisation set
 
 Understanding these advanced features allows researchers to fully leverage the `speed` package for complex or non-standard experimental design challenges.
 
+
+``` r
 library(speed)
+```
 
 # Understanding the Optimisation Process
 
@@ -117,6 +120,8 @@ Most of constraints can be handled by careful design of the layout and the defau
 
 Firstly, we need to create a function that evaluates the co-occurrence of treatments in the design. The function will count the number of times each pair of treatments appears together, and simply return a list of the counts. This will also help us to check if the design meets the BIBD requirements later.
 
+
+``` r
 get_cooccurrence <- function(design_df, swap) {
   pairs <- unlist(lapply(unique(design_df$block), function(block) {
     combn(
@@ -128,9 +133,12 @@ get_cooccurrence <- function(design_df, swap) {
   
   as.list(table(pairs))
 }
+```
 
 Given an input data frame `design_df` with a column for blocks and a column for treatments, this function will return a list of treatment pairs (provided in the column given by the `swap` argument) and their counts across the blocks. Now we need to incorporate this into a custom objective function that uses this to evaluate the BIBD properties. To be able to include it within the `speed` optimisation algorithim, we need to ensure that the function returns a list with a `score` element, which is a single numeric value representing the optimality of the layout. The `speed` package is set up to minimise this score, so lower values are better, and may require taking the reciprocal of the score if higher values mean more optimal layouts in the context of a custom objective function.
 
+
+``` r
 bibd_objective_function <- function(
     layout_df,
     swap,
@@ -149,6 +157,7 @@ bibd_objective_function <- function(
     score = round(adj_score + bal_score + 10*pair_bal_score, 10)
   ))
 }
+```
 
 This function follows a very similar structure to the [default objective functions](https://biometryhub.github.io/speed/reference/objective_functions.html) in `speed`, but it adds a specific penalty for the co-occurrence of treatments. The `get_cooccurrence` function is called to calculate how many times each pair of treatments appears together, and the variance of these counts is used as a penalty term in the final score. As increasinly more treatment pairs appear the same number of times together, the variance of the pairs co-occurrence decreases, becoming more optimal. The `10*pair_bal_score` term is a weight that can be adjusted based on how important the co-occurrence balance is relative to the adjacency and balance scores. This function could be further customised to include additional penalties or adjustments based on specific design requirements, however the current implementation provides a solid foundation for optimising a BIBD layout. Also, given that custom objective functions are user-defined, they don't require the same level of error-checking as the default functions, so we can keep the implementation relatively simple.
 
@@ -168,21 +177,26 @@ The following parameters will allow us to produce a valid BIBD layout:
 
 We will create a data frame representing the BIBD layout, and then run the `speed` optimisation with our custom objective function.
 
-# Create the data framebibd_df <- initialise_design_df(items = 5, nrows = 3, ncols = 10, 
-                                block_nrows = 3, block_ncols = 1)head(bibd_df)#>   row col treatment row_block col_block block
+
+``` r
+# Create the data frame
+bibd_df <- initialise_design_df(items = 5, nrows = 3, ncols = 10, 
+                                block_nrows = 3, block_ncols = 1)
+
+head(bibd_df)
+#>   row col treatment row_block col_block block
 #> 1   1   1        T1         1         1     1
 #> 2   2   1        T2         1         1     1
 #> 3   3   1        T3         1         1     1
 #> 4   1   2        T4         1         2     2
 #> 5   2   2        T5         1         2     2
 #> 6   3   2        T1         1         2     2
-
+```
 
 The `initialise_design_df` function creates a data frame with 5 treatments, arranged in 10 blocks, with each block containing 3 plots. The `block_nrows` and `block_ncols` parameters define the layout of the blocks.
 
 
 ![Initial BIBD Layout](figures/fig-bibd-layout-1.png){#fig-bibd-layout fig-align="center"}
-
 
 @fig-bibd-layout shows the initial layout of the BIBD design. The treatments are systematically assigned to blocks, but we need to randomise this design, and ensure that the co-occurrence of treatments meets the BIBD requirements.
 
@@ -190,30 +204,43 @@ The `initialise_design_df` function creates a data frame with 5 treatments, arra
 
 Now we can run the optimisation using our custom objective function simply by passing the name to the `speed` function via the `obj_function` argument. We will also specify the `swap` argument to indicate which column contains the treatments, and the `spatial_factors` argument to include the block, row, and column information for spatial balance. This will allow the optimisation to consider both the adjacency of treatments and their spatial distribution across the blocks, while the custom objective function will ensure that the co-occurrence of treatments is balanced according to the BIBD requirements. Note also that we set `optim_params(random_initialisation = TRUE)` to ensure that the initialisation of the design is randomised. 
 
+
+``` r
 result <- speed(bibd_df, 
                 swap = "treatment",
                 spatial_factors = ~ block + row + col,
                 obj_function = bibd_objective_function,
                 optimise_params = optim_params(random_initialisation = TRUE),
-                seed = 42)#> row and col are used as row and column, respectively.
+                seed = 42)
+#> row and col are used as row and column, respectively.
 #> Optimising level: single treatment within whole design 
 #> Level: single treatment within whole design Iteration: 1000 Score: 7 Best: 7 Since Improvement: 425 
 #> Level: single treatment within whole design Iteration: 2000 Score: 6 Best: 6 Since Improvement: 888 
 #> Level: single treatment within whole design Iteration: 3000 Score: 6 Best: 6 Since Improvement: 1888 
 #> Early stopping at iteration 3112 for level single treatment within whole design
-result#> Optimised Experimental Design
+
+result
+#> Optimised Experimental Design
 #> ----------------------------
 #> Score: 6 
 #> Iterations Run: 3113 
 #> Stopped Early: TRUE 
 #> Treatments: T1, T2, T3, T4, T5 
 #> Seed: 42
+```
 
 
 
+``` r
 autoplot(result)
+```
+
+
 ![](figures/bibd_result-plot-1.png){fig-align="default"}
-get_cooccurrence(result$design_df, "treatment")#> $`T1,T2`
+
+``` r
+get_cooccurrence(result$design_df, "treatment")
+#> $`T1,T2`
 #> [1] 3
 #> 
 #> $`T1,T3`
@@ -242,8 +269,9 @@ get_cooccurrence(result$design_df, "treatment")#> $`T1,T2`
 #> 
 #> $`T4,T5`
 #> [1] 3
-unique(unlist(get_cooccurrence(result$design_df, "treatment")))#> [1] 3
-
+unique(unlist(get_cooccurrence(result$design_df, "treatment")))
+#> [1] 3
+```
 
 Visual inspection of the plot and the output above shows that each treatment appears exactly 3 times together as required. Hence we have successfully used our custom objective function to generate a type of design that is not possible with the default objective functions.
 
@@ -257,19 +285,46 @@ Visual inspection of the plot and the output above shows that each treatment app
 
 Controlling the cooling rate and acceptance probability.
 
-# Placeholder for temperature schedule# This will show:# - Initial temperature selection# - Cooling rate adjustments# - Linear vs exponential vs adaptive schedules# - Impact on optimisation quality# - Convergence speed trade-offs
+
+``` r
+# Placeholder for temperature schedule
+# This will show:
+# - Initial temperature selection
+# - Cooling rate adjustments
+# - Linear vs exponential vs adaptive schedules
+# - Impact on optimisation quality
+# - Convergence speed trade-offs
+```
 
 ### Iteration Controls
 
 Managing the number of iterations and convergence criteria.
 
-# Placeholder for iteration controls# This will show:# - Maximum iteration settings# - Convergence detection methods# - Early stopping criteria# - Progress monitoring# - Computational time management
+
+``` r
+# Placeholder for iteration controls
+# This will show:
+# - Maximum iteration settings
+# - Convergence detection methods
+# - Early stopping criteria
+# - Progress monitoring
+# - Computational time management
+```
 
 ### Move Types and Probabilities
 
 Customising how the algorithm proposes layout changes.
 
-# Placeholder for move types# This will show:# - Different types of moves (swap, shift, rotate)# - Move probability settings# - Constraint-respecting moves# - Large vs small perturbations# - Adaptive move selection
+
+``` r
+# Placeholder for move types
+# This will show:
+# - Different types of moves (swap, shift, rotate)
+# - Move probability settings
+# - Constraint-respecting moves
+# - Large vs small perturbations
+# - Adaptive move selection
+```
 
 ## Performance Tuning
 
@@ -277,19 +332,46 @@ Customising how the algorithm proposes layout changes.
 
 Handling computationally intensive large-scale designs.
 
-# Placeholder for large design tuning# This will show:# - Memory management strategies# - Computational complexity considerations# - Parallel processing options# - Approximation methods for speed# - Quality vs speed trade-offs
+
+``` r
+# Placeholder for large design tuning
+# This will show:
+# - Memory management strategies
+# - Computational complexity considerations
+# - Parallel processing options
+# - Approximation methods for speed
+# - Quality vs speed trade-offs
+```
 
 ### Convergence Diagnostics
 
 Monitoring and ensuring optimisation quality.
 
-# Placeholder for convergence diagnostics# This will show:# - Objective function tracking# - Convergence plots and metrics# - Multiple run comparisons# - Plateau detection# - Quality assessment methods
+
+``` r
+# Placeholder for convergence diagnostics
+# This will show:
+# - Objective function tracking
+# - Convergence plots and metrics
+# - Multiple run comparisons
+# - Plateau detection
+# - Quality assessment methods
+```
 
 ### Parameter Sensitivity Analysis
 
 Understanding how parameter choices affect results.
 
-# Placeholder for parameter sensitivity# This will show:# - Systematic parameter testing# - Sensitivity to initial conditions# - Robustness across different scenarios# - Optimal parameter identification# - Automated parameter tuning
+
+``` r
+# Placeholder for parameter sensitivity
+# This will show:
+# - Systematic parameter testing
+# - Sensitivity to initial conditions
+# - Robustness across different scenarios
+# - Optimal parameter identification
+# - Automated parameter tuning
+```
 
 # Advanced Constraint Handling
 
@@ -299,19 +381,46 @@ Understanding how parameter choices affect results.
 
 Beyond standard rectangular blocking patterns.
 
-# Placeholder for custom blocking constraints# This will show:# - Irregular block shapes# - Hierarchical blocking structures# - Overlapping constraint systems# - Dynamic constraint adjustment# - Constraint violation penalties
+
+``` r
+# Placeholder for custom blocking constraints
+# This will show:
+# - Irregular block shapes
+# - Hierarchical blocking structures
+# - Overlapping constraint systems
+# - Dynamic constraint adjustment
+# - Constraint violation penalties
+```
 
 ### Treatment Assignment Rules
 
 Specialised rules for treatment placement.
 
-# Placeholder for treatment assignment rules# This will show:# - Mandatory treatment positions# - Forbidden treatment combinations# - Sequential treatment requirements# - Resource-based constraints# - Logical constraint dependencies
+
+``` r
+# Placeholder for treatment assignment rules
+# This will show:
+# - Mandatory treatment positions
+# - Forbidden treatment combinations
+# - Sequential treatment requirements
+# - Resource-based constraints
+# - Logical constraint dependencies
+```
 
 ### Spatial Constraints
 
 Physical or practical limitations on plot placement.
 
-# Placeholder for spatial constraints# This will show:# - Irregular field boundaries# - Obstacle avoidance# - Access path requirements# - Equipment movement constraints# - Safety or regulatory restrictions
+
+``` r
+# Placeholder for spatial constraints
+# This will show:
+# - Irregular field boundaries
+# - Obstacle avoidance
+# - Access path requirements
+# - Equipment movement constraints
+# - Safety or regulatory restrictions
+```
 
 ## Constraint Satisfaction Strategies
 
@@ -319,13 +428,31 @@ Physical or practical limitations on plot placement.
 
 Managing different types of constraint requirements.
 
-# Placeholder for constraint types# This will show:# - Absolute requirements (hard constraints)# - Preference-based requirements (soft constraints)# - Penalty function design# - Constraint priority systems# - Feasibility checking
+
+``` r
+# Placeholder for constraint types
+# This will show:
+# - Absolute requirements (hard constraints)
+# - Preference-based requirements (soft constraints)
+# - Penalty function design
+# - Constraint priority systems
+# - Feasibility checking
+```
 
 ### Constraint Relaxation
 
 Strategies when exact constraint satisfaction is impossible.
 
-# Placeholder for constraint relaxation# This will show:# - Gradual constraint loosening# - Minimum viable constraint satisfaction# - Trade-off analysis# - Alternative constraint formulations# - User notification of violations
+
+``` r
+# Placeholder for constraint relaxation
+# This will show:
+# - Gradual constraint loosening
+# - Minimum viable constraint satisfaction
+# - Trade-off analysis
+# - Alternative constraint formulations
+# - User notification of violations
+```
 
 # Monitoring and Control
 
@@ -333,7 +460,16 @@ Strategies when exact constraint satisfaction is impossible.
 
 Assessing optimisation results.
 
-# Placeholder for quality metrics# This will show:# - Statistical efficiency measures# - Design balance assessments# - Constraint satisfaction scores# - Comparative quality analysis# - Recommendation systems
+
+``` r
+# Placeholder for quality metrics
+# This will show:
+# - Statistical efficiency measures
+# - Design balance assessments
+# - Constraint satisfaction scores
+# - Comparative quality analysis
+# - Recommendation systems
+```
 
 ## Batch and Automated Optimisation
 
@@ -341,13 +477,31 @@ Assessing optimisation results.
 
 Systematic comparison of optimisation strategies.
 
-# Placeholder for batch optimisation# This will show:# - Automated parameter sweeps# - Multiple initialisation strategies# - Comparative result analysis# - Best design selection# - Robustness testing
+
+``` r
+# Placeholder for batch optimisation
+# This will show:
+# - Automated parameter sweeps
+# - Multiple initialisation strategies
+# - Comparative result analysis
+# - Best design selection
+# - Robustness testing
+```
 
 ### Workflow Integration
 
 Incorporating optimisation into larger research workflows.
 
-# Placeholder for workflow integration# This will show:# - Automated design generation# - Integration with field planning software# - Batch processing for multiple experiments# - Result documentation and archiving# - Quality control pipelines
+
+``` r
+# Placeholder for workflow integration
+# This will show:
+# - Automated design generation
+# - Integration with field planning software
+# - Batch processing for multiple experiments
+# - Result documentation and archiving
+# - Quality control pipelines
+```
 --->
 
 # Conclusion

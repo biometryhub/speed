@@ -1,7 +1,7 @@
 ---
 title: "Common Agricultural Experimental Designs with speed"
 author: "Sam Rogers"
-date: "2026-08-09"
+date: "2026-08-10"
 output:
   html_document:
     toc: true
@@ -23,7 +23,10 @@ This vignette demonstrates how to use `speed` for common agricultural experiment
 
 For advanced and specialised experimental designs (e.g., split-split plot, strip-plot, incomplete block, p-rep, and more), see the companion vignette: [Complex Agricultural Experimental Designs with speed](complex_designs.html).
 
+
+``` r
 library(speed)
+```
 
 # Completely Randomised Design (CRD)
 
@@ -46,18 +49,25 @@ Consider a field trial testing 8 new wheat varieties with 4 replicates each. Eve
 
 In agricultural contexts, even completely randomised designs benefit from spatial optimisation to minimise treatment clustering and neighbour effects. Firstly we will initialise a data frame representing the design and visualise it. This design has 4 replicates of 8 treatments or `items`, with 8 rows and 4 columns.
 
-# Initialise data framecrd_design <- initialise_design_df(items = 8, nrows = 8, ncols = 4)head(crd_design)##   row col treatment
+
+``` r
+# Initialise data frame
+crd_design <- initialise_design_df(items = 8, nrows = 8, ncols = 4)
+head(crd_design)
+```
+
+```
+##   row col treatment
 ## 1   1   1        T1
 ## 2   2   1        T2
 ## 3   3   1        T3
 ## 4   4   1        T4
 ## 5   5   1        T5
 ## 6   6   1        T6
-
+```
 
 
 ![](figures/crd-plot1-1.png){fig-align="default"}
-
 
 This is a systematic layout; note how the initial layout arranges treatments in a repeating, non-random pattern. This will now be randomised before visualisation. 
 
@@ -65,25 +75,47 @@ This is a systematic layout; note how the initial layout arranges treatments in 
 
 The main `speed()` function performs the optimisation. It has been set up with sensible defaults to allow application to a wide variety of situations. In this case, we only need to provide the design data frame for it to operate on, the column name of the data frame to use for the treatments, and a seed for reproducibility. 
 
+
+``` r
 crd_result <- speed(crd_design, 
                     swap = "treatment",
-                    seed = 42)## row and col are used as row and column, respectively.
+                    seed = 42)
+```
+
+```
+## row and col are used as row and column, respectively.
+```
+
+```
 ## Optimising level: single treatment within whole design 
 ## Optimal score reached at iteration 730 for level single treatment within whole design
-crd_result## Optimised Experimental Design
+```
+
+``` r
+crd_result
+```
+
+```
+## Optimised Experimental Design
 ## ----------------------------
 ## Score: 2.285714 
 ## Iterations Run: 730 
 ## Stopped Early: TRUE 
 ## Treatments: T1, T2, T3, T4, T5, T6, T7, T8 
 ## Seed: 42
-
+```
 
 ### Output of the Optimisation
 
 The printed output from the returned design object gives a quick identity check: the final optimisation score (lower is better), how many iterations were run and whether it stopped early, the treatments, and the seed. For a fuller, statistically meaningful evaluation of the design - layout, replication, score decomposition, connectedness and more - use `summary()` (see [Evaluating a Design](#evaluating-a-design)). The output object contains some additional components, which can be seen below:
 
-str(crd_result)## List of 9
+
+``` r
+str(crd_result)
+```
+
+```
+## List of 9
 ##  $ design_df     :Classes 'design' and 'data.frame':	32 obs. of  3 variables:
 ##   ..$ row      : int [1:32] 1 1 1 1 2 2 2 2 3 3 ...
 ##   ..$ col      : int [1:32] 1 2 3 4 1 2 3 4 1 2 ...
@@ -110,7 +142,7 @@ str(crd_result)## List of 9
 ##   .. ..$ single treatment within whole design:List of 12
 ##   .. .. ..$ swap            : chr "treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x00000209da8a9d58> 
+##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x0000022516ab6008> 
 ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
 ##   .. .. ..$ adj_weight      : num 1
 ##   .. .. ..$ bal_weight      : num 1
@@ -120,22 +152,26 @@ str(crd_result)## List of 9
 ##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1, 
 ##     row_column = "row", col_column = "col", ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000209d4d247e8> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x000002250edb7a10> 
 ##   .. .. ..$ final_score     : num 2.29
 ##   .. .. ..$ final_components: Named num [1:2] 0 2.29
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
 ##   .. .. ..$ optimal_score   : num 2.29
 ##   ..$ call      : language speed(data = crd_design, swap = "treatment", seed = 42)
 ##  - attr(*, "class")= chr [1:2] "design" "list"
-
+```
 
 ### Visualise the Output
 
 The final step is to visualise the optimised design. The plot below displays the spatial arrangement of treatments after optimisation, allowing you to easily check for clustering, spatial trends, or other patterns that may affect your experiment. A well-randomised and spatially efficient design will show treatments distributed evenly across the field, helping to minimise neighbour effects and maximise the reliability of your results.
 
-autoplot(crd_result)
-![](figures/crd-plot2-1.png){fig-align="default"}
 
+``` r
+autoplot(crd_result)
+```
+
+
+![](figures/crd-plot2-1.png){fig-align="default"}
 
 A nicely randomised[^1] and spatially optimal design!
 
@@ -145,7 +181,13 @@ A nicely randomised[^1] and spatially optimal design!
 
 `print()` tells you *what* a design is; `summary()` helps you *evaluate and defend* it. Calling `summary()` on any design object reports a set of structural and evaluation metrics:
 
-summary(crd_result)## Design Summary
+
+``` r
+summary(crd_result)
+```
+
+```
+## Design Summary
 ## ==============
 ## 
 ## Structure
@@ -175,7 +217,7 @@ summary(crd_result)## Design Summary
 ## Efficiency:   not requested (set efficiency = TRUE)
 ## Self-adj.:    none
 ## Neighbour:    min 0, max 5 over 28 pairs (variance 1.9048), 4 never adjacent
-
+```
 
 The output is organised into sections:
 
@@ -190,7 +232,13 @@ Any issues -- a design that ran to its iteration cap, unequal replication, or a 
 
 Some metrics are opt-in or context-dependent. The A-efficiency factor (a row--column model metric) is computed only when you ask for it:
 
-summary(crd_result, efficiency = TRUE)## Design Summary
+
+``` r
+summary(crd_result, efficiency = TRUE)
+```
+
+```
+## Design Summary
 ## ==============
 ## 
 ## Structure
@@ -220,11 +268,18 @@ summary(crd_result, efficiency = TRUE)## Design Summary
 ## Efficiency:   0.8232 (A-efficiency, row-column model)
 ## Self-adj.:    none
 ## Neighbour:    min 0, max 5 over 28 pairs (variance 1.9048), 4 never adjacent
-
+```
 
 The returned summary is also a list, so individual metrics can be pulled out programmatically:
 
-s <- summary(crd_result)s$per_level[[1]]$score## $initial
+
+``` r
+s <- summary(crd_result)
+s$per_level[[1]]$score
+```
+
+```
+## $initial
 ## [1] 40
 ## 
 ## $final
@@ -236,7 +291,7 @@ s <- summary(crd_result)s$per_level[[1]]$score## $initial
 ## $components
 ## adjacency   balance 
 ##  0.000000  2.285714
-
+```
 
 # Randomised Complete Block Design (RCBD)
 
@@ -259,41 +314,69 @@ Consider testing 6 barley varieties across a field with a moisture gradient. Usi
 
 Here we initialise a data frame for a design with 4 blocks and 6 treatments, arranged in 4 rows and 6 columns. Note that we can specify treatments in the `items` argument.
 
-rcbd_design <- initialise_design_df(items = paste0("V", 1:6), nrows = 4, ncols = 6, block_nrows = 1, block_ncols = 6)head(rcbd_design)##   row col treatment row_block col_block block
+
+``` r
+rcbd_design <- initialise_design_df(items = paste0("V", 1:6), nrows = 4, ncols = 6, block_nrows = 1, block_ncols = 6)
+head(rcbd_design)
+```
+
+```
+##   row col treatment row_block col_block block
 ## 1   1   1        V1         1         1     1
 ## 2   2   1        V1         2         1     2
 ## 3   3   1        V1         3         1     3
 ## 4   4   1        V1         4         1     4
 ## 5   1   2        V2         1         1     1
 ## 6   2   2        V2         2         1     2
-
+```
 
 
 ![](figures/rcbd-plot1-1.png){fig-align="default"}
-
 
 This is a systematic block layout; each block contains all treatments in a repeating pattern. This will now be randomised within blocks.
 
 ### Performing the Optimisation
 
+
+``` r
 rcbd_result <- speed(rcbd_design, 
                      swap = "treatment",
                      swap_within = "block",
-                     seed = 42)## row and col are used as row and column, respectively.
+                     seed = 42)
+```
+
+```
+## row and col are used as row and column, respectively.
+```
+
+```
 ## Optimising level: single treatment within block 
 ## Optimal score reached at iteration 329 for level single treatment within block
-rcbd_result## Optimised Experimental Design
+```
+
+``` r
+rcbd_result
+```
+
+```
+## Optimised Experimental Design
 ## ----------------------------
 ## Score: 1.6 
 ## Iterations Run: 329 
 ## Stopped Early: TRUE 
 ## Treatments: V1, V2, V3, V4, V5, V6 
 ## Seed: 42
-
+```
 
 ### Output of the Optimisation
 
-str(rcbd_result)## List of 9
+
+``` r
+str(rcbd_result)
+```
+
+```
+## List of 9
 ##  $ design_df     :Classes 'design' and 'data.frame':	24 obs. of  6 variables:
 ##   ..$ row      : int [1:24] 1 1 1 1 1 1 2 2 2 2 ...
 ##   ..$ col      : int [1:24] 1 2 3 4 5 6 1 2 3 4 ...
@@ -323,7 +406,7 @@ str(rcbd_result)## List of 9
 ##   .. ..$ single treatment within block:List of 12
 ##   .. .. ..$ swap            : chr "treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x00000209d39a3bd0> 
+##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x0000022514d79858> 
 ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
 ##   .. .. ..$ adj_weight      : num 1
 ##   .. .. ..$ bal_weight      : num 1
@@ -333,20 +416,24 @@ str(rcbd_result)## List of 9
 ##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1, 
 ##     row_column = "row", col_column = "col", ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000209d4d247e8> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x000002250edb7a10> 
 ##   .. .. ..$ final_score     : num 1.6
 ##   .. .. ..$ final_components: Named num [1:2] 0 1.6
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
 ##   .. .. ..$ optimal_score   : num 1.6
 ##   ..$ call      : language speed(data = rcbd_design, swap = "treatment", swap_within = "block", seed = 42)
 ##  - attr(*, "class")= chr [1:2] "design" "list"
-
+```
 
 ### Visualise the Output
 
-autoplot(rcbd_result)
-![](figures/rcbd-plot2-1.png){fig-align="default"}
 
+``` r
+autoplot(rcbd_result)
+```
+
+
+![](figures/rcbd-plot2-1.png){fig-align="default"}
 
 A well-randomised and spatially efficient RCBD layout.
 
@@ -373,18 +460,24 @@ Latin Square Design controls for two sources of variation simultaneously by arra
 
 Here we initialise a 5 × 5 Latin square with 5 treatments.
 
-latin_square_design <- initialise_design_df(items = 5, nrows = 5, ncols = 5)head(latin_square_design)##   row col treatment
+
+``` r
+latin_square_design <- initialise_design_df(items = 5, nrows = 5, ncols = 5)
+head(latin_square_design)
+```
+
+```
+##   row col treatment
 ## 1   1   1        T1
 ## 2   2   1        T2
 ## 3   3   1        T3
 ## 4   4   1        T4
 ## 5   5   1        T5
 ## 6   1   2        T1
-
+```
 
 
 ![](figures/latin-square-plot1-1.png){fig-align="default"}
-
 
 This is a systematic Latin square layout; each treatment appears once per row and column. The design will now be randomised.
 
@@ -392,26 +485,48 @@ This is a systematic Latin square layout; each treatment appears once per row an
 
 Because of the spatial optimisation algorithm built into `speed`, with default optimization parameters and enough iterations, it should arrive at a Latin square design in cases where the number of rows, columns, treatments and replicates are all equal such as this.
 
+
+``` r
 latin_square_result <- speed(latin_square_design, 
                              swap = "treatment",
-                             seed = 42)## row and col are used as row and column, respectively.
+                             seed = 42)
+```
+
+```
+## row and col are used as row and column, respectively.
+```
+
+```
 ## Optimising level: single treatment within whole design 
 ## Level: single treatment within whole design Iteration: 1000 Score: 1 Best: 1 Since Improvement: 308 
 ## Early stopping at iteration 1040 for level single treatment within whole design
-latin_square_result## Optimised Experimental Design
+```
+
+``` r
+latin_square_result
+```
+
+```
+## Optimised Experimental Design
 ## ----------------------------
 ## Score: 0 
 ## Iterations Run: 1041 
 ## Stopped Early: TRUE 
 ## Treatments: T1, T2, T3, T4, T5 
 ## Seed: 42
-
+```
 
 ### Output of the Optimisation
 
 Note that the final score of zero shows that the algorithm has found a perfect Latin Square solution.
 
-str(latin_square_result)## List of 9
+
+``` r
+str(latin_square_result)
+```
+
+```
+## List of 9
 ##  $ design_df     :Classes 'design' and 'data.frame':	25 obs. of  3 variables:
 ##   ..$ row      : int [1:25] 1 1 1 1 1 2 2 2 2 2 ...
 ##   ..$ col      : int [1:25] 1 2 3 4 5 1 2 3 4 5 ...
@@ -438,7 +553,7 @@ str(latin_square_result)## List of 9
 ##   .. ..$ single treatment within whole design:List of 12
 ##   .. .. ..$ swap            : chr "treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x00000209e2d165f0> 
+##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x000002251027ab60> 
 ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
 ##   .. .. ..$ adj_weight      : num 1
 ##   .. .. ..$ bal_weight      : num 1
@@ -448,20 +563,24 @@ str(latin_square_result)## List of 9
 ##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1, 
 ##     row_column = "row", col_column = "col", ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000209d4d247e8> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x000002250edb7a10> 
 ##   .. .. ..$ final_score     : num 0
 ##   .. .. ..$ final_components: Named num [1:2] 0 0
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
 ##   .. .. ..$ optimal_score   : num 0
 ##   ..$ call      : language speed(data = latin_square_design, swap = "treatment", seed = 42)
 ##  - attr(*, "class")= chr [1:2] "design" "list"
-
+```
 
 ### Visualise the Output
 
-autoplot(latin_square_result)
-![](figures/latin-square-plot2-1.png){fig-align="default"}
 
+``` r
+autoplot(latin_square_result)
+```
+
+
+![](figures/latin-square-plot2-1.png){fig-align="default"}
 
 A well-randomised and spatially efficient Latin square layout.
 
@@ -488,24 +607,31 @@ Split-Plot Design is used when some treatments are easier to apply to large area
 
 Now we can create a data frame representing a split plot design. We can build it with `initialise_split_design_df()` by passing a `splits` list - one entry per nested level, each describing the size of one unit and the treatments to allocate to it.
 
+
+``` r
 splits <- list(
   subplot = list(items = letters[1:4], nrows = 1, ncols = 1),
   wholeplot = list(items = LETTERS[1:3], nrows = 1, ncols = 4),
   block = list(nrows = 3, ncols = 4)
-)split_plot_design <- initialise_split_design_df(splits = splits, rep_dim = c(4, 1))head(split_plot_design)##   row col block wholeplot wholeplot_treatment subplot subplot_treatment
+)
+split_plot_design <- initialise_split_design_df(splits = splits, rep_dim = c(4, 1))
+head(split_plot_design)
+```
+
+```
+##   row col block wholeplot wholeplot_treatment subplot subplot_treatment
 ## 1   1   1     1         1                   A       1                 a
 ## 2   2   1     1         2                   B       5                 a
 ## 3   3   1     1         3                   C       9                 a
 ## 4   4   1     2         4                   A      13                 a
 ## 5   5   1     2         5                   B      17                 a
 ## 6   6   1     2         6                   C      21                 a
-
+```
 
 
 ![](figures/split-plot-plot1-1.png){fig-align="default"}
 
 ![](figures/split-plot-plot1-2.png){fig-align="default"}
-
 
 This is a systematic split plot layout; each treatment appears once per block for whole plot treatments, and once per whole plot for sub-plot treatments. The design will now be randomised.
 
@@ -517,17 +643,35 @@ For split-plot designs, we describe the hierarchy through the `optimise` argumen
 `swap_all = TRUE` is set on the whole-plot level so that all subplots sharing a whole plot move together; the subplot level keeps the default single-cell swap.
 :::
 
+
+``` r
 optimise <- list(
   wp = list(swap = "wholeplot_treatment", swap_within = "block", swap_all = TRUE),
   sp = list(swap = "subplot_treatment", swap_within = "wholeplot")
-)split_plot_result <- speed(split_plot_design, optimise = optimise, seed = 42)## row and col are used as row and column, respectively.
+)
+
+split_plot_result <- speed(split_plot_design, optimise = optimise, seed = 42)
+```
+
+```
+## row and col are used as row and column, respectively.
+```
+
+```
 ## Optimising level: wp 
 ## Level: wp Iteration: 1000 Score: 100 Best: 100 Since Improvement: 1000 
 ## Level: wp Iteration: 2000 Score: 100 Best: 100 Since Improvement: 2000 
 ## Early stopping at iteration 2000 for level wp 
 ## Optimising level: sp 
 ## Early stopping at iteration 570 for level sp
-split_plot_result## Optimised Experimental Design
+```
+
+``` r
+split_plot_result
+```
+
+```
+## Optimised Experimental Design
 ## ----------------------------
 ## Score: 100 
 ## Iterations Run: 2572 
@@ -536,13 +680,19 @@ split_plot_result## Optimised Experimental Design
 ##   wp: A, B, C
 ##   sp: a, b, c, d
 ## Seed: 42
-
+```
 
 ### Output of the Optimisation
 
 The output shows optimisation results for the design. The score and iterations are combined for the entire design, while the treatments, and stopping criteria are reported separately for each level, allowing you to assess the quality of optimisation at each hierarchy level.
 
-str(split_plot_result)## List of 9
+
+``` r
+str(split_plot_result)
+```
+
+```
+## List of 9
 ##  $ design_df     :Classes 'design' and 'data.frame':	48 obs. of  7 variables:
 ##   ..$ row                : int [1:48] 1 1 1 1 2 2 2 2 3 3 ...
 ##   ..$ col                : int [1:48] 1 2 3 4 1 2 3 4 1 2 ...
@@ -580,7 +730,7 @@ str(split_plot_result)## List of 9
 ##   .. ..$ wp:List of 12
 ##   .. .. ..$ swap            : chr "wholeplot_treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x00000209d3d6a5b0> 
+##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x000002251e8576d0> 
 ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
 ##   .. .. ..$ adj_weight      : num 1
 ##   .. .. ..$ bal_weight      : num 1
@@ -590,7 +740,7 @@ str(split_plot_result)## List of 9
 ##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1, 
 ##     row_column = "row", col_column = "col", ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000209d4d247e8> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x000002250edb7a10> 
 ##   .. .. ..$ final_score     : num 100
 ##   .. .. ..$ final_components: Named num [1:2] 36 64
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
@@ -598,7 +748,7 @@ str(split_plot_result)## List of 9
 ##   .. ..$ sp:List of 12
 ##   .. .. ..$ swap            : chr "subplot_treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x00000209d3d6a5b0> 
+##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x000002251e8576d0> 
 ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
 ##   .. .. ..$ adj_weight      : num 1
 ##   .. .. ..$ bal_weight      : num 1
@@ -608,22 +758,31 @@ str(split_plot_result)## List of 9
 ##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1, 
 ##     row_column = "row", col_column = "col", ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000209d4d247e8> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x000002250edb7a10> 
 ##   .. .. ..$ final_score     : num 0
 ##   .. .. ..$ final_components: Named num [1:2] 0 0
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
 ##   .. .. ..$ optimal_score   : num 0
 ##   ..$ call      : language speed(data = split_plot_design, optimise = optimise, seed = 42)
 ##  - attr(*, "class")= chr [1:2] "design" "list"
-
+```
 
 ### Visualise the Output
 
-autoplot(split_plot_result, treatments = "wholeplot_treatment")
-![](figures/split-plot-plot2-1.png){fig-align="default"}
-autoplot(split_plot_result, treatments = "subplot_treatment", block = "wholeplot")
-![](figures/split-plot-plot2-2.png){fig-align="default"}
 
+``` r
+autoplot(split_plot_result, treatments = "wholeplot_treatment")
+```
+
+
+![](figures/split-plot-plot2-1.png){fig-align="default"}
+
+``` r
+autoplot(split_plot_result, treatments = "subplot_treatment", block = "wholeplot")
+```
+
+
+![](figures/split-plot-plot2-2.png){fig-align="default"}
 
 This design has now been optimised at both the whole plot level and the sub-plot level.
 
