@@ -29,11 +29,25 @@ anything that was.
 decisions is new: the objective's global optimum turns out to be the design class the 2021 paper
 explicitly says it does not want.
 
-**Running things on this machine** (no devcontainer here):
+**Added 2026-08-10, second pass.** Review comments on the *Feat: revise piepho objective function*
+issue - "`pair_mapping` could be created internally" and "pair table might not be required, using
+matrix calculation instead" - were checked against the code, measured, and cross-referenced against
+every open branch. Both hold. The second is the more important: a treatment x treatment count matrix
+is a verified drop-in for `calculate_nb()`, is 3.1-4.8x faster, and closes defects 2 and 4
+structurally rather than by patch. The branch survey also found that **the same computation exists in
+up to seven places** across `main` and four branches, which is the subject of the new
+*Consolidation* section. See Performance for the numbers.
+
+**Running things** - paths are per-machine, no devcontainer on either:
 
 ```sh
+# machine A
 RS="C:/Users/a1193984/AppData/Local/Programs/R/R-4.6.1/bin/x64/Rscript.exe"
 "$RS" -e 'devtools::test("c:/Workspace/speed", reporter = "silent")'
+
+# machine B
+RS="C:/Program Files/R/R-4.6.1/bin/Rscript.exe"
+"$RS" -e 'devtools::test("d:/Workspaces/speed-sam", reporter = "silent")'
 ```
 
 Every `Rscript`-based `devtools::test()` run **deletes the vdiffr SVG snapshots** - all 84 of them,
@@ -215,6 +229,24 @@ grid holds a single treatment fails with `combn`'s bare `n < m`, with no mention
 **Fix:** build one `pair_mapping` from the whole design, and guard the fewer-than-two-items case with a
 message naming the design or grid.
 
+**Better fix, and the one to take** (added 2026-08-10). The universe should not be a *pair table* at
+all. Under the count-matrix form (see Consolidation, stage 1) the universe is the **level set** - `v`
+labels rather than `v(v-1)/2` pair strings - and a treatment missing from a grid is a zero row and
+column instead of a dropped pair, so the structural zeros survive by construction. Three consequences:
+
+- **`speed()` already has it for free.** [R/speed.R:206](R/speed.R#L206) factors the data before the
+  loop, so `levels(factored[[swap]])` is the universe. Nothing needs building.
+- **The cost of getting this wrong today is larger than the fix.** `create_pair_mapping()` measures
+  **92 ms** on the 2021 Ex4 layout (v = 450) against **~9.5 ms** for the whole NB call, and 0.65 ms
+  for `sort(unique())`. The `pair_mapping = NULL` default therefore pays roughly 10x the cost of the
+  work it enables, every iteration.
+- **The opaque `combn` error disappears** rather than needing a guard: there is no `combn` call. The
+  fewer-than-two-items case is `v < 2`, where the count matrix is 1x1 and `var` is already defined as 0.
+
+The review comment "`pair_mapping` could be created internally" points at this defect, but "internally"
+cannot mean inside `calculate_nb()` - that is precisely the scope that cannot see the whole design.
+It has to come from `speed()`.
+
 ### 3. `msts` keeps phantom entries when a treatment leaves a grid
 
 Introduced by the merge, because ED is now per grid: `msts` is seeded from `current_ed$msts`
@@ -256,6 +288,13 @@ binary."*
 as an `==` comparison on the two shifted matrices rather than a second `paste`/`pair_mapping` pass -
 cheaper (0.55 -> 0.65 ms on 300 plots, an upper bound) and it does not depend on `paste()`-built labels,
 which `create_pair_mapping()` explicitly allows to contain commas.
+
+**The count-matrix form makes this free** (added 2026-08-10). In a v x v count matrix the **diagonal
+is the self-adjacency count** and the off-diagonal is `nb`, so "diagonal counted in both directions,
+off-diagonal following `directions`" is a natural split rather than a bolt-on second pass. The
+measured 3.1-4.8x NB speedup in Performance is *with* both-direction self-adjacency already included -
+this defect is fixed inside the speedup, not traded against it. Take this fix as part of stage 1 of
+Consolidation rather than on its own; the blast radius below is unchanged either way.
 
 Contained to `calculate_nb()`'s implementation, but **not** behaviour-contained: it changes
 `objective_function_piepho()`'s score for every non-square grid, hence the search trajectory and the
@@ -459,17 +498,71 @@ second measurement using `Sys.time()` loops and *without* a precomputed `pair_ma
 on Figure 1 rather than 0.23 - which is itself worth knowing: calling
 `objective_function_piepho()` without `pair_mapping` rebuilds it every iteration.)
 
-Two concrete optimisations follow, neither of which changes results:
+Two concrete optimisations follow. Neither changes results on its own - the count-matrix rewrite below
+is bit-identical to what `calculate_nb()` returns today; only bundling defect 4's fix with it moves any
+score:
 
-- **A single-grid fast path for the pooling block.** For `length(grid_index) == 1` - the common case, and
-  all four designs above - lines 412-427 recompute exactly what `calculate_nb()` already returned,
-  materialising and de-duplicating all 101,025 pair names on Ex4 and then re-running `max`/`var`/`s2`
-  over the full vector. That is 19 of the 39 ms. This block arrived with the MET merge.
+- ~~**A single-grid fast path for the pooling block.**~~ **Superseded 2026-08-10 - do the count-matrix
+  rewrite instead.** For `length(grid_index) == 1` lines 412-427 recompute exactly what
+  `calculate_nb()` already returned, materialising and de-duplicating all 101,025 pair names on Ex4,
+  which is 19 of the 39 ms. A fast path would fix the single-grid case only. The count matrix makes
+  pooling `Reduce("+", mats)`, which is **5.5-18.5x faster in every case including MET** and needs no
+  special-casing. See the measured table below.
 - **`calculate_ed()`'s setup now dominates its own call.** The `data.frame` + `split()` is 0.56 ms on
   Figure 1 but 8.06 ms at 450 items, which is 69-95% of an *incremental* call - `split()` is ~96% of
   that. Once only two treatments need recomputing, rebuilding every treatment's coordinate groups from
   scratch is the whole cost. Hoisting or caching the grouping is the obvious win. (Note this is
   currently masked by defect 1, which means nothing is recomputed at all.)
+
+**The count-matrix rewrite, measured** (2026-08-10, host R 4.6.1, microbenchmark minima, 400 reps below
+v = 100 and 50 above, names precomputed in *both* variants as the SA loop does). Implemented
+standalone: factor codes via `match()`, one `tabulate()` into a `v x v` matrix, symmetrise.
+
+```
+design                     current   matrix   speedup
+2018 Ex1   9x11,  v=25       0.271    0.057      4.8x
+2021 Ex2   6x10,  v=20       0.159    0.052      3.1x
+2021 Ex3  25x12, v=253       2.828    0.810      3.5x
+2021 Ex4  18x30, v=450       9.492    2.436      3.9x     ms per calculate_nb() call
+
+MET pooling block (3 grids), name union vs matrix addition
+2018 Ex1                     0.079    0.011      6.9x
+2021 Ex2                     0.053    0.010      5.5x
+2021 Ex3                     7.126    0.523     13.6x
+2021 Ex4                    32.523    1.759     18.5x     ms
+```
+
+`var` and `s2` need no triangle materialised. With `S` and `SS` the sums of counts and squared counts
+over the upper triangle - both obtainable from `sum(M)`, `sum(M*M)` and the diagonal:
+
+```
+var = (SS - S^2 / P) / (P - 1)          s2 = (SS - S) / 2
+```
+
+**Equivalence checked, not assumed:** 0 mismatches over 300 random designs spanning v = 2-12, layouts
+2x2 to 8x8 and all four `directions` settings, comparing `nb` **including its names and their order**,
+plus `var`, `s2`, `max_nb`, `max_pairs` and `self_adjacencies`. `NA`/empty-plot handling matches too.
+
+Three caveats found while measuring, all of which change how it should be written:
+
+1. **The named `nb` vector is the cost centre, not the counting.** Rebuilding the `v(v-1)/2` pair names
+   per call made the matrix version *2.3x slower* than current at v = 450 (24.5 ms against 10.6). Build
+   them once, exactly as `pair_mapping` is today. The clean split is a lean internal returning counts
+   plus scalars, with `calculate_nb()` a thin public wrapper that attaches names - which is what the SA
+   loop wants anyway, since it reads only `var` and `self_adjacencies`.
+2. **Level order.** `to_factor()` leaves an existing factor's level order alone
+   ([R/utils.R:85-87](R/utils.R#L85-L87)), so `levels()` is not always `sort(unique())`. Values are
+   unaffected, but `nb`'s *name order* would shift for pre-factored input. Sort the level set to keep
+   it byte-identical.
+3. **`create_pair_mapping()` is exported** and listed in `_pkgdown.yml`, so it needs a deprecation
+   cycle rather than deletion. `calculate_nb(pair_mapping = )` can stay and derive the level set from
+   the mapping it is handed.
+
+**Incremental NB becomes possible for the first time.** A single swap touches at most 8 adjacencies, so
+the count matrix updates in place: a further **2.7x** over a full matrix recompute, flat across all four
+sizes. That is a floor, not a ceiling - the prototype still recomputes the variance in `O(v^2)`, and
+`S`/`SS` admit `O(1)` updates too. `origin/feature/incremental-scoring` is plan-only (328 lines, no
+code); this is its precondition, so sequence the two together.
 
 **The MST kernels.** `.mst_mean_prim()` versus `.mst_mean_igraph()`, mean edge length for one
 treatment's replications:
@@ -500,6 +593,145 @@ plots cannot reach `calculate_ed()` at all now: `grid_index()` rejects duplicate
 3000 random designs and all five `add_buffers()` types: no within-treatment distance of 0. Keep Prim's
 because it is faster and because a zero-length edge is handled correctly if it ever does arise - not
 because the input is expected.
+
+---
+
+## Consolidation: one implementation per primitive
+
+Added 2026-08-10, from the branch survey. The immediate trigger was the review comment "pair table
+might not be required", but the finding is broader: **counting how often two treatments co-occur is
+implemented up to seven times across `main` and four branches**, in incompatible containers, and
+nothing in the suite asserts that any two of them agree.
+
+### What is duplicated
+
+**Family A - treatment x treatment co-occurrence over some plot relation.**
+
+| Where | Branch | Relation | Container |
+|---|---|---|---|
+| [`calculate_nb()`](R/metrics.R#L520) | main | rook adjacency | named vector over `v(v-1)/2` pasted pair strings |
+| [piepho pooling block](R/metrics.R#L412-L427) | main | same, pooled over grids | re-derives `max`/`var`/`s2` by name union |
+| [`.neighbour_balance()`](R/summary.R#L1042) | main | same, forces both directions | own per-grid loop and own pooling |
+| [`.design_concurrence()`](R/summary.R#L900) | main | block co-membership | `table()` then `M %*% t(M)` |
+| [`adjacency_score_vec()`](R/calculate_adjacency_score.R#L132) | main | arbitrary ring offsets, graded - the general case, **stays** | per-cell score matrix |
+| `calculate_pair_incidence()` | `origin/feature/incidence` | rook adjacency | **already the `v x v` matrix form** |
+| `calc_concurrence_matrix()` | `info-objective` | block co-membership | `N %*% t(N)` - duplicate of `.design_concurrence()` |
+
+**Family B - treatment x spatial-level incidence.** [`calculate_balance_score()`](R/metrics.R#L185) and
+[`.balance_score_min()`](R/metrics.R#L215) build the same `table()` separately;
+[`.design_concurrence()`](R/summary.R#L904) and [`.block_spread()`](R/summary.R#L943) build the same `M`
+separately - and `.block_spread()`'s own roxygen [says so](R/summary.R#L933-L934) ("It reads the same
+treatment-by-block incidence `M`"). Add `calculate_position_incidence()` on `feature/incidence` and
+`calc_incidence_matrix()` on `info-objective`.
+
+**Family C - plot x treatment indicator `X`.** Built independently in
+[`calculate_efficiency_factor()`](R/metrics.R#L981-L982) on `main`, in `.build_treatment_matrix()` on
+`info-objective`, and again in `objective_function_a_optimality` on `origin/feature/a-optimality`.
+
+### The identity that unifies them
+
+With `X` the `n x v` plot-treatment indicator, every entry in family A is **`t(X) %*% A %*% X`** for a
+different plot-by-plot relation `A`:
+
+| `A` | Result | Consumers |
+|---|---|---|
+| rook adjacency | adjacency concurrence | `calculate_nb`, `self_adjacencies`, the `adjacency_score_vec` diagonal |
+| block co-membership `Z Z'` | classical concurrence `N N'` | `.design_concurrence`, efficiency factors |
+| projection `L` | treatment information matrix | `objective_function_info`, A/D-optimality |
+
+Family B is the same construction one level down (`t(X) %*% Z`), which is what
+`calculate_balance_score()` takes row variances of.
+
+**Two honest limits on this, both of which shape the target design:**
+
+- Dense `t(X) %*% A %*% X` is `O(n^2 v)` - about 131M flops at Ex4's size (`n = 540`, `v = 450`).
+  Correct for `summary()` and one-off reporting, hopeless per iteration. The SA loop needs the sparse
+  edge-list `tabulate()`. So the target is **one primitive per family with two backends and a shared
+  statistics layer**, not one function.
+- Adjacency concurrence is genuinely **not** `N N'` for any incidence `N` - it is an edge-list
+  tabulation, not a co-membership product. Anyone attempting a single `concurrence()` covering both
+  will get stuck here.
+
+### What deliberately does not fold in
+
+- **[`adjacency_score_vec()`](R/calculate_adjacency_score.R#L132) stays as it is.** Arbitrary ring
+  offsets x graded `relationship` lookups x per-cell output is a genuinely different function, and
+  collapsing it into a `v x v` container would lose the per-cell result that
+  `calculate_adjacency_score()` needs. But **at `ring_dists = 1, ring_type = "manhattan"` the ring is
+  exactly rook adjacency**, so `sum(diag(M))` must equal `calculate_adjacency_score()` at the defaults.
+  `feature/incidence`'s review notes verified that identity holds at the defaults and **fails** under
+  `ring_type = "chebyshev"` (5 against 1), so pin it scoped to rook distance 1.
+- **[`.efficiency_factor()`](R/summary.R#L964)** is a legitimate guarded wrapper over
+  `calculate_efficiency_factor()`, not a duplicate.
+- **[`get_vertices()`](R/metrics.R#L784) / [`get_edges()`](R/metrics.R#L820)** - exported, no longer
+  used by `calculate_ed()`, two near-duplicate test files. A separate keep-or-deprecate decision,
+  already recorded under *Findings not previously recorded*.
+
+### The staged path
+
+Each stage is independently shippable and has a different blast radius. **Do not bundle stage 1 with
+stages 2-4:** stage 1 changes returned designs, the others change nothing, and mixing them makes any
+regression unattributable.
+
+**Stage 0 - prerequisite, not part of this work.** Defects 1 and 3. Defect 1 freezes the incremental ED
+path, so *no performance claim here can be validated until it lands*.
+
+**Stage 1 - the count matrix.** Add `.pair_counts(design_matrix, levels, directions)` returning the
+`v x v` integer matrix, and `.pair_stats(M)` returning `max`/`var`/`s2`/`self`/`n_zero` from `S`, `SS`
+and the diagonal. `calculate_nb()` becomes a thin public wrapper that attaches names. **Closes defects
+2 and 4.** Behaviour-changing: own commit, NEWS under *Bug Fixes*. Blast radius already measured - two
+assertions in `test-calculate_nb.R`, plus a reworded error message at lines 105-109.
+
+**Stage 2 - collapse the other two adjacency copies onto it.** The piepho pooling block becomes
+`Reduce("+", mats)` then `.pair_stats()`; `.neighbour_balance()` calls the same primitive. Pure
+refactor - pin `summary()`'s output first, then assert it is unchanged. This ends the
+objective-versus-summary contradiction in defect 4 *by construction* rather than by keeping two
+implementations in step.
+
+**Stage 3 - `.level_incidence(df, swap, factor_col)`.** Merges the table built twice in
+`calculate_balance_score`/`.balance_score_min` and the `M` built twice in
+`.design_concurrence`/`.block_spread`. Pure refactor, no API change, cheapest stage here - it can be
+done at any point, including before stage 1.
+
+**Stage 4 - `.treatment_indicator(df, swap)`.** Extract the `n x v` `X` from
+`calculate_efficiency_factor()`. No behaviour change on `main`; it is the prerequisite for stages 5-6.
+
+**Stage 5 - rebase `origin/feature/incidence`.** `calculate_pair_incidence()` becomes the public face
+of `.pair_counts()`. This settles that branch's own **I5** ("duplicates `calculate_nb()`'s edge
+enumeration") and resolves its **I-D2** naming question as a consequence rather than a style call: once
+there is one implementation with two relations, the adjacency-versus-block distinction has to live in
+the name or in a `relation =` argument.
+
+**Stage 6 - rebase `info-objective` and `origin/feature/a-optimality`** onto `.treatment_indicator()`.
+`calc_concurrence_matrix()` collapses into `.level_incidence()` plus the product, which is
+`.design_concurrence()`'s body.
+
+### Ordering hazards
+
+- **The two objective branches are additive, not reverting - checked, not assumed.**
+  `info-objective` (2026-05-01) and `origin/feature/a-optimality` (2026-05-25) both hold a working copy
+  of the *pre*-structural-zeros `metrics.R`, so it is natural to assume merging them would reinstate the
+  observed-pairs-only `calculate_nb()` whose ranking inversion is documented under *Settled - do not
+  revert*. **It would not.** `git diff --numstat main...origin/feature/a-optimality` is `401 0` on
+  `R/metrics.R` - pure append - and the diff contains no line matching `calculate_nb`, `sorted_pairs`
+  or `pair_mapping`. `info-objective` adds `R/objectives.R` as a new file (`434 0`). A three-way merge
+  keeps `main`'s definitions.
+  The genuine conflict surfaces are much smaller: `a-optimality`'s `R/speed.R` (`6 5`, against 145
+  commits of drift) and `info-objective`'s `DESCRIPTION` (`18 10`). Both branches duplicate
+  functionality that `main` has since grown, so they need **reconciling on the merits**, not defending
+  against.
+- `feature/incidence`'s REVIEW-NOTES.md points at code "on `bugfix/grid-orientation`". That branch is
+  no longer in the branch list and `build_design_matrix()` is on `main`, so those notes are stale on
+  that point.
+
+### The test that makes it stick
+
+There are three copies of adjacency counting on `main` alone because **nothing asserts they agree** -
+which is also why `.neighbour_balance()` could be right about both directions while the objective was
+wrong (defect 4) without a single failure. One cross-path invariant test is the durable fix: on the same
+design, `calculate_nb()`, `.neighbour_balance()` and `calculate_pair_incidence()` must return identical
+counts, and `sum(diag(M))` must equal `calculate_adjacency_score()` at rook distance 1. Without it a
+future branch adds a fourth copy and nothing fails.
 
 ---
 
@@ -581,6 +813,19 @@ Beyond the four defects, verification turned up these:
   Cosmetic only.
 - **`get_vertices()` / `get_edges()` are still exported but no longer used by `calculate_ed()`**, with
   two near-duplicate test files. Decide whether they stay.
+- **The count-matrix form of `calculate_nb()` is a verified drop-in, not a rewrite** (2026-08-10). 0
+  mismatches over 300 random designs on names, name order, `var`, `s2`, `max_nb`, `max_pairs`,
+  `self_adjacencies` and `NA` handling; 3.1-4.8x faster; 5.5-18.5x on the MET pooling block. See
+  Performance for the numbers and the three implementation caveats, and Consolidation for the wider
+  duplication it exposes. `feature/incidence` already contains this computation
+  (`calculate_pair_incidence()`, with a 114-line test file), so stage 1 is partly written.
+- **`.block_spread()` and `.design_concurrence()` build the same incidence table twice**, and
+  `.block_spread()`'s roxygen [says so explicitly](R/summary.R#L933-L934) without sharing it. Same for
+  `calculate_balance_score()` and `.balance_score_min()`. Both are free wins under Consolidation
+  stage 3.
+- **`main` already has a concurrence matrix.** [`.design_concurrence()`](R/summary.R#L900) computes
+  `M %*% t(M)` internally, so `info-objective`'s exported `calc_concurrence_matrix()` is a second
+  implementation of something `main` already has - worth knowing before that branch is revisited.
 - **The score formula in the docs is stale.** [R/metrics.R:290](R/metrics.R#L290) and
   `man/objective_function_piepho.Rd` both say the score is
   `nb$var + ed$inv_total_mst + self_adj_weight * nb$self_adjacencies`, but `ed` is a per-grid list now,
@@ -698,14 +943,23 @@ Every row verified against the PDFs on 2026-08-10.
    test that goes through `speed()`, and until it is done every non-integer-labelled run is optimising a
    frozen ED term and reporting a score no design achieved. Re-measure anything performance-related
    afterwards - defect 1 currently means the incremental path does no work.
-3. **Fix defect 2** (one global `pair_mapping`), which also removes the opaque `n < m` error, and
-   **defect 3** (one line).
-4. **Fix defect 4** (`self_adjacencies` in both directions), then re-argue the `self_adj_weight` default
-   (decision 1), since the two are coupled. Blast radius is two assertions in `test-calculate_nb.R`.
-5. Decide the span question (decision 2) - there is a published oracle for it now - and the MET NB
+3. **Fix defect 3** (one line).
+4. **Do Consolidation stage 1** - the count-matrix form of `calculate_nb()`. This is now the route to
+   **defects 2 and 4 together**, and it subsumes what those entries originally proposed (a global
+   `pair_mapping`, a separate `==` pass for self-adjacencies, and the single-grid pooling fast path).
+   It is behaviour-changing, so it lands as its own commit with NEWS entries under *Bug Fixes*. Blast
+   radius is two assertions in `test-calculate_nb.R` plus one error message.
+5. Then re-argue the `self_adj_weight` default (decision 1), which is coupled to defect 4: the term goes
+   from usually-0 to usually-non-zero once both directions are counted.
+6. **Consolidation stages 2-3** - collapse `.neighbour_balance()` and the piepho pooling block onto the
+   same primitive, and share the incidence tables. Pure refactors; pin `summary()`'s output first. Add
+   the cross-path invariant test, without which this all re-diverges.
+7. Decide the span question (decision 2) - there is a published oracle for it now - and the MET NB
    pooling question (decision 3).
-6. The single-grid pooling fast path and the `calculate_ed()` `split()` hoist are free performance wins
-   once defect 1 is fixed.
-7. **Before making the search stronger** (multi-swap, slower cooling, more restarts), settle decision 4.
+8. The `calculate_ed()` `split()` hoist is a free performance win once defect 1 is fixed.
+9. **Before making the search stronger** (multi-swap, slower cooling, more restarts), settle decision 4.
    Fixing defect 1 alone makes the ED term live again, which moves in that direction; the current
    distance from the knight's-move optimum is search weakness, not a guard.
+10. Consolidation stages 4-6 (the `X` primitive and the branch rebases) are the long tail. Both objective
+    branches are additive rather than reverting (verified - see *Ordering hazards*), so the work there is
+    reconciling duplicated functionality, not untangling a merge.
