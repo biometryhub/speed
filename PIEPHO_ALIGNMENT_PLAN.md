@@ -642,15 +642,68 @@ different plot-by-plot relation `A`:
 Family B is the same construction one level down (`t(X) %*% Z`), which is what
 `calculate_balance_score()` takes row variances of.
 
-**Two honest limits on this, both of which shape the target design:**
+`t(X) %*% A %*% X` is the **identity that explains the shared shape, not the implementation.** Dense, it
+is `O(n^2 v)` - about 131M flops at Ex4's size (`n = 540`, `v = 450`) - so it is fine for `summary()`
+and hopeless per iteration. The implementation is a sparse edge-list `tabulate()`, and **one worker
+covers every relation in the table above** (verified below). An earlier revision of this section said
+the target had to be "one primitive per family with two backends, not one function"; the prototype
+disproved that.
 
-- Dense `t(X) %*% A %*% X` is `O(n^2 v)` - about 131M flops at Ex4's size (`n = 540`, `v = 450`).
-  Correct for `summary()` and one-off reporting, hopeless per iteration. The SA loop needs the sparse
-  edge-list `tabulate()`. So the target is **one primitive per family with two backends and a shared
-  statistics layer**, not one function.
-- Adjacency concurrence is genuinely **not** `N N'` for any incidence `N` - it is an edge-list
-  tabulation, not a co-membership product. Anyone attempting a single `concurrence()` covering both
-  will get stuck here.
+### The target architecture
+
+Four layers. Only the first does any work.
+
+```r
+# Layer 1 - the single worker. Everything below feeds it.
+# `a`, `b`: equal-length integer treatment codes, one entry per related plot
+# pair. NA (empty plots) drop out. Returns the symmetric v x v count matrix.
+.count_pairs <- function(a, b, v) {
+  keep <- !is.na(a) & !is.na(b)
+  a <- a[keep]; b <- b[keep]
+  raw <- matrix(tabulate((b - 1L) * v + a, v * v), v, v)
+  M <- raw + t(raw)
+  diag(M) <- diag(raw)  # self-pairs counted once, not twice
+  return(M)
+}
+
+# Layer 2 - relation adapters. Small, and the only part that knows the design.
+.rook_pairs(codes, directions)   # grid neighbours  -> NB, self-adjacency
+.group_pairs(codes, group)       # block co-members -> concurrence
+
+# Layer 3 - statistics, shared. All from S, SS and the diagonal; no triangle
+# is ever materialised, so this is O(v^2) arithmetic with no allocation.
+.pair_stats(M)  # n_pairs, self, total, max, var, s2, n_zero
+
+# Layer 4 - public faces, all thin.
+calculate_nb()               # attaches pair names; keeps its current contract
+calculate_cooccurrence()     # the v x v matrix, `relation = c("adjacency", "block")`
+calculate_incidence()        # treatment x level (family B)
+```
+
+`.count_pairs()` matches the layer-2 adapter to the container `speed()` already has: the SA loop holds
+integer codes (`speed()` factors at [R/speed.R:206](R/speed.R#L206)), so no adapter allocates strings
+and the objective never touches layer 4.
+
+**Verified 2026-08-10 against the current implementation:**
+
+| Check | Result |
+|---|---|
+| Layers 1-3 vs `calculate_nb()`, 300 random designs | **0 mismatches** on `var`, `s2`, `self`, `max`, `n_pairs`, `total`, `n_zero` |
+| Defect 4 as a splice: `diag(M) <- diag(M_both)` | self 1 -> 3, off-diagonals provably **unchanged** |
+| `.group_pairs()` vs `table()` then `M %*% t(M)` | off-diagonal concurrences **identical** |
+| MET pooling as `M1 + M2` | structural zeros retained across sites |
+| Cost, Ex1 / Ex4 | **7.4x / 3.5x faster** than current `calculate_nb()` |
+
+The layering is *faster* than the monolithic matrix version measured in Performance (0.033 ms against
+0.057 on Ex1) because `.pair_stats()` never builds the named vector - only layer 4 does, and only when
+a caller asks for it.
+
+**The one caveat that survives, and it must be documented:** the diagonal means different things per
+relation. Under `.rook_pairs()` it is the **self-adjacency count**; under `.group_pairs()` it is
+**within-block self-pairs**, which is *not* `N N'`'s diagonal (replication). Measured on 5 treatments
+in 4 complete blocks: worker diagonal `0,0,0,0,0`, `N N'` diagonal `4,4,4,4,4`. Off-diagonals agree
+exactly. So `calculate_cooccurrence(relation = "block")` must either document its diagonal or fill it
+with replication to match the design-theory convention - a deliberate choice, not an accident.
 
 ### What deliberately does not fold in
 
@@ -676,11 +729,13 @@ regression unattributable.
 **Stage 0 - prerequisite, not part of this work.** Defects 1 and 3. Defect 1 freezes the incremental ED
 path, so *no performance claim here can be validated until it lands*.
 
-**Stage 1 - the count matrix.** Add `.pair_counts(design_matrix, levels, directions)` returning the
-`v x v` integer matrix, and `.pair_stats(M)` returning `max`/`var`/`s2`/`self`/`n_zero` from `S`, `SS`
-and the diagonal. `calculate_nb()` becomes a thin public wrapper that attaches names. **Closes defects
-2 and 4.** Behaviour-changing: own commit, NEWS under *Bug Fixes*. Blast radius already measured - two
-assertions in `test-calculate_nb.R`, plus a reworded error message at lines 105-109.
+**Stage 1 - layers 1-3, plus `calculate_nb()` as the first layer-4 face.** Add `.count_pairs()`,
+`.rook_pairs()` and `.pair_stats()` exactly as sketched above; `calculate_nb()` becomes a thin wrapper
+that attaches pair names and keeps its current return contract. **Closes defects 2 and 4.**
+Behaviour-changing: own commit, NEWS under *Bug Fixes*. Blast radius already measured - two assertions
+in `test-calculate_nb.R`, plus a reworded error message at lines 105-109. Do **not** add
+`calculate_cooccurrence()` / `calculate_incidence()` here; new public API in a behaviour-changing
+commit makes a revert expensive.
 
 **Stage 2 - collapse the other two adjacency copies onto it.** The piepho pooling block becomes
 `Reduce("+", mats)` then `.pair_stats()`; `.neighbour_balance()` calls the same primitive. Pure
@@ -696,11 +751,15 @@ done at any point, including before stage 1.
 **Stage 4 - `.treatment_indicator(df, swap)`.** Extract the `n x v` `X` from
 `calculate_efficiency_factor()`. No behaviour change on `main`; it is the prerequisite for stages 5-6.
 
-**Stage 5 - rebase `origin/feature/incidence`.** `calculate_pair_incidence()` becomes the public face
-of `.pair_counts()`. This settles that branch's own **I5** ("duplicates `calculate_nb()`'s edge
-enumeration") and resolves its **I-D2** naming question as a consequence rather than a style call: once
-there is one implementation with two relations, the adjacency-versus-block distinction has to live in
-the name or in a `relation =` argument.
+**Stage 5 - rebase `origin/feature/incidence` and add the remaining layer-4 faces.**
+`calculate_cooccurrence(relation = c("adjacency", "block"))` and `calculate_incidence()` land here, on
+top of the already-shipped layers 1-3. This settles that branch's own **I5** ("duplicates
+`calculate_nb()`'s edge enumeration") and answers its **I-D2** naming question as a consequence rather
+than a style call: with one implementation serving two relations, the adjacency-versus-block
+distinction belongs in a `relation =` argument, not in two function names. Recommend `relation =` over
+separate `calculate_adjacency_concurrence()` / `calculate_concurrence()` - it makes the shared
+implementation visible in the API and stops the two faces drifting again. Document the diagonal
+convention per relation (see *The target architecture*).
 
 **Stage 6 - rebase `info-objective` and `origin/feature/a-optimality`** onto `.treatment_indicator()`.
 `calc_concurrence_matrix()` collapses into `.level_incidence()` plus the product, which is
