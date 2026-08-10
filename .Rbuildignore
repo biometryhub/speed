@@ -28,3 +28,4 @@ codemeta.json
 CLAUDE.md
 .claude
 Rplots.pdf
+^KNOWN_ISSUES\.md$
