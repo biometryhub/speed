@@ -92,6 +92,12 @@ to_factor <- function(df) {
 
 #' Convert Data Frame Data to Provided Types
 #'
+#' Columns are converted via `as.<type>()`. Factors are routed through
+#' [as.character()] first, because `as.numeric()` and friends applied to a
+#' factor return its integer level codes rather than its labels - the labels are
+#' what hold the original values. Columns whose target type is `factor` are left
+#' as-is, since re-factoring would re-sort the levels.
+#'
 #' @inheritParams to_factor
 #' @param types A named list of the types for each column
 #'
@@ -100,7 +106,12 @@ to_factor <- function(df) {
 #' @keywords internal
 to_types <- function(df, types) {
   df[names(types)] <- mapply(
-    \(t, x) get(sprintf("as.%s", t), mode = "function")(x),
+    \(t, x) {
+      if (is.factor(x) && t != "factor") {
+        x <- as.character(x)
+      }
+      get(sprintf("as.%s", t), mode = "function")(x)
+    },
     types,
     df[names(types)],
     SIMPLIFY = FALSE
@@ -156,17 +167,19 @@ to_types <- function(df, types) {
 #' @inheritParams speed
 #'
 #' @keywords internal
-create_speed_input <- function(swap,
-                               swap_within,
-                               spatial_factors,
-                               grid_factors,
-                               iterations,
-                               early_stop_iterations,
-                               obj_function,
-                               swap_all,
-                               optimise_params,
-                               optimise = NULL,
-                               row_col_inferred = TRUE) {
+create_speed_input <- function(
+  swap,
+  swap_within,
+  spatial_factors,
+  grid_factors,
+  iterations,
+  early_stop_iterations,
+  obj_function,
+  swap_all,
+  optimise_params,
+  optimise = NULL,
+  row_col_inferred = TRUE
+) {
   speed_args <- c(
     "swap",
     "swap_within",
@@ -210,7 +223,10 @@ create_speed_input <- function(swap,
       )
 
       for (arg in speed_args) {
-        if (!(arg %in% c("swap", "swap_within", "grid_factors", "optimise_params"))) {
+        if (
+          !(arg %in%
+            c("swap", "swap_within", "grid_factors", "optimise_params"))
+        ) {
           if (is.null(optimise[[optimise_name]][[arg]])) {
             optimise_var <- get(arg)
             optimise[[optimise_name]][[arg]] <- if (is.list(optimise_var)) {

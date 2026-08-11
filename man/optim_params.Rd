@@ -12,7 +12,8 @@ optim_params(
   cooling_rate = 0.99,
   random_initialisation = 0,
   adj_weight = 1,
-  bal_weight = 1
+  bal_weight = 1,
+  stop_at_optimal = TRUE
 )
 }
 \arguments{
@@ -41,6 +42,11 @@ the best score is used as an initial design (default: 0).}
 \item{adj_weight}{Weight for adjacency score (default: 1).}
 
 \item{bal_weight}{Weight for balance score (default: 1).}
+
+\item{stop_at_optimal}{Logical; if \code{TRUE}, stops the level as soon as the best score reaches the lowest score
+its layout allows (default: \code{TRUE}). The bound is only derivable for the default \code{\link[=objective_function]{objective_function()}}
+with non-negative weights and no \code{relationship} matrix; otherwise the level runs to its usual stopping
+rules regardless of this setting.}
 }
 \value{
 A named list of optimization parameters.

@@ -8,14 +8,16 @@
 #' @inheritParams speed
 #'
 #' @keywords internal
-.verify_speed_inputs <- function(data,
-                                 swap,
-                                 swap_within,
-                                 spatial_factors,
-                                 iterations,
-                                 early_stop_iterations,
-                                 quiet,
-                                 seed) {
+.verify_speed_inputs <- function(
+  data,
+  swap,
+  swap_within,
+  spatial_factors,
+  iterations,
+  early_stop_iterations,
+  quiet,
+  seed
+) {
   if (!is.data.frame(data)) {
     stop("`data` must be an initial data frame of the design")
   }
@@ -39,19 +41,33 @@
   verify_boolean(quiet)
   verify_between(lower = 0, upper = 1, upper_exclude = TRUE)
   if (!is.null(seed)) {
-    verify_between(seed, lower = -.Machine$integer.max, upper = .Machine$integer.max)
+    verify_between(
+      seed,
+      lower = -.Machine$integer.max,
+      upper = .Machine$integer.max
+    )
   }
 }
 
 #' Verify hierarchical inputs
 #' @rdname verify
 #' @keywords internal
-.verify_hierarchical_inputs <- function(data, swap, swap_within, spatial_factors,
-                                        iterations, early_stop_iterations, obj_function,
-                                        quiet, seed) {
+.verify_hierarchical_inputs <- function(
+  data,
+  swap,
+  swap_within,
+  spatial_factors,
+  iterations,
+  early_stop_iterations,
+  obj_function,
+  quiet,
+  seed
+) {
   # Check that swap and swap_within have same names
   if (!all(names(swap) == names(swap_within))) {
-    stop("Names of `swap` and `swap_within` must match for hierarchical designs")
+    stop(
+      "Names of `swap` and `swap_within` must match for hierarchical designs"
+    )
   }
 
   # Check that all specified columns exist in data
@@ -59,8 +75,10 @@
     if (!swap[[level]] %in% names(data)) {
       stop(paste("Column", swap[[level]], "not found in data"))
     }
-    if (!swap_within[[level]] %in% names(data) &&
-      !(swap_within[[level]] %in% c("1", "none"))) {
+    if (
+      !swap_within[[level]] %in% names(data) &&
+        !(swap_within[[level]] %in% c("1", "none"))
+    ) {
       stop(paste("Column", swap_within[[level]], "not found in data"))
     }
   }
@@ -80,17 +98,20 @@
 #' @rdname verify
 #'
 #' @keywords internal
-.verify_optim_params <- function(swap_count,
-                                 swap_all_blocks,
-                                 adaptive_swaps,
-                                 start_temp,
-                                 cooling_rate,
-                                 random_initialisation,
-                                 adj_weight,
-                                 bal_weight) {
+.verify_optim_params <- function(
+  swap_count,
+  swap_all_blocks,
+  adaptive_swaps,
+  start_temp,
+  cooling_rate,
+  random_initialisation,
+  adj_weight,
+  bal_weight,
+  stop_at_optimal
+) {
   verify_positive_whole_number(swap_count)
   verify_non_negative_whole(start_temp)
-  verify_boolean(adaptive_swaps, swap_all_blocks)
+  verify_boolean(adaptive_swaps, swap_all_blocks, stop_at_optimal)
   verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
   verify_numeric(adj_weight, bal_weight)
 
@@ -99,12 +120,117 @@
   }
 }
 
+#' Verify equal replication for `swap_all` levels
+#'
+#' @description
+#' `swap_all = TRUE` proposes a move by exchanging *every* plot holding one
+#' treatment with *every* plot holding another. That is a rearrangement of the
+#' design only when both treatments occupy the same number of plots within the
+#' swap group; when they do not, the two treatments exchange replication counts
+#' and the design that comes back is not the design that went in. Error before
+#' any optimisation happens rather than silently altering replication.
+#'
+#' Called on the resolved `optimise` list, so it covers simple, legacy
+#' hierarchical and `optimise = ` calls alike, including levels that set
+#' `swap_all` individually.
+#'
+#' @param dummy_group Name of the internal placeholder column used for a level
+#'   with no `swap_within` boundary, so it can be described as the whole design.
+#'
+#' @rdname verify
+#'
+#' @keywords internal
+.verify_swap_all_replication <- function(data, optimise, dummy_group = NULL) {
+  for (level in names(optimise)) {
+    opt <- optimise[[level]]
+    if (!isTRUE(opt$swap_all)) {
+      next
+    }
+
+    groups <- as.character(data[[opt$swap_within]])
+    treatments <- as.character(data[[opt$swap]])
+    keep <- !is.na(groups) & !is.na(treatments)
+    by_group <- split(treatments[keep], groups[keep])
+
+    # The generator only swaps in groups holding two or more treatments, so a
+    # single-treatment group can never produce an unequal exchange.
+    unequal <- vapply(
+      by_group,
+      function(x) {
+        counts <- table(x)
+        length(counts) > 1 && length(unique(as.integer(counts))) > 1
+      },
+      logical(1)
+    )
+
+    if (!any(unequal)) {
+      next
+    }
+
+    bad <- names(by_group)[unequal]
+    counts <- table(by_group[[bad[1]]])
+    stop(
+      "`swap_all = TRUE` requires equal replication within each swap group",
+      if (length(optimise) > 1) paste0(" (level `", level, "`)") else "",
+      ", because a swap exchanges every plot of one treatment with every plot",
+      " of another.\n`",
+      opt$swap,
+      "` is unequally replicated ",
+      if (identical(opt$swap_within, dummy_group)) {
+        "across the whole design"
+      } else {
+        paste0("within `", opt$swap_within, "` ", bad[1])
+      },
+      ": ",
+      paste0(names(counts), " (", as.integer(counts), ")", collapse = ", "),
+      if (length(bad) > 1) {
+        paste0(", and in ", length(bad) - 1, " other group(s)")
+      } else {
+        ""
+      },
+      ".\nSwapping these would change the replication of the design. Use",
+      " `swap_all = FALSE`, or correct the replication of `",
+      opt$swap,
+      "`.",
+      call. = FALSE
+    )
+  }
+}
+
+#' Verify the `by` element of `grid_factors`
+#'
+#' @description
+#' `grid_factors` is a plain list, so a mistyped `by` would be ignored and every
+#' grid silently pooled. Checked before any optimisation happens.
+#'
+#' @inheritParams speed
+#'
+#' @rdname verify
+#'
+#' @keywords internal
+.verify_grid_by <- function(data, grid_factors) {
+  grid_by <- grid_factors$by
+  if (!is.null(grid_by)) {
+    if (!is.character(grid_by) || length(grid_by) != 1) {
+      data_type_error("grid_factors$by", "a single column name")
+    }
+    verify_column_exists(grid_by, data, "grid grouping column")
+  }
+
+  return(invisible(NULL))
+}
+
 
 # Other functions for verifying
 
 default_tolerance <- .Machine$double.eps^0.5
 
-is_between_ <- function(lower, upper, lower_exclude = FALSE, upper_exclude = FALSE) {
+is_between_ <- function(
+  lower,
+  upper,
+  lower_exclude = FALSE,
+  upper_exclude = FALSE
+) {
   return(function(x) {
     is_between <- is.numeric(x)
 
@@ -176,7 +302,13 @@ must_be_ <- function(valid_values) {
 }
 
 verify_between <- function(
-    ..., lower = -Inf, upper = Inf, lower_exclude = FALSE, upper_exclude = FALSE, var_names = NULL) {
+  ...,
+  lower = -Inf,
+  upper = Inf,
+  lower_exclude = FALSE,
+  upper_exclude = FALSE,
+  var_names = NULL
+) {
   if (lower != -Inf && upper != Inf) {
     object_type <- paste0("between ", lower)
     if (lower_exclude) {
@@ -205,7 +337,12 @@ verify_between <- function(
     }
   }
 
-  verify_data_type(is_between_(lower, upper, lower_exclude, upper_exclude), object_type, var_names, ...)
+  verify_data_type(
+    is_between_(lower, upper, lower_exclude, upper_exclude),
+    object_type,
+    var_names,
+    ...
+  )
 }
 
 verify_boolean <- function(..., var_names = NULL) {
@@ -214,13 +351,27 @@ verify_boolean <- function(..., var_names = NULL) {
 
 verify_column_exists <- function(col, data, suffix = NULL) {
   if (!(col %in% names(data))) {
-    msg <- c(paste0("'", col, "' not found in ", paste(colnames(data), collapse = ", "), ". "), suffix)
+    msg <- c(
+      paste0(
+        "'",
+        col,
+        "' not found in ",
+        paste(colnames(data), collapse = ", "),
+        ". "
+      ),
+      suffix
+    )
     stop(msg, call. = FALSE)
   }
 }
 
 verify_non_negative_whole <- function(..., var_names = NULL) {
-  verify_data_type(is_non_negative_whole_number, "a non-negative whole number", var_names, ...)
+  verify_data_type(
+    is_non_negative_whole_number,
+    "a non-negative whole number",
+    var_names,
+    ...
+  )
 }
 
 verify_multiple_of <- function(..., var_names = NULL) {
@@ -230,12 +381,26 @@ verify_multiple_of <- function(..., var_names = NULL) {
 
   args <- list(...)
   if (!is_multiple_of(args[[1]], args[[2]])) {
-    stop(paste0("`", var_names[[1]], "` must be a multiple of `", var_names[[2]], "`."), call. = FALSE)
+    stop(
+      paste0(
+        "`",
+        var_names[[1]],
+        "` must be a multiple of `",
+        var_names[[2]],
+        "`."
+      ),
+      call. = FALSE
+    )
   }
 }
 
 verify_positive_whole_number <- function(..., var_names = NULL) {
-  verify_data_type(is_positive_whole_number, "a positive whole number", var_names, ...)
+  verify_data_type(
+    is_positive_whole_number,
+    "a positive whole number",
+    var_names,
+    ...
+  )
 }
 
 verify_character <- function(..., var_names = NULL) {
@@ -251,7 +416,12 @@ verify_numeric <- function(..., var_names = NULL) {
 }
 
 verify_positive_whole_numbers <- function(..., var_names = NULL) {
-  verify_data_type(is_positive_whole_numbers, "a vector of positive whole numbers", var_names, ...)
+  verify_data_type(
+    is_positive_whole_numbers,
+    "a vector of positive whole numbers",
+    var_names,
+    ...
+  )
 }
 
 verify_must_be <- function(..., valid_values, var_names = NULL) {
@@ -302,7 +472,10 @@ get_var_names <- function(...) {
 }
 
 data_type_error <- function(var_name, expected_data_type) {
-  stop(paste0("`", var_name, "` must be ", expected_data_type, "."), call. = FALSE)
+  stop(
+    paste0("`", var_name, "` must be ", expected_data_type, "."),
+    call. = FALSE
+  )
 }
 
 literal <- function(v) {
