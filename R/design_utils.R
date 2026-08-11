@@ -610,8 +610,6 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL, origin_col = N
   for (i in levels(design[[swap_within]])) {
     swap_within_filter <- design[[swap_within]] == i & !is.na(design[[swap_within]])
     items <- design[swap_within_filter, ][[swap]]
-    # `sample(items)` is `items[sample.int(length(items))]`, so drawing the permutation
-    # explicitly consumes exactly the same random numbers and leaves seeds reproducible
     perm <- sample.int(length(items))
     design[swap_within_filter, ][[swap]] <- items[perm]
     if (!is.null(origin_col)) {

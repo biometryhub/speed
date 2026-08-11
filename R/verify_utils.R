@@ -1,11 +1,66 @@
 #' Verify Inputs for `speed`
 #'
 #' @description
-#' Verify inputs for the `speed` function.
+#' Single entry point for input validation. `speed()` accepts three input
+#' shapes, so this dispatches to the checker for the shape given and runs the
+#' checks that apply to all of them.
 #'
 #' @rdname verify
 #'
 #' @inheritParams speed
+#'
+#' @keywords internal
+.verify_inputs <- function(
+  data,
+  swap,
+  swap_within,
+  spatial_factors,
+  grid_factors,
+  iterations,
+  early_stop_iterations,
+  obj_function,
+  quiet,
+  seed,
+  optimise = NULL
+) {
+  if (is.null(optimise)) {
+    # A named list of swap columns is the legacy hierarchical shape
+    if (is.list(swap) && !is.null(names(swap))) {
+      .verify_hierarchical_inputs(
+        data,
+        swap,
+        swap_within,
+        spatial_factors,
+        iterations,
+        early_stop_iterations,
+        obj_function,
+        quiet,
+        seed
+      )
+    } else {
+      .verify_speed_inputs(
+        data,
+        swap,
+        swap_within,
+        spatial_factors,
+        iterations,
+        early_stop_iterations,
+        quiet,
+        seed
+      )
+    }
+  }
+
+  # `by` groups plots into separate grids (a multi-environment trial), and is
+  # checked for every input shape, including `optimise`
+  .verify_grid_by(data, grid_factors)
+
+  return(invisible(NULL))
+}
+
+#' Verify simple inputs
+#'
+#' @rdname verify
 #'
 #' @keywords internal
 .verify_speed_inputs <- function(
@@ -106,7 +161,14 @@
 #'
 #' @keywords internal
 .verify_linked_cols <- function(data, optimise, linked_cols = NULL) {
-  if (is.list(linked_cols) && !is.null(names(linked_cols))) {
+  if (is.list(linked_cols)) {
+    if (is.null(names(linked_cols))) {
+      stop(
+        "`linked_cols` must be a character vector, or a named list with names matching `swap`.",
+        call. = FALSE
+      )
+    }
+
     unknown <- setdiff(names(linked_cols), names(optimise))
     if (length(unknown) > 0) {
       stop(
@@ -119,16 +181,6 @@
       )
     }
   }
-
-  # Columns taking part in the optimisation cannot also travel as passengers
-  reserved <- unique(unlist(lapply(optimise, function(opt) {
-    c(
-      opt$swap,
-      opt$swap_within,
-      all.vars(opt$spatial_factors),
-      unlist(opt$grid_factors)
-    )
-  })))
 
   owner <- character(0)
   for (level in names(optimise)) {
@@ -145,6 +197,11 @@
       )
     }
 
+    # Derived per level, so what a level may carry depends only on what that
+    # level itself optimises
+    reserved <- .level_optimised_cols(opt)
+    others <- setdiff(names(optimise), level)
+
     for (col in cols) {
       verify_column_exists(col, data, "linked column")
 
@@ -153,7 +210,28 @@
           "`linked_cols` column '",
           col,
           "' is already used as a swap, swap_within or spatial ",
-          "factor column. Linked columns must be separate from the columns being optimised.",
+          "factor column at level '",
+          level,
+          "'. Linked columns must be separate from the columns being optimised.",
+          call. = FALSE
+        )
+      }
+
+      # Linked columns are held out of the design for the whole search, so one
+      # that another level needs would not be there when that level runs
+      needed_by <- Filter(
+        function(other) col %in% .level_optimised_cols(optimise[[other]]),
+        others
+      )
+      if (length(needed_by) > 0) {
+        stop(
+          "`linked_cols` column '",
+          col,
+          "' is optimised at level '",
+          needed_by[[1]],
+          "', so it cannot also travel with '",
+          opt$swap,
+          "'. A column is either optimised or carried, not both.",
           call. = FALSE
         )
       }
@@ -175,6 +253,26 @@
   }
 
   return(invisible(NULL))
+}
+
+#' Columns a Single Level Optimises or Scores On
+#'
+#' @description
+#' The columns one level of `optimise` needs present in the design: the ones it
+#' swaps, groups by, and scores on.
+#'
+#' @param opt One level of the `optimise` list.
+#'
+#' @return A character vector of column names.
+#'
+#' @keywords internal
+.level_optimised_cols <- function(opt) {
+  return(unique(c(
+    opt$swap,
+    opt$swap_within,
+    all.vars(opt$spatial_factors),
+    unlist(opt$grid_factors)
+  )))
 }
 
 #' Verify Optimization Parameters for `speed`

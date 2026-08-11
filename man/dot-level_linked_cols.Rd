@@ -19,7 +19,8 @@ vector applies to every level, so in a hierarchical design it is only
 valid when every level swaps the same column, as in a multi-environment
 trial; levels swapping different columns need the named list, because a
 column can only travel with one \code{swap} column. Columns used as \code{swap},
-\code{swap_within} or spatial factors cannot be linked. On a level with
+\code{swap_within} or spatial factors cannot be linked, at any level, because
+linked columns are held out of the design for the whole search. On a level with
 \code{swap_all = TRUE} whole treatment groups move at once, so a linked column
 with more than one value per treatment travels with its treatment group
 rather than being paired plot for plot (default: \code{NULL}).}
@@ -31,6 +32,7 @@ A character vector of column names, or \code{NULL}.
 }
 \description{
 \code{linked_cols} is either a bare character vector, which applies to every
-level, or a named list with one entry per hierarchy level.
+level, or a named list with one entry per hierarchy level. Resolution only -
+the input is checked by \code{\link[=.verify_linked_cols]{.verify_linked_cols()}}.
 }
 \keyword{internal}

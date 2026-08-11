@@ -43,21 +43,6 @@ expect_pairing_preserved <- function(input, output, key, value) {
 
 # Simple designs ---------------------------------------------------------------
 
-test_that("linked_cols keeps a companion column with its treatment", {
-  df <- simple_df()
-  result <- speed(
-    df,
-    swap = "treatment",
-    linked_cols = "trt_name",
-    iterations = 100,
-    early_stop_iterations = 30,
-    seed = 42,
-    quiet = TRUE
-  )
-
-  expect_pairing_preserved(df, result$design_df, "treatment", "trt_name")
-})
-
 test_that("linked_cols leaves no bookkeeping columns behind", {
   df <- simple_df()
   result <- speed(
@@ -115,7 +100,27 @@ test_that("linked_cols actually moves the companion column", {
   expect_false(identical(as.character(result$design_df$trt_name), df$trt_name))
 })
 
-test_that("linked_cols carries a per-plot column on a single-swap level", {
+test_that("linked_cols preserves a class to_types() could not rebuild", {
+  df <- simple_df()
+  # `base_type()` maps Date to "character", so this survives only because linked
+  # columns are set aside before `to_factor()` records the column types
+  df$sown <- as.Date("2026-01-01") + rep(0:3, 5)
+
+  result <- speed(
+    df,
+    swap = "treatment",
+    linked_cols = "sown",
+    iterations = 100,
+    early_stop_iterations = 30,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  expect_s3_class(result$design_df$sown, "Date")
+  expect_pairing_preserved(df, result$design_df, "treatment", "sown")
+})
+
+test_that("linked_cols keeps companion columns with their treatment", {
   df <- simple_df()
   # Unique per row, so no value-level lookup could reconstruct it
   df$plot_id <- sprintf("P%02d", seq_len(nrow(df)))
@@ -123,13 +128,14 @@ test_that("linked_cols carries a per-plot column on a single-swap level", {
   result <- speed(
     df,
     swap = "treatment",
-    linked_cols = "plot_id",
+    linked_cols = c("trt_name", "plot_id"),
     iterations = 100,
     early_stop_iterations = 30,
     seed = 42,
     quiet = TRUE
   )
 
+  expect_pairing_preserved(df, result$design_df, "trt_name", "treatment")
   expect_setequal(result$design_df$plot_id, df$plot_id)
   # Each plot_id must still sit with the treatment it started with
   expect_pairing_preserved(df, result$design_df, "plot_id", "treatment")
@@ -422,6 +428,38 @@ test_that("linked_cols rejects an unknown level name", {
       quiet = TRUE
     ),
     "no matching level for 'nope'"
+  )
+})
+
+test_that("linked_cols rejects a list without names", {
+  df <- split_plot_df()
+
+  expect_error(
+    speed(
+      df,
+      swap = list(wp = "wp_trt", sp = "sp_trt"),
+      swap_within = list(wp = "block", sp = "wholeplot"),
+      linked_cols = list("wp_label"),
+      seed = 42,
+      quiet = TRUE
+    ),
+    "must be a character vector, or a named list"
+  )
+})
+
+test_that("linked_cols rejects a column another level optimises", {
+  df <- split_plot_df()
+
+  expect_error(
+    speed(
+      df,
+      swap = list(wp = "wp_trt", sp = "sp_trt"),
+      swap_within = list(wp = "block", sp = "wholeplot"),
+      linked_cols = list(wp = "sp_trt"),
+      seed = 42,
+      quiet = TRUE
+    ),
+    "is optimised at level 'sp'"
   )
 })
 

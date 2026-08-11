@@ -201,13 +201,6 @@ create_speed_input <- function(
         }
       }
 
-      if (is.null(optimise[[optimise_name]][["linked_cols"]])) {
-        optimise[[optimise_name]][["linked_cols"]] <- .level_linked_cols(
-          linked_cols,
-          optimise_name
-        )
-      }
-
       # if (!row_col_inferred) {
       #   optimise[[optimise_name]]$optimise_params$adj_weight <- 0
       # }
@@ -245,12 +238,6 @@ create_speed_input <- function(
           }
         }
       }
-
-      # Assigned rather than built into the list above so that a NULL stays absent
-      optimise[[optimise_name]][["linked_cols"]] <- .level_linked_cols(
-        linked_cols,
-        optimise_name
-      )
     }
   } else {
     optimise <- list()
@@ -273,12 +260,15 @@ create_speed_input <- function(
       swap_all = swap_all,
       optimise_params = optimise_params
     )
+  }
 
-    # Assigned rather than built into the list above so that a NULL stays absent
-    optimise[[optimise_name]][["linked_cols"]] <- .level_linked_cols(
-      linked_cols,
-      optimise_name
-    )
+  # `linked_cols` resolves per level - a bare character vector applies to every
+  # level, a named list only to the levels it names - so it is set here rather
+  # than in each branch above. A per-level value from `optimise` wins.
+  for (optimise_name in names(optimise)) {
+    level_cols <- optimise[[optimise_name]][["linked_cols"]]
+    optimise[[optimise_name]][["linked_cols"]] <- level_cols %||%
+      .level_linked_cols(linked_cols, optimise_name)
   }
 
   if (!row_col_inferred) {
@@ -294,7 +284,8 @@ create_speed_input <- function(
 #'
 #' @description
 #' `linked_cols` is either a bare character vector, which applies to every
-#' level, or a named list with one entry per hierarchy level.
+#' level, or a named list with one entry per hierarchy level. Resolution only -
+#' the input is checked by [.verify_linked_cols()].
 #'
 #' @inheritParams speed
 #' @param level Name of the hierarchy level being resolved.
@@ -303,20 +294,9 @@ create_speed_input <- function(
 #'
 #' @keywords internal
 .level_linked_cols <- function(linked_cols, level) {
-  if (is.null(linked_cols)) {
-    return(NULL)
-  }
-
+  # `[[` yields NULL for a level the list does not name, so a missing level needs
+  # no guard of its own. Anything else - a bare vector, or NULL - applies as-is.
   if (is.list(linked_cols)) {
-    if (is.null(names(linked_cols))) {
-      stop(
-        "`linked_cols` must be a character vector, or a named list with names matching `swap`.",
-        call. = FALSE
-      )
-    }
-    if (!(level %in% names(linked_cols))) {
-      return(NULL)
-    }
     return(linked_cols[[level]])
   }
 
@@ -373,6 +353,78 @@ create_speed_input <- function(
   names(origin_cols) <- swap_cols
 
   return(origin_cols)
+}
+
+#' Set Linked Columns Aside Before The Search
+#'
+#' @description
+#' Linked columns take no part in scoring, so they are lifted out of `data` and
+#' held until the design is returned - leaving them out avoids copying them on
+#' every iteration. Each swap column carrying linked columns is given a
+#' provenance index (see [.origin_col_names()]) that follows its treatment
+#' through the swaps, which is how the held values are put back in the
+#' optimised order.
+#'
+#' @param data The design data frame, as the user passed it.
+#' @param optimise Per-level `optimise` list as built by [create_speed_input()].
+#'
+#' @return A list holding the stripped `data`, `optimise` with each level's
+#'   `origin_col` set, the held `values`, the linked column `map`, the
+#'   `origin_cols` names and the input `col_order`.
+#'
+#' @keywords internal
+.detach_linked_cols <- function(data, optimise) {
+  map <- .linked_col_map(optimise)
+  origin_cols <- .origin_col_names(map)
+  col_order <- names(data)
+
+  for (level in names(optimise)) {
+    swap_col <- optimise[[level]]$swap
+    if (swap_col %in% names(origin_cols)) {
+      optimise[[level]]$origin_col <- unname(origin_cols[[swap_col]])
+    }
+  }
+
+  values <- NULL
+  if (length(map) > 0) {
+    values <- data[names(map)]
+    data[names(map)] <- NULL
+  }
+
+  return(list(
+    data = data,
+    optimise = optimise,
+    values = values,
+    map = map,
+    origin_cols = origin_cols,
+    col_order = col_order
+  ))
+}
+
+#' Re-attach Linked Columns in The Optimised Order
+#'
+#' @description
+#' Each linked column is rebuilt by indexing the held values with the
+#' provenance index, then the input column order is restored - which also drops
+#' the provenance columns.
+#'
+#' @param design_df The optimised design data frame.
+#' @param linked The list returned by [.detach_linked_cols()].
+#'
+#' @return `design_df`, with the linked columns back in their input positions.
+#'
+#' @keywords internal
+.reattach_linked_cols <- function(design_df, linked) {
+  if (length(linked$map) == 0) {
+    return(design_df)
+  }
+
+  for (col in names(linked$map)) {
+    origin_col <- linked$origin_cols[[linked$map[[col]]]]
+    design_df[[col]] <- linked$values[[col]][design_df[[origin_col]]]
+  }
+
+  return(design_df[linked$col_order])
 }
 
 `%||%` <- function(a, b) if (!is.null(a)) a else b

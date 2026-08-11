@@ -56,7 +56,8 @@
 #'   valid when every level swaps the same column, as in a multi-environment
 #'   trial; levels swapping different columns need the named list, because a
 #'   column can only travel with one `swap` column. Columns used as `swap`,
-#'   `swap_within` or spatial factors cannot be linked. On a level with
+#'   `swap_within` or spatial factors cannot be linked, at any level, because
+#'   linked columns are held out of the design for the whole search. On a level with
 #'   `swap_all = TRUE` whole treatment groups move at once, so a linked column
 #'   with more than one value per treatment travels with its treatment group
 #'   rather than being paired plot for plot (default: `NULL`).
@@ -203,20 +204,8 @@ speed <- function(data,
   rlang::check_dots_used()
   call <- match.call()
 
-  if (is.null(optimise)) {
-    # Check if this is a legacy hierarchical design
-    is_legacy <- is.list(swap) && !is.null(names(swap))
-    if (is_legacy) {
-      .verify_hierarchical_inputs(data, swap, swap_within, spatial_factors, iterations, early_stop_iterations,
-                                  obj_function, quiet, seed)
-    } else {
-      .verify_speed_inputs(data, swap, swap_within, spatial_factors, iterations, early_stop_iterations, quiet,
-                           seed)
-    }
-  }
-
-  # `by` groups plots into separate grids (a multi-environment trial)
-  .verify_grid_by(data, grid_factors)
+  .verify_inputs(data, swap, swap_within, spatial_factors, grid_factors, iterations,
+                 early_stop_iterations, obj_function, quiet, seed, optimise)
   grid_by <- grid_factors$by
 
   # Infer row and column columns
@@ -224,37 +213,28 @@ speed <- function(data,
   row_column <- inferred$row
   col_column <- inferred$col
 
-  # prepare inputs (needed up front to resolve `linked_cols` for each level)
+  # Normalise the three input shapes into one per-level list
   optimise <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
                                  early_stop_iterations, obj_function, swap_all, optimise_params,
                                  linked_cols, optimise, inferred$inferred)
 
-  # Set linked columns aside before the search; they take no part in scoring, and leaving
-  # them out of the loop avoids copying them on every iteration
+  # Checked here, not in `.verify_inputs()`: the per-level rules need the merged list
   .verify_linked_cols(data, optimise, linked_cols)
-  linked_map <- .linked_col_map(optimise)
-  origin_cols <- .origin_col_names(linked_map)
-  input_col_order <- names(data)
-  linked_values <- NULL
-  if (length(linked_map) > 0) {
-    linked_values <- data[names(linked_map)]
-    data[names(linked_map)] <- NULL
-  }
+
+  # Detached before `to_factor()` so the held values never enter `factored$input_types`
+  # and come back verbatim, keeping classes `to_types()` could not rebuild, such as Date
+  linked <- .detach_linked_cols(data, optimise)
+  data <- linked$data
+  optimise <- linked$optimise
 
   # convert to factors
   factored <- to_factor(data)
   data <- factored$df
 
-  # Provenance index per swap column, stamped in input row order and before the sort
-  # below, so it refers to the rows as the user passed them. Integer, and added after
-  # `to_factor()`, so it never enters `factored$input_types`.
-  for (level in names(optimise)) {
-    swap_col <- optimise[[level]]$swap
-    if (swap_col %in% names(origin_cols)) {
-      optimise[[level]]$origin_col <- unname(origin_cols[[swap_col]])
-    }
-  }
-  for (origin_col in origin_cols) {
+  # Provenance indices are stamped in input row order and before the sort below, so they
+  # refer to the rows as the user passed them. Integer, and added after `to_factor()`, so
+  # they never enter `factored$input_types`.
+  for (origin_col in linked$origin_cols) {
     data[[origin_col]] <- seq_len(nrow(data))
   }
 
@@ -300,22 +280,7 @@ speed <- function(data,
   design$metadata$call <- call
   design$design_df[[dummy_group]] <- NULL
 
-  # Bring linked columns forward in the optimised order, then drop the bookkeeping
-  if (length(linked_map) > 0) {
-    for (col in names(linked_map)) {
-      origin_col <- origin_cols[[linked_map[[col]]]]
-      design$design_df[[col]] <- linked_values[[col]][design$design_df[[origin_col]]]
-    }
-    for (origin_col in origin_cols) {
-      design$design_df[[origin_col]] <- NULL
-    }
-    # Re-attached columns land at the right hand end, so restore the input order
-    design$design_df <- design$design_df[c(
-      intersect(input_col_order, names(design$design_df)),
-      setdiff(names(design$design_df), input_col_order)
-    )]
-  }
-
+  design$design_df <- .reattach_linked_cols(design$design_df, linked)
   design$design_df <- to_types(design$design_df, factored$input_types)
 
   # to print deprecate warning at the end
@@ -394,6 +359,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     temperatures <- numeric(opt$iterations)
     last_improvement_iter <- 0
     frozen_groups <- character(0)
+    n_groups <- nlevels(current_design[[opt$swap_within]])
 
     # Optimisation loop for this level
     for (iter in 1:opt$iterations) {
@@ -422,6 +388,14 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
       if (length(new_design$frozen)) {
         frozen_groups <- union(frozen_groups, new_design$frozen)
+
+        # Whether a group is frozen cannot change during the level, so once every
+        # group is frozen no later iteration can find a swap either
+        if (length(frozen_groups) == n_groups) {
+          scores <- scores[1:iter]
+          temperatures <- temperatures[1:iter]
+          break
+        }
       }
 
       # Calculate new score
@@ -474,8 +448,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     }
 
     # `swap_all` only exchanges equally replicated treatments, so a group where no two
-    # share a replication can never swap. The search still runs, so say so rather than
-    # returning those groups silently unchanged.
+    # share a replication can never swap. Warned once per level, whether the search ran
+    # to the end or broke out above, rather than returning those groups silently unchanged.
     if (length(frozen_groups)) {
       warning(
         "No treatments could be swapped",

@@ -14,7 +14,9 @@
 ## Bug Fixes
 
 - `speed()` now warns when a `swap_all = TRUE` group holds no two treatments of equal
-  replication, since no swap is possible there and the group is returned unchanged.
+  replication, since no swap is possible there and the group is returned unchanged. Once
+  every group at a level is in that state, the level stops rather than running out its
+  iterations.
 
 # speed 0.0.10
 

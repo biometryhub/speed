@@ -125,7 +125,13 @@ test_that("generate_multi_swap_neighbour reports groups it could not swap in", {
     treatment = factor(c("A", "A", "A", "B", "B", "C"))
   )
 
-  result <- generate_multi_swap_neighbour(design, "treatment", "block", 1, FALSE)
+  result <- generate_multi_swap_neighbour(
+    design,
+    "treatment",
+    "block",
+    1,
+    FALSE
+  )
 
   expect_equal(result$frozen, "g1")
   expect_equal(result$design, design)
@@ -137,7 +143,13 @@ test_that("generate_multi_swap_neighbour reports no frozen groups when swaps are
     treatment = factor(c("A", "A", "B", "B", "C", "C"))
   )
 
-  result <- generate_multi_swap_neighbour(design, "treatment", "block", 1, FALSE)
+  result <- generate_multi_swap_neighbour(
+    design,
+    "treatment",
+    "block",
+    1,
+    FALSE
+  )
 
   expect_length(result$frozen, 0)
 })
@@ -170,6 +182,35 @@ test_that("speed() warns when a swap group is left frozen mid-search", {
     "No treatments could be swapped at level `lvl2` within `site`",
     fixed = TRUE
   )
+})
+
+test_that("speed() stops a level once every swap group is frozen", {
+  # As above, but the level 1 swaps leave both sites frozen. Nothing can move at
+  # level 2 from then on, so it should give up rather than run out its iterations.
+  df <- data.frame(
+    row = rep(1:6, times = 2),
+    col = rep(1:2, each = 6),
+    block = c(1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2),
+    site = c("a", "a", "a", "b", "b", "b", "a", "a", "a", "b", "b", "b"),
+    lines = c("X", "X", "Z", "Y", "Y", "Z", "Y", "Y", "Z", "X", "X", "Z"),
+    stringsAsFactors = FALSE
+  )
+
+  result <- suppressWarnings(speed(
+    df,
+    swap = "lines",
+    optimise = list(
+      lvl1 = list(swap_within = "block", swap_all = TRUE, iterations = 20),
+      lvl2 = list(swap_within = "site", swap_all = TRUE, iterations = 500)
+    ),
+    early_stop_iterations = 500,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
+    seed = 2,
+    quiet = TRUE
+  ))
+
+  expect_true(result$stopped_early[["lvl2"]])
+  expect_lt(length(result$scores$lvl2), 500)
 })
 
 test_that("speed() does not warn when every group can swap", {
