@@ -13,6 +13,9 @@
 
 ## Bug Fixes
 
+- Columns that take no part in the optimisation are no longer converted to factors and
+  back, so a class that cannot be rebuilt with `as.<class>()`, such as `Date`, is now
+  returned unchanged instead of as `character`.
 - `speed()` now warns when a `swap_all = TRUE` group holds no two treatments of equal
   replication, since no swap is possible there and the group is returned unchanged. Once
   every group at a level is in that state, the level stops rather than running out its

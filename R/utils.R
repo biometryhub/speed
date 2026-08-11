@@ -72,16 +72,22 @@ base_type <- function(x) {
 #' Convert Data Frame Data to Factors
 #'
 #' @param df A data frame
+#' @param cols Names of the columns to convert, defaulting to every column.
+#'   Columns outside this set are left untouched and are not recorded in
+#'   `input_types`, so [to_types()] returns them exactly as they came in. This
+#'   is the only way to preserve a class [base_type()] cannot rebuild, such as
+#'   `Date`, and is why `speed()` converts only the columns it optimises on.
 #'
 #' @returns A list containing:
-#' - **df** - A data frame with factors
+#' - **df** - A data frame with the named columns as factors
 #' - **input_types** - A named character vector of the original base type of
-#'   each column (for restoring via [to_types()])
+#'   each converted column (for restoring via [to_types()])
 #'
 #' @keywords internal
-to_factor <- function(df) {
-  input_types <- vapply(df, base_type, character(1))
-  for (col in names(df)) {
+to_factor <- function(df, cols = names(df)) {
+  cols <- intersect(cols, names(df))
+  input_types <- vapply(df[cols], base_type, character(1))
+  for (col in cols) {
     if (!is.factor(df[[col]])) {
       df[[col]] <- as.factor(df[[col]])
     }

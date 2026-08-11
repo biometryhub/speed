@@ -227,8 +227,10 @@ speed <- function(data,
   data <- linked$data
   optimise <- linked$optimise
 
-  # convert to factors
-  factored <- to_factor(data)
+  # convert to factors. Only the columns the optimisation reads need to be factors;
+  # converting the rest would round-trip them through `base_type()`, which silently
+  # downgrades any class it cannot rebuild with `as.<class>()`, such as Date
+  factored <- to_factor(data, unlist(lapply(optimise, .level_optimised_cols)))
   data <- factored$df
 
   # Provenance indices are stamped in input row order and before the sort below, so they

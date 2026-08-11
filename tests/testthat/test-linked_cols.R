@@ -59,6 +59,36 @@ test_that("linked_cols leaves no bookkeeping columns behind", {
   expect_equal(names(result$design_df), names(df))
 })
 
+test_that("linked_cols leaves unrelated columns where they are", {
+  df <- simple_df()
+  df$staff <- rep(c("Ana", "Bo", "Cy", "Di", "Ed"), each = 4)
+  df$visited <- as.Date("2026-03-01") + rep(0:4, each = 4)
+
+  result <- speed(
+    df,
+    swap = "treatment",
+    linked_cols = "trt_name",
+    iterations = 100,
+    early_stop_iterations = 30,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  expect_equal(names(result$design_df), names(df))
+  expect_s3_class(result$design_df$visited, "Date")
+
+  # `staff` was not linked, so unlike `trt_name` it stays with its plot rather
+  # than following the treatment
+  expect_equal(
+    result$design_df[
+      order(result$design_df$row, result$design_df$col),
+      c("staff", "visited")
+    ],
+    df[order(df$row, df$col), c("staff", "visited")],
+    ignore_attr = "row.names"
+  )
+})
+
 test_that("linked_cols preserves the type of the companion column", {
   df <- simple_df()
   df$trt_num <- match(df$treatment, LETTERS)

@@ -257,6 +257,22 @@ test_that("to_factor/to_types handle multi-class (vctrs-style) columns", {
   expect_equal(typed_data$numeric_col, test_data$numeric_col)
 })
 
+test_that("to_factor only converts the columns it is given", {
+  test_data <- data.frame(
+    treatment = LETTERS[1:3],
+    when = as.Date("2026-01-01") + 0:2
+  )
+
+  factored <- to_factor(test_data, "treatment")
+
+  expect_s3_class(factored$df$treatment, "factor")
+  expect_s3_class(factored$df$when, "Date")
+  # An unconverted column is not recorded, so `to_types()` never touches it -
+  # the only way a class `base_type()` cannot rebuild survives the round trip
+  expect_named(factored$input_types, "treatment")
+  expect_s3_class(to_types(factored$df, factored$input_types)$when, "Date")
+})
+
 # test_that("parse_swap_formula parses with defaults", {
 #   swap <- ~ single(treatment)
 #   parsed <- parse_swap_formula(swap)

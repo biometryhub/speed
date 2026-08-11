@@ -4,17 +4,23 @@
 \alias{to_factor}
 \title{Convert Data Frame Data to Factors}
 \usage{
-to_factor(df)
+to_factor(df, cols = names(df))
 }
 \arguments{
 \item{df}{A data frame}
+
+\item{cols}{Names of the columns to convert, defaulting to every column.
+Columns outside this set are left untouched and are not recorded in
+\code{input_types}, so \code{\link[=to_types]{to_types()}} returns them exactly as they came in. This
+is the only way to preserve a class \code{\link[=base_type]{base_type()}} cannot rebuild, such as
+\code{Date}, and is why \code{speed()} converts only the columns it optimises on.}
 }
 \value{
 A list containing:
 \itemize{
-\item \strong{df} - A data frame with factors
+\item \strong{df} - A data frame with the named columns as factors
 \item \strong{input_types} - A named character vector of the original base type of
-each column (for restoring via \code{\link[=to_types]{to_types()}})
+each converted column (for restoring via \code{\link[=to_types]{to_types()}})
 }
 }
 \description{
