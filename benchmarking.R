@@ -148,175 +148,161 @@ run_benchmarks <- function(designs, seeds, csv_prefix = "benchmark") {
 
 designs <- list()
 
-#######################################################
-# 15 treatments, 5 reps, 25 rows, 3 columns
-n_treatments_small <- 15
-n_reps <- 5
-n_rows_small <- 25
-n_cols_small <- 3
-
-# speed
-df_initial_small <- speed::initialise_design_df(
-  items = n_treatments_small,
-  nrows = n_rows_small,
-  ncols = n_cols_small,
-  block_nrows = 5,
-  block_ncols = 3
-) |>
-  to_factor(c("treatment", "block", "row", "col"))
-
-df_layout <- df_initial_small
-df_layout$plot_in_block <- df_initial_small$treatment
-class(df_layout) <- c(class(df_layout), "design")
-png("layout-small.png", height = 500, width = 500)
-speed::autoplot(df_layout, treatments = "plot_in_block")
-dev.off()
-
-bench_speed_small <- function(seed = 112) {
-  speed::speed(
-    data = df_initial_small,
-    swap = "treatment",
-    swap_within = "block",
-    spatial_factors = ~col,
-    optimise_params = optim_params(random_initialisation = 10),
-    seed = seed
-  )
-}
-speed_result <- bench_speed_small()
-
-design_df <- speed_result$design_df
-get_metrics(design_df, c("col", "block"))
-efficiency(design_df, "treatment", ~ block + row * col)
-# Source.units df1 Source.treatments df2 aefficiency eefficiency order
-# block          4
-# row[block]    20 treatment          14      0.1034      0.0249    14
-#                  Residual            6
-# col            2 treatment           2      0.0400      0.0400     1
-# row#col       48 treatment          14      0.6160      0.2696    14
-#                  Residual           34
-
-png("speed-small.png", height = 1080, width = 480)
-speed::autoplot(speed_result)
-dev.off()
-
-# digger
-bench_digger_small <- function(seed = 112) {
-  DiGGer::corDiGGer(
-    numberOfTreatments = n_treatments_small,
-    rowsInDesign = n_rows_small,
-    columnsInDesign = n_cols_small,
-    rowsInReplicate = 5,
-    columnsInReplicate = 3,
-    treatRepPerRep = 1,
-    blockSequence = list(c(12, 1)),
-    maxInterchanges = c(5000, 500000),
-    rngSeeds = rep(seed, 2)
-  )
-}
-digger_design <- DiGGer::getDesign(bench_digger_small())
-
-df_digger <- df_initial_small
-df_digger$treatment <- c(digger_design)
-get_metrics(df_digger, c("col", "block"))
-efficiency(df_digger, "treatment", ~ block + row * col)
-# Source.units df1 Source.treatments df2 aefficiency eefficiency order
-# block          4
-# row[block]    20 treatment          14      0.0833      0.0101    14
-#                  Residual            6
-# col            2 treatment           2      0.0400      0.0400     1
-# row#col       48 treatment          14      0.6488      0.3475    14
-#                  Residual           34
-
-digger_result <- speed_result
-digger_result$design_df <- df_digger
-png("digger-small.png", height = 500, width = 480)
-speed::autoplot(digger_result)
-dev.off()
-
-# odw
-df_initial_odw_small <- speed::initialise_design_df(
-  rep(1:n_treatments_small, n_reps),
-  n_rows_small,
-  n_cols_small,
-  5,
-  3
-) |>
-  speed:::shuffle_items("treatment", "block", 112) |>
-  to_factor(c("treatment", "block", "row", "col"))
-
-initial_param_table_small <- odw::odw(
-  random = ~ treatment + block + row + col,
-  data = df_initial_odw_small,
-  permute = ~treatment,
-  swap = ~block,
-  search = "tabu",
-  start.values = TRUE
-)$vparameters.table
-initial_param_table_small
-
-initial_param_table_small[4, 2] <- 100
-initial_param_table_small
-
-bench_odw_small <- function() {
-  odw::odw(
-    random = ~ treatment + block + row + col,
-    data = df_initial_odw_small,
-    permute = ~treatment,
-    swap = ~block,
-    search = "tabu",
-    G.param = initial_param_table_small,
-    R.param = initial_param_table_small,
-    maxit = 2
-  )
-}
-design_object <- bench_odw_small()
-
-df_odw <- design_object$design
-odw_result <- speed_result
-odw_result$design_df <- df_odw
-get_metrics(df_odw, c("col", 'block'))
-efficiency(df_odw, "treatment", ~ block + row * col)
-# Source.units df1 Source.treatments df2 aefficiency eefficiency order
-# block          4
-# row[block]    20 treatment          14      0.1891      0.0477    14
-#                  Residual            6
-# col            2 treatment           2      0.0400      0.0400     1
-# row#col       48 treatment          14      0.6823      0.4618    14
-#                  Residual           34
-
-png("odw-small.png", height = 500, width = 500)
-speed::autoplot(odw_result)
-dev.off()
-
-designs[["small"]] <- list(
-  units = ~ block + row * col,
-  treatment = "treatment",
-  is_converged = function(df) TRUE,
-  custom_metrics = function(df) get_metrics(df, c("row", "col", "block")),
-  tools = list(
-    speed = function(seed) bench_speed_small(seed)$design_df,
-    digger = function(seed) {
-      d <- df_initial_small
-      d$treatment <- c(DiGGer::getDesign(bench_digger_small(seed)))
-      return(d)
-    },
-    odw = function(seed) bench_odw_small()$design
-  )
-)
-
-# bench_result <- bench::mark(
-#   check = FALSE,
-#   iterations = 10,
-#   speed = bench_speed_small(),
-#   digger = bench_digger_small(),
-#   odw = bench_odw_small()
-# )
-#
-# png("bench-small.png", height = 720, width = 720, res = 300)
-# ggplot2::autoplot(bench_result, type = "violin") + ggplot2::theme_bw()
-# dev.off()
-
-# run_benchmarks(designs, 1:10)
+##########################################################
+#### 15 treatments, 5 reps, 25 rows, 3 columns
+###n_treatments_small <- 15
+###n_reps <- 5
+###n_rows_small <- 25
+###n_cols_small <- 3
+###
+#### speed
+###df_initial_small <- speed::initialise_design_df(
+###  items = n_treatments_small,
+###  nrows = n_rows_small,
+###  ncols = n_cols_small,
+###  block_nrows = 5,
+###  block_ncols = 3
+###) |>
+###  to_factor(c("treatment", "block", "row", "col"))
+###
+###df_layout <- df_initial_small
+###df_layout$plot_in_block <- df_initial_small$treatment
+###class(df_layout) <- c(class(df_layout), "design")
+###png("layout-small.png", height = 500, width = 500)
+###speed::autoplot(df_layout, treatments = "plot_in_block")
+###dev.off()
+###
+###bench_speed_small <- function(seed = 112) {
+###  speed::speed(
+###    data = df_initial_small,
+###    swap = "treatment",
+###    swap_within = "block",
+###    spatial_factors = ~col,
+###    optimise_params = optim_params(random_initialisation = 10),
+###    seed = seed
+###  )
+###}
+###speed_result <- bench_speed_small()
+###
+###design_df <- speed_result$design_df
+###get_metrics(design_df, c("col", "block"))
+###efficiency(design_df, "treatment", ~ block + row * col)
+#### Source.units df1 Source.treatments df2 aefficiency eefficiency order
+#### block          4
+#### row[block]    20 treatment          14      0.1034      0.0249    14
+####                  Residual            6
+#### col            2 treatment           2      0.0400      0.0400     1
+#### row#col       48 treatment          14      0.6160      0.2696    14
+####                  Residual           34
+###
+###png("speed-small.png", height = 1080, width = 480)
+###speed::autoplot(speed_result)
+###dev.off()
+###
+#### digger
+###bench_digger_small <- function(seed = 112) {
+###  DiGGer::corDiGGer(
+###    numberOfTreatments = n_treatments_small,
+###    rowsInDesign = n_rows_small,
+###    columnsInDesign = n_cols_small,
+###    rowsInReplicate = 5,
+###    columnsInReplicate = 3,
+###    treatRepPerRep = 1,
+###    blockSequence = list(c(12, 1)),
+###    maxInterchanges = c(5000, 500000),
+###    rngSeeds = rep(seed, 2)
+###  )
+###}
+###digger_design <- DiGGer::getDesign(bench_digger_small())
+###
+###df_digger <- df_initial_small
+###df_digger$treatment <- c(digger_design)
+###get_metrics(df_digger, c("col", "block"))
+###efficiency(df_digger, "treatment", ~ block + row * col)
+#### Source.units df1 Source.treatments df2 aefficiency eefficiency order
+#### block          4
+#### row[block]    20 treatment          14      0.0833      0.0101    14
+####                  Residual            6
+#### col            2 treatment           2      0.0400      0.0400     1
+#### row#col       48 treatment          14      0.6488      0.3475    14
+####                  Residual           34
+###
+###digger_result <- speed_result
+###digger_result$design_df <- df_digger
+###png("digger-small.png", height = 500, width = 480)
+###speed::autoplot(digger_result)
+###dev.off()
+###
+#### odw
+###df_initial_odw_small <- speed::initialise_design_df(
+###  rep(1:n_treatments_small, n_reps),
+###  n_rows_small,
+###  n_cols_small,
+###  5,
+###  3
+###) |>
+###  speed:::shuffle_items("treatment", "block", 112) |>
+###  to_factor(c("treatment", "block", "row", "col"))
+###
+###initial_param_table_small <- odw::odw(
+###  random = ~ treatment + block + row + col,
+###  data = df_initial_odw_small,
+###  permute = ~treatment,
+###  swap = ~block,
+###  search = "tabu",
+###  start.values = TRUE
+###)$vparameters.table
+###initial_param_table_small
+###
+###initial_param_table_small[4, 2] <- 100
+###initial_param_table_small
+###
+###bench_odw_small <- function() {
+###  odw::odw(
+###    random = ~ treatment + block + row + col,
+###    data = df_initial_odw_small,
+###    permute = ~treatment,
+###    swap = ~block,
+###    search = "tabu",
+###    G.param = initial_param_table_small,
+###    R.param = initial_param_table_small,
+###    maxit = 2
+###  )
+###}
+###design_object <- bench_odw_small()
+###
+###df_odw <- design_object$design
+###odw_result <- speed_result
+###odw_result$design_df <- df_odw
+###get_metrics(df_odw, c("col", 'block'))
+###efficiency(df_odw, "treatment", ~ block + row * col)
+#### Source.units df1 Source.treatments df2 aefficiency eefficiency order
+#### block          4
+#### row[block]    20 treatment          14      0.1891      0.0477    14
+####                  Residual            6
+#### col            2 treatment           2      0.0400      0.0400     1
+#### row#col       48 treatment          14      0.6823      0.4618    14
+####                  Residual           34
+###
+###png("odw-small.png", height = 500, width = 500)
+###speed::autoplot(odw_result)
+###dev.off()
+###
+###designs[["small"]] <- list(
+###  units = ~ block + row * col,
+###  treatment = "treatment",
+###  is_converged = function(df) TRUE,
+###  custom_metrics = function(df) get_metrics(df, c("row", "col", "block")),
+###  tools = list(
+###    speed = function(seed) bench_speed_small(seed)$design_df,
+###    digger = function(seed) {
+###      d <- df_initial_small
+###      d$treatment <- c(DiGGer::getDesign(bench_digger_small(seed)))
+###      return(d)
+###    },
+###    odw = function(seed) bench_odw_small()$design
+###  )
+###)
 
 #######################################################
 # # 40 treatments, 10 reps, 20 rows, 20 columns
@@ -807,6 +793,65 @@ designs[["split-plot"]] <- list(
     }
   )
 )
+
+#######################################################
+# irregular, oz barley
+df_initial_irr <- initialise_design_df(
+  items = 1,
+  designs = list(
+    sw = list(nrows = 20, ncols = 26),
+    se = list(nrows = 24, ncols = 26)
+  )
+)
+
+irr_row <- df_initial_irr$row
+irr_col <- df_initial_irr$col
+
+is_sw <- df_initial_irr$site == "sw"
+is_blank <- (is_sw &
+  ((irr_col == 26 & irr_row %in% c(9:12, 15:18, 20)) |
+    (irr_col == 15 & irr_row == 9))) |
+  (!is_sw &
+    ((irr_col == 26 & irr_row %in% c(15, 9:12)) |
+      (irr_col %in% 21:26 & irr_row %in% 16:18) |
+      irr_col == 15 & irr_row == 9))
+
+# assign blocks
+df_initial_irr$block <- 1
+df_initial_irr[is_sw & irr_row <= 18 & irr_col >= 6, ]$block <- 2
+df_initial_irr[is_sw & irr_row <= 15, ]$block <- 2
+df_initial_irr[is_sw & irr_row <= 9 & irr_col <= 14, ]$block <- 3
+df_initial_irr[is_sw & irr_row <= 8, ]$block <- 3
+df_initial_irr[!is_sw & irr_row <= 18, ]$block <- 4
+df_initial_irr[!is_sw & irr_row <= 9 & irr_col <= 14, ]$block <- 5
+df_initial_irr[!is_sw & irr_row <= 8, ]$block <- 5
+df_initial_irr[is_blank, ]$block <- -1
+
+for (block in 1:5) {
+  df_initial_irr[df_initial_irr$block == block, ]$treatment <- 1:222
+}
+df_initial_irr[is_blank, ]$block <- NA
+
+df_layout <- df_initial_irr
+class(df_layout) <- c(class(df_layout), "design")
+png("layout-irr-sw.png", height = 500, width = 500)
+speed::autoplot(df_layout[is_sw, ], treatments = "block")
+dev.off()
+png("layout-irr-se.png", height = 500, width = 500)
+speed::autoplot(df_layout[!is_sw, ], treatments = "block")
+dev.off()
+
+bench_speed_irr <- function(seed = 112) {
+  speed::speed(
+    data = df_initial_irr,
+    swap = "treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col", by = "site"),
+    optimise_params = optim_params(random_initialisation = 10),
+    seed = seed
+  )
+}
 
 #######################################################
 benchmark_results <- run_benchmarks(designs, seeds = 1:10)
