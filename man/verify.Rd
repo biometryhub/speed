@@ -120,21 +120,29 @@ reproducibility of results (default: \code{NULL}).}
 
 \item{linked_cols}{Character vector of column names that should travel with
 the \code{swap} column, for example a \code{variety_name} label belonging to a
-numeric \code{variety} code. These columns are rearranged alongside \code{swap} and
-returned in the optimised order, keeping their original type and position.
-They take no part in scoring. For hierarchical designs, provide a named
-list with names matching \code{swap} to link different columns at different
-levels, e.g.
+numeric \code{variety} code. Every swap moves these columns alongside \code{swap}, so
+a value paired with a treatment stays paired with it. They take no part in
+scoring, and keep their input class and position.
+
+For hierarchical designs, provide a named list with names matching \code{swap} to
+link different columns at different levels, e.g.
 \code{list(wp = "wholeplot_label", sp = "subplot_label")}. A bare character
 vector applies to every level, so in a hierarchical design it is only
 valid when every level swaps the same column, as in a multi-environment
 trial; levels swapping different columns need the named list, because a
-column can only travel with one \code{swap} column. Columns used as \code{swap},
-\code{swap_within} or spatial factors cannot be linked, at any level, because
-linked columns are held out of the design for the whole search. On a level with
-\code{swap_all = TRUE} whole treatment groups move at once, so a linked column
-with more than one value per treatment travels with its treatment group
-rather than being paired plot for plot (default: \code{NULL}).}
+column can only travel with one \code{swap} column.
+
+A later level's \code{swap} column \emph{may} be linked to an earlier one, which moves
+a child treatment with its parent - linking \code{sp_trt} to the whole-plot level
+of a split-plot carries each sub-plot treatment along when its whole-plot
+treatment moves, before the sub-plot level then optimises it. The carrying
+level must come first, or it would undo the child level's work. Columns used
+as \code{swap_within}, spatial factors or grid factors cannot be linked at all,
+since they describe where a plot is rather than what is on it.
+
+On a level with \code{swap_all = TRUE} whole treatment groups move at once, so a
+linked column with more than one value per treatment travels with its
+treatment group rather than being paired plot for plot (default: \code{NULL}).}
 
 \item{swap_count}{Number of treatment swaps per iteration (default: 1).}
 

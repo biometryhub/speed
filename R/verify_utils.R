@@ -197,41 +197,59 @@
       )
     }
 
-    # Derived per level, so what a level may carry depends only on what that
-    # level itself optimises
-    reserved <- .level_optimised_cols(opt)
-    others <- setdiff(names(optimise), level)
+    earlier <- names(optimise)[seq_len(which(names(optimise) == level) - 1)]
 
     for (col in cols) {
       verify_column_exists(col, data, "linked column")
 
-      if (col %in% reserved) {
+      # A carried column moves with its treatment, so it must describe the
+      # treatment. Columns that say where a plot is, or which group it belongs
+      # to, would break the layout the search is scoring against. Checked across
+      # every level, since one level's grouping is fixed for all of them.
+      fixes_layout <- Filter(
+        function(other) col %in% .level_fixed_cols(optimise[[other]]),
+        names(optimise)
+      )
+      if (length(fixes_layout) > 0) {
         stop(
           "`linked_cols` column '",
           col,
-          "' is already used as a swap, swap_within or spatial ",
-          "factor column at level '",
-          level,
-          "'. Linked columns must be separate from the columns being optimised.",
+          "' defines the layout at level '",
+          fixes_layout[[1]],
+          "' as a swap_within, spatial or grid factor, so it cannot be moved.",
           call. = FALSE
         )
       }
 
-      # Linked columns are held out of the design for the whole search, so one
-      # that another level needs would not be there when that level runs
-      needed_by <- Filter(
-        function(other) col %in% .level_optimised_cols(optimise[[other]]),
-        others
+      if (identical(col, opt$swap)) {
+        stop(
+          "`linked_cols` column '",
+          col,
+          "' is the swap column at level '",
+          level,
+          "', so it cannot also travel with itself.",
+          call. = FALSE
+        )
+      }
+
+      # A child treatment may ride with its parent, but only if the parent moves
+      # first - otherwise this level would undo the child level's optimisation
+      optimised_earlier <- Filter(
+        function(other) identical(col, optimise[[other]]$swap),
+        earlier
       )
-      if (length(needed_by) > 0) {
+      if (length(optimised_earlier) > 0) {
         stop(
           "`linked_cols` column '",
           col,
           "' is optimised at level '",
-          needed_by[[1]],
-          "', so it cannot also travel with '",
-          opt$swap,
-          "'. A column is either optimised or carried, not both.",
+          optimised_earlier[[1]],
+          "', which runs before '",
+          level,
+          "'. Carrying it here would undo that level's work; order the levels so ",
+          "'",
+          level,
+          "' comes first.",
           call. = FALSE
         )
       }
@@ -255,24 +273,39 @@
   return(invisible(NULL))
 }
 
-#' Columns a Single Level Optimises or Scores On
+#' Columns a Single Level Treats as Fixed Layout
 #'
 #' @description
-#' The columns one level of `optimise` needs present in the design: the ones it
-#' swaps, groups by, and scores on.
+#' The columns that say where a plot sits and which group it belongs to. Unlike
+#' the `swap` column these never move, so they can be neither optimised by
+#' another level nor carried by one.
 #'
 #' @param opt One level of the `optimise` list.
 #'
 #' @return A character vector of column names.
 #'
 #' @keywords internal
-.level_optimised_cols <- function(opt) {
+.level_fixed_cols <- function(opt) {
   return(unique(c(
-    opt$swap,
     opt$swap_within,
     all.vars(opt$spatial_factors),
     unlist(opt$grid_factors)
   )))
+}
+
+#' Columns a Single Level Optimises or Scores On
+#'
+#' @description
+#' Everything one level of `optimise` needs present in the design: the column it
+#' swaps, plus the fixed layout columns it groups and scores by.
+#'
+#' @inheritParams .level_fixed_cols
+#'
+#' @return A character vector of column names.
+#'
+#' @keywords internal
+.level_optimised_cols <- function(opt) {
+  return(unique(c(opt$swap, .level_fixed_cols(opt))))
 }
 
 #' Verify Optimization Parameters for `speed`

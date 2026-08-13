@@ -397,6 +397,41 @@ test_that("linked_cols accumulates across levels sharing one swap column", {
   expect_pairing_preserved(df, result$design_df, "lines", "line_name")
 })
 
+test_that("linked_cols carries a child treatment with its parent", {
+  df <- split_plot_df()
+
+  result <- speed(
+    df,
+    swap = list(wp = "wp_trt", sp = "sp_trt"),
+    swap_within = list(wp = "block", sp = "wholeplot"),
+    # `sp_trt` rides along when `wp_trt` moves, then `sp` optimises it in place
+    linked_cols = list(wp = "sp_trt"),
+    swap_all = TRUE,
+    iterations = 100,
+    early_stop_iterations = 30,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # Carrying a treatment must not change the replication of either factor
+  expect_equal(
+    as.integer(table(result$design_df$wp_trt)),
+    as.integer(table(df$wp_trt))
+  )
+  expect_equal(
+    as.integer(table(result$design_df$sp_trt)),
+    as.integer(table(df$sp_trt))
+  )
+
+  # Nor the split-plot structure: one whole-plot treatment per whole plot, and a
+  # full set of sub-plot treatments within it
+  per_wholeplot <- function(d, col) {
+    tapply(as.character(d[[col]]), d$wholeplot, function(x) length(unique(x)))
+  }
+  expect_true(all(per_wholeplot(result$design_df, "wp_trt") == 1))
+  expect_true(all(per_wholeplot(result$design_df, "sp_trt") == 4))
+})
+
 # Validation -------------------------------------------------------------------
 
 test_that("linked_cols rejects columns that are not in the data", {
@@ -413,9 +448,8 @@ test_that("linked_cols rejects columns that are not in the data", {
   )
 })
 
-test_that("linked_cols rejects columns used by the optimisation", {
+test_that("linked_cols rejects the swap column itself", {
   df <- simple_df()
-  df$block <- rep(1:5, each = 4)
 
   expect_error(
     speed(
@@ -425,22 +459,7 @@ test_that("linked_cols rejects columns used by the optimisation", {
       seed = 42,
       quiet = TRUE
     ),
-    "already used as a swap"
-  )
-  expect_error(
-    speed(
-      df,
-      swap = "treatment",
-      swap_within = "block",
-      linked_cols = "block",
-      seed = 42,
-      quiet = TRUE
-    ),
-    "already used as a swap"
-  )
-  expect_error(
-    speed(df, swap = "treatment", linked_cols = "row", seed = 42, quiet = TRUE),
-    "already used as a swap"
+    "cannot also travel with itself"
   )
 })
 
@@ -477,19 +496,53 @@ test_that("linked_cols rejects a list without names", {
   )
 })
 
-test_that("linked_cols rejects a column another level optimises", {
+test_that("linked_cols rejects a child treatment optimised before its carrier", {
   df <- split_plot_df()
 
+  # `sp` runs first here, so carrying `sp_trt` at `wp` would undo its work
   expect_error(
     speed(
       df,
-      swap = list(wp = "wp_trt", sp = "sp_trt"),
-      swap_within = list(wp = "block", sp = "wholeplot"),
+      swap = list(sp = "sp_trt", wp = "wp_trt"),
+      swap_within = list(sp = "wholeplot", wp = "block"),
       linked_cols = list(wp = "sp_trt"),
       seed = 42,
       quiet = TRUE
     ),
-    "is optimised at level 'sp'"
+    "which runs before 'wp'"
+  )
+})
+
+test_that("linked_cols rejects a column that defines the layout", {
+  # `wholeplot` groups the sub-plot level; moving it would break that grouping
+  expect_error(
+    speed(
+      split_plot_df(),
+      swap = list(wp = "wp_trt", sp = "sp_trt"),
+      swap_within = list(wp = "block", sp = "wholeplot"),
+      linked_cols = list(wp = "wholeplot"),
+      seed = 42,
+      quiet = TRUE
+    ),
+    "defines the layout at level 'sp'"
+  )
+
+  df <- simple_df()
+  df$block <- rep(1:5, each = 4)
+  expect_error(
+    speed(
+      df,
+      swap = "treatment",
+      swap_within = "block",
+      linked_cols = "block",
+      seed = 42,
+      quiet = TRUE
+    ),
+    "defines the layout"
+  )
+  expect_error(
+    speed(df, swap = "treatment", linked_cols = "row", seed = 42, quiet = TRUE),
+    "defines the layout"
   )
 })
 

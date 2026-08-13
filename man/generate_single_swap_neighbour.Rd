@@ -10,7 +10,7 @@ generate_single_swap_neighbour(
   swap_within,
   swap_count,
   swap_all_blocks,
-  origin_col = NULL
+  carry_cols = NULL
 )
 }
 \description{

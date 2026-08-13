@@ -6,7 +6,9 @@
   `swap` column, for example a `variety_name` label belonging to a numeric `variety` code. Linked columns
   are returned in the optimised order with their original type and position, and take no part in scoring.
   For hierarchical designs, pass a named list to link different columns at different levels, e.g.
-  `linked_cols = list(wp = "wholeplot_label", sp = "subplot_label")`. ([#105](https://github.com/biometryhub/speed/issues/105))
+  `linked_cols = list(wp = "wholeplot_label", sp = "subplot_label")`. A later level's `swap` column can be
+  linked to an earlier one, which carries a child treatment along when its parent moves.
+  ([#105](https://github.com/biometryhub/speed/issues/105))
 - `speed()` now stops as soon as a design reaches the lowest score its layout allows, applicable only to the
   default `objective_function()`. This can be turned off per level with `optim_params(stop_at_optimal =
   FALSE)`. `summary()` now reports the lower bound score alongside the achieved one.

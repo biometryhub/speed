@@ -13,7 +13,7 @@
 A character vector of column names.
 }
 \description{
-The columns one level of \code{optimise} needs present in the design: the ones it
-swaps, groups by, and scores on.
+Everything one level of \code{optimise} needs present in the design: the column it
+swaps, plus the fixed layout columns it groups and scores by.
 }
 \keyword{internal}

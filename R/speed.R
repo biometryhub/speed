@@ -46,21 +46,29 @@
 #'   at a time (default: FALSE)
 #' @param linked_cols Character vector of column names that should travel with
 #'   the `swap` column, for example a `variety_name` label belonging to a
-#'   numeric `variety` code. These columns are rearranged alongside `swap` and
-#'   returned in the optimised order, keeping their original type and position.
-#'   They take no part in scoring. For hierarchical designs, provide a named
-#'   list with names matching `swap` to link different columns at different
-#'   levels, e.g.
+#'   numeric `variety` code. Every swap moves these columns alongside `swap`, so
+#'   a value paired with a treatment stays paired with it. They take no part in
+#'   scoring, and keep their input class and position.
+#'
+#'   For hierarchical designs, provide a named list with names matching `swap` to
+#'   link different columns at different levels, e.g.
 #'   `list(wp = "wholeplot_label", sp = "subplot_label")`. A bare character
 #'   vector applies to every level, so in a hierarchical design it is only
 #'   valid when every level swaps the same column, as in a multi-environment
 #'   trial; levels swapping different columns need the named list, because a
-#'   column can only travel with one `swap` column. Columns used as `swap`,
-#'   `swap_within` or spatial factors cannot be linked, at any level, because
-#'   linked columns are held out of the design for the whole search. On a level with
-#'   `swap_all = TRUE` whole treatment groups move at once, so a linked column
-#'   with more than one value per treatment travels with its treatment group
-#'   rather than being paired plot for plot (default: `NULL`).
+#'   column can only travel with one `swap` column.
+#'
+#'   A later level's `swap` column *may* be linked to an earlier one, which moves
+#'   a child treatment with its parent - linking `sp_trt` to the whole-plot level
+#'   of a split-plot carries each sub-plot treatment along when its whole-plot
+#'   treatment moves, before the sub-plot level then optimises it. The carrying
+#'   level must come first, or it would undo the child level's work. Columns used
+#'   as `swap_within`, spatial factors or grid factors cannot be linked at all,
+#'   since they describe where a plot is rather than what is on it.
+#'
+#'   On a level with `swap_all = TRUE` whole treatment groups move at once, so a
+#'   linked column with more than one value per treatment travels with its
+#'   treatment group rather than being paired plot for plot (default: `NULL`).
 #' @param optimise_params Parameters used to control the behaviour of
 #'   simulated annealing algorithm. See [optim_params()] for more details.
 #' @param optimise A list of named arguments describing optimising parameters;
@@ -221,24 +229,13 @@ speed <- function(data,
   # Checked here, not in `.verify_inputs()`: the per-level rules need the merged list
   .verify_linked_cols(data, optimise, linked_cols)
 
-  # Detached before `to_factor()` so the held values never enter `factored$input_types`
-  # and come back verbatim, keeping classes `to_types()` could not rebuild, such as Date
-  linked <- .detach_linked_cols(data, optimise)
-  data <- linked$data
-  optimise <- linked$optimise
-
   # convert to factors. Only the columns the optimisation reads need to be factors;
   # converting the rest would round-trip them through `base_type()`, which silently
-  # downgrades any class it cannot rebuild with `as.<class>()`, such as Date
+  # downgrades any class it cannot rebuild with `as.<class>()`, such as Date. Linked
+  # columns are among those left alone, so they keep their input class while the
+  # search moves them.
   factored <- to_factor(data, unlist(lapply(optimise, .level_optimised_cols)))
   data <- factored$df
-
-  # Provenance indices are stamped in input row order and before the sort below, so they
-  # refer to the rows as the user passed them. Integer, and added after `to_factor()`, so
-  # they never enter `factored$input_types`.
-  for (origin_col in linked$origin_cols) {
-    data[[origin_col]] <- seq_len(nrow(data))
-  }
 
   if (inferred$inferred) {
     # Metrics are built from each plot's coordinates now, but neighbour
@@ -282,7 +279,6 @@ speed <- function(data,
   design$metadata$call <- call
   design$design_df[[dummy_group]] <- NULL
 
-  design$design_df <- .reattach_linked_cols(design$design_df, linked)
   design$design_df <- to_types(design$design_df, factored$input_types)
 
   # to print deprecate warning at the end
@@ -386,7 +382,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
       # Generate new design by swapping treatments at this level
       new_design <- generate_neighbour(current_design, opt$swap, opt$swap_within, current_swap_count,
-                                       current_swap_all_blocks, opt$swap_all, opt$origin_col)
+                                       current_swap_all_blocks, opt$swap_all, opt$linked_cols)
 
       if (length(new_design$frozen)) {
         frozen_groups <- union(frozen_groups, new_design$frozen)

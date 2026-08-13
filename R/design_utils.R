@@ -9,11 +9,10 @@
 #' @param swap_all_blocks Whether to perform swaps in all blocks or just one
 #' @param swap_all Whether to swap all matching items or a single item at a time
 #'   (default: FALSE)
-#' @param origin_col Name of an internal integer column recording, for each
-#'   plot, the input row the current `swap` value came from. Moved in lockstep
-#'   with the `swap` column so that columns named in `linked_cols` can be
-#'   reordered after the search. `NULL` (default) disables the tracking
-#'   entirely, leaving behaviour unchanged.
+#' @param carry_cols Character vector of column names moved in lockstep with the
+#'   `swap` column, so that a value paired with a treatment stays paired with it.
+#'   These are the columns named in `linked_cols`. `NULL` (default) moves the
+#'   `swap` column alone.
 #'
 #' @return A list with the updated design after swapping and information about
 #'   swapped items
@@ -26,19 +25,46 @@ generate_neighbour <- function(design,
                                swap_count = getOption("speed.swap_count", 1),
                                swap_all_blocks = getOption("speed.swap_all_blocks", FALSE),
                                swap_all = FALSE,
-                               origin_col = NULL) {
+                               carry_cols = NULL) {
   if (swap_all) {
-    return(generate_multi_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks, origin_col))
+    return(generate_multi_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks, carry_cols))
   } else {
-    return(generate_single_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks, origin_col))
+    return(generate_single_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks, carry_cols))
   }
+}
+
+#' Exchange Carried Columns Between Two Sets of Plots
+#'
+#' @description
+#' Moves each `carry_cols` column between `plots_1` and `plots_2` position by
+#' position, so a value paired with a treatment follows it. The two sets are
+#' always the same length: trivially so for a single swap, and for `swap_all`
+#' because only treatments of equal replication are exchanged.
+#'
+#' @param design Data frame containing the current design
+#' @param carry_cols Character vector of column names to exchange
+#' @param plots_1,plots_2 Equal-length vectors of row positions
+#'
+#' @return `design`, with the carried columns exchanged
+#'
+#' @keywords internal
+exchange_carried <- function(design, carry_cols, plots_1, plots_2) {
+  # Per column rather than a data frame `[<-`, which coerces classes and
+  # benchmarks slower
+  for (col in carry_cols) {
+    held <- design[[col]][plots_1]
+    design[[col]][plots_1] <- design[[col]][plots_2]
+    design[[col]][plots_2] <- held
+  }
+
+  return(design)
 }
 
 #' Generate neighbour for simple (non-hierarchical) designs
 #' @keywords internal
 # fmt: skip
 generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks,
-                                           origin_col = NULL) {
+                                           carry_cols = NULL) {
   new_design <- design
 
   # Get unique blocks
@@ -85,10 +111,7 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
         # Perform the swap only if we have valid treatments to swap
         if (!is.null(to_be_swapped)) {
           new_design[[swap]][rev(swap_pair)] <- to_be_swapped
-          if (!is.null(origin_col)) {
-            # Exact 2-element exchange: the provenance index follows its treatment
-            new_design[[origin_col]][rev(swap_pair)] <- new_design[[origin_col]][swap_pair]
-          }
+          new_design <- exchange_carried(new_design, carry_cols, swap_pair, rev(swap_pair))
           swapped_items[swapped_idx:(swapped_idx + 1)] <- to_be_swapped
           swapped_idx <- swapped_idx + 2
         }
@@ -103,7 +126,7 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
 #' @keywords internal
 # fmt: skip
 generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks,
-                                          origin_col = NULL) {
+                                          carry_cols = NULL) {
   new_design <- design
 
   # Get unique groups for this level
@@ -173,14 +196,10 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
         plots_1 <- which(group_filter & new_design[[swap]] == swap_pair[1])
         plots_2 <- which(group_filter & new_design[[swap]] == swap_pair[2])
 
-        # Swap all instances of these treatments
-        if (!is.null(origin_col)) {
-          # The swap pair is drawn from treatments with equal replication, so the two
-          # plot sets are the same size and their provenance indices exchange one for one
-          origins_1 <- new_design[[origin_col]][plots_1]
-          new_design[[origin_col]][plots_1] <- new_design[[origin_col]][plots_2]
-          new_design[[origin_col]][plots_2] <- origins_1
-        }
+        # Swap all instances of these treatments. The pair is drawn from treatments of
+        # equal replication, so the two plot sets are the same size and the carried
+        # columns exchange one position for one.
+        new_design <- exchange_carried(new_design, carry_cols, plots_1, plots_2)
         new_design[[swap]][plots_1] <- swap_pair[2]
         new_design[[swap]][plots_2] <- swap_pair[1]
 
@@ -602,7 +621,7 @@ initialise_multiple_designs_df <- function(items, designs, design_col) {
 #'
 #' @keywords internal
 # fmt: skip
-shuffle_items <- function(design, swap, swap_within, seed = NULL, origin_col = NULL) {
+shuffle_items <- function(design, swap, swap_within, seed = NULL, carry_cols = NULL) {
   if (!is.null(seed)) {
     set.seed(seed)
   }
@@ -612,8 +631,9 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL, origin_col = N
     items <- design[swap_within_filter, ][[swap]]
     perm <- sample.int(length(items))
     design[swap_within_filter, ][[swap]] <- items[perm]
-    if (!is.null(origin_col)) {
-      design[swap_within_filter, ][[origin_col]] <- design[swap_within_filter, ][[origin_col]][perm]
+    for (col in carry_cols) {
+      # The same permutation, so a carried value stays with its treatment
+      design[swap_within_filter, ][[col]] <- design[swap_within_filter, ][[col]][perm]
     }
   }
 
@@ -667,7 +687,7 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
         opt$swap,
         opt$swap_within,
         seed + i - 1,
-        opt$origin_col
+        opt$linked_cols
       )
     }
 
