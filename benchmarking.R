@@ -22,8 +22,12 @@ to_factor <- function(df, cols) {
   return(df)
 }
 
-get_metrics <- function(df, cols) {
-  metrics <- list(adjacency = speed::calculate_adjacency_score(df, "treatment"))
+get_metrics <- function(df, cols, skip_adj = FALSE) {
+  metrics <- if (!skip_adj) {
+    list(adjacency = speed::calculate_adjacency_score(df, "treatment"))
+  } else {
+    list()
+  }
   for (col in cols) {
     uniques <- unique(table(df$treatment, df[[col]]))
     name <- paste0(col, "_unique_occurence")
@@ -796,6 +800,80 @@ designs[["split-plot"]] <- list(
 
 #######################################################
 # irregular, oz barley
+contrast_colour <- function(fills) {
+  luminance <- apply(grDevices::col2rgb(fills) / 255, 2, function(channel) {
+    linear <- ifelse(
+      channel <= 0.03928,
+      channel / 12.92,
+      ((channel + 0.055) / 1.055)^2.4
+    )
+    return(sum(c(0.2126, 0.7152, 0.0722) * linear))
+  })
+
+  return(ifelse(luminance > 0.179, "black", "white"))
+}
+
+tile_colour <- function(values, na_colour = "grey") {
+  if (is.numeric(values)) {
+    colours <- scales::col_numeric(
+      viridisLite::viridis(256),
+      range(values, na.rm = TRUE)
+    )(values)
+  } else {
+    values <- as.factor(values)
+    colours <- viridisLite::viridis(nlevels(values))[as.integer(values)]
+  }
+  colours[is.na(colours)] <- na_colour
+
+  return(colours)
+}
+
+plot_layout_irr <- function(df, fill, title = NULL) {
+  scale_args <- list(na.value = "grey")
+  if (is.numeric(df[[fill]])) {
+    scale_fill <- scale_fill_viridis_c
+  } else {
+    scale_fill <- scale_fill_viridis_d
+    scale_args$drop <- FALSE
+  }
+  df$label_colour <- contrast_colour(
+    tile_colour(df[[fill]], scale_args$na.value)
+  )
+
+  return(
+    ggplot(df, aes(col, row, fill = get(fill))) +
+      geom_tile(color = "black") +
+      geom_text(aes(label = treatment, colour = label_colour), size = 5) +
+      scale_colour_identity() +
+      do.call(scale_fill, scale_args) +
+      scale_x_continuous(
+        expand = c(0, 0),
+        breaks = 1:max(df$col),
+        position = "top"
+      ) +
+      scale_y_continuous(expand = c(0, 0), breaks = 1:max(df$row)) +
+      labs(title = title) +
+      theme_bw(base_size = 23) +
+      theme(
+        legend.position = "none",
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()
+      )
+  )
+}
+
+autoplot_irr <- function(df) {
+  sw <- plot_layout_irr(df[df$site == "sw", ], "block", "SW")
+  sw_x <- sw$scales$get_scales("x")
+  sw_x$trans <- scales::reverse_trans()
+
+  se <- plot_layout_irr(df[df$site == "se", ], "block", "SE")
+  se_y <- se$scales$get_scales("y")
+  se_y$position <- "right"
+  return(sw + se + patchwork::plot_layout(ncol = 2))
+}
+
+# speed
 df_initial_irr <- initialise_design_df(
   items = 1,
   designs = list(
@@ -806,6 +884,8 @@ df_initial_irr <- initialise_design_df(
 
 irr_row <- df_initial_irr$row
 irr_col <- df_initial_irr$col
+df_initial_irr$site_col <- paste(df_initial_irr$site, irr_col, sep = "_")
+df_initial_irr$site_row <- paste(df_initial_irr$site, irr_row, sep = "_")
 
 is_sw <- df_initial_irr$site == "sw"
 is_blank <- (is_sw &
@@ -831,14 +911,11 @@ for (block in 1:5) {
   df_initial_irr[df_initial_irr$block == block, ]$treatment <- 1:222
 }
 df_initial_irr[is_blank, ]$block <- NA
+df_initial_irr$block <- factor(df_initial_irr$block)
 
 df_layout <- df_initial_irr
-class(df_layout) <- c(class(df_layout), "design")
-png("layout-irr-sw.png", height = 500, width = 500)
-speed::autoplot(df_layout[is_sw, ], treatments = "block")
-dev.off()
-png("layout-irr-se.png", height = 500, width = 500)
-speed::autoplot(df_layout[!is_sw, ], treatments = "block")
+png("layout-irr.png", height = 1000, width = 1600)
+autoplot_irr(df_layout)
 dev.off()
 
 bench_speed_irr <- function(seed = 112) {
@@ -846,12 +923,182 @@ bench_speed_irr <- function(seed = 112) {
     data = df_initial_irr,
     swap = "treatment",
     swap_within = "block",
-    spatial_factors = ~ row + col,
-    grid_factors = list(dim1 = "row", dim2 = "col", by = "site"),
-    optimise_params = optim_params(random_initialisation = 10),
+    spatial_factors = ~ site_row + site_col,
+    optimise_params = optim_params(random_initialisation = 10, adj_weight = 0),
     seed = seed
   )
 }
+
+speed_result <- bench_speed_irr()
+design_df <- speed_result$design_df
+get_metrics(design_df, c("site_col", "site_row", "block"), TRUE)
+efficiency(design_df, "treatment", ~ site / (block + row * col))
+# Summary table of the decomposition for units & treatments (based on adjusted quantities)
+#
+#  Source.units  df1  Source.treatments df2  aefficiency eefficiency order
+#  site             1 treatment            1      0.0336      0.0336     1
+#  block[site]      4 treatment            1      0.1664      0.1664     1
+#                     Residual             3
+#  row[site]       41 treatment           41      0.1716      0.0843    41
+#  col[site]       50 treatment           50      0.1503      0.0536    50
+#  row#col[site] 1013 treatment          221      0.9003      0.5465    93
+#                     Residual           792
+#
+# Table of information (partially) aliased with previous sources derived from the same formula
+#
+#  Source    df Alias                    In    aefficiency eefficiency order
+#  row[site]  4 block[site]              units      0.9041      0.7567     4
+#  row[site] 41 ## Information remaining units      0.4922      0.0451     4
+#  col[site]  4 block[site]              units      0.0018      0.0005     4
+#  col[site]  8 row[site]                units      0.0038      0.0010     8
+#  col[site] 50 ## Information remaining units      0.9933      0.8375     9
+#
+# The design is not orthogonal
+
+png("speed-irr.png", height = 1000, width = 1600)
+autoplot_irr(design_df)
+dev.off()
+
+# digger
+# one site at a time; blanks are treatment 0
+digger_site <- function(df_site, seed) {
+  not_empty <- !is.na(df_site$block)
+  cells <- cbind(df_site$row[not_empty], df_site$col[not_empty])
+  treatments <- as.integer(df_site$treatment[not_empty])
+
+  initial <- matrix(0, nrow = max(df_site$row), ncol = max(df_site$col))
+  initial[cells] <- treatments
+
+  # like swap_within
+  swap <- matrix(0, nrow = nrow(initial), ncol = ncol(initial))
+  swap[cells] <- as.integer(df_site$block[not_empty])
+
+  block_nrows <- max(as.integer(df_site$row))
+
+  digger <- DiGGer::corDiGGer(
+    numberOfTreatments = 222,
+    rowsInDesign = nrow(initial),
+    columnsInDesign = ncol(initial),
+    treatRepPerRep = tabulate(treatments, 222),
+    initialDesign = initial,
+    initialSwap = swap,
+    blockSequence = list(c(block_nrows, 1)),
+    maxInterchanges = c(50000, 200000),
+    rngSeeds = rep(seed, 2)
+  )
+  df_site$treatment[not_empty] <- as.character(
+    DiGGer::getDesign(digger)[cells]
+  )
+
+  return(df_site)
+}
+
+bench_digger_irr <- function(seed = 112) {
+  df_digger_irr <- df_initial_irr
+  set.seed(seed)
+  is_block_1 <- !is.na(df_digger_irr$block) & df_digger_irr$block == "1"
+  df_digger_irr[is_block_1, ]$treatment <- sample(
+    df_digger_irr[is_block_1, ]$treatment
+  )
+
+  is_sw <- df_digger_irr$site == "sw"
+  df_digger_irr[is_sw, ] <- digger_site(df_digger_irr[is_sw, ], seed)
+  df_digger_irr[!is_sw, ] <- digger_site(df_digger_irr[!is_sw, ], seed)
+
+  return(df_digger_irr)
+}
+
+digger_result_irr <- bench_digger_irr()
+get_metrics(digger_result_irr, c("site_col", "site_row", "block"), TRUE)
+efficiency(digger_result_irr, "treatment", ~ site / (block + row * col))
+# Summary table of the decomposition for units & treatments (based on adjusted quantities)
+#
+#  Source.units  df1  Source.treatments df2  aefficiency eefficiency order
+#  site             1 treatment            1      0.0336      0.0336     1
+#  block[site]      4 treatment            1      0.1664      0.1664     1
+#                     Residual             3
+#  row[site]       41 treatment           41      0.1713      0.0803    41
+#  col[site]       50 treatment           50      0.1650      0.0790    50
+#  row#col[site] 1013 treatment          221      0.9026      0.5988    93
+#                     Residual           792
+#
+# Table of information (partially) aliased with previous sources derived from the same formula
+#
+#  Source    df Alias                    In    aefficiency eefficiency order
+#  row[site]  4 block[site]              units      0.9041      0.7567     4
+#  row[site] 41 ## Information remaining units      0.4922      0.0451     4
+#  col[site]  4 block[site]              units      0.0018      0.0005     4
+#  col[site]  8 row[site]                units      0.0038      0.0010     8
+#  col[site] 50 ## Information remaining units      0.9933      0.8375     9
+#
+# The design is not orthogonal
+
+png("digger-irr.png", height = 1000, width = 1600)
+autoplot_irr(digger_result_irr)
+dev.off()
+
+# odw
+odw_site <- function(df_site, maxit = 9) {
+  not_empty <- !is.na(df_site$block)
+  fit_df <- to_factor(
+    df_site[not_empty, ],
+    c("treatment", "block", "row", "col")
+  )
+
+  odw_random_irr <- ~ treatment + block + col
+  param_table <- odw::odw(
+    random = odw_random_irr,
+    data = fit_df,
+    permute = ~treatment,
+    swap = ~block,
+    search = "tabu",
+    start.values = TRUE
+  )$vparameters.table
+
+  param_table[3, 2] <- 100
+
+  design <- odw::odw(
+    random = odw_random_irr,
+    data = fit_df,
+    permute = ~treatment,
+    swap = ~block,
+    search = "tabu",
+    G.param = param_table,
+    R.param = param_table,
+    maxit = maxit
+  )$design
+
+  # match on plot position in case odw returns its own row order
+  df_site$treatment[not_empty] <- as.character(design$treatment)[match(
+    paste(df_site$row[not_empty], df_site$col[not_empty]),
+    paste(design$row, design$col)
+  )]
+
+  return(df_site)
+}
+
+bench_odw_irr <- function(seed = 112, maxit = 9) {
+  df_odw_irr <- df_initial_irr
+  set.seed(seed)
+  is_block_1 <- !is.na(df_odw_irr$block) & df_odw_irr$block == "1"
+  df_odw_irr[is_block_1, ]$treatment <- sample(
+    df_odw_irr[is_block_1, ]$treatment
+  )
+
+  is_sw <- df_odw_irr$site == "sw"
+  df_odw_irr[is_sw, ] <- odw_site(df_odw_irr[is_sw, ], maxit)
+  df_odw_irr[!is_sw, ] <- odw_site(df_odw_irr[!is_sw, ], maxit)
+
+  return(df_odw_irr)
+}
+
+odw_result_irr <- bench_odw_irr()
+get_metrics(odw_result_irr, c("site_col", "site_row", "block"), TRUE)
+efficiency(odw_result_irr, "treatment", ~ site / (block + row * col))
+
+png("odw-irr.png", height = 1000, width = 1600)
+autoplot_irr(odw_result_irr)
+dev.off()
 
 #######################################################
 benchmark_results <- run_benchmarks(designs, seeds = 1:10)
