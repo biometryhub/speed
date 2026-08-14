@@ -108,7 +108,8 @@ in the function, the seed is set to the third element of \code{.Random.seed}.
 \code{call}, the ordered \code{levels}, the resolved \code{row_column} / \code{col_column}
 names, and a \code{per_level} list recording each level's swap variable,
 spatial factors, adjacency/balance weights, requested iterations, starting
-temperature, cooling rate, objective function and achieved score. Used by
+temperature, cooling rate, objective function, achieved score and the
+\code{stop_reason} that ended the level. Used by
 \link[=summary.design]{summary()} to recompute per-level evaluation metrics.
 }
 }

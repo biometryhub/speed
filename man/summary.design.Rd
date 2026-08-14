@@ -60,7 +60,9 @@ name for a simple design).
 computed.
 \item \code{score} - \code{initial}, \code{final}, \code{optimal} (\code{NA} when not applicable), \code{components}.
 \item \code{optim} - \code{objective}, \code{start_temp}, \code{cooling_rate},
-\code{iterations_requested}, \code{iterations_run}, \code{stopped_early}.
+\code{iterations_requested}, \code{iterations_run}, \code{stopped_early}, and
+\code{stop_reason}: one of \code{"optimal"}, \code{"no_improvement"}, \code{"frozen"} or
+\code{"iterations"} (\code{NA} for designs produced before it was recorded).
 }
 \item \strong{score} - the overall optimised score (summed across levels for a
 hierarchical design).

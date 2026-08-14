@@ -74,7 +74,8 @@
 #'   `call`, the ordered `levels`, the resolved `row_column` / `col_column`
 #'   names, and a `per_level` list recording each level's swap variable,
 #'   spatial factors, adjacency/balance weights, requested iterations, starting
-#'   temperature, cooling rate, objective function and achieved score. Used by
+#'   temperature, cooling rate, objective function, achieved score and the
+#'   `stop_reason` that ended the level. Used by
 #'   [summary()][summary.design()] to recompute per-level evaluation metrics.
 #'
 #' @details
@@ -316,6 +317,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   all_scores <- list()
   all_temperatures <- list()
   all_optimal_scores <- list()
+  all_stop_reasons <- list()
   total_iterations <- 0  # TODO: Track total iterations across all levels
 
   # Set seed for reproducibility
@@ -352,19 +354,47 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     scores <- numeric(opt$iterations)
     temperatures <- numeric(opt$iterations)
     last_improvement_iter <- 0
-    frozen_groups <- character(0)
-    n_groups <- nlevels(current_design[[opt$swap_within]])
+
+    # Which groups this level can rearrange at all. Settled here rather than in
+    # the loop, since no swap it makes can change the answer.
+    groups <- swappable_groups(current_design, opt$swap, opt$swap_within, opt$swap_all)
+    if (length(groups$unequal_replication)) {
+      warning(
+        "No treatments could be swapped",
+        if (length(optimise) > 1) paste0(" at level `", level, "`") else "",
+        " within `", opt$swap_within, "` ",
+        paste0(sort(groups$unequal_replication), collapse = ", "),
+        ", because `swap_all = TRUE` only exchanges treatments with equal replication",
+        " and no two treatments there share a replication count.",
+        " Those groups were left unchanged.",
+        call. = FALSE
+      )
+    }
+
+    # Why the level stopped, and how many recorded scores that leaves. A level
+    # that runs to the end keeps all of them; each `break` below sets both.
+    stop_reason <- "iterations"
+    n_kept <- opt$iterations
 
     # Optimisation loop for this level
     for (iter in 1:opt$iterations) {
       scores[iter] <- current_score
       temperatures[iter] <- temp
 
+      # Nothing at this level can move. Established before the loop, so this
+      # breaks on the first iteration, having recorded the starting score.
+      if (length(groups$swappable) == 0) {
+        if (!quiet) cat("No swaps possible for level", level, "\n")
+        stop_reason <- "frozen"
+        n_kept <- iter
+        break
+      }
+
       # break once optimal
       if (stop_at_optimal && !is.na(optimal_score) && best_score <= optimal_score + 1e-9) {
         if (!quiet) cat("Optimal score reached at iteration", iter, "for level", level, "\n")
-        scores <- scores[1:iter]
-        temperatures <- temperatures[1:iter]
+        stop_reason <- "optimal"
+        n_kept <- iter
         break
       }
 
@@ -379,18 +409,6 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       # Generate new design by swapping treatments at this level
       new_design <- generate_neighbour(current_design, opt$swap, opt$swap_within, current_swap_count,
                                        current_swap_all_blocks, opt$swap_all, opt$linked_cols)
-
-      if (length(new_design$frozen)) {
-        frozen_groups <- union(frozen_groups, new_design$frozen)
-
-        # Whether a group is frozen cannot change during the level, so once every
-        # group is frozen no later iteration can find a swap either
-        if (length(frozen_groups) == n_groups) {
-          scores <- scores[1:iter]
-          temperatures <- temperatures[1:iter]
-          break
-        }
-      }
 
       # Calculate new score
       new_score_obj <- opt$obj_function(new_design$design,opt$swap, spatial_cols, adj_weight = adj_weight,
@@ -427,37 +445,25 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       # Early stopping
       if (iter - last_improvement_iter >= opt$early_stop_iterations || new_score < .Machine$double.eps) {
         if (!quiet) cat("Early stopping at iteration", iter, "for level", level, "\n")
+        stop_reason <- "no_improvement"
         # Record final score and temperature before breaking
         if (iter < opt$iterations) {
           scores[iter + 1] <- current_score
           temperatures[iter + 1] <- temp
-          scores <- scores[1:(iter + 1)]
-          temperatures <- temperatures[1:(iter + 1)]
+          n_kept <- iter + 1
         } else {
-          scores <- scores[1:iter]
-          temperatures <- temperatures[1:iter]
+          n_kept <- iter
         }
         break
       }
     }
 
-    # `swap_all` only exchanges equally replicated treatments, so a group where no two
-    # share a replication can never swap. Warned once per level, whether the search ran
-    # to the end or broke out above, rather than returning those groups silently unchanged.
-    if (length(frozen_groups)) {
-      warning(
-        "No treatments could be swapped",
-        if (length(optimise) > 1) paste0(" at level `", level, "`") else "",
-        " within `", opt$swap_within, "` ", paste0(sort(frozen_groups), collapse = ", "),
-        ", because `swap_all = TRUE` only exchanges treatments with equal replication",
-        " and no two treatments there share a replication count.",
-        " Those groups were left unchanged.",
-        call. = FALSE
-      )
-    }
+    scores <- scores[seq_len(n_kept)]
+    temperatures <- temperatures[seq_len(n_kept)]
 
     all_scores[[level]] <- scores
     all_temperatures[[level]] <- temperatures
+    all_stop_reasons[[level]] <- stop_reason
     total_iterations <- total_iterations + length(scores)
   }
 
@@ -490,7 +496,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       obj_function     = opt$obj_function,
       final_score      = score_obj$score,
       final_components = score_obj$components,
-      optimal_score    = all_optimal_scores[[level]]
+      optimal_score    = all_optimal_scores[[level]],
+      stop_reason      = all_stop_reasons[[level]]
     )
   }
 

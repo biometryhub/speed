@@ -91,7 +91,9 @@
 #'     computed.
 #'   - `score` - `initial`, `final`, `optimal` (`NA` when not applicable), `components`.
 #'   - `optim` - `objective`, `start_temp`, `cooling_rate`,
-#'     `iterations_requested`, `iterations_run`, `stopped_early`.
+#'     `iterations_requested`, `iterations_run`, `stopped_early`, and
+#'     `stop_reason`: one of `"optimal"`, `"no_improvement"`, `"frozen"` or
+#'     `"iterations"` (`NA` for designs produced before it was recorded).
 #' - **score** - the overall optimised score (summed across levels for a
 #'   hierarchical design).
 #' - **seed** - the seed used for reproducibility.
@@ -283,7 +285,9 @@ summary.design <- function(
         cooling_rate = pm$cooling_rate,
         iterations_requested = pm$iterations,
         iterations_run = run,
-        stopped_early = stopped
+        stopped_early = stopped,
+        # Absent from designs produced before `stop_reason` was recorded
+        stop_reason = pm$stop_reason %||% NA_character_
       )
     ))
   })
@@ -1125,13 +1129,21 @@ print.summary.design <- function(x, ...) {
     cat(lab("Optimal:"), fmt_num(s$optimal), "  ", reached, "\n", sep = "")
   }
 
-  # Whether the run converged (stopped early) or hit the iteration cap is the
-  # single most useful signal here, so it's colour-highlighted either way.
-  stop_reason <- if (o$stopped_early) {
-    crayon::green("(stopped early)")
-  } else {
-    crayon::bold(crayon::magenta("(ran to cap)"))
-  }
+  # Why the run ended is the single most useful signal here, so it's
+  # colour-highlighted either way. `frozen` is neither convergence nor a cap:
+  # the level gave up because nothing could be swapped.
+  stop_reason <- switch(
+    o$stop_reason %||% NA_character_,
+    optimal = crayon::green("(optimal reached)"),
+    no_improvement = crayon::green("(no further improvement)"),
+    frozen = crayon::yellow("(no swaps possible)"),
+    iterations = crayon::bold(crayon::magenta("(ran to cap)")),
+    if (o$stopped_early) {
+      crayon::green("(stopped early)")
+    } else {
+      crayon::bold(crayon::magenta("(ran to cap)"))
+    }
+  )
   iter <- paste(
     sprintf(
       "%s / %s",

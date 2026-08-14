@@ -13,15 +13,21 @@
   default `objective_function()`. This can be turned off per level with `optim_params(stop_at_optimal =
   FALSE)`. `summary()` now reports the lower bound score alongside the achieved one.
 
+## Minor Changes
+
+- `summary()` now reports why each level stopped - the optimum was reached, no further
+  improvement was found, no swap was possible, or the iteration cap was hit - in place of
+  the previous "stopped early" / "ran to cap". The reason is also recorded as
+  `stop_reason` in each level's metadata.
+
 ## Bug Fixes
 
-- Columns that take no part in the optimisation are no longer converted to factors and
-  back, so a class that cannot be rebuilt with `as.<class>()`, such as `Date`, is now
-  returned unchanged instead of as `character`.
-- `speed()` now warns when a `swap_all = TRUE` group holds no two treatments of equal
-  replication, since no swap is possible there and the group is returned unchanged. Once
-  every group at a level is in that state, the level stops rather than running out its
-  iterations.
+- Columns that take no part in the optimisation are no longer converted to factors and back, so a class
+  that cannot be rebuilt with `as.<class>()`, such as `Date`, is now returned unchanged instead of as
+  `character`.
+- `speed()` now warns when a `swap_all = TRUE` group holds no two treatments of equal replication, since no
+  swap is possible there and the group is returned unchanged. Where no group at a level can be swapped, the
+  level now stops immediately rather than running out its iterations.
 
 # speed 0.0.10
 

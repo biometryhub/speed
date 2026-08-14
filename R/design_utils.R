@@ -58,6 +58,57 @@ exchange_linked <- function(design, linked_cols, plots_1, plots_2) {
   return(design)
 }
 
+#' Groups Where a Swap Can Still Be Proposed
+#'
+#' @description
+#' A group can only be rearranged if it holds two exchangeable treatments.
+#' Whether it does is fixed for the whole of a level, because a level's swaps
+#' permute treatments within a group and so change neither the number of
+#' distinct treatments nor their replication counts. It is therefore settled
+#' once per level rather than rediscovered by sampling.
+#'
+#' @inheritParams generate_neighbour
+#'
+#' @return A list with:
+#' - **swappable** - groups holding an exchangeable pair.
+#' - **unequal_replication** - groups where `swap_all = TRUE` rules out every
+#'   pair, because no two treatments there share a replication count. Kept
+#'   separate from the rest of the unswappable groups because, unlike a group
+#'   holding a single treatment, it is rarely what was intended.
+#'
+#' @keywords internal
+swappable_groups <- function(design, swap, swap_within, swap_all) {
+  swappable <- character(0)
+  unequal_replication <- character(0)
+
+  for (group in levels(design[[swap_within]])) {
+    in_group <- design[[swap_within]] == group &
+      !is.na(design[[swap_within]]) &
+      !is.na(design[[swap]])
+
+    # Two distinct treatments are the minimum for any exchange, which also rules
+    # out groups holding fewer than two plots and levels holding none
+    counts <- table(as.character(design[[swap]][in_group]))
+    if (length(counts) < 2) {
+      next
+    }
+
+    # `swap_all` exchanges every plot of one treatment for every plot of
+    # another, so the two treatments must be equally replicated
+    if (swap_all && !any(duplicated(as.integer(counts)))) {
+      unequal_replication <- c(unequal_replication, group)
+      next
+    }
+
+    swappable <- c(swappable, group)
+  }
+
+  return(list(
+    swappable = swappable,
+    unequal_replication = unequal_replication
+  ))
+}
+
 #' Generate neighbour for simple (non-hierarchical) designs
 #' @keywords internal
 # fmt: skip
@@ -141,9 +192,6 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
   swapped_idx <- 1
   swapped_items <- character(2 * swap_count * length(groups_to_swap))
 
-  # Groups holding no exchangeable pair, reported so the caller can warn once
-  frozen <- character(0)
-
   # Perform swaps in selected groups
   for (group in groups_to_swap) {
     # Get unique treatments within this group
@@ -171,9 +219,9 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
           replications <- table(group_counts)
           replications <- replications[replications >= 2]
 
-          # No two treatments share a replication, so nothing can be exchanged
+          # No two treatments share a replication, so nothing can be exchanged.
+          # `swappable_groups()` has already reported this group to the caller.
           if (length(replications) == 0) {
-            frozen <- c(frozen, group)
             next
           }
 
@@ -206,8 +254,7 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
     }
   }
 
-  return(list(design = new_design, swapped_items = swapped_items[1:(swapped_idx - 1)],
-              frozen = unique(frozen)))
+  return(list(design = new_design, swapped_items = swapped_items[1:(swapped_idx - 1)]))
 }
 
 #' Infer 'row' and 'col' with Patterns

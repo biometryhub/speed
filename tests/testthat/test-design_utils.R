@@ -118,40 +118,40 @@ test_that("swap_all preserves replication when levels have cross-cutting groups"
   }
 })
 
-test_that("generate_multi_swap_neighbour reports groups it could not swap in", {
-  # A/B/C replicated 3/2/1, so no two treatments can be exchanged
+test_that("swappable_groups separates unequal replication from other blockers", {
   design <- data.frame(
-    block = factor(rep("g1", 6)),
-    treatment = factor(c("A", "A", "A", "B", "B", "C"))
+    # g1: A/B/C replicated 3/2/1, so `swap_all` can exchange no pair
+    # g2: equal replication, exchangeable
+    # g3: a single treatment, unswappable but unremarkable
+    block = factor(rep(c("g1", "g2", "g3"), each = 6)),
+    treatment = factor(c(
+      "A", "A", "A", "B", "B", "C",
+      "A", "A", "B", "B", "C", "C",
+      "A", "A", "A", "A", "A", "A"
+    ))
   )
 
-  result <- generate_multi_swap_neighbour(
-    design,
-    "treatment",
-    "block",
-    1,
-    FALSE
-  )
+  all_swap <- swappable_groups(design, "treatment", "block", swap_all = TRUE)
+  expect_equal(all_swap$swappable, "g2")
+  expect_equal(all_swap$unequal_replication, "g1")
 
-  expect_equal(result$frozen, "g1")
-  expect_equal(result$design, design)
+  # Without `swap_all` a single pair of plots moves, so replication is irrelevant
+  # and only the single-treatment group is stuck
+  single <- swappable_groups(design, "treatment", "block", swap_all = FALSE)
+  expect_equal(single$swappable, c("g1", "g2"))
+  expect_length(single$unequal_replication, 0)
 })
 
-test_that("generate_multi_swap_neighbour reports no frozen groups when swaps are possible", {
+test_that("swappable_groups counts a level with no plots as unswappable", {
+  # A factor carrying a level the data no longer uses, e.g. a subset of a MET
   design <- data.frame(
-    block = factor(rep("g1", 6)),
-    treatment = factor(c("A", "A", "B", "B", "C", "C"))
+    site = factor(rep(c("a", "b"), each = 4), levels = c("a", "b", "c")),
+    treatment = factor(c("A", "A", "B", "B", "A", "A", "B", "B"))
   )
 
-  result <- generate_multi_swap_neighbour(
-    design,
-    "treatment",
-    "block",
-    1,
-    FALSE
-  )
-
-  expect_length(result$frozen, 0)
+  result <- swappable_groups(design, "treatment", "site", swap_all = TRUE)
+  expect_equal(result$swappable, c("a", "b"))
+  expect_length(result$unequal_replication, 0)
 })
 
 test_that("speed() warns when a swap group is left frozen mid-search", {
@@ -210,7 +210,94 @@ test_that("speed() stops a level once every swap group is frozen", {
   ))
 
   expect_true(result$stopped_early[["lvl2"]])
-  expect_lt(length(result$scores$lvl2), 500)
+  # Settled before the first swap is proposed, so only the starting score is kept
+  expect_length(result$scores$lvl2, 1)
+  expect_equal(result$metadata$per_level$lvl2$stop_reason, "frozen")
+})
+
+test_that("speed() gives up on a frozen level whatever else blocks its groups", {
+  # The level 1 swaps leave sites `a` and `b` with no exchangeable pair. Neither
+  # a factor level holding no plots nor a site holding one treatment can swap
+  # either, so level 2 should stop rather than run out its iterations.
+  df <- data.frame(
+    row = rep(1:6, times = 2),
+    col = rep(1:2, each = 6),
+    block = c(1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2),
+    site = c("a", "a", "a", "b", "b", "b", "a", "a", "a", "b", "b", "b"),
+    lines = c("X", "X", "Z", "Y", "Y", "Z", "Y", "Y", "Z", "X", "X", "Z"),
+    stringsAsFactors = FALSE
+  )
+
+  run <- function(d) {
+    return(suppressWarnings(speed(
+      d,
+      swap = "lines",
+      optimise = list(
+        lvl1 = list(swap_within = "block", swap_all = TRUE, iterations = 20),
+        lvl2 = list(swap_within = "site", swap_all = TRUE, iterations = 500)
+      ),
+      early_stop_iterations = 500,
+      optimise_params = optim_params(stop_at_optimal = FALSE),
+      seed = 2,
+      quiet = TRUE
+    )))
+  }
+
+  # An unused factor level, e.g. `site` subset from a larger trial
+  unused_level <- df
+  unused_level$site <- factor(df$site, levels = c("a", "b", "c"))
+  expect_length(run(unused_level)$scores$lvl2, 1)
+
+  # A third site that is its own block, holding a single treatment
+  single_treatment <- rbind(
+    df,
+    data.frame(
+      row = rep(7:8, times = 2), col = rep(1:2, each = 2),
+      block = 3, site = "c", lines = "W",
+      stringsAsFactors = FALSE
+    )
+  )
+  expect_length(run(single_treatment)$scores$lvl2, 1)
+})
+
+test_that("speed() records why each level stopped", {
+  df <- data.frame(
+    row = rep(1:6, times = 2),
+    col = rep(1:2, each = 6),
+    block = rep(c(1, 2), each = 6),
+    trt = rep(c("A", "B", "C"), times = 4)
+  )
+
+  optimal <- speed(df, swap = "trt", swap_within = "block", seed = 1, quiet = TRUE)
+  expect_equal(optimal$metadata$per_level[[1]]$stop_reason, "optimal")
+
+  # No lower bound to stop at, and too few iterations to run out of improvements
+  capped <- speed(
+    df,
+    swap = "trt",
+    swap_within = "block",
+    iterations = 5,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
+    seed = 1,
+    quiet = TRUE
+  )
+  expect_equal(capped$metadata$per_level[[1]]$stop_reason, "iterations")
+  expect_length(capped$scores, 5)
+
+  no_improvement <- speed(
+    df,
+    swap = "trt",
+    swap_within = "block",
+    iterations = 200,
+    early_stop_iterations = 2,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
+    seed = 1,
+    quiet = TRUE
+  )
+  expect_equal(
+    no_improvement$metadata$per_level[[1]]$stop_reason,
+    "no_improvement"
+  )
 })
 
 test_that("speed() does not warn when every group can swap", {
