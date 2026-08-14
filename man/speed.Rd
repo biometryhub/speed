@@ -71,31 +71,10 @@ be a named list with names matching \code{swap}.}
 \item{swap_all}{Logical; Whether to swap all matching items or a single item
 at a time (default: FALSE)}
 
-\item{linked_cols}{Character vector of column names that should travel with
-the \code{swap} column, for example a \code{variety_name} label belonging to a
-numeric \code{variety} code. Every swap moves these columns alongside \code{swap}, so
-a value paired with a treatment stays paired with it. They take no part in
-scoring, and keep their input class and position.
-
-For hierarchical designs, provide a named list with names matching \code{swap} to
-link different columns at different levels, e.g.
-\code{list(wp = "wholeplot_label", sp = "subplot_label")}. A bare character
-vector applies to every level, so in a hierarchical design it is only
-valid when every level swaps the same column, as in a multi-environment
-trial; levels swapping different columns need the named list, because a
-column can only travel with one \code{swap} column.
-
-A later level's \code{swap} column \emph{may} be linked to an earlier one, which moves
-a child treatment with its parent - linking \code{sp_trt} to the whole-plot level
-of a split-plot carries each sub-plot treatment along when its whole-plot
-treatment moves, before the sub-plot level then optimises it. The carrying
-level must come first, or it would undo the child level's work. Columns used
-as \code{swap_within}, spatial factors or grid factors cannot be linked at all,
-since they describe where a plot is rather than what is on it.
-
-On a level with \code{swap_all = TRUE} whole treatment groups move at once, so a
-linked column with more than one value per treatment travels with its
-treatment group rather than being paired plot for plot (default: \code{NULL}).}
+\item{linked_cols}{Character vector of column names that travel with the
+\code{swap} column, for example a \code{variety_name} label belonging to a numeric
+\code{variety} code (default: \code{NULL}). For hierarchical designs, can be a named
+list with names matching \code{swap}. See details for more information.}
 
 \item{optimise}{A list of named arguments describing optimising parameters;
 see more in example.}
@@ -152,6 +131,29 @@ optimisation parameters and objective functions to be applied at different
 levels of the design structure. For simple (non-hierarchical) designs, these
 arguments can be provided as single values. For more examples and detailed
 usage, see the package vignettes.
+
+\code{linked_cols} names columns that describe the treatment rather than the plot,
+so that a value paired with a treatment stays paired with it wherever the
+search moves it. They take no part in scoring, and are returned in their
+input class and position. Columns used as \code{swap_within}, spatial factors or
+grid factors cannot be linked, since they describe where a plot is rather
+than what is on it.
+
+A named list links different columns at different levels, e.g.
+\code{list(wp = "wholeplot_label", sp = "subplot_label")}. A bare character vector
+applies to every level, which in a hierarchical design is only valid when
+every level swaps the same column, as in a multi-environment trial - a column
+can only travel with one \code{swap} column.
+
+A later level's \code{swap} column may be linked to an earlier one, which carries a
+child treatment along when its parent moves: linking \code{sp_trt} at the
+whole-plot level of a split-plot moves each sub-plot treatment with its
+whole-plot treatment, before the sub-plot level then optimises it. The
+carrying level must come first, or it would undo the child level's work.
+
+On a level with \code{swap_all = TRUE} whole treatment groups move at once, so a
+linked column with more than one value per treatment travels with its
+treatment group rather than being paired plot for plot.
 }
 \examples{
 # Create a simple design with 3 replicates of 4 treatments in a 4x3 layout

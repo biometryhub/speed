@@ -402,7 +402,9 @@ unique(linked_split$design_df[, c("wholeplot_treatment", "irrigation")])
 A bare character vector applies to every level, which in a hierarchical design is only valid when all levels swap the same column - a multi-environment trial, for example. Where levels swap different columns, use the named list, since a column can only travel with one `swap` column.
 :::
 
-Columns already used as `swap`, `swap_within`, or as spatial factors cannot be linked, as they are part of the optimisation rather than passengers on it.
+Columns used as `swap_within`, or as spatial or grid factors, cannot be linked: they describe where a plot sits rather than what is on it, so moving them would break the layout being scored.
+
+A `swap` column is the exception. Linking a *later* level's `swap` column at an earlier level carries a child treatment along when its parent moves - linking `subplot_treatment` at the whole plot level keeps each sub-plot treatment with its whole plot treatment, and the sub-plot level then optimises it in place. The carrying level must run first, or it would undo the child level's work.
 
 # Spatial Design Considerations
 

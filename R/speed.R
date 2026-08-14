@@ -44,31 +44,10 @@
 #'   be a named list with names matching `swap`.
 #' @param swap_all Logical; Whether to swap all matching items or a single item
 #'   at a time (default: FALSE)
-#' @param linked_cols Character vector of column names that should travel with
-#'   the `swap` column, for example a `variety_name` label belonging to a
-#'   numeric `variety` code. Every swap moves these columns alongside `swap`, so
-#'   a value paired with a treatment stays paired with it. They take no part in
-#'   scoring, and keep their input class and position.
-#'
-#'   For hierarchical designs, provide a named list with names matching `swap` to
-#'   link different columns at different levels, e.g.
-#'   `list(wp = "wholeplot_label", sp = "subplot_label")`. A bare character
-#'   vector applies to every level, so in a hierarchical design it is only
-#'   valid when every level swaps the same column, as in a multi-environment
-#'   trial; levels swapping different columns need the named list, because a
-#'   column can only travel with one `swap` column.
-#'
-#'   A later level's `swap` column *may* be linked to an earlier one, which moves
-#'   a child treatment with its parent - linking `sp_trt` to the whole-plot level
-#'   of a split-plot carries each sub-plot treatment along when its whole-plot
-#'   treatment moves, before the sub-plot level then optimises it. The carrying
-#'   level must come first, or it would undo the child level's work. Columns used
-#'   as `swap_within`, spatial factors or grid factors cannot be linked at all,
-#'   since they describe where a plot is rather than what is on it.
-#'
-#'   On a level with `swap_all = TRUE` whole treatment groups move at once, so a
-#'   linked column with more than one value per treatment travels with its
-#'   treatment group rather than being paired plot for plot (default: `NULL`).
+#' @param linked_cols Character vector of column names that travel with the
+#'   `swap` column, for example a `variety_name` label belonging to a numeric
+#'   `variety` code (default: `NULL`). For hierarchical designs, can be a named
+#'   list with names matching `swap`. See details for more information.
 #' @param optimise_params Parameters used to control the behaviour of
 #'   simulated annealing algorithm. See [optim_params()] for more details.
 #' @param optimise A list of named arguments describing optimising parameters;
@@ -113,6 +92,28 @@
 #' arguments can be provided as single values. For more examples and detailed
 #' usage, see the package vignettes.
 #'
+#' `linked_cols` names columns that describe the treatment rather than the plot,
+#' so that a value paired with a treatment stays paired with it wherever the
+#' search moves it. They take no part in scoring, and are returned in their
+#' input class and position. Columns used as `swap_within`, spatial factors or
+#' grid factors cannot be linked, since they describe where a plot is rather
+#' than what is on it.
+#'
+#' A named list links different columns at different levels, e.g.
+#' `list(wp = "wholeplot_label", sp = "subplot_label")`. A bare character vector
+#' applies to every level, which in a hierarchical design is only valid when
+#' every level swaps the same column, as in a multi-environment trial - a column
+#' can only travel with one `swap` column.
+#'
+#' A later level's `swap` column may be linked to an earlier one, which carries a
+#' child treatment along when its parent moves: linking `sp_trt` at the
+#' whole-plot level of a split-plot moves each sub-plot treatment with its
+#' whole-plot treatment, before the sub-plot level then optimises it. The
+#' carrying level must come first, or it would undo the child level's work.
+#'
+#' On a level with `swap_all = TRUE` whole treatment groups move at once, so a
+#' linked column with more than one value per treatment travels with its
+#' treatment group rather than being paired plot for plot.
 #'
 #' @importFrom stringi stri_sort
 #' @importFrom stats runif
