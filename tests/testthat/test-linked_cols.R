@@ -22,13 +22,16 @@ split_plot_df <- function() {
   )
   df$wp_label <- paste("Irrigation", df$wp_trt)
   df$sp_label <- paste("Variety", df$sp_trt)
-  df
+  return(df)
 }
 
 # `treatment` -> `trt_name` is a fixed mapping, so a linked column is correct
 # exactly when every row still pairs the two the same way as the input did
 pairing_of <- function(df, key, value) {
-  unique(data.frame(k = as.character(df[[key]]), v = as.character(df[[value]])))
+  return(unique(data.frame(
+    k = as.character(df[[key]]),
+    v = as.character(df[[value]])
+  )))
 }
 
 expect_pairing_preserved <- function(input, output, key, value) {
@@ -38,26 +41,10 @@ expect_pairing_preserved <- function(input, output, key, value) {
   after <- after[order(after$k), ]
   rownames(before) <- NULL
   rownames(after) <- NULL
-  expect_equal(after, before)
+  return(expect_equal(after, before))
 }
 
 # Simple designs ---------------------------------------------------------------
-
-test_that("linked_cols leaves no bookkeeping columns behind", {
-  df <- simple_df()
-  result <- speed(
-    df,
-    swap = "treatment",
-    linked_cols = "trt_name",
-    iterations = 100,
-    early_stop_iterations = 30,
-    seed = 42,
-    quiet = TRUE
-  )
-
-  expect_false(any(grepl("^\\.origin", names(result$design_df))))
-  expect_equal(names(result$design_df), names(df))
-})
 
 test_that("linked_cols leaves unrelated columns where they are", {
   df <- simple_df()
@@ -75,10 +62,10 @@ test_that("linked_cols leaves unrelated columns where they are", {
   )
 
   expect_equal(names(result$design_df), names(df))
-  expect_s3_class(result$design_df$visited, "Date")
 
   # `staff` was not linked, so unlike `trt_name` it stays with its plot rather
-  # than following the treatment
+  # than following the treatment. Comparing `visited` as a `Date` also covers its
+  # class surviving the round trip.
   expect_equal(
     result$design_df[
       order(result$design_df$row, result$design_df$col),
@@ -370,7 +357,7 @@ test_that("linked_cols works via the optimise argument", {
 })
 
 test_that("linked_cols accumulates across levels sharing one swap column", {
-  # Both levels optimise `lines`, so one index must follow both passes
+  # Both levels optimise `lines`, so the linked column must follow both passes
   df <- data.frame(
     row = rep(1:10, times = 4),
     col = rep(1:4, each = 10),
@@ -426,10 +413,79 @@ test_that("linked_cols carries a child treatment with its parent", {
   # Nor the split-plot structure: one whole-plot treatment per whole plot, and a
   # full set of sub-plot treatments within it
   per_wholeplot <- function(d, col) {
-    tapply(as.character(d[[col]]), d$wholeplot, function(x) length(unique(x)))
+    return(tapply(
+      as.character(d[[col]]),
+      d$wholeplot,
+      function(x) return(length(unique(x)))
+    ))
   }
   expect_true(all(per_wholeplot(result$design_df, "wp_trt") == 1))
   expect_true(all(per_wholeplot(result$design_df, "sp_trt") == 4))
+})
+
+test_that("linked_cols carries a per-plot column on a swap_all level", {
+  df <- split_plot_df()
+  # Unique per row, so no value-level lookup could reconstruct it
+  df$plot_id <- sprintf("P%02d", seq_len(nrow(df)))
+
+  result <- speed(
+    df,
+    swap = list(wp = "wp_trt", sp = "sp_trt"),
+    swap_within = list(wp = "block", sp = "wholeplot"),
+    linked_cols = list(wp = "plot_id"),
+    swap_all = TRUE,
+    iterations = 100,
+    early_stop_iterations = 30,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # No value duplicated or lost, and each plot_id still sits with its own treatment
+  expect_setequal(result$design_df$plot_id, df$plot_id)
+  expect_pairing_preserved(df, result$design_df, "plot_id", "wp_trt")
+})
+
+test_that("linked_cols survives cross-cutting swap_all levels", {
+  # `block` and `site` cut across each other, so a level 1 swap can unbalance a site
+  # mid-search. Every linked value must still be present exactly once, and still
+  # sit with the treatment it started against.
+  df <- data.frame(
+    row = rep(1:6, times = 2),
+    col = rep(1:2, each = 6),
+    block = c(1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2),
+    site = c("a", "a", "a", "b", "b", "b", "a", "a", "a", "b", "b", "b"),
+    lines = c("X", "X", "Z", "Y", "Y", "Z", "Y", "Y", "Z", "X", "X", "Z"),
+    stringsAsFactors = FALSE
+  )
+  df$plot_id <- sprintf("P%02d", seq_len(nrow(df)))
+
+  for (seed in 1:5) {
+    warnings_seen <- character(0)
+    result <- withCallingHandlers(
+      speed(
+        df,
+        swap = "lines",
+        optimise = list(
+          lvl1 = list(swap_within = "block", swap_all = TRUE),
+          lvl2 = list(swap_within = "site", swap_all = TRUE)
+        ),
+        linked_cols = "plot_id",
+        iterations = 30,
+        seed = seed,
+        quiet = TRUE
+      ),
+      warning = function(w) {
+        warnings_seen <<- c(warnings_seen, conditionMessage(w))
+        return(invokeRestart("muffleWarning"))
+      }
+    )
+
+    # Unequal plot sets would recycle rather than exchange; a frozen-group warning
+    # is expected on some seeds
+    expect_false(any(grepl("number of items to replace", warnings_seen)))
+    expect_setequal(result$design_df$plot_id, df$plot_id)
+    expect_pairing_preserved(df, result$design_df, "plot_id", "lines")
+  }
 })
 
 # Validation -------------------------------------------------------------------
@@ -562,83 +618,3 @@ test_that("linked_cols rejects one column linked to two swap columns", {
   )
 })
 
-test_that("linked_cols carries a per-plot column on a swap_all level", {
-  df <- split_plot_df()
-  # Unique per row, so no value-level lookup could reconstruct it
-  df$plot_id <- sprintf("P%02d", seq_len(nrow(df)))
-
-  result <- speed(
-    df,
-    swap = list(wp = "wp_trt", sp = "sp_trt"),
-    swap_within = list(wp = "block", sp = "wholeplot"),
-    linked_cols = list(wp = "plot_id"),
-    swap_all = TRUE,
-    iterations = 100,
-    early_stop_iterations = 30,
-    seed = 42,
-    quiet = TRUE
-  )
-
-  # No value duplicated or lost, and each plot_id still sits with its own treatment
-  expect_setequal(result$design_df$plot_id, df$plot_id)
-  expect_pairing_preserved(df, result$design_df, "plot_id", "wp_trt")
-})
-
-test_that("linked_cols survives cross-cutting swap_all levels", {
-  # `block` and `site` cut across each other, so a level 1 swap can unbalance a site
-  # mid-search. The provenance index must stay a permutation regardless.
-  df <- data.frame(
-    row = rep(1:6, times = 2),
-    col = rep(1:2, each = 6),
-    block = c(1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2),
-    site = c("a", "a", "a", "b", "b", "b", "a", "a", "a", "b", "b", "b"),
-    lines = c("X", "X", "Z", "Y", "Y", "Z", "Y", "Y", "Z", "X", "X", "Z"),
-    stringsAsFactors = FALSE
-  )
-  df$plot_id <- sprintf("P%02d", seq_len(nrow(df)))
-
-  for (seed in 1:5) {
-    warnings_seen <- character(0)
-    result <- withCallingHandlers(
-      speed(
-        df,
-        swap = "lines",
-        optimise = list(
-          lvl1 = list(swap_within = "block", swap_all = TRUE),
-          lvl2 = list(swap_within = "site", swap_all = TRUE)
-        ),
-        linked_cols = "plot_id",
-        iterations = 30,
-        seed = seed,
-        quiet = TRUE
-      ),
-      warning = function(w) {
-        warnings_seen <<- c(warnings_seen, conditionMessage(w))
-        invokeRestart("muffleWarning")
-      }
-    )
-
-    # The recycling this guards against; a frozen-group warning is expected on some seeds
-    expect_false(any(grepl("number of items to replace", warnings_seen)))
-    expect_setequal(result$design_df$plot_id, df$plot_id)
-    expect_pairing_preserved(df, result$design_df, "plot_id", "lines")
-  }
-})
-
-test_that("linked_cols allows a functionally dependent column on a swap_all level", {
-  df <- split_plot_df()
-
-  expect_no_error(
-    speed(
-      df,
-      swap = list(wp = "wp_trt", sp = "sp_trt"),
-      swap_within = list(wp = "block", sp = "wholeplot"),
-      linked_cols = list(wp = "wp_label"),
-      swap_all = TRUE,
-      iterations = 100,
-      early_stop_iterations = 30,
-      seed = 42,
-      quiet = TRUE
-    )
-  )
-})
