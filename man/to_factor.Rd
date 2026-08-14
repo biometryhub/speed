@@ -10,10 +10,11 @@ to_factor(df, cols = names(df))
 \item{df}{A data frame}
 
 \item{cols}{Names of the columns to convert, defaulting to every column.
+Names not present in \code{df} are ignored, so a caller may pass the \code{"1"} /
+\code{"none"} placeholder used for a level with no \code{swap_within} boundary.
 Columns outside this set are left untouched and are not recorded in
-\code{input_types}, so \code{\link[=to_types]{to_types()}} returns them exactly as they came in. This
-is the only way to preserve a class \code{\link[=base_type]{base_type()}} cannot rebuild, such as
-\code{Date}, and is why \code{speed()} converts only the columns it optimises on.}
+\code{input_types}, so \code{\link[=to_types]{to_types()}} returns them exactly as they came in - the
+only way to preserve a class \code{\link[=base_type]{base_type()}} cannot rebuild, such as \code{Date}.}
 }
 \value{
 A list containing:

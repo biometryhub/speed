@@ -116,33 +116,14 @@ be a named list with names matching \code{swap}.}
 \item{seed}{A numeric value for random seed. If provided, it ensures
 reproducibility of results (default: \code{NULL}).}
 
-\item{optimise}{Per-level \code{optimise} list as built by \code{\link[=create_speed_input]{create_speed_input()}}.}
+\item{optimise}{The \code{optimise} argument as passed to \code{\link[=speed]{speed()}} for
+\code{\link[=.verify_inputs]{.verify_inputs()}}, or the resolved per-level list built by
+\code{\link[=create_speed_input]{create_speed_input()}} for the checks that run after it.}
 
-\item{linked_cols}{Character vector of column names that should travel with
-the \code{swap} column, for example a \code{variety_name} label belonging to a
-numeric \code{variety} code. Every swap moves these columns alongside \code{swap}, so
-a value paired with a treatment stays paired with it. They take no part in
-scoring, and keep their input class and position.
-
-For hierarchical designs, provide a named list with names matching \code{swap} to
-link different columns at different levels, e.g.
-\code{list(wp = "wholeplot_label", sp = "subplot_label")}. A bare character
-vector applies to every level, so in a hierarchical design it is only
-valid when every level swaps the same column, as in a multi-environment
-trial; levels swapping different columns need the named list, because a
-column can only travel with one \code{swap} column.
-
-A later level's \code{swap} column \emph{may} be linked to an earlier one, which moves
-a child treatment with its parent - linking \code{sp_trt} to the whole-plot level
-of a split-plot carries each sub-plot treatment along when its whole-plot
-treatment moves, before the sub-plot level then optimises it. The carrying
-level must come first, or it would undo the child level's work. Columns used
-as \code{swap_within}, spatial factors or grid factors cannot be linked at all,
-since they describe where a plot is rather than what is on it.
-
-On a level with \code{swap_all = TRUE} whole treatment groups move at once, so a
-linked column with more than one value per treatment travels with its
-treatment group rather than being paired plot for plot (default: \code{NULL}).}
+\item{linked_cols}{Character vector of column names that travel with the
+\code{swap} column, for example a \code{variety_name} label belonging to a numeric
+\code{variety} code (default: \code{NULL}). For hierarchical designs, can be a named
+list with names matching \code{swap}. See details for more information.}
 
 \item{swap_count}{Number of treatment swaps per iteration (default: 1).}
 
@@ -185,7 +166,9 @@ checks that apply to all of them.
 
 Checks the columns named in \code{linked_cols} after they have been merged into
 the per-level \code{optimise} list, so all three input shapes are covered by one
-set of rules.
+set of rules. The rules are cross-level, so like
+\code{\link[=.verify_swap_all_replication]{.verify_swap_all_replication()}} this runs on the resolved list rather than
+in the per-shape checkers.
 
 \code{swap_all = TRUE} proposes a move by exchanging \emph{every} plot holding one
 treatment with \emph{every} plot holding another. That is a rearrangement of the

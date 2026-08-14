@@ -73,10 +73,11 @@ base_type <- function(x) {
 #'
 #' @param df A data frame
 #' @param cols Names of the columns to convert, defaulting to every column.
+#'   Names not present in `df` are ignored, so a caller may pass the `"1"` /
+#'   `"none"` placeholder used for a level with no `swap_within` boundary.
 #'   Columns outside this set are left untouched and are not recorded in
-#'   `input_types`, so [to_types()] returns them exactly as they came in. This
-#'   is the only way to preserve a class [base_type()] cannot rebuild, such as
-#'   `Date`, and is why `speed()` converts only the columns it optimises on.
+#'   `input_types`, so [to_types()] returns them exactly as they came in - the
+#'   only way to preserve a class [base_type()] cannot rebuild, such as `Date`.
 #'
 #' @returns A list containing:
 #' - **df** - A data frame with the named columns as factors
@@ -268,13 +269,17 @@ create_speed_input <- function(
     )
   }
 
-  # `linked_cols` resolves per level - a bare character vector applies to every
-  # level, a named list only to the levels it names - so it is set here rather
-  # than in each branch above. A per-level value from `optimise` wins.
+  # Set here rather than in each branch above: a named list applies only to the
+  # levels it names, a bare character vector to every level. A per-level value
+  # from `optimise` wins.
   for (optimise_name in names(optimise)) {
-    level_cols <- optimise[[optimise_name]][["linked_cols"]]
-    optimise[[optimise_name]][["linked_cols"]] <- level_cols %||%
-      .level_linked_cols(linked_cols, optimise_name)
+    level_cols <- if (is.list(linked_cols)) {
+      linked_cols[[optimise_name]]
+    } else {
+      linked_cols
+    }
+    optimise[[optimise_name]][["linked_cols"]] <-
+      optimise[[optimise_name]][["linked_cols"]] %||% level_cols
   }
 
   if (!row_col_inferred) {
@@ -286,27 +291,39 @@ create_speed_input <- function(
   return(optimise)
 }
 
-#' Resolve `linked_cols` for A Single Level
+#' Columns a Single Level Treats as Fixed Layout
 #'
 #' @description
-#' `linked_cols` is either a bare character vector, which applies to every
-#' level, or a named list with one entry per hierarchy level. Resolution only -
-#' the input is checked by [.verify_linked_cols()].
+#' The columns that say where a plot sits and which group it belongs to. Unlike
+#' the `swap` column these never move, so they can be neither optimised by
+#' another level nor linked to one.
 #'
-#' @inheritParams speed
-#' @param level Name of the hierarchy level being resolved.
+#' @param opt One level of the `optimise` list.
 #'
-#' @return A character vector of column names, or `NULL`.
+#' @return A character vector of column names.
 #'
 #' @keywords internal
-.level_linked_cols <- function(linked_cols, level) {
-  # `[[` yields NULL for a level the list does not name, so a missing level needs
-  # no guard of its own. Anything else - a bare vector, or NULL - applies as-is.
-  if (is.list(linked_cols)) {
-    return(linked_cols[[level]])
-  }
+.level_fixed_cols <- function(opt) {
+  return(unique(c(
+    opt$swap_within,
+    all.vars(opt$spatial_factors),
+    unlist(opt$grid_factors)
+  )))
+}
 
-  return(linked_cols)
+#' Columns a Single Level Optimises or Scores On
+#'
+#' @description
+#' Everything one level of `optimise` needs present in the design: the column it
+#' swaps, plus the fixed layout columns it groups and scores by.
+#'
+#' @inheritParams .level_fixed_cols
+#'
+#' @return A character vector of column names.
+#'
+#' @keywords internal
+.level_optimised_cols <- function(opt) {
+  return(unique(c(opt$swap, .level_fixed_cols(opt))))
 }
 
 `%||%` <- function(a, b) if (!is.null(a)) a else b

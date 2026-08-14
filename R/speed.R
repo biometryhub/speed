@@ -226,14 +226,8 @@ speed <- function(data,
                                  early_stop_iterations, obj_function, swap_all, optimise_params,
                                  linked_cols, optimise, inferred$inferred)
 
-  # Checked here, not in `.verify_inputs()`: the per-level rules need the merged list
-  .verify_linked_cols(data, optimise, linked_cols)
-
-  # convert to factors. Only the columns the optimisation reads need to be factors;
-  # converting the rest would round-trip them through `base_type()`, which silently
-  # downgrades any class it cannot rebuild with `as.<class>()`, such as Date. Linked
-  # columns are among those left alone, so they keep their input class while the
-  # search moves them.
+  # convert to factors. Only the columns the optimisation reads, so the rest -
+  # linked columns among them - keep whatever class they came in with
   factored <- to_factor(data, unlist(lapply(optimise, .level_optimised_cols)))
   data <- factored$df
 
@@ -260,8 +254,10 @@ speed <- function(data,
     }
   }
 
-  # `swap_all` exchanges whole label sets, which only preserves replication when
-  # the sets are the same size
+  # Checks needing the resolved `optimise` list, so they run here rather than in
+  # `.verify_inputs()`. `swap_all` exchanges whole label sets, which only
+  # preserves replication when the sets are the same size.
+  .verify_linked_cols(data, optimise, linked_cols)
   .verify_swap_all_replication(data, optimise, dummy_group)
 
   dots <- list(...)
@@ -278,7 +274,6 @@ speed <- function(data,
   # object argument, re-invoking speed() recursively.
   design$metadata$call <- call
   design$design_df[[dummy_group]] <- NULL
-
   design$design_df <- to_types(design$design_df, factored$input_types)
 
   # to print deprecate warning at the end

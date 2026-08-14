@@ -9,6 +9,10 @@
 #'
 #' @inheritParams speed
 #'
+#' @param optimise The `optimise` argument as passed to [speed()] for
+#'   [.verify_inputs()], or the resolved per-level list built by
+#'   [create_speed_input()] for the checks that run after it.
+#'
 #' @keywords internal
 .verify_inputs <- function(
   data,
@@ -153,16 +157,16 @@
 #' @description
 #' Checks the columns named in `linked_cols` after they have been merged into
 #' the per-level `optimise` list, so all three input shapes are covered by one
-#' set of rules.
+#' set of rules. The rules are cross-level, so like
+#' [.verify_swap_all_replication()] this runs on the resolved list rather than
+#' in the per-shape checkers.
 #'
 #' @rdname verify
-#'
-#' @param optimise Per-level `optimise` list as built by [create_speed_input()].
 #'
 #' @keywords internal
 .verify_linked_cols <- function(data, optimise, linked_cols = NULL) {
   if (is.list(linked_cols)) {
-    if (is.null(names(linked_cols))) {
+    if (is.null(names(linked_cols)) || any(names(linked_cols) == "")) {
       stop(
         "`linked_cols` must be a character vector, or a named list with names matching `swap`.",
         call. = FALSE
@@ -180,6 +184,12 @@
         call. = FALSE
       )
     }
+
+    for (level_cols in linked_cols) {
+      verify_character(level_cols, var_names = "linked_cols")
+    }
+  } else if (!is.null(linked_cols)) {
+    verify_character(linked_cols)
   }
 
   owner <- character(0)
@@ -190,24 +200,17 @@
       next
     }
 
-    if (!is.character(cols)) {
-      stop(
-        "`linked_cols` must be a character vector of column names.",
-        call. = FALSE
-      )
-    }
-
     earlier <- names(optimise)[seq_len(which(names(optimise) == level) - 1)]
 
     for (col in cols) {
       verify_column_exists(col, data, "linked column")
 
-      # A carried column moves with its treatment, so it must describe the
-      # treatment. Columns that say where a plot is, or which group it belongs
-      # to, would break the layout the search is scoring against. Checked across
-      # every level, since one level's grouping is fixed for all of them.
+      # Checked across every level, since one level's grouping is fixed for all
+      # of them
       fixes_layout <- Filter(
-        function(other) col %in% .level_fixed_cols(optimise[[other]]),
+        function(other) {
+          return(col %in% .level_fixed_cols(optimise[[other]]))
+        },
         names(optimise)
       )
       if (length(fixes_layout) > 0) {
@@ -235,7 +238,9 @@
       # A child treatment may ride with its parent, but only if the parent moves
       # first - otherwise this level would undo the child level's optimisation
       optimised_earlier <- Filter(
-        function(other) identical(col, optimise[[other]]$swap),
+        function(other) {
+          return(identical(col, optimise[[other]]$swap))
+        },
         earlier
       )
       if (length(optimised_earlier) > 0) {
@@ -271,41 +276,6 @@
   }
 
   return(invisible(NULL))
-}
-
-#' Columns a Single Level Treats as Fixed Layout
-#'
-#' @description
-#' The columns that say where a plot sits and which group it belongs to. Unlike
-#' the `swap` column these never move, so they can be neither optimised by
-#' another level nor carried by one.
-#'
-#' @param opt One level of the `optimise` list.
-#'
-#' @return A character vector of column names.
-#'
-#' @keywords internal
-.level_fixed_cols <- function(opt) {
-  return(unique(c(
-    opt$swap_within,
-    all.vars(opt$spatial_factors),
-    unlist(opt$grid_factors)
-  )))
-}
-
-#' Columns a Single Level Optimises or Scores On
-#'
-#' @description
-#' Everything one level of `optimise` needs present in the design: the column it
-#' swaps, plus the fixed layout columns it groups and scores by.
-#'
-#' @inheritParams .level_fixed_cols
-#'
-#' @return A character vector of column names.
-#'
-#' @keywords internal
-.level_optimised_cols <- function(opt) {
-  return(unique(c(opt$swap, .level_fixed_cols(opt))))
 }
 
 #' Verify Optimization Parameters for `speed`
