@@ -380,26 +380,48 @@ They are also returned in their original position and with their original type -
 
 ## Hierarchical Designs
 
-Each level of a hierarchical design swaps its own column, so companion columns have to be matched to the level that moves them. Pass a named list whose names match the levels:
+Each level of a hierarchical design swaps its own column, so companion columns have to be matched to the level that moves them. Since the hierarchy is already described level by level through `optimise`, `linked_cols` goes in alongside the other per-level arguments. Here the whole plot treatment carries an irrigation method, and the sub-plot treatment carries a cultivar name:
 
 ```{r linked-hierarchical}
 split_plot_linked <- initialise_split_design_df(splits = splits, rep_dim = c(4, 1))
 split_plot_linked$irrigation <- unname(
   c(A = "Drip", B = "Flood", C = "None")[split_plot_linked$wholeplot_treatment]
 )
-
-linked_split <- speed(
-  split_plot_linked,
-  optimise = optimise,
-  linked_cols = list(wp = "irrigation"),
-  seed = 42
+split_plot_linked$variety <- unname(
+  c(a = "Scepter", b = "Vixen", c = "Calibre", d = "Denison")[
+    split_plot_linked$subplot_treatment
+  ]
 )
 
+optimise_linked <- list(
+  wp = list(
+    swap = "wholeplot_treatment", swap_within = "block", swap_all = TRUE,
+    linked_cols = "irrigation"
+  ),
+  sp = list(
+    swap = "subplot_treatment", swap_within = "wholeplot",
+    linked_cols = "variety"
+  )
+)
+
+linked_split <- speed(split_plot_linked, optimise = optimise_linked, seed = 42)
+
 unique(linked_split$design_df[, c("wholeplot_treatment", "irrigation")])
+unique(linked_split$design_df[, c("subplot_treatment", "variety")])
 ```
 
+The same thing can be said from outside `optimise`, with a named list whose names match the levels - useful when the `optimise` list is defined elsewhere and reused:
+
+```{r linked-hierarchical-alt}
+#| eval: false
+speed(split_plot_linked, optimise = optimise,
+      linked_cols = list(wp = "irrigation", sp = "variety"), seed = 42)
+```
+
+Where a level sets `linked_cols` itself, that wins; the argument fills in the levels that do not.
+
 ::: {.callout-note}
-A bare character vector applies to every level, which in a hierarchical design is only valid when all levels swap the same column - a multi-environment trial, for example. Where levels swap different columns, use the named list, since a column can only travel with one `swap` column.
+A bare character vector applies to every level, which in a hierarchical design is only valid when all levels swap the same column - a multi-environment trial, for example. Where levels swap different columns, name the level, since a column can only travel with one `swap` column.
 :::
 
 Columns used as `swap_within`, or as spatial or grid factors, cannot be linked: they describe where a plot sits rather than what is on it, so moving them would break the layout being scored.
