@@ -356,6 +356,29 @@ test_that("linked_cols works via the optimise argument", {
   expect_pairing_preserved(df, result$design_df, "sp_trt", "sp_label")
 })
 
+test_that("a level's own linked_cols wins over the argument", {
+  # `wp` sets its own, so the argument only fills in `sp`
+  resolved <- create_speed_input(
+    swap = list(wp = "wp_trt", sp = "sp_trt"),
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 100,
+    early_stop_iterations = 30,
+    obj_function = objective_function,
+    swap_all = FALSE,
+    optimise_params = optim_params(),
+    linked_cols = list(wp = "wp_other", sp = "sp_label"),
+    optimise = list(
+      wp = list(swap = "wp_trt", swap_within = "block", linked_cols = "wp_label"),
+      sp = list(swap = "sp_trt", swap_within = "wholeplot")
+    )
+  )
+
+  expect_equal(resolved$wp$linked_cols, "wp_label")
+  expect_equal(resolved$sp$linked_cols, "sp_label")
+})
+
 test_that("linked_cols accumulates across levels sharing one swap column", {
   # Both levels optimise `lines`, so the linked column must follow both passes
   df <- data.frame(
