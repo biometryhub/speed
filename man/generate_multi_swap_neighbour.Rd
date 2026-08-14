@@ -10,7 +10,7 @@ generate_multi_swap_neighbour(
   swap_within,
   swap_count,
   swap_all_blocks,
-  carry_cols = NULL
+  linked_cols = NULL
 )
 }
 \description{

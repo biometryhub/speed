@@ -11,7 +11,7 @@ generate_neighbour(
   swap_count = getOption("speed.swap_count", 1),
   swap_all_blocks = getOption("speed.swap_all_blocks", FALSE),
   swap_all = FALSE,
-  carry_cols = NULL
+  linked_cols = NULL
 )
 }
 \arguments{
@@ -30,10 +30,9 @@ treatments, or named list for hierarchical designs}
 \item{swap_all}{Whether to swap all matching items or a single item at a time
 (default: FALSE)}
 
-\item{carry_cols}{Character vector of column names moved in lockstep with the
-\code{swap} column, so that a value paired with a treatment stays paired with it.
-These are the columns named in \code{linked_cols}. \code{NULL} (default) moves the
-\code{swap} column alone.}
+\item{linked_cols}{Character vector of column names moved in lockstep with
+the \code{swap} column, so that a value paired with a treatment stays paired with
+it. \code{NULL} (default) moves the \code{swap} column alone.}
 }
 \value{
 A list with the updated design after swapping and information about
