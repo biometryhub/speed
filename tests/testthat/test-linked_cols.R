@@ -117,6 +117,27 @@ test_that("linked_cols actually moves the companion column", {
   expect_false(identical(as.character(result$design_df$trt_name), df$trt_name))
 })
 
+test_that("linked_cols moves the companion column with NA", {
+  df <- simple_df()
+  df$trt_name[df$treatment == "A"] = NA
+  result <- speed(
+    df,
+    swap = "treatment",
+    linked_cols = "trt_name",
+    iterations = 100,
+    early_stop_iterations = 30,
+    seed = 42,
+    quiet = TRUE
+  )
+
+  # The optimised design differs from the input, so the companion must have moved too
+  expect_false(identical(
+    as.character(result$design_df$treatment),
+    df$treatment
+  ))
+  expect_false(identical(as.character(result$design_df$trt_name), df$trt_name))
+})
+
 test_that("linked_cols preserves a class to_types() could not rebuild", {
   df <- simple_df()
   # `base_type()` maps Date to "character", so this survives only because linked
