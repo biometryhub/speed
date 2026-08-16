@@ -1133,7 +1133,7 @@ print.summary.design <- function(x, ...) {
   # colour-highlighted either way. `frozen` is neither convergence nor a cap:
   # the level gave up because nothing could be swapped.
   stop_reason <- switch(
-    o$stop_reason %||% NA_character_,
+    o$stop_reason,
     optimal = crayon::green("(optimal reached)"),
     no_improvement = crayon::green("(no further improvement)"),
     frozen = crayon::yellow("(no swaps possible)"),

@@ -3,11 +3,8 @@
 ## Major Changes
 
 - Added the `linked_cols` argument to `speed()`, naming columns that should be rearranged along with the
-  `swap` column, for example a `variety_name` label belonging to a numeric `variety` code. Linked columns
-  are returned in the optimised order with their original type and position, and take no part in scoring.
-  For hierarchical designs, pass a named list to link different columns at different levels, e.g.
-  `linked_cols = list(wp = "wholeplot_label", sp = "subplot_label")`. A later level's `swap` column can be
-  linked to an earlier one, which carries a child treatment along when its parent moves.
+  `swap` column, for example a `variety_name` label belonging to a numeric `variety` code. For hierarchical
+  designs, pass a named list to link different columns at different levels.
   ([#105](https://github.com/biometryhub/speed/issues/105))
 - `speed()` now stops as soon as a design reaches the lowest score its layout allows, applicable only to the
   default `objective_function()`. This can be turned off per level with `optim_params(stop_at_optimal =
@@ -15,19 +12,20 @@
 
 ## Minor Changes
 
-- `summary()` now reports why each level stopped - the optimum was reached, no further
-  improvement was found, no swap was possible, or the iteration cap was hit - in place of
-  the previous "stopped early" / "ran to cap". The reason is also recorded as
-  `stop_reason` in each level's metadata.
+- `summary()` now reports why each level stopped - the optimum was reached, no further improvement was
+  found, no swap was possible, or the iteration cap was hit. The reason is also recorded as `stop_reason`
+  in each level's metadata.
+- `speed()` now warns when a `swap_all = TRUE` group holds no two treatments of equal replication, and
+  stops a level immediately when no group in it can be swapped.
 
 ## Bug Fixes
 
+- Named lists for hierarchical arguments such as `iterations` are now split per level under the `optimise`
+  argument, as they already were when `swap` was a named list. A level the list leaves out now takes that
+  argument's own default rather than the default for `spatial_factors`.
 - Columns that take no part in the optimisation are no longer converted to factors and back, so a class
   that cannot be rebuilt with `as.<class>()`, such as `Date`, is now returned unchanged instead of as
   `character`.
-- `speed()` now warns when a `swap_all = TRUE` group holds no two treatments of equal replication, since no
-  swap is possible there and the group is returned unchanged. Where no group at a level can be swapped, the
-  level now stops immediately rather than running out its iterations.
 
 # speed 0.0.10
 

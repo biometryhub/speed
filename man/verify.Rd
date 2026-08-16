@@ -4,6 +4,7 @@
 \alias{.verify_inputs}
 \alias{.verify_speed_inputs}
 \alias{.verify_hierarchical_inputs}
+\alias{.verify_level_columns}
 \alias{.verify_linked_cols}
 \alias{.verify_optim_params}
 \alias{.verify_swap_all_replication}
@@ -47,7 +48,9 @@
   seed
 )
 
-.verify_linked_cols(data, optimise, linked_cols = NULL)
+.verify_level_columns(data, optimise)
+
+.verify_linked_cols(data, optimise, linked_cols = NULL, named_levels = TRUE)
 
 .verify_optim_params(
   swap_count,
@@ -125,6 +128,10 @@ reproducibility of results (default: \code{NULL}).}
 \code{variety} code (default: \code{NULL}). For hierarchical designs, can be a named
 list with names matching \code{swap}. See details for more information.}
 
+\item{named_levels}{Whether the levels of \code{optimise} carry names the user
+chose. \code{FALSE} for a simple design, whose single level name is synthesised
+by \code{\link[=create_speed_input]{create_speed_input()}} and so cannot be named in \code{linked_cols}.}
+
 \item{swap_count}{Number of treatment swaps per iteration (default: 1).}
 
 \item{swap_all_blocks}{Logical; if \code{TRUE}, performs swaps in all blocks at each iteration (default: \code{FALSE}).}
@@ -160,9 +167,17 @@ rules regardless of this setting.}
 with no \code{swap_within} boundary, so it can be described as the whole design.}
 }
 \description{
-Single entry point for input validation. \code{speed()} accepts three input
-shapes, so this dispatches to the checker for the shape given and runs the
-checks that apply to all of them.
+Validates the arguments as the user passed them, dispatching to the checker
+for the input shape given and running the checks that apply to all three.
+Checks needing the resolved per-level list - \code{\link[=.verify_level_columns]{.verify_level_columns()}},
+\code{\link[=.verify_linked_cols]{.verify_linked_cols()}} and \code{\link[=.verify_swap_all_replication]{.verify_swap_all_replication()}} - cannot run
+here, and are called from \code{\link[=speed]{speed()}} once \code{\link[=create_speed_input]{create_speed_input()}} has built it.
+
+The \code{optimise} input shape bypasses both per-shape checkers, so a level
+naming a column that is not there reaches the search unchallenged: a bad
+\code{swap_within} leaves \code{\link[=swappable_groups]{swappable_groups()}} with nothing to group by, and the
+level is reported as frozen rather than as a mistake. Checked on the resolved
+list so all three shapes are covered.
 
 Checks the columns named in \code{linked_cols} after they have been merged into
 the per-level \code{optimise} list, so all three input shapes are covered by one

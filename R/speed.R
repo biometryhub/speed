@@ -223,10 +223,20 @@ speed <- function(data,
   row_column <- inferred$row
   col_column <- inferred$col
 
+  # Captured before `optimise` is replaced: a simple design's single level name
+  # is synthesised below, so the user cannot have named it in `linked_cols`
+  named_levels <- !is.null(optimise) || is.list(swap)
+
   # Normalise the three input shapes into one per-level list
   optimise <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
                                  early_stop_iterations, obj_function, swap_all, optimise_params,
                                  linked_cols, optimise, inferred$inferred)
+
+  # Checks needing the resolved `optimise` list, so they run here rather than in
+  # `.verify_inputs()`. Both come before the dummy group column is added below,
+  # so it cannot appear in the column names they report.
+  .verify_level_columns(data, optimise)
+  .verify_linked_cols(data, optimise, linked_cols, named_levels)
 
   # convert to factors. Only the columns the optimisation reads, so the rest -
   # linked columns among them - keep whatever class they came in with
@@ -256,10 +266,9 @@ speed <- function(data,
     }
   }
 
-  # Checks needing the resolved `optimise` list, so they run here rather than in
-  # `.verify_inputs()`. `swap_all` exchanges whole label sets, which only
-  # preserves replication when the sets are the same size.
-  .verify_linked_cols(data, optimise, linked_cols)
+  # Needs the dummy group, both to read a whole-design level's swap column and to
+  # describe it. `swap_all` exchanges whole label sets, which only preserves
+  # replication when the sets are the same size.
   .verify_swap_all_replication(data, optimise, dummy_group)
 
   dots <- list(...)
@@ -355,21 +364,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     temperatures <- numeric(opt$iterations)
     last_improvement_iter <- 0
 
-    # Which groups this level can rearrange at all. Settled here rather than in
-    # the loop, since no swap it makes can change the answer.
     groups <- swappable_groups(current_design, opt$swap, opt$swap_within, opt$swap_all)
-    if (length(groups$unequal_replication)) {
-      warning(
-        "No treatments could be swapped",
-        if (length(optimise) > 1) paste0(" at level `", level, "`") else "",
-        " within `", opt$swap_within, "` ",
-        paste0(sort(groups$unequal_replication), collapse = ", "),
-        ", because `swap_all = TRUE` only exchanges treatments with equal replication",
-        " and no two treatments there share a replication count.",
-        " Those groups were left unchanged.",
-        call. = FALSE
-      )
-    }
+    .warn_unequal_replication(groups$unequal_replication, level, opt$swap_within)
 
     # Why the level stopped, and how many recorded scores that leaves. A level
     # that runs to the end keeps all of them; each `break` below sets both.
@@ -512,11 +508,12 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     per_level  = per_level_meta
   )
 
-  # Check which levels stopped early
-  stopped_early <- sapply(hierarchy_levels, function(level) {
-    length(all_scores[[level]]) < optimise[[level]]$iterations
-  })
-  names(stopped_early) <- hierarchy_levels
+  # Taken from the recorded reason rather than the number of scores kept, so the
+  # two cannot disagree when a level runs out of improvements on its last
+  # iteration.
+  stopped_early <- vapply(hierarchy_levels, function(level) {
+    return(all_stop_reasons[[level]] != "iterations")
+  }, logical(1))
 
   # Finalise output
   if (length(hierarchy_levels) == 1) {

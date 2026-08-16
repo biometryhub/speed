@@ -109,6 +109,43 @@ swappable_groups <- function(design, swap, swap_within, swap_all) {
   ))
 }
 
+#' Warn About Groups No `swap_all` Swap Can Reach
+#'
+#' @description
+#' Reported once per level rather than up front, because at the first level
+#' [.verify_swap_all_replication()] has already errored on unequal replication.
+#' It can therefore only arise where an earlier level's swaps have unbalanced a
+#' group that cuts across theirs.
+#'
+#' @param unequal Group names, as returned in the `unequal_replication` element
+#'   of [swappable_groups()].
+#' @param level Name of the level being optimised.
+#' @param swap_within Column name grouping the swaps at that level.
+#'
+#' @return `NULL`, invisibly. Called for its side effect.
+#'
+#' @keywords internal
+.warn_unequal_replication <- function(unequal, level, swap_within) {
+  if (length(unequal) == 0) {
+    return(invisible(NULL))
+  }
+
+  warning(
+    "No treatments could be swapped at level `",
+    level,
+    "` within `",
+    swap_within,
+    "` ",
+    paste0(sort(unequal), collapse = ", "),
+    ", because `swap_all = TRUE` only exchanges treatments with equal ",
+    "replication and no two treatments there share a replication count.",
+    " Those groups were left unchanged.",
+    call. = FALSE
+  )
+
+  return(invisible(NULL))
+}
+
 #' Generate neighbour for simple (non-hierarchical) designs
 #' @keywords internal
 # fmt: skip
@@ -160,7 +197,7 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
         # Perform the swap only if we have valid treatments to swap
         if (!is.null(to_be_swapped)) {
           new_design[[swap]][rev(swap_pair)] <- to_be_swapped
-          new_design <- exchange_linked(new_design, linked_cols, swap_pair, rev(swap_pair))
+          new_design <- exchange_linked(new_design, linked_cols, swap_pair[1], swap_pair[2])
           swapped_items[swapped_idx:(swapped_idx + 1)] <- to_be_swapped
           swapped_idx <- swapped_idx + 2
         }
@@ -243,9 +280,9 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
         plots_2 <- which(group_filter & new_design[[swap]] == swap_pair[2])
 
         # Swap all instances of these treatments
-        new_design <- exchange_linked(new_design, linked_cols, plots_1, plots_2)
         new_design[[swap]][plots_1] <- swap_pair[2]
         new_design[[swap]][plots_2] <- swap_pair[1]
+        new_design <- exchange_linked(new_design, linked_cols, plots_1, plots_2)
 
         swapped_items[swapped_idx] <- swap_pair[1]
         swapped_items[swapped_idx + 1] <- swap_pair[2]

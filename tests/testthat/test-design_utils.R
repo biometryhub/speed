@@ -196,38 +196,6 @@ test_that("speed() stops a level once every swap group is frozen", {
     stringsAsFactors = FALSE
   )
 
-  result <- suppressWarnings(speed(
-    df,
-    swap = "lines",
-    optimise = list(
-      lvl1 = list(swap_within = "block", swap_all = TRUE, iterations = 20),
-      lvl2 = list(swap_within = "site", swap_all = TRUE, iterations = 500)
-    ),
-    early_stop_iterations = 500,
-    optimise_params = optim_params(stop_at_optimal = FALSE),
-    seed = 2,
-    quiet = TRUE
-  ))
-
-  expect_true(result$stopped_early[["lvl2"]])
-  # Settled before the first swap is proposed, so only the starting score is kept
-  expect_length(result$scores$lvl2, 1)
-  expect_equal(result$metadata$per_level$lvl2$stop_reason, "frozen")
-})
-
-test_that("speed() gives up on a frozen level whatever else blocks its groups", {
-  # The level 1 swaps leave sites `a` and `b` with no exchangeable pair. Neither
-  # a factor level holding no plots nor a site holding one treatment can swap
-  # either, so level 2 should stop rather than run out its iterations.
-  df <- data.frame(
-    row = rep(1:6, times = 2),
-    col = rep(1:2, each = 6),
-    block = c(1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2),
-    site = c("a", "a", "a", "b", "b", "b", "a", "a", "a", "b", "b", "b"),
-    lines = c("X", "X", "Z", "Y", "Y", "Z", "Y", "Y", "Z", "X", "X", "Z"),
-    stringsAsFactors = FALSE
-  )
-
   run <- function(d) {
     return(suppressWarnings(speed(
       d,
@@ -243,12 +211,18 @@ test_that("speed() gives up on a frozen level whatever else blocks its groups", 
     )))
   }
 
-  # An unused factor level, e.g. `site` subset from a larger trial
+  result <- run(df)
+  expect_true(result$stopped_early[["lvl2"]])
+  # Settled before the first swap is proposed, so only the starting score is kept
+  expect_length(result$scores$lvl2, 1)
+  expect_equal(result$metadata$per_level$lvl2$stop_reason, "frozen")
+
+  # Neither an unused factor level, e.g. `site` subset from a larger trial, nor
+  # a site holding a single treatment gives the level anything else to move
   unused_level <- df
   unused_level$site <- factor(df$site, levels = c("a", "b", "c"))
   expect_length(run(unused_level)$scores$lvl2, 1)
 
-  # A third site that is its own block, holding a single treatment
   single_treatment <- rbind(
     df,
     data.frame(

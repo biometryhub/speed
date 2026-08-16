@@ -1,9 +1,11 @@
 #' Verify Inputs for `speed`
 #'
 #' @description
-#' Single entry point for input validation. `speed()` accepts three input
-#' shapes, so this dispatches to the checker for the shape given and runs the
-#' checks that apply to all of them.
+#' Validates the arguments as the user passed them, dispatching to the checker
+#' for the input shape given and running the checks that apply to all three.
+#' Checks needing the resolved per-level list - [.verify_level_columns()],
+#' [.verify_linked_cols()] and [.verify_swap_all_replication()] - cannot run
+#' here, and are called from [speed()] once [create_speed_input()] has built it.
 #'
 #' @rdname verify
 #'
@@ -152,6 +154,33 @@
   }
 }
 
+#' Verify each level's columns exist
+#'
+#' @description
+#' The `optimise` input shape bypasses both per-shape checkers, so a level
+#' naming a column that is not there reaches the search unchallenged: a bad
+#' `swap_within` leaves [swappable_groups()] with nothing to group by, and the
+#' level is reported as frozen rather than as a mistake. Checked on the resolved
+#' list so all three shapes are covered.
+#'
+#' @rdname verify
+#'
+#' @keywords internal
+.verify_level_columns <- function(data, optimise) {
+  for (level in names(optimise)) {
+    opt <- optimise[[level]]
+    verify_column_exists(opt$swap, data, "treatment")
+
+    # `"1"` / `"none"` is the placeholder for no boundary, swapped for the dummy
+    # group column later
+    if (!opt$swap_within %in% c("1", "none")) {
+      verify_column_exists(opt$swap_within, data, "constraint")
+    }
+  }
+
+  return(invisible(NULL))
+}
+
 #' Verify linked columns
 #'
 #' @description
@@ -163,9 +192,26 @@
 #'
 #' @rdname verify
 #'
+#' @param named_levels Whether the levels of `optimise` carry names the user
+#'   chose. `FALSE` for a simple design, whose single level name is synthesised
+#'   by [create_speed_input()] and so cannot be named in `linked_cols`.
+#'
 #' @keywords internal
-.verify_linked_cols <- function(data, optimise, linked_cols = NULL) {
+.verify_linked_cols <- function(
+  data,
+  optimise,
+  linked_cols = NULL,
+  named_levels = TRUE
+) {
   if (is.list(linked_cols)) {
+    if (!named_levels) {
+      stop(
+        "`linked_cols` must be a character vector for a non-hierarchical ",
+        "design; there are no levels to name.",
+        call. = FALSE
+      )
+    }
+
     if (is.null(names(linked_cols)) || any(names(linked_cols) == "")) {
       stop(
         "`linked_cols` must be a character vector, or a named list with names matching `swap`.",
@@ -192,6 +238,16 @@
     verify_character(linked_cols)
   }
 
+  # A simple design's one level is named by `create_speed_input()`, so naming it
+  # back at the user would point them at something they never wrote
+  at_level <- function(level) {
+    if (!named_levels) {
+      return("")
+    }
+
+    return(paste0(" at level '", level, "'"))
+  }
+
   owner <- character(0)
   for (level in names(optimise)) {
     opt <- optimise[[level]]
@@ -199,6 +255,10 @@
     if (length(cols) == 0) {
       next
     }
+
+    # Also covers values set per level inside `optimise`, which the shape checks
+    # above never see
+    verify_character(cols, var_names = "linked_cols")
 
     earlier <- names(optimise)[seq_len(which(names(optimise) == level) - 1)]
 
@@ -217,9 +277,9 @@
         stop(
           "`linked_cols` column '",
           col,
-          "' defines the layout at level '",
-          fixes_layout[[1]],
-          "' as a swap_within, spatial or grid factor, so it cannot be moved.",
+          "' defines the layout",
+          at_level(fixes_layout[[1]]),
+          " as a swap_within, spatial or grid factor, so it cannot be moved.",
           call. = FALSE
         )
       }
@@ -228,9 +288,9 @@
         stop(
           "`linked_cols` column '",
           col,
-          "' is the swap column at level '",
-          level,
-          "', so it cannot also travel with itself.",
+          "' is the swap column",
+          at_level(level),
+          ", so it cannot also travel with itself.",
           call. = FALSE
         )
       }

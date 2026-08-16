@@ -507,6 +507,76 @@ test_that("create_speed_input creates an input from optimise argument", {
   )
 })
 
+test_that("create_speed_input splits a per-level list the same way for every shape", {
+  args <- list(
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    early_stop_iterations = 2000,
+    obj_function = objective_function,
+    swap_all = FALSE,
+    optimise_params = optim_params(),
+    iterations = list(wp = 5, sp = 7)
+  )
+
+  from_swap <- do.call(
+    create_speed_input,
+    c(args, list(swap = list(wp = "wp_trt", sp = "sp_trt")))
+  )
+  from_optimise <- do.call(
+    create_speed_input,
+    c(
+      args,
+      list(
+        swap = "trt",
+        optimise = list(wp = list(), sp = list())
+      )
+    )
+  )
+
+  expect_equal(from_swap$wp$iterations, 5)
+  expect_equal(from_swap$sp$iterations, 7)
+  expect_equal(from_optimise$wp$iterations, 5)
+  expect_equal(from_optimise$sp$iterations, 7)
+})
+
+test_that("create_speed_input falls back to the argument's own default", {
+  # `sp` is left out of the list, so it takes the `iterations` default rather
+  # than a value belonging to some other argument
+  resolved <- create_speed_input(
+    swap = list(wp = "wp_trt", sp = "sp_trt"),
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = list(wp = 5),
+    early_stop_iterations = 2000,
+    obj_function = objective_function,
+    swap_all = FALSE,
+    optimise_params = optim_params()
+  )
+
+  expect_equal(resolved$wp$iterations, 5)
+  expect_equal(resolved$sp$iterations, .DEFAULT$iterations)
+})
+
+test_that("create_speed_input leaves named lists that are not levels whole", {
+  # `grid_factors` and `optim_params()` name their own fields, not levels
+  resolved <- create_speed_input(
+    swap = list(wp = "wp_trt", sp = "sp_trt"),
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 100,
+    early_stop_iterations = 2000,
+    obj_function = objective_function,
+    swap_all = FALSE,
+    optimise_params = optim_params(start_temp = 42)
+  )
+
+  expect_equal(resolved$wp$grid_factors, list(dim1 = "row", dim2 = "col"))
+  expect_equal(resolved$sp$optimise_params$start_temp, 42)
+})
+
 test_that("add_names adds names to a list", {
   a_list <- list(1, 2, 3, "a")
   named_list <- add_names(a_list)

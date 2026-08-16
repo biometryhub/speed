@@ -9,12 +9,7 @@ to_factor(df, cols = names(df))
 \arguments{
 \item{df}{A data frame}
 
-\item{cols}{Names of the columns to convert, defaulting to every column.
-Names not present in \code{df} are ignored, so a caller may pass the \code{"1"} /
-\code{"none"} placeholder used for a level with no \code{swap_within} boundary.
-Columns outside this set are left untouched and are not recorded in
-\code{input_types}, so \code{\link[=to_types]{to_types()}} returns them exactly as they came in - the
-only way to preserve a class \code{\link[=base_type]{base_type()}} cannot rebuild, such as \code{Date}.}
+\item{cols}{Names of the columns to convert (default: every column).}
 }
 \value{
 A list containing:
@@ -25,6 +20,11 @@ each converted column (for restoring via \code{\link[=to_types]{to_types()}})
 }
 }
 \description{
-Convert Data Frame Data to Factors
+Converts the named columns to factors, which is what the SA loop requires.
+Names not present in \code{df} are ignored, so a caller may pass the \code{"1"} /
+\code{"none"} placeholder used for a level with no \code{swap_within} boundary. Columns
+outside \code{cols} are left untouched and are not recorded in \code{input_types}, so
+\code{\link[=to_types]{to_types()}} returns them exactly as they came in - the only way to preserve
+a class \code{\link[=base_type]{base_type()}} cannot rebuild, such as \code{Date}.
 }
 \keyword{internal}

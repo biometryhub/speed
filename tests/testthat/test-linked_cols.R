@@ -49,7 +49,6 @@ expect_pairing_preserved <- function(input, output, key, value) {
 test_that("linked_cols leaves unrelated columns where they are", {
   df <- simple_df()
   df$staff <- rep(c("Ana", "Bo", "Cy", "Di", "Ed"), each = 4)
-  df$visited <- as.Date("2026-03-01") + rep(0:4, each = 4)
 
   result <- speed(
     df,
@@ -64,15 +63,13 @@ test_that("linked_cols leaves unrelated columns where they are", {
   expect_equal(names(result$design_df), names(df))
 
   # `staff` was not linked, so unlike `trt_name` it stays with its plot rather
-  # than following the treatment. Comparing `visited` as a `Date` also covers its
-  # class surviving the round trip.
+  # than following the treatment
   expect_equal(
     result$design_df[
       order(result$design_df$row, result$design_df$col),
-      c("staff", "visited")
+      "staff"
     ],
-    df[order(df$row, df$col), c("staff", "visited")],
-    ignore_attr = "row.names"
+    df[order(df$row, df$col), "staff"]
   )
 })
 
@@ -117,9 +114,10 @@ test_that("linked_cols actually moves the companion column", {
   expect_false(identical(as.character(result$design_df$trt_name), df$trt_name))
 })
 
-test_that("linked_cols moves the companion column with NA", {
+test_that("linked_cols moves an NA companion value with its treatment", {
   df <- simple_df()
-  df$trt_name[df$treatment == "A"] = NA
+  df$trt_name[df$treatment == "A"] <- NA
+
   result <- speed(
     df,
     swap = "treatment",
@@ -130,12 +128,13 @@ test_that("linked_cols moves the companion column with NA", {
     quiet = TRUE
   )
 
-  # The optimised design differs from the input, so the companion must have moved too
-  expect_false(identical(
-    as.character(result$design_df$treatment),
-    df$treatment
-  ))
+  # The companion moved, so the NAs must have moved with it - landing on exactly
+  # the plots now holding `A`, wherever the search put them
   expect_false(identical(as.character(result$design_df$trt_name), df$trt_name))
+  expect_equal(
+    is.na(result$design_df$trt_name),
+    result$design_df$treatment == "A"
+  )
 })
 
 test_that("linked_cols preserves a class to_types() could not rebuild", {
@@ -551,6 +550,7 @@ test_that("linked_cols rejects columns that are not in the data", {
 test_that("linked_cols rejects the swap column itself", {
   df <- simple_df()
 
+  # Simple design, so no level is named; the hierarchical case below names one
   expect_error(
     speed(
       df,
@@ -559,7 +559,21 @@ test_that("linked_cols rejects the swap column itself", {
       seed = 42,
       quiet = TRUE
     ),
-    "cannot also travel with itself"
+    "is the swap column, so it cannot also travel with itself",
+    fixed = TRUE
+  )
+
+  expect_error(
+    speed(
+      split_plot_df(),
+      swap = list(wp = "wp_trt", sp = "sp_trt"),
+      swap_within = list(wp = "block", sp = "wholeplot"),
+      linked_cols = list(sp = "sp_trt"),
+      seed = 42,
+      quiet = TRUE
+    ),
+    "is the swap column at level 'sp'",
+    fixed = TRUE
   )
 })
 
@@ -577,6 +591,69 @@ test_that("linked_cols rejects an unknown level name", {
       quiet = TRUE
     ),
     "no matching level for 'nope'"
+  )
+})
+
+test_that("a level naming a missing column is refused, not run as frozen", {
+  df <- simple_df()
+
+  # `optimise` bypasses both per-shape checkers, so without an explicit check a
+  # bad `swap_within` leaves nothing to group by and the level reports as frozen
+  expect_error(
+    speed(
+      df,
+      swap = "treatment",
+      optimise = list(a = list(swap = "treatment", swap_within = "nope")),
+      iterations = 5,
+      seed = 1,
+      quiet = TRUE
+    ),
+    "'nope' not found in"
+  )
+
+  expect_error(
+    speed(
+      df,
+      swap = "treatment",
+      optimise = list(a = list(swap = "nope")),
+      iterations = 5,
+      seed = 1,
+      quiet = TRUE
+    ),
+    "'nope' not found in"
+  )
+})
+
+test_that("linked_cols rejects a named list for a simple design", {
+  df <- simple_df()
+
+  # The one level is named by `create_speed_input()`, not by the user, so there
+  # is nothing they could correctly have named here
+  expect_error(
+    speed(
+      df,
+      swap = "treatment",
+      linked_cols = list(lvl = "trt_name"),
+      seed = 42,
+      quiet = TRUE
+    ),
+    "must be a character vector for a non-hierarchical design"
+  )
+})
+
+test_that("linked_cols rejects a non-character value set inside optimise", {
+  df <- simple_df()
+
+  expect_error(
+    speed(
+      df,
+      swap = "treatment",
+      optimise = list(lvl = list(swap = "treatment", linked_cols = 42)),
+      seed = 42,
+      quiet = TRUE
+    ),
+    "`linked_cols` must be a character",
+    fixed = TRUE
   )
 })
 
@@ -627,6 +704,7 @@ test_that("linked_cols rejects a column that defines the layout", {
     "defines the layout at level 'sp'"
   )
 
+  # A simple design has no level the user named, so it is not pointed at one
   df <- simple_df()
   df$block <- rep(1:5, each = 4)
   expect_error(
@@ -638,11 +716,13 @@ test_that("linked_cols rejects a column that defines the layout", {
       seed = 42,
       quiet = TRUE
     ),
-    "defines the layout"
+    "'block' defines the layout as a swap_within",
+    fixed = TRUE
   )
   expect_error(
     speed(df, swap = "treatment", linked_cols = "row", seed = 42, quiet = TRUE),
-    "defines the layout"
+    "'row' defines the layout as a swap_within",
+    fixed = TRUE
   )
 })
 
