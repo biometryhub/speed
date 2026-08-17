@@ -76,6 +76,12 @@ list with names matching \code{swap}. See details for more information.}
 \item{optimise}{A list of named arguments describing optimising parameters;
 see more in example.}
 }
+\value{
+The per-level \code{optimise} list, carrying a \code{user_named} attribute
+recording whether the level names are the user's or were synthesised here.
+\code{\link[=.verify_linked_cols]{.verify_linked_cols()}} reads it to decide whether an error may quote a
+level name back at them.
+}
 \description{
 Create Input for Internal speed Function
 }

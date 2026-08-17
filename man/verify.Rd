@@ -50,7 +50,7 @@
 
 .verify_level_columns(data, optimise)
 
-.verify_linked_cols(data, optimise, linked_cols = NULL, named_levels = TRUE)
+.verify_linked_cols(data, optimise, linked_cols = NULL)
 
 .verify_optim_params(
   swap_count,
@@ -127,10 +127,6 @@ reproducibility of results (default: \code{NULL}).}
 \code{swap} column, for example a \code{variety_name} label belonging to a numeric
 \code{variety} code (default: \code{NULL}). For hierarchical designs, can be a named
 list with names matching \code{swap}. See details for more information.}
-
-\item{named_levels}{Whether the levels of \code{optimise} carry names the user
-chose. \code{FALSE} for a simple design, whose single level name is synthesised
-by \code{\link[=create_speed_input]{create_speed_input()}} and so cannot be named in \code{linked_cols}.}
 
 \item{swap_count}{Number of treatment swaps per iteration (default: 1).}
 

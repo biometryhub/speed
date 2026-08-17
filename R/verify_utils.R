@@ -192,17 +192,12 @@
 #'
 #' @rdname verify
 #'
-#' @param named_levels Whether the levels of `optimise` carry names the user
-#'   chose. `FALSE` for a simple design, whose single level name is synthesised
-#'   by [create_speed_input()] and so cannot be named in `linked_cols`.
-#'
 #' @keywords internal
-.verify_linked_cols <- function(
-  data,
-  optimise,
-  linked_cols = NULL,
-  named_levels = TRUE
-) {
+.verify_linked_cols <- function(data, optimise, linked_cols = NULL) {
+  # A simple design's single level name is synthesised by
+  # `create_speed_input()`, so the user cannot have named it in `linked_cols`
+  named_levels <- !identical(attr(optimise, "user_named"), FALSE)
+
   if (is.list(linked_cols)) {
     if (!named_levels) {
       stop(
@@ -252,8 +247,6 @@
       next
     }
 
-    # The only type check needed: every shape resolves to here, including values
-    # set per level inside `optimise`
     verify_character(cols, var_names = "linked_cols")
 
     earlier <- names(optimise)[seq_len(which(names(optimise) == level) - 1)]

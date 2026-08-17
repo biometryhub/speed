@@ -84,51 +84,46 @@ exchange_linked <- function(design, linked_cols, plots_1, plots_2) {
 #'
 #' @keywords internal
 swappable_groups <- function(design, swap, swap_within, swap_all) {
-  swappable <- character(0)
-  unequal_replication <- character(0)
+  groups <- design[[swap_within]]
+  treatments <- as.character(design[[swap]])
+  keep <- !is.na(groups) & !is.na(treatments)
 
-  for (group in levels(design[[swap_within]])) {
-    in_group <- design[[swap_within]] == group &
-      !is.na(design[[swap_within]]) &
-      !is.na(design[[swap]])
+  # One pass over the design rather than a scan per group. Splitting on the
+  # factor keeps every level, so a level the data no longer uses arrives empty
+  # and falls out below rather than being dropped silently.
+  by_group <- split(treatments[keep], groups[keep])
+  counts <- lapply(by_group, function(x) return(as.integer(table(x))))
 
-    # Two distinct treatments are the minimum for any exchange, which also rules
-    # out groups holding fewer than two plots and levels holding none
-    counts <- table(as.character(design[[swap]][in_group]))
-    if (length(counts) < 2) {
-      next
-    }
+  # Two distinct treatments are the minimum for any exchange, which also rules
+  # out groups holding fewer than two plots and levels holding none
+  exchangeable <- lengths(counts) >= 2
 
-    # `swap_all` exchanges every plot of one treatment for every plot of
-    # another, so the two treatments must be equally replicated
-    if (swap_all && !any(duplicated(as.integer(counts)))) {
-      unequal_replication <- c(unequal_replication, group)
-      next
-    }
-
-    swappable <- c(swappable, group)
-  }
+  # `swap_all` exchanges every plot of one treatment for every plot of another,
+  # so the two treatments must be equally replicated
+  unequal <- exchangeable &
+    swap_all &
+    !vapply(counts, function(x) return(any(duplicated(x))), logical(1))
 
   return(list(
-    swappable = swappable,
-    unequal_replication = unequal_replication
+    swappable = names(by_group)[exchangeable & !unequal],
+    unequal_replication = names(by_group)[unequal]
   ))
 }
 
 #' Warn About Groups No `swap_all` Swap Can Reach
 #'
 #' @description
-#' Reported once per level rather than up front, because at the first level
-#' [.verify_swap_all_replication()] has already errored on unequal replication.
-#' It can therefore only arise where an earlier level's swaps have unbalanced a
-#' group that cuts across theirs.
+#' Reported per level rather than up front, because
+#' [.verify_swap_all_replication()] has already errored on unequal replication at
+#' the first level. This can only arise where an earlier level's swaps have
+#' unbalanced a group cutting across theirs.
 #'
 #' @param unequal Group names, as returned in the `unequal_replication` element
 #'   of [swappable_groups()].
 #' @param level Name of the level being optimised.
 #' @param swap_within Column name grouping the swaps at that level.
 #'
-#' @return `NULL`, invisibly. Called for its side effect.
+#' @return `NULL`, invisibly.
 #'
 #' @keywords internal
 .warn_unequal_replication <- function(unequal, level, swap_within) {
@@ -222,8 +217,7 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
                                           linked_cols = NULL, swappable = NULL) {
   new_design <- design
 
-  # Only groups a swap can be proposed in, so no iteration is spent on one that
-  # cannot move. Settled once per level by `swappable_groups()`.
+  # Settled once per level by `swappable_groups()`
   groups <- swappable %||% levels(design[[swap_within]])
 
   if (swap_all_blocks) {

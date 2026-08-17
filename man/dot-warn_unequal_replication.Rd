@@ -15,12 +15,12 @@ of \code{\link[=swappable_groups]{swappable_groups()}}.}
 \item{swap_within}{Column name grouping the swaps at that level.}
 }
 \value{
-\code{NULL}, invisibly. Called for its side effect.
+\code{NULL}, invisibly.
 }
 \description{
-Reported once per level rather than up front, because at the first level
-\code{\link[=.verify_swap_all_replication]{.verify_swap_all_replication()}} has already errored on unequal replication.
-It can therefore only arise where an earlier level's swaps have unbalanced a
-group that cuts across theirs.
+Reported per level rather than up front, because
+\code{\link[=.verify_swap_all_replication]{.verify_swap_all_replication()}} has already errored on unequal replication at
+the first level. This can only arise where an earlier level's swaps have
+unbalanced a group cutting across theirs.
 }
 \keyword{internal}

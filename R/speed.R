@@ -223,10 +223,6 @@ speed <- function(data,
   row_column <- inferred$row
   col_column <- inferred$col
 
-  # Captured before `optimise` is replaced: a simple design's single level name
-  # is synthesised below, so the user cannot have named it in `linked_cols`
-  named_levels <- !is.null(optimise) || is.list(swap)
-
   # Normalise the three input shapes into one per-level list
   optimise <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
                                  early_stop_iterations, obj_function, swap_all, optimise_params,
@@ -236,11 +232,18 @@ speed <- function(data,
   # `.verify_inputs()`. Both come before the dummy group column is added below,
   # so it cannot appear in the column names they report.
   .verify_level_columns(data, optimise)
-  .verify_linked_cols(data, optimise, linked_cols, named_levels)
+  .verify_linked_cols(data, optimise, linked_cols)
 
   # convert to factors. Only the columns the optimisation reads, so the rest -
-  # linked columns among them - keep whatever class they came in with
-  factored <- to_factor(data, unlist(lapply(optimise, .level_optimised_cols)))
+  # linked columns among them - keep whatever class they came in with. The
+  # resolved row and column names are added because a level names the grid via
+  # `grid_factors`, which holds what the user asked for rather than what
+  # `infer_row_col()` matched it to.
+  factored <- to_factor(data, c(
+    unlist(lapply(optimise, .level_optimised_cols)),
+    row_column,
+    col_column
+  ))
   data <- factored$df
 
   if (inferred$inferred) {

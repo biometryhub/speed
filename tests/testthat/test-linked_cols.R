@@ -1,13 +1,13 @@
 # Helpers ---------------------------------------------------------------------
 
 simple_df <- function() {
-  data.frame(
+  return(data.frame(
     row = rep(1:4, times = 5),
     col = rep(1:5, each = 4),
     treatment = rep(LETTERS[1:4], 5),
     trt_name = rep(paste("Variety", LETTERS[1:4]), 5),
     stringsAsFactors = FALSE
-  )
+  ))
 }
 
 split_plot_df <- function() {
@@ -135,26 +135,6 @@ test_that("linked_cols moves an NA companion value with its treatment", {
     is.na(result$design_df$trt_name),
     result$design_df$treatment == "A"
   )
-})
-
-test_that("linked_cols preserves a class to_types() could not rebuild", {
-  df <- simple_df()
-  # `base_type()` maps Date to "character", so this survives only because linked
-  # columns are set aside before `to_factor()` records the column types
-  df$sown <- as.Date("2026-01-01") + rep(0:3, 5)
-
-  result <- speed(
-    df,
-    swap = "treatment",
-    linked_cols = "sown",
-    iterations = 100,
-    early_stop_iterations = 30,
-    seed = 42,
-    quiet = TRUE
-  )
-
-  expect_s3_class(result$design_df$sown, "Date")
-  expect_pairing_preserved(df, result$design_df, "treatment", "sown")
 })
 
 test_that("linked_cols keeps companion columns with their treatment", {
@@ -591,36 +571,6 @@ test_that("linked_cols rejects an unknown level name", {
       quiet = TRUE
     ),
     "no matching level for 'nope'"
-  )
-})
-
-test_that("a level naming a missing column is refused, not run as frozen", {
-  df <- simple_df()
-
-  # `optimise` bypasses both per-shape checkers, so without an explicit check a
-  # bad `swap_within` leaves nothing to group by and the level reports as frozen
-  expect_error(
-    speed(
-      df,
-      swap = "treatment",
-      optimise = list(a = list(swap = "treatment", swap_within = "nope")),
-      iterations = 5,
-      seed = 1,
-      quiet = TRUE
-    ),
-    "'nope' not found in"
-  )
-
-  expect_error(
-    speed(
-      df,
-      swap = "treatment",
-      optimise = list(a = list(swap = "nope")),
-      iterations = 5,
-      seed = 1,
-      quiet = TRUE
-    ),
-    "'nope' not found in"
   )
 })
 

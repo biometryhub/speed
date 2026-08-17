@@ -685,3 +685,38 @@ test_that("speed() errors instead of altering replication when swap_all = TRUE",
   )
   expect_equal(c(table(result$design_df$treatment)), c(table(df$treatment)))
 })
+
+test_that("a level naming a missing column is refused, not run as frozen", {
+  df <- data.frame(
+    row = rep(1:4, times = 5),
+    col = rep(1:5, each = 4),
+    treatment = rep(LETTERS[1:4], 5),
+    stringsAsFactors = FALSE
+  )
+
+  # `optimise` bypasses both per-shape checkers, so without an explicit check a
+  # bad `swap_within` leaves nothing to group by and the level reports as frozen
+  expect_error(
+    speed(
+      df,
+      swap = "treatment",
+      optimise = list(a = list(swap = "treatment", swap_within = "nope")),
+      iterations = 5,
+      seed = 1,
+      quiet = TRUE
+    ),
+    "'nope' not found in"
+  )
+
+  expect_error(
+    speed(
+      df,
+      swap = "treatment",
+      optimise = list(a = list(swap = "nope")),
+      iterations = 5,
+      seed = 1,
+      quiet = TRUE
+    ),
+    "'nope' not found in"
+  )
+})
