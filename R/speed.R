@@ -372,19 +372,21 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     stop_reason <- "iterations"
     n_kept <- opt$iterations
 
+    # Nothing at this level can move, and no swap it could make would change
+    # that, so the level is settled without searching. The starting score is
+    # still recorded, as it is the score the level ends on.
+    if (length(groups$swappable) == 0) {
+      if (!quiet) cat("No swaps possible for level", level, "\n")
+      stop_reason <- "frozen"
+      n_kept <- 1
+      scores[1] <- current_score
+      temperatures[1] <- temp
+    }
+
     # Optimisation loop for this level
-    for (iter in 1:opt$iterations) {
+    for (iter in seq_len(if (stop_reason == "frozen") 0 else opt$iterations)) {
       scores[iter] <- current_score
       temperatures[iter] <- temp
-
-      # Nothing at this level can move. Established before the loop, so this
-      # breaks on the first iteration, having recorded the starting score.
-      if (length(groups$swappable) == 0) {
-        if (!quiet) cat("No swaps possible for level", level, "\n")
-        stop_reason <- "frozen"
-        n_kept <- iter
-        break
-      }
 
       # break once optimal
       if (stop_at_optimal && !is.na(optimal_score) && best_score <= optimal_score + 1e-9) {
@@ -404,7 +406,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
       # Generate new design by swapping treatments at this level
       new_design <- generate_neighbour(current_design, opt$swap, opt$swap_within, current_swap_count,
-                                       current_swap_all_blocks, opt$swap_all, opt$linked_cols)
+                                       current_swap_all_blocks, opt$swap_all, opt$linked_cols,
+                                       groups$swappable)
 
       # Calculate new score
       new_score_obj <- opt$obj_function(new_design$design,opt$swap, spatial_cols, adj_weight = adj_weight,

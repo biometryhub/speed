@@ -230,16 +230,12 @@
         call. = FALSE
       )
     }
-
-    for (level_cols in linked_cols) {
-      verify_character(level_cols, var_names = "linked_cols")
-    }
-  } else if (!is.null(linked_cols)) {
-    verify_character(linked_cols)
   }
 
   # A simple design's one level is named by `create_speed_input()`, so naming it
-  # back at the user would point them at something they never wrote
+  # back at the user would point them at something they never wrote. Only the
+  # two errors below need it; the rest require a second level to arise at all,
+  # so their level is always one the user chose.
   at_level <- function(level) {
     if (!named_levels) {
       return("")
@@ -256,8 +252,8 @@
       next
     }
 
-    # Also covers values set per level inside `optimise`, which the shape checks
-    # above never see
+    # The only type check needed: every shape resolves to here, including values
+    # set per level inside `optimise`
     verify_character(cols, var_names = "linked_cols")
 
     earlier <- names(optimise)[seq_len(which(names(optimise) == level) - 1)]

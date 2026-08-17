@@ -12,6 +12,9 @@
 #' @param linked_cols Character vector of column names moved in lockstep with
 #'   the `swap` column, so that a value paired with a treatment stays paired with
 #'   it. `NULL` (default) moves the `swap` column alone.
+#' @param swappable Groups a swap can be proposed in, as returned in the
+#'   `swappable` element of [swappable_groups()]. `NULL` (default) considers
+#'   every group, which costs an iteration whenever an unswappable one is drawn.
 #'
 #' @return A list with the updated design after swapping and information about
 #'   swapped items
@@ -24,11 +27,14 @@ generate_neighbour <- function(design,
                                swap_count = getOption("speed.swap_count", 1),
                                swap_all_blocks = getOption("speed.swap_all_blocks", FALSE),
                                swap_all = FALSE,
-                               linked_cols = NULL) {
+                               linked_cols = NULL,
+                               swappable = NULL) {
   if (swap_all) {
-    return(generate_multi_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks, linked_cols))
+    return(generate_multi_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks, linked_cols,
+                                         swappable))
   } else {
-    return(generate_single_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks, linked_cols))
+    return(generate_single_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks, linked_cols,
+                                          swappable))
   }
 }
 
@@ -150,12 +156,13 @@ swappable_groups <- function(design, swap, swap_within, swap_all) {
 #' @keywords internal
 # fmt: skip
 generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks,
-                                           linked_cols = NULL) {
+                                           linked_cols = NULL, swappable = NULL) {
   new_design <- design
 
-  # Get unique blocks
+  # Only groups a swap can be proposed in, so no iteration is spent on one that
+  # cannot move. Settled once per level by `swappable_groups()`.
   all_blocks <- design[[swap_within]]
-  blocks <- levels(all_blocks)
+  blocks <- swappable %||% levels(all_blocks)
 
   if (swap_all_blocks) {
     # Swap in all blocks
@@ -212,11 +219,12 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
 #' @keywords internal
 # fmt: skip
 generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks,
-                                          linked_cols = NULL) {
+                                          linked_cols = NULL, swappable = NULL) {
   new_design <- design
 
-  # Get unique groups for this level
-  groups <- levels(design[[swap_within]])
+  # Only groups a swap can be proposed in, so no iteration is spent on one that
+  # cannot move. Settled once per level by `swappable_groups()`.
+  groups <- swappable %||% levels(design[[swap_within]])
 
   if (swap_all_blocks) {
     # Swap in all groups
