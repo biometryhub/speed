@@ -1,0 +1,56 @@
+# Mirrors this repository to a second repository in another organisation, so
+# the two stay identical without pushing to two remotes by hand.
+#
+# Setup (one-off):
+#   1. ssh-keygen -t ed25519 -C "speed mirror" -f mirror_key -N ""
+#   2. Destination repo -> Settings -> Deploy keys -> add `mirror_key.pub`,
+#      with "Allow write access" ticked.
+#   3. This repo -> Settings -> Secrets -> Actions -> new secret
+#      MIRROR_SSH_KEY, holding the contents of `mirror_key`.
+#   4. Set MIRROR_TARGET below to the destination's SSH URL, then delete
+#      both local key files.
+#
+# `git push --mirror` is a force push that also deletes refs absent from the
+# source, which is what makes the destination an exact copy. Anything
+# committed only to the destination is discarded on the next run.
+on:
+  push:
+  delete:
+  workflow_dispatch:
+
+name: mirror.yaml
+
+permissions: read-all
+
+# Queue runs rather than cancelling them, so a cancelled push never leaves the
+# destination on an older commit than the one that superseded it.
+concurrency:
+  group: mirror
+  cancel-in-progress: false
+
+env:
+  MIRROR_TARGET: git@github.com:AAGI-AUS/speed.git
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+
+    # Forks do not hold the deploy key, and should not overwrite the mirror.
+    if: github.repository == 'biometryhub/speed'
+
+    steps:
+      - name: Clone every ref of this repository
+        run: git clone --mirror "https://github.com/${{ github.repository }}.git" source.git
+
+      - name: Load the deploy key
+        env:
+          MIRROR_SSH_KEY: ${{ secrets.MIRROR_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$MIRROR_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Push all branches and tags to the mirror
+        working-directory: source.git
+        run: git push --mirror "$MIRROR_TARGET"
