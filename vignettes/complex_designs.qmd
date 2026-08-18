@@ -1,7 +1,7 @@
 ---
 title: "Complex Agricultural Experimental Designs with speed"
 author: "Sam Rogers"
-date: "`r Sys.Date()`"
+date: "2026-08-10"
 output:
   html_document:
     toc: true
@@ -21,7 +21,8 @@ This vignette covers advanced and complex experimental designs that are used in 
 
 Building on the foundational designs covered in the [Common Agricultural Experimental Designs vignette](/speed.html), these complex designs offer solutions for challenging experimental scenarios while maintaining statistical rigour through spatial optimisation with the `speed` package.
 
-```{r load-package}
+
+``` r
 library(speed)
 library(patchwork) # For combining plots
 ```
@@ -89,7 +90,8 @@ Consider a complex agricultural trial examining Tillage System × Nitrogen Rate 
 
 ## Setting Up Split-Split Plot Designs with speed
 
-```{r split-split-design-df}
+
+``` r
 splits <- list(
   subsubplot = list(items = c("x", "y", "z"), nrows = 1, ncols = 1),
   subplot = list(items = c("a", "b", "c", "d"), nrows = 1, ncols = 3),
@@ -99,25 +101,15 @@ splits <- list(
 split_split_df <- initialise_split_design_df(splits = splits, rep_dim = c(4, 1))
 ```
 
-```{r}
-#| echo: false
-#| label: fig-ssplot1
-#| fig-cap: "Initial layout of the split-split-plot design showing systematic treatment distribution."
-class(split_split_df) <- c("design", class(split_split_df))
-p1 <- autoplot(split_split_df, treatments = "block") + ggplot2::labs(title = "Blocks")
-p2 <- autoplot(split_split_df, treatments = "wholeplot_treatment") + ggplot2::labs(title = "Whole plot Treatments")
-p3 <- autoplot(split_split_df, treatments = "subplot_treatment", block = "wholeplot") + ggplot2::labs(title = "Sub-plot Treatments")
-p4 <- autoplot(split_split_df, treatments = "subsubplot_treatment", block = "subplot") + ggplot2::labs(title = "Sub-sub-plot Treatments")
-p1 + p2 + p3 + p4 +
-  plot_layout(ncol = 2) +
-  plot_annotation(title = "Initial Split-Split Plot Design")
-```
+
+![Initial layout of the split-split-plot design showing systematic treatment distribution.](figures/fig-ssplot1-1.png){#fig-ssplot1 fig-align="default"}
 
 This shows the initial split-split plot design with three-level hierarchical structure.
 
 ### Performing the Optimisation
 
-```{r split-split-design-example}
+
+``` r
 optimise <- list(
   wp = list(
     swap = "wholeplot_treatment",
@@ -144,17 +136,61 @@ optimise <- list(
 result_ss <- speed(split_split_df, optimise = optimise, seed = 42)
 ```
 
+```
+## row and col are used as row and column, respectively.
+```
+
+```
+## Optimising level: wp 
+## Level: wp Iteration: 1000 Score: 252 Best: 252 Since Improvement: 972 
+## Early stopping at iteration 1028 for level wp 
+## Optimising level: sp 
+## Level: sp Iteration: 1000 Score: 132 Best: 132 Since Improvement: 594 
+## Level: sp Iteration: 2000 Score: 132 Best: 132 Since Improvement: 1594 
+## Level: sp Iteration: 3000 Score: 132 Best: 132 Since Improvement: 2594 
+## Early stopping at iteration 3406 for level sp 
+## Optimising level: ssp 
+## Level: ssp Iteration: 1000 Score: 16 Best: 16 Since Improvement: 120 
+## Level: ssp Iteration: 2000 Score: 12 Best: 12 Since Improvement: 349 
+## Level: ssp Iteration: 3000 Score: 11 Best: 11 Since Improvement: 553 
+## Level: ssp Iteration: 4000 Score: 11 Best: 11 Since Improvement: 1553 
+## Level: ssp Iteration: 5000 Score: 10 Best: 10 Since Improvement: 925 
+## Level: ssp Iteration: 6000 Score: 10 Best: 10 Since Improvement: 1925 
+## Level: ssp Iteration: 7000 Score: 9 Best: 9 Since Improvement: 19 
+## Level: ssp Iteration: 8000 Score: 9 Best: 9 Since Improvement: 1019 
+## Level: ssp Iteration: 9000 Score: 9 Best: 9 Since Improvement: 2019 
+## Level: ssp Iteration: 10000 Score: 7 Best: 7 Since Improvement: 985 
+## Level: ssp Iteration: 11000 Score: 7 Best: 7 Since Improvement: 1985 
+## Level: ssp Iteration: 12000 Score: 7 Best: 7 Since Improvement: 2985 
+## Level: ssp Iteration: 13000 Score: 7 Best: 7 Since Improvement: 3985 
+## Level: ssp Iteration: 14000 Score: 7 Best: 7 Since Improvement: 4985 
+## Early stopping at iteration 14015 for level ssp
+```
+
 ### Output of the Optimisation
 
-```{r split-split-design-output}
+
+``` r
 result_ss
+```
+
+```
+## Optimised Experimental Design
+## ----------------------------
+## Score: 391 
+## Iterations Run: 18452 
+## Stopped Early: TRUE TRUE TRUE 
+## Treatments:
+##   wp: A, B, C
+##   sp: a, b, c, d
+##   ssp: x, y, z
+## Seed: 42
 ```
 
 ### Visualise the Output
 
-```{r}
-#| label: fig-ssplot2
-#| fig-cap: "Final layout of the split-split-plot design showing optimised treatment distribution."
+
+``` r
 res1 <- autoplot(result_ss, treatments = "wholeplot_treatment") + ggplot2::labs(title = "Whole plot Treatments")
 res2 <- autoplot(result_ss, treatments = "subplot_treatment") + ggplot2::labs(title = "Sub-plot Treatments")
 res3 <- autoplot(result_ss, treatments = "subsubplot_treatment") + ggplot2::labs(title = "Sub-sub-plot Treatments")
@@ -162,6 +198,9 @@ res1 + res2 + res3 +
   plot_layout(ncol = 2) +
   plot_annotation(title = "Optimised Split-Split Plot Design")
 ```
+
+
+![Final layout of the split-split-plot design showing optimised treatment distribution.](figures/fig-ssplot2-1.png){#fig-ssplot2 fig-align="default"}
 
 Above is the final output of this design. Note that there are some adjacent pairs of treatments in the sub-sub-plots. This is quite difficult to avoid in these situations, however adjusting some of the optimisation parameters may help with this. For further information, see the vignette about [changing optimisation parameters for speed](/custom_objective_functions.html).
 
@@ -208,7 +247,8 @@ Consider an experiment testing 3 tillage methods and 4 planting dates where both
 
 ## Setting Up Strip-Plot Designs with speed
 
-```{r strip-plot-df}
+
+``` r
 df_strip <- data.frame(
   row = rep(1:12, each = 6),  # 12 rows total (4 rows per block x 6 blocks)
   col = rep(1:6, times = 12),  # 6 columns
@@ -225,43 +265,71 @@ df_strip <- data.frame(
 )
 ```
 
-```{r}
-#| echo: false
-#| label: fig-strip-plot1
-#| fig-cap: "Initial layout of the strip plot design showing systematic treatment distribution."
-class(df_strip) <- c("design", class(df_strip))
-p1 <- autoplot(df_strip, treatments = "block") + ggplot2::labs(title = "Blocks")
-p2 <- autoplot(df_strip, treatments = "horizontal_treatment") + ggplot2::labs(title = "Tillage Treatments")
-p3 <- autoplot(df_strip, treatments = "vertical_treatment") + ggplot2::labs(title = "Planting Date Treatments")
-p1 + p2 + p3 +
-  plot_layout(ncol = 2) +
-  plot_annotation(title = "Initial Strip Plot Design")
-```
+
+![Initial layout of the strip plot design showing systematic treatment distribution.](figures/fig-strip-plot1-1.png){#fig-strip-plot1 fig-align="default"}
 
 This shows the initial strip-plot layout with horizontal and vertical strips before optimisation.
 
 ### Performing the Optimisation
 
-```{r strip-plot-example}
+
+``` r
 strip_result <- speed(df_strip,
                       swap = list(ht = "horizontal_treatment", vt = "vertical_treatment"),
                       swap_within = list(ht = "block", vt = "block"),
                       swap_all = TRUE)
+```
 
+```
+## row and col are used as row and column, respectively.
+```
+
+```
+## Optimising level: ht 
+## Level: ht Iteration: 1000 Score: 84 Best: 84 Since Improvement: 961 
+## Level: ht Iteration: 2000 Score: 84 Best: 84 Since Improvement: 1961 
+## Early stopping at iteration 2039 for level ht 
+## Optimising level: vt 
+## Level: vt Iteration: 1000 Score: 54 Best: 54 Since Improvement: 878 
+## Level: vt Iteration: 2000 Score: 54 Best: 54 Since Improvement: 1878 
+## Early stopping at iteration 2122 for level vt
 ```
 
 ### Output of the Optimisation
 
-```{r strip-plot-output}
+
+``` r
 strip_result
+```
+
+```
+## Optimised Experimental Design
+## ----------------------------
+## Score: 138 
+## Iterations Run: 4163 
+## Stopped Early: TRUE TRUE 
+## Treatments:
+##   ht: a, b, c, d
+##   vt: A, B, C
+## Seed: -2124829786
 ```
 
 ### Visualise the Output
 
-```{r strip-plot-plot2}
+
+``` r
 autoplot(strip_result, treatments = "horizontal_treatment") + ggplot2::labs(title = "Tillage Treatments")
+```
+
+
+![](figures/strip-plot-plot2-1.png){fig-align="default"}
+
+``` r
 autoplot(strip_result, treatments = "vertical_treatment") + ggplot2::labs(title = "Planting Date Treatments")
 ```
+
+
+![](figures/strip-plot-plot2-2.png){fig-align="default"}
 
 An optimised strip-plot design with well-arranged treatment combinations!
 
@@ -327,7 +395,8 @@ Consider a trial with 15 treatments where complete blocks would be too large for
 
 Firstly we need to create a data frame representing the incomplete block design. Here we will use a systematic approach to generate the blocks and treatment combinations.
 
-```{r ribd-df}
+
+``` r
 # Create the data frame
 ribd_df <- data.frame(
   row = rep(1:3, 6),                             # Row within each block
@@ -341,42 +410,113 @@ ribd_df <- data.frame(
 head(ribd_df)
 ```
 
-```{r}
-#| echo: false
-#| label: fig-ribdplot1
-#| fig-cap: "Initial layout of the resolvable incomplete block design showing systematic treatment distribution."
-class(ribd_df) <- c("design", class(ribd_df))
-p1 <- autoplot(ribd_df, treatments = "replicate") + ggplot2::labs(title = "Replicate layout")
-p2 <- autoplot(ribd_df, treatments = "block") + ggplot2::labs(title = "Block layout")
-p3 <- autoplot(ribd_df) + ggplot2::labs(title = "Initial treatment layouts")
-p1 + p2 + p3 +
-  plot_layout(ncol = 2) +
-  plot_annotation(title = "Initial Systematic Resolvable Incomplete Block Design")
 ```
+##   row col replicate block treatment
+## 1   1   1         1     1        V1
+## 2   2   1         1     1        V2
+## 3   3   1         1     1        V3
+## 4   1   2         1     2        V4
+## 5   2   2         1     2        V5
+## 6   3   2         1     2        V6
+```
+
+
+![Initial layout of the resolvable incomplete block design showing systematic treatment distribution.](figures/fig-ribdplot1-1.png){#fig-ribdplot1 fig-align="default"}
 
 @fig-ribdplot1 shows the systematic resolvable incomplete block layout before optimisation. Note that replicates are made of two blocks, in each of which half the treatments will appear, and replicates are made up of pairs of blocks. The treatments can be swapped between blocks, but need to remain within their replicate.
 
 ### Performing the Optimisation
 
-```{r ribd-example}
+
+``` r
 ribd_result <- speed(ribd_df, 
                      swap = "treatment", 
                      swap_within = "replicate", 
                      seed = 42)    
 ```
 
+```
+## row and col are used as row and column, respectively.
+```
+
+```
+## Optimising level: single treatment within replicate 
+## Optimal score reached at iteration 474 for level single treatment within replicate
+```
+
 ### Output of the Optimisation
 
-```{r ribd-output}
+
+``` r
 ribd_result
+```
+
+```
+## Optimised Experimental Design
+## ----------------------------
+## Score: 1.8 
+## Iterations Run: 474 
+## Stopped Early: TRUE 
+## Treatments: V1, V2, V3, V4, V5, V6 
+## Seed: 42
+```
+
+``` r
 str(ribd_result)
+```
+
+```
+## List of 9
+##  $ design_df     :Classes 'design' and 'data.frame':	18 obs. of  5 variables:
+##   ..$ row      : int [1:18] 1 1 1 1 1 1 2 2 2 2 ...
+##   ..$ col      : int [1:18] 1 2 3 4 5 6 1 2 3 4 ...
+##   ..$ replicate: int [1:18] 1 1 2 2 3 3 1 1 2 2 ...
+##   ..$ block    : int [1:18] 1 2 3 4 5 6 1 2 3 4 ...
+##   ..$ treatment: chr [1:18] "V3" "V2" "V1" "V4" ...
+##  $ score         : num 1.8
+##  $ scores        : num [1:474] 9 7.4 5.8 6.8 5.4 4.6 4.2 4.2 4.2 4.2 ...
+##  $ temperatures  : num [1:474] 100 99 98 97 96.1 ...
+##  $ iterations_run: num 474
+##  $ stopped_early : logi TRUE
+##  $ treatments    : chr [1:6] "V1" "V2" "V3" "V4" ...
+##  $ seed          : num 42
+##  $ metadata      :List of 6
+##   ..$ levels    : chr "single treatment within replicate"
+##   ..$ row_column: chr "row"
+##   ..$ col_column: chr "col"
+##   ..$ grid_by   : NULL
+##   ..$ per_level :List of 1
+##   .. ..$ single treatment within replicate:List of 12
+##   .. .. ..$ swap            : chr "treatment"
+##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
+##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x0000022515d88dd0> 
+##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
+##   .. .. ..$ adj_weight      : num 1
+##   .. .. ..$ bal_weight      : num 1
+##   .. .. ..$ iterations      : num 10000
+##   .. .. ..$ start_temp      : num 100
+##   .. .. ..$ cooling_rate    : num 0.99
+##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1, 
+##     row_column = "row", col_column = "col", ...)  
+##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x000002250edb7a10> 
+##   .. .. ..$ final_score     : num 1.8
+##   .. .. ..$ final_components: Named num [1:2] 0 1.8
+##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+##   .. .. ..$ optimal_score   : num 1.8
+##   ..$ call      : language speed(data = ribd_df, swap = "treatment", swap_within = "replicate", seed = 42)
+##  - attr(*, "class")= chr [1:2] "design" "list"
 ```
 
 ### Visualise the Output
 
-```{r ribd-plot4}
+
+``` r
 autoplot(ribd_result)
 ```
+
+
+![](figures/ribd-plot4-1.png){fig-align="default"}
 
 We see that each block by itself only contains half the treatments, but when combined, the pairs have a full replicate. The algorithm has also spatially optimised the treatments across rows and columns, giving a nicely optimised resolvable incomplete block design.
 
@@ -422,7 +562,8 @@ Consider a breeding trial with 140 entries where 40 key entries (checks and prom
 
 ## Setting Up P-Rep Designs with speed
 
-```{r prep-design-df}
+
+``` r
 prep_design <- data.frame(
   row = rep(1:14, each = 10), 
   col = rep(1:10, times = 14), 
@@ -436,55 +577,140 @@ prep_design$duplicated <- duplicated(prep_design$entry) | duplicated(prep_design
 head(prep_design)
 ```
 
-```{r}
-#| echo: false
-#| label: fig-prepplot1
-#| fig-cap: "Initial layout of the p-rep design showing systematic treatment distribution."
-class(prep_design) <- c("design", class(prep_design))
-autoplot(prep_design, treatments = "entry")
+```
+##   row col block entry duplicated
+## 1   1   1     1    V1       TRUE
+## 2   1   2     1    V2       TRUE
+## 3   1   3     1    V3       TRUE
+## 4   1   4     1    V4       TRUE
+## 5   1   5     1    V5       TRUE
+## 6   1   6     2    V6       TRUE
 ```
 
-```{r}
-#| echo: false
-#| label: fig-prepplot2
-#| fig-cap: "Initial layout of the p-rep design showing replicated treatments."
-autoplot(prep_design, treatments = "duplicated")
-```
+
+![Initial layout of the p-rep design showing systematic treatment distribution.](figures/fig-prepplot1-1.png){#fig-prepplot1 fig-align="default"}
+
+
+![Initial layout of the p-rep design showing replicated treatments.](figures/fig-prepplot2-1.png){#fig-prepplot2 fig-align="default"}
 
 This shows the initial p-rep design with duplicated entries distributed systematically. Once we have set up the data frame, the `speed()` optimisation call is quite straight-forward. Note that we have added `block` into the `spatial_factors` argument, to attempt to balance the replicated treatments between blocks as well. Typically with larger designs, we may also want to increase the number of `iterations` and `early_stop_iterations` to allow more swapping to take place, however in this case it is not necessary due to the low replication.
 
 ### Performing the Optimisation
 
-```{r prep-design-example}
+
+``` r
 prep_result <- speed(prep_design,
                      swap = "entry",
                      spatial_factors = ~ block + row + col, 
                      seed = 42)
 ```
 
+```
+## row and col are used as row and column, respectively.
+```
+
+```
+## Optimising level: single entry within whole design 
+## Level: single entry within whole design Iteration: 1000 Score: 2.993939 Best: 2.993939 Since Improvement: 5 
+## Optimal score reached at iteration 1183 for level single entry within whole design
+```
+
 ### Output of the Optimisation
 
-```{r prep-design-output}
+
+``` r
 prep_result
+```
+
+```
+## Optimised Experimental Design
+## ----------------------------
+## Score: 2.913131 
+## Iterations Run: 1183 
+## Stopped Early: TRUE 
+## Treatments: V1, V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22, V23, V24, V25, V26, V27, V28, V29, V30, V31, V32, V33, V34, V35, V36, V37, V38, V39, V40, V41, V42, V43, V44, V45, V46, V47, V48, V49, V50, V51, V52, V53, V54, V55, V56, V57, V58, V59, V60, V61, V62, V63, V64, V65, V66, V67, V68, V69, V70, V71, V72, V73, V74, V75, V76, V77, V78, V79, V80, V81, V82, V83, V84, V85, V86, V87, V88, V89, V90, V91, V92, V93, V94, V95, V96, V97, V98, V99, V100 
+## Seed: 42
+```
+
+``` r
 str(prep_result)
+```
+
+```
+## List of 9
+##  $ design_df     :Classes 'design' and 'data.frame':	140 obs. of  5 variables:
+##   ..$ row       : int [1:140] 1 1 1 1 1 1 1 1 1 1 ...
+##   ..$ col       : int [1:140] 1 2 3 4 5 6 7 8 9 10 ...
+##   ..$ block     : int [1:140] 1 1 1 1 1 2 2 2 2 2 ...
+##   ..$ entry     : chr [1:140] "V100" "V16" "V38" "V37" ...
+##   ..$ duplicated: logi [1:140] TRUE TRUE TRUE TRUE TRUE TRUE ...
+##  $ score         : num 2.91
+##  $ scores        : num [1:1183] 4.53 4.49 4.45 4.37 4.37 ...
+##  $ temperatures  : num [1:1183] 100 99 98 97 96.1 ...
+##  $ iterations_run: num 1183
+##  $ stopped_early : logi TRUE
+##  $ treatments    : chr [1:100] "V1" "V2" "V3" "V4" ...
+##  $ seed          : num 42
+##  $ metadata      :List of 6
+##   ..$ levels    : chr "single entry within whole design"
+##   ..$ row_column: chr "row"
+##   ..$ col_column: chr "col"
+##   ..$ grid_by   : NULL
+##   ..$ per_level :List of 1
+##   .. ..$ single entry within whole design:List of 12
+##   .. .. ..$ swap            : chr "entry"
+##   .. .. ..$ spatial_factors :Class 'formula'  language ~block + row + col
+##   .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv> 
+##   .. .. ..$ spatial_cols    : chr [1:3] "block" "row" "col"
+##   .. .. ..$ adj_weight      : num 1
+##   .. .. ..$ bal_weight      : num 1
+##   .. .. ..$ iterations      : num 10000
+##   .. .. ..$ start_temp      : num 100
+##   .. .. ..$ cooling_rate    : num 0.99
+##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1, 
+##     row_column = "row", col_column = "col", ...)  
+##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x000002250edb7a10> 
+##   .. .. ..$ final_score     : num 2.91
+##   .. .. ..$ final_components: Named num [1:2] 0 2.91
+##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
+##   .. .. ..$ optimal_score   : num 2.91
+##   ..$ call      : language speed(data = prep_design, swap = "entry", spatial_factors = ~block + row +      col, seed = 42)
+##  - attr(*, "class")= chr [1:2] "design" "list"
 ```
 
 Ideally here we would also like to see an even distribution of the duplicated entries between each block.
 
-```{r prep-check-spread}
+
+``` r
 prep_result$design_df$duplicated <- duplicated(prep_result$design_df$entry) | duplicated(prep_result$design_df$entry, fromLast = TRUE)
 
 sum(prep_result$design_df$duplicated[prep_result$design_df$block==1])
+```
+
+```
+## [1] 40
+```
+
+``` r
 any(duplicated(prep_result$design_df$entry[prep_result$design_df$block==1]))
+```
+
+```
+## [1] FALSE
 ```
 
 With 40 duplicated varieties in this block, we know we also have 40 in the other block.
 
 ### Visualise the Output
 
-```{r prep-design-plot2}
+
+``` r
 autoplot(prep_result, treatments = "entry")
 ```
+
+
+![](figures/prep-design-plot2-1.png){fig-align="default"}
 
 An optimised p-rep design with strategic replication and spatial distribution. Note that because the treatments column is not called "treatment", we need to specify the `treatments` argument in the `autoplot()` function.
 
@@ -530,7 +756,8 @@ Consider a large field trial with 40 varieties each replicated 10 times, requiri
 
 ## Setting Up Row-Column Designs with Blocking
 
-```{r rowcol-block-design-df}
+
+``` r
 blocking_2d_design <- data.frame(row = rep(1:20, each = 20), 
                                  col = rep(1:20, 20), 
                                  treatment = rep(paste("V", 1:40, sep = ""), 10), 
@@ -539,27 +766,24 @@ blocking_2d_design <- data.frame(row = rep(1:20, each = 20),
 head(blocking_2d_design)
 ```
 
-```{r}
-#| echo: false
-#| label: fig-2dblockplot1
-#| fig-cap: "Initial layout of the 2D blocking design showing systematic treatment distribution."
-class(blocking_2d_design) <- c("design", class(blocking_2d_design))
-autoplot(blocking_2d_design, block = "rowBlock")
+```
+##   row col treatment rowBlock colBlock
+## 1   1   1        V1        1        1
+## 2   1   2        V2        1        1
+## 3   1   3        V3        1        2
+## 4   1   4        V4        1        2
+## 5   1   5        V5        1        3
+## 6   1   6        V6        1        3
 ```
 
-```{r}
-#| echo: false
-#| label: fig-2dblockplot2
-#| fig-cap: "2D blocking design showing rowBlock layout."
-autoplot(blocking_2d_design, block = "rowBlock", treatments = "rowBlock")
-```
 
-```{r}
-#| echo: false
-#| label: fig-2dblockplot3
-#| fig-cap: "2D blocking design showing colBlock layout."
-autoplot(blocking_2d_design, block = "colBlock", treatments = "colBlock")
-```
+![Initial layout of the 2D blocking design showing systematic treatment distribution.](figures/fig-2dblockplot1-1.png){#fig-2dblockplot1 fig-align="default"}
+
+
+![2D blocking design showing rowBlock layout.](figures/fig-2dblockplot2-1.png){#fig-2dblockplot2 fig-align="default"}
+
+
+![2D blocking design showing colBlock layout.](figures/fig-2dblockplot3-1.png){#fig-2dblockplot3 fig-align="default"}
 
 This shows the initial row-column design with hierarchical blocking structure.
 
@@ -567,8 +791,8 @@ This shows the initial row-column design with hierarchical blocking structure.
 
 Now we will use the `speed()` function to optimise this design. We will swap treatments within row blocks, while also considering column blocks as a spatial factor. Note that we also set some optimisation parameters to allow for more swaps, as this is a larger design with more treatments.
 
-```{r rowcol-block-design-example}
-#| cache: true
+
+``` r
 optimise_params <- optim_params(swap_count = 5, swap_all_blocks = TRUE, adaptive_swaps = TRUE)
 
 blocking_2d_result <- speed(blocking_2d_design, 
@@ -583,18 +807,25 @@ blocking_2d_result <- speed(blocking_2d_design,
 
 ### Output of the Optimisation
 
-```{r rowcol-block-design-output}
+
+``` r
 blocking_2d_result
+```
+
+```
+## Optimised Experimental Design
+## ----------------------------
+## Score: 0 
+## Iterations Run: 39972 
+## Stopped Early: TRUE 
+## Treatments: V1, V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22, V23, V24, V25, V26, V27, V28, V29, V30, V31, V32, V33, V34, V35, V36, V37, V38, V39, V40 
+## Seed: 42
 ```
 
 ### Visualise the Output
 
-```{r}
-#| label: fig-2dblockplot4
-#| fig-cap: "Final layout of the 2D blocking design showing optimised treatment distribution."
-#| echo: false
-autoplot(blocking_2d_result, block = "rowBlock")
-```
+
+![Final layout of the 2D blocking design showing optimised treatment distribution.](figures/fig-2dblockplot4-1.png){#fig-2dblockplot4 fig-align="default"}
 
 An optimised row-column design with blocking in two directions.
 
@@ -657,7 +888,8 @@ Consider a field trial that must work around existing trees, buildings, and drai
 
 ## Setting Up Designs for Irregular Areas
 
-```{r irregular-design-df}
+
+``` r
 # Placeholder: Initialise irregular field design
 # # Define field boundaries and obstacles
 # field_constraints <- list(
@@ -669,21 +901,14 @@ Consider a field trial that must work around existing trees, buildings, and drai
 # head(irregular_design)
 ```
 
-```{r irregular-design-plot1}
-#| echo: false
-# Placeholder: Initial visualisation with constraints
-# class(irregular_design) <- c("design", class(irregular_design))
-# autoplot(irregular_design) + 
-#   # Add constraint visualisation
-#   geom_polygon(data = field_constraints$obstacles, 
-#                aes(x = x, y = y), alpha = 0.3, fill = "red")
-```
+
 
 This shows the initial design layout accommodating field constraints and obstacles.
 
 ### Performing the Optimisation
 
-```{r irregular-design-example}
+
+``` r
 # Placeholder: Optimise design with spatial constraints
 # irregular_result <- speed(irregular_design,
 #                          swap = "entry",
@@ -694,14 +919,16 @@ This shows the initial design layout accommodating field constraints and obstacl
 
 ### Output of the Optimisation
 
-```{r irregular-design-output}
+
+``` r
 # Placeholder: Show structure of results
 # str(irregular_result)
 ```
 
 ### Visualise the Output
 
-```{r irregular-design-plot2}
+
+``` r
 # Placeholder: Final visualisation with constraints
 # autoplot(irregular_result) + 
 #   # Add constraint visualisation
@@ -740,7 +967,8 @@ When factorial experiments involve many treatment combinations, complete replica
 
 ## Setting Up Factorial Designs in Incomplete Blocks with speed
 
-```{r factorial-incomplete-example, eval=FALSE}
+
+``` r
 # Placeholder for Factorial in Incomplete Blocks example
 # This will show:
 # - Designing confounded factorial experiments
@@ -780,7 +1008,8 @@ Nested designs involve factors that are nested within levels of other factors, c
 
 ## Setting Up Nested Designs with speed
 
-```{r nested-design-example, eval=FALSE}
+
+``` r
 # Placeholder for Nested Design example
 # This will show:
 # - Creating hierarchical factor structures

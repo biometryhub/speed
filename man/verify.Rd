@@ -5,6 +5,7 @@
 \alias{.verify_hierarchical_inputs}
 \alias{.verify_optim_params}
 \alias{.verify_swap_all_replication}
+\alias{.verify_grid_factors}
 \alias{.verify_grid_by}
 \title{Verify Inputs for \code{speed}}
 \usage{
@@ -44,6 +45,8 @@
 )
 
 .verify_swap_all_replication(data, optimise, dummy_group = NULL)
+
+.verify_grid_factors(grid_factors)
 
 .verify_grid_by(data, grid_factors)
 }
@@ -94,7 +97,9 @@ with no \code{swap_within} boundary, so it can be described as the whole design.
 
 \item{grid_factors}{A named list specifying grid factors to construct a
 matrix for calculating adjacency score, \code{dim1} for row and \code{dim2} for
-column. (default: \code{list(dim1 = "row", dim2 = "col")}).
+column. (default: \code{list(dim1 = "row", dim2 = "col")}). The axes apply to
+the whole design, so unlike \code{swap} they cannot be set per level of a
+hierarchical design.
 
 An optional third element, \code{by}, names a column that groups plots into
 \emph{separate} grids - a multi-environment trial, where each site reuses the
@@ -117,6 +122,11 @@ any optimisation happens rather than silently altering replication.
 Called on the resolved \code{optimise} list, so it covers simple, legacy
 hierarchical and \verb{optimise = } calls alike, including levels that set
 \code{swap_all} individually.
+
+\code{grid_factors} must be a single list naming the two grid axes, since
+\code{\link[=infer_row_col]{infer_row_col()}} resolves one pair of axes for the whole design. The axes
+cannot vary between levels of a hierarchical design; \code{by} is what splits a
+design into separate grids.
 
 \code{grid_factors} is a plain list, so a mistyped \code{by} would be ignored and every
 grid silently pooled. Checked before any optimisation happens.

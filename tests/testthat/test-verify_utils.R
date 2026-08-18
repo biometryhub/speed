@@ -1,5 +1,4 @@
 test_that(".verify_speed_inputs works correctly", {
-  # Create test data
   test_data <- data.frame(
     row = 1:6,
     col = rep(1:3, 2),
@@ -7,7 +6,6 @@ test_that(".verify_speed_inputs works correctly", {
     block = rep(1:2, each = 3)
   )
 
-  # Test successful verification
   expect_silent(.verify_speed_inputs(
     data = test_data,
     swap = "treatment",
@@ -19,7 +17,6 @@ test_that(".verify_speed_inputs works correctly", {
     seed = 123
   ))
 
-  # Test with swap_within = "1"
   expect_silent(.verify_speed_inputs(
     data = test_data,
     swap = "treatment",
@@ -31,7 +28,6 @@ test_that(".verify_speed_inputs works correctly", {
     seed = NULL
   ))
 
-  # Test error: data not a data frame
   expect_error(
     .verify_speed_inputs(
       data = "not_a_dataframe",
@@ -46,7 +42,6 @@ test_that(".verify_speed_inputs works correctly", {
     "`data` must be an initial data frame"
   )
 
-  # Test error: swap column doesn't exist
   expect_error(
     .verify_speed_inputs(
       data = test_data,
@@ -61,7 +56,6 @@ test_that(".verify_speed_inputs works correctly", {
     "'nonexistent_column' not found in"
   )
 
-  # Test error: spatial_factors not a formula
   expect_error(
     .verify_speed_inputs(
       data = test_data,
@@ -76,7 +70,6 @@ test_that(".verify_speed_inputs works correctly", {
     "spatial_factors must be a one sided formula"
   )
 
-  # Test error: spatial factor column doesn't exist
   expect_error(
     .verify_speed_inputs(
       data = test_data,
@@ -91,7 +84,6 @@ test_that(".verify_speed_inputs works correctly", {
     "'nonexistent_col' not found in"
   )
 
-  # Test error: invalid iterations
   expect_error(
     .verify_speed_inputs(
       data = test_data,
@@ -105,22 +97,9 @@ test_that(".verify_speed_inputs works correctly", {
     ),
     "must be a positive whole number"
   )
-
-  # Test error: invalid cooling_rate
-  # expect_error(.verify_speed_inputs(
-  #   data = test_data,
-  #   swap = "treatment",
-  #   swap_within = "1",
-  #   spatial_factors = ~ row + col,
-  #   iterations = 100,
-  #   early_stop_iterations = 50,
-  #   quiet = TRUE,
-  #   seed = 123
-  # ), "between 0 and 1 \\(exclusive\\)")
 })
 
 test_that(".verify_hierarchical_inputs works correctly", {
-  # Create test data
   test_data <- data.frame(
     row = 1:6,
     col = rep(1:3, 2),
@@ -129,7 +108,6 @@ test_that(".verify_hierarchical_inputs works correctly", {
     block = rep(1:2, each = 3)
   )
 
-  # Test successful verification
   expect_silent(.verify_hierarchical_inputs(
     data = test_data,
     swap = list(main = "treatment", sub = "subplot"),
@@ -142,7 +120,6 @@ test_that(".verify_hierarchical_inputs works correctly", {
     seed = 123
   ))
 
-  # Test error: mismatched names
   expect_error(
     .verify_hierarchical_inputs(
       data = test_data,
@@ -158,7 +135,6 @@ test_that(".verify_hierarchical_inputs works correctly", {
     "Names of `swap` and `swap_within` must match"
   )
 
-  # Test error: column not found in swap
   expect_error(
     .verify_hierarchical_inputs(
       data = test_data,
@@ -174,7 +150,6 @@ test_that(".verify_hierarchical_inputs works correctly", {
     "Column nonexistent not found in data"
   )
 
-  # Test error: column not found in swap_within
   expect_error(
     .verify_hierarchical_inputs(
       data = test_data,
@@ -190,7 +165,6 @@ test_that(".verify_hierarchical_inputs works correctly", {
     "Column nonexistent not found in data"
   )
 
-  # Test error: invalid quiet parameter
   expect_error(
     .verify_hierarchical_inputs(
       data = test_data,
@@ -206,7 +180,6 @@ test_that(".verify_hierarchical_inputs works correctly", {
     "`quiet` must be logical"
   )
 
-  # Test error: invalid seed parameter
   expect_error(
     .verify_hierarchical_inputs(
       data = test_data,
@@ -224,7 +197,6 @@ test_that(".verify_hierarchical_inputs works correctly", {
 })
 
 test_that("is_between_ works correctly", {
-  # Test basic between function
   between_1_10 <- is_between_(1, 10)
   expect_true(between_1_10(5))
   expect_true(between_1_10(1))
@@ -233,7 +205,6 @@ test_that("is_between_ works correctly", {
   expect_false(between_1_10(11))
   expect_false(between_1_10("5"))
 
-  # Test with exclusions
   between_1_10_exclusive <- is_between_(
     1,
     10,
@@ -246,13 +217,11 @@ test_that("is_between_ works correctly", {
   expect_false(between_1_10_exclusive(0))
   expect_false(between_1_10_exclusive(11))
 
-  # Test with only lower bound
   greater_than_0 <- is_between_(0, Inf, lower_exclude = TRUE)
   expect_true(greater_than_0(1))
   expect_false(greater_than_0(0))
   expect_false(greater_than_0(-1))
 
-  # Test with only upper bound
   less_than_100 <- is_between_(-Inf, 100, upper_exclude = TRUE)
   expect_true(less_than_100(50))
   expect_false(less_than_100(100))
@@ -281,7 +250,6 @@ test_that("is_whole_number works correctly", {
   expect_false(is_whole_number(NA))
   expect_equal(is_whole_number(Inf), NA)
 
-  # Test with custom tolerance
   expect_true(is_whole_number(1.0000001, tol = 1e-6))
   expect_false(is_whole_number(1.001, tol = 1e-6))
 })
@@ -489,7 +457,6 @@ test_that("literal works correctly", {
 
 test_that("get_var_names works correctly", {
   # This function extracts variable names from function calls
-  # We need to test it in a way that mimics how it's used
   test_func <- function(...) {
     get_var_names(...)
   }
@@ -512,23 +479,19 @@ test_that("data_type_error works correctly", {
 })
 
 test_that("edge cases and error handling", {
-  # Test with empty data frame
   empty_df <- data.frame()
   expect_error(verify_column_exists("any", empty_df), "'any' not found in")
 
-  # Test verify_between with edge values
   expect_silent(verify_between(0, lower = 0, upper = 0))
   expect_error(
     verify_between(0, lower = 0, upper = 0, lower_exclude = TRUE),
     "must be between 0 \\(exclusive\\) and 0"
   )
 
-  # Test with very large numbers
   large_num <- .Machine$integer.max
   expect_true(is_whole_number(large_num))
   expect_true(is_positive_whole_number(large_num))
 
-  # Test with very small numbers (floating point precision)
   small_num <- .Machine$double.eps
   expect_false(is_whole_number(small_num, tol = .Machine$double.eps))
   expect_true(is_whole_number(small_num, tol = small_num * 2))

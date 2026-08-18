@@ -6,6 +6,16 @@
   default `objective_function()`. This can be turned off per level with `optim_params(stop_at_optimal =
   FALSE)`. `summary()` now reports the lower bound score alongside the achieved one.
 
+## Minor Changes
+
+- The startup version check now only runs in interactive sessions. Set the `SPEED_NO_VERSION_CHECK`
+  environment variable to disable it entirely.
+
+## Bug Fixes
+
+- `speed()` now gives a clear error when `grid_factors` is malformed, instead of failing with
+  "missing value where TRUE/FALSE needed".
+
 # speed 0.0.10
 
 ## Major Changes

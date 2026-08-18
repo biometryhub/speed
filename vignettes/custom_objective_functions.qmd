@@ -1,7 +1,7 @@
 ---
 title: "Custom Objective Functions and Advanced Options for Optimisation in speed"
 author: "Sam Rogers"
-date: "`r Sys.Date()`"
+date: "2026-08-10"
 output:
   html_document:
     toc: true
@@ -15,15 +15,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  fig.width = 8,
-  fig.height = 6,
-  dpi = 150
-)
-```
+
 
 # Introduction
 
@@ -37,7 +29,8 @@ While the `speed` package provides a range of excellent default optimisation set
 
 Understanding these advanced features allows researchers to fully leverage the `speed` package for complex or non-standard experimental design challenges.
 
-```{r load-package}
+
+``` r
 library(speed)
 ```
 
@@ -127,7 +120,8 @@ Most of constraints can be handled by careful design of the layout and the defau
 
 Firstly, we need to create a function that evaluates the co-occurrence of treatments in the design. The function will count the number of times each pair of treatments appears together, and simply return a list of the counts. This will also help us to check if the design meets the BIBD requirements later.
 
-```{r cooccurrance, eval=TRUE}
+
+``` r
 get_cooccurrence <- function(design_df, swap) {
   pairs <- unlist(lapply(unique(design_df$block), function(block) {
     combn(
@@ -143,7 +137,8 @@ get_cooccurrence <- function(design_df, swap) {
 
 Given an input data frame `design_df` with a column for blocks and a column for treatments, this function will return a list of treatment pairs (provided in the column given by the `swap` argument) and their counts across the blocks. Now we need to incorporate this into a custom objective function that uses this to evaluate the BIBD properties. To be able to include it within the `speed` optimisation algorithim, we need to ensure that the function returns a list with a `score` element, which is a single numeric value representing the optimality of the layout. The `speed` package is set up to minimise this score, so lower values are better, and may require taking the reciprocal of the score if higher values mean more optimal layouts in the context of a custom objective function.
 
-```{r custom-objective, eval=TRUE}
+
+``` r
 bibd_objective_function <- function(
     layout_df,
     swap,
@@ -182,24 +177,26 @@ The following parameters will allow us to produce a valid BIBD layout:
 
 We will create a data frame representing the BIBD layout, and then run the `speed` optimisation with our custom objective function.
 
-```{r bibd-objective, eval=TRUE}
+
+``` r
 # Create the data frame
 bibd_df <- initialise_design_df(items = 5, nrows = 3, ncols = 10, 
                                 block_nrows = 3, block_ncols = 1)
 
 head(bibd_df)
+#>   row col treatment row_block col_block block
+#> 1   1   1        T1         1         1     1
+#> 2   2   1        T2         1         1     1
+#> 3   3   1        T3         1         1     1
+#> 4   1   2        T4         1         2     2
+#> 5   2   2        T5         1         2     2
+#> 6   3   2        T1         1         2     2
 ```
 
 The `initialise_design_df` function creates a data frame with 5 treatments, arranged in 10 blocks, with each block containing 3 plots. The `block_nrows` and `block_ncols` parameters define the layout of the blocks.
 
-```{r}
-#| label: fig-bibd-layout
-#| fig-cap: "Initial BIBD Layout"
-#| fig-align: center
-#| echo: false
-class(bibd_df) <- c("design", class(bibd_df))
-autoplot(bibd_df)
-```
+
+![Initial BIBD Layout](figures/fig-bibd-layout-1.png){#fig-bibd-layout fig-align="center"}
 
 @fig-bibd-layout shows the initial layout of the BIBD design. The treatments are systematically assigned to blocks, but we need to randomise this design, and ensure that the co-occurrence of treatments meets the BIBD requirements.
 
@@ -207,22 +204,73 @@ autoplot(bibd_df)
 
 Now we can run the optimisation using our custom objective function simply by passing the name to the `speed` function via the `obj_function` argument. We will also specify the `swap` argument to indicate which column contains the treatments, and the `spatial_factors` argument to include the block, row, and column information for spatial balance. This will allow the optimisation to consider both the adjacency of treatments and their spatial distribution across the blocks, while the custom objective function will ensure that the co-occurrence of treatments is balanced according to the BIBD requirements. Note also that we set `optim_params(random_initialisation = TRUE)` to ensure that the initialisation of the design is randomised. 
 
-```{r bibd-optimisation, eval=TRUE}
+
+``` r
 result <- speed(bibd_df, 
                 swap = "treatment",
                 spatial_factors = ~ block + row + col,
                 obj_function = bibd_objective_function,
                 optimise_params = optim_params(random_initialisation = TRUE),
                 seed = 42)
+#> row and col are used as row and column, respectively.
+#> Optimising level: single treatment within whole design 
+#> Level: single treatment within whole design Iteration: 1000 Score: 7 Best: 7 Since Improvement: 425 
+#> Level: single treatment within whole design Iteration: 2000 Score: 6 Best: 6 Since Improvement: 888 
+#> Level: single treatment within whole design Iteration: 3000 Score: 6 Best: 6 Since Improvement: 1888 
+#> Early stopping at iteration 3112 for level single treatment within whole design
 
 result
+#> Optimised Experimental Design
+#> ----------------------------
+#> Score: 6 
+#> Iterations Run: 3113 
+#> Stopped Early: TRUE 
+#> Treatments: T1, T2, T3, T4, T5 
+#> Seed: 42
 ```
 
 
-```{r bibd_result-plot, eval=TRUE}
+
+``` r
 autoplot(result)
+```
+
+
+![](figures/bibd_result-plot-1.png){fig-align="default"}
+
+``` r
 get_cooccurrence(result$design_df, "treatment")
+#> $`T1,T2`
+#> [1] 3
+#> 
+#> $`T1,T3`
+#> [1] 3
+#> 
+#> $`T1,T4`
+#> [1] 3
+#> 
+#> $`T1,T5`
+#> [1] 3
+#> 
+#> $`T2,T3`
+#> [1] 3
+#> 
+#> $`T2,T4`
+#> [1] 3
+#> 
+#> $`T2,T5`
+#> [1] 3
+#> 
+#> $`T3,T4`
+#> [1] 3
+#> 
+#> $`T3,T5`
+#> [1] 3
+#> 
+#> $`T4,T5`
+#> [1] 3
 unique(unlist(get_cooccurrence(result$design_df, "treatment")))
+#> [1] 3
 ```
 
 Visual inspection of the plot and the output above shows that each treatment appears exactly 3 times together as required. Hence we have successfully used our custom objective function to generate a type of design that is not possible with the default objective functions.
@@ -237,7 +285,8 @@ Visual inspection of the plot and the output above shows that each treatment app
 
 Controlling the cooling rate and acceptance probability.
 
-```{r temperature-schedule, eval=FALSE}
+
+``` r
 # Placeholder for temperature schedule
 # This will show:
 # - Initial temperature selection
@@ -251,7 +300,8 @@ Controlling the cooling rate and acceptance probability.
 
 Managing the number of iterations and convergence criteria.
 
-```{r iteration-controls, eval=FALSE}
+
+``` r
 # Placeholder for iteration controls
 # This will show:
 # - Maximum iteration settings
@@ -265,7 +315,8 @@ Managing the number of iterations and convergence criteria.
 
 Customising how the algorithm proposes layout changes.
 
-```{r move-types, eval=FALSE}
+
+``` r
 # Placeholder for move types
 # This will show:
 # - Different types of moves (swap, shift, rotate)
@@ -281,7 +332,8 @@ Customising how the algorithm proposes layout changes.
 
 Handling computationally intensive large-scale designs.
 
-```{r large-design-tuning, eval=FALSE}
+
+``` r
 # Placeholder for large design tuning
 # This will show:
 # - Memory management strategies
@@ -295,7 +347,8 @@ Handling computationally intensive large-scale designs.
 
 Monitoring and ensuring optimisation quality.
 
-```{r convergence-diagnostics, eval=FALSE}
+
+``` r
 # Placeholder for convergence diagnostics
 # This will show:
 # - Objective function tracking
@@ -309,7 +362,8 @@ Monitoring and ensuring optimisation quality.
 
 Understanding how parameter choices affect results.
 
-```{r parameter-sensitivity, eval=FALSE}
+
+``` r
 # Placeholder for parameter sensitivity
 # This will show:
 # - Systematic parameter testing
@@ -327,7 +381,8 @@ Understanding how parameter choices affect results.
 
 Beyond standard rectangular blocking patterns.
 
-```{r custom-blocking, eval=FALSE}
+
+``` r
 # Placeholder for custom blocking constraints
 # This will show:
 # - Irregular block shapes
@@ -341,7 +396,8 @@ Beyond standard rectangular blocking patterns.
 
 Specialised rules for treatment placement.
 
-```{r treatment-assignment, eval=FALSE}
+
+``` r
 # Placeholder for treatment assignment rules
 # This will show:
 # - Mandatory treatment positions
@@ -355,7 +411,8 @@ Specialised rules for treatment placement.
 
 Physical or practical limitations on plot placement.
 
-```{r spatial-constraints, eval=FALSE}
+
+``` r
 # Placeholder for spatial constraints
 # This will show:
 # - Irregular field boundaries
@@ -371,7 +428,8 @@ Physical or practical limitations on plot placement.
 
 Managing different types of constraint requirements.
 
-```{r constraint-types, eval=FALSE}
+
+``` r
 # Placeholder for constraint types
 # This will show:
 # - Absolute requirements (hard constraints)
@@ -385,7 +443,8 @@ Managing different types of constraint requirements.
 
 Strategies when exact constraint satisfaction is impossible.
 
-```{r constraint-relaxation, eval=FALSE}
+
+``` r
 # Placeholder for constraint relaxation
 # This will show:
 # - Gradual constraint loosening
@@ -401,7 +460,8 @@ Strategies when exact constraint satisfaction is impossible.
 
 Assessing optimisation results.
 
-```{r quality-metrics, eval=FALSE}
+
+``` r
 # Placeholder for quality metrics
 # This will show:
 # - Statistical efficiency measures
@@ -417,7 +477,8 @@ Assessing optimisation results.
 
 Systematic comparison of optimisation strategies.
 
-```{r batch-optimisation, eval=FALSE}
+
+``` r
 # Placeholder for batch optimisation
 # This will show:
 # - Automated parameter sweeps
@@ -431,7 +492,8 @@ Systematic comparison of optimisation strategies.
 
 Incorporating optimisation into larger research workflows.
 
-```{r workflow-integration, eval=FALSE}
+
+``` r
 # Placeholder for workflow integration
 # This will show:
 # - Automated design generation

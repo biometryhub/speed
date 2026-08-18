@@ -221,9 +221,8 @@ test_that("calculate_efficiency_factor refuses unreplicated and degenerate desig
   }
 })
 
-test_that("calculate_efficiency_factor uses pseudoinverse for matrices with high condition numbers", {
+test_that("calculate_efficiency_factor handles designs with dependencies between treatments", {
   # Create a larger design with subtle dependencies that increase condition number
-  # This creates a more realistic scenario where pseudoinverse might be needed
   df_design_dependent <- data.frame(
     row = rep(1:6, each = 2),
     col = rep(1:2, times = 6),

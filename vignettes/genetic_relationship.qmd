@@ -1,7 +1,7 @@
 ---
 title: "Relationship-Aware Adjacency in speed"
 author: "Wasin Pipattungsakul"
-date: "`r Sys.Date()`"
+date: "2026-08-10"
 output:
   html_document:
     toc: true
@@ -31,7 +31,8 @@ for matches and `0` for non-matches. This vignette walks through a
 blocked design with sixteen treatments split into four groups whose
 within-group relatedness varies from "tightly related" to "unrelated".
 
-```{r load-package}
+
+``` r
 library(speed)
 library(patchwork)
 ```
@@ -60,7 +61,8 @@ Sixteen treatments `T01`–`T16` are organised into four groups of four:
 
 The trial uses an `8 × 8` grid divided into four `4 × 4` blocks.
 
-```{r design-df}
+
+``` r
 items <- paste0("T", 1:16)
 groups <- setNames(rep(c("A", "B", "C", "D"), each = 4), items)
 
@@ -76,13 +78,20 @@ design_df$group <- groups[design_df$treatment]
 head(design_df)
 ```
 
+```
+##   row col treatment row_block col_block block group
+## 1   1   1        T1         1         1     1     A
+## 2   2   1        T2         1         1     1     A
+## 3   3   1        T3         1         1     1     A
+## 4   4   1        T4         1         1     1     A
+## 5   5   1        T1         2         1     2     A
+## 6   6   1        T2         2         1     2     A
+```
+
 Plotting these factors shows the initial layout of the treatments and their group.
 
-```{r}
-#| code-fold: true
-#| code-summary: "Code"
-#| label: fig-init
-#| fig-cap: "Initial systematic layout: treatments and groups, with block boundaries."
+
+``` r
 class(design_df) <- c("design", class(design_df))
 p_treat <- autoplot(design_df, treatments = "treatment") +
   ggplot2::labs(title = "Treatments")
@@ -90,6 +99,9 @@ p_group <- autoplot(design_df, treatments = "group") +
   ggplot2::labs(title = "Groups")
 p_treat + p_group + plot_layout(ncol = 2)
 ```
+
+
+![Initial systematic layout: treatments and groups, with block boundaries.](figures/fig-init-1.png){#fig-init fig-align="default"}
 
 ## Building the Relationship Matrix
 
@@ -100,7 +112,8 @@ of having that pair adjacent. The diagonal is typically `1`
 here we encode four within-group levels and zero between-group
 similarity.
 
-```{r relationship}
+
+``` r
 n <- length(items)
 rel <- matrix(0, n, n, dimnames = list(items, items))
 within <- c(A = 0.8, B = 0.4, C = 0.1, D = 0.0)
@@ -111,13 +124,8 @@ for (g in names(within)) {
 diag(rel) <- 1
 ```
 
-```{r}
-#| code-fold: true
-#| code-summary: "Code"
-#| label: fig-relationship
-#| fig-cap: "Relationship matrix as a heatmap. Diagonal cells are self-pairs (`1`); each `4 × 4` block on the diagonal corresponds to a group, with brightness encoding within-group similarity."
-#| fig-width: 6
-#| fig-height: 5
+
+``` r
 rel_long <- as.data.frame.table(rel, responseName = "value")
 names(rel_long)[1:2] <- c("row", "col")
 
@@ -139,13 +147,17 @@ ggplot2::ggplot(rel_long, ggplot2::aes(x = col, y = row, fill = value)) +
   ggplot2::theme(panel.grid = ggplot2::element_blank())
 ```
 
+
+![Relationship matrix as a heatmap. Diagonal cells are self-pairs (`1`); each `4 × 4` block on the diagonal corresponds to a group, with brightness encoding within-group similarity.](figures/fig-relationship-1.png){#fig-relationship fig-align="default"}
+
 ## Running the Optimisation
 
 We run `speed()` twice with the same seed: first using the default
 identity-only adjacency, then with the relationship matrix
 (`relationship = rel`).
 
-```{r both-runs}
+
+``` r
 default_result <- speed(
   design_df,
   swap = "treatment",
@@ -164,17 +176,36 @@ related_result <- speed(
 )
 
 default_result
+```
+
+```
+## Optimised Experimental Design
+## ----------------------------
+## Score: 4.266667 
+## Iterations Run: 872 
+## Stopped Early: TRUE 
+## Treatments: T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16 
+## Seed: 42
+```
+
+``` r
 related_result
+```
+
+```
+## Optimised Experimental Design
+## ----------------------------
+## Score: 4.266667 
+## Iterations Run: 3511 
+## Stopped Early: TRUE 
+## Treatments: T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16 
+## Seed: 42
 ```
 
 ## Visualising the Output
 
-```{r}
-#| code-fold: true
-#| code-summary: "Code"
-#| label: fig-final-group
-#| fig-cap: "Group view: default identity-only adjacency vs. relationship-aware adjacency."
-#| fig-width: 10
+
+``` r
 default_result$design_df$group <- groups[default_result$design_df$treatment]
 related_result$design_df$group <- groups[related_result$design_df$treatment]
 
@@ -185,18 +216,20 @@ p_rel_g <- autoplot(related_result, treatments = "group") +
 p_def_g + p_rel_g + plot_layout(ncol = 2)
 ```
 
-```{r}
-#| code-fold: true
-#| code-summary: "Code"
-#| label: fig-final-treat
-#| fig-cap: "Treatment view: default identity-only adjacency vs. relationship-aware adjacency."
-#| fig-width: 10
+
+![Group view: default identity-only adjacency vs. relationship-aware adjacency.](figures/fig-final-group-1.png){#fig-final-group fig-align="default"}
+
+
+``` r
 p_def_t <- autoplot(default_result, treatments = "treatment") +
   ggplot2::labs(title = "Default speed: treatments")
 p_rel_t <- autoplot(related_result, treatments = "treatment") +
   ggplot2::labs(title = "speed + relationship: treatments")
 p_def_t + p_rel_t + plot_layout(ncol = 2)
 ```
+
+
+![Treatment view: default identity-only adjacency vs. relationship-aware adjacency.](figures/fig-final-treat-1.png){#fig-final-treat fig-align="default"}
 
 The default optimisation only avoids same-treatment adjacency; related
 treatments from the same group are still free to sit next to each other.
@@ -213,7 +246,8 @@ into two `4 × 4` blocks, with two replicates of every variety per
 block. Unlike the previous example, there is no group structure -
 every pair of varieties carries its own similarity coefficient.
 
-```{r design-df-cor}
+
+``` r
 items2 <- paste0("V", 1:8)
 design_df2 <- initialise_design_df(
   items = rep(items2, 4),
@@ -226,6 +260,16 @@ design_df2 <- initialise_design_df(
 head(design_df2)
 ```
 
+```
+##   row col treatment row_block col_block block
+## 1   1   1        V1         1         1     1
+## 2   2   1        V2         1         1     1
+## 3   3   1        V3         1         1     1
+## 4   4   1        V4         1         1     1
+## 5   1   2        V5         1         1     1
+## 6   2   2        V6         1         1     1
+```
+
 ## Building the Relationship Matrix
 
 We populate the upper triangle with random similarities in `[0, 0.9]`,
@@ -234,7 +278,8 @@ relationship matrix in which every off-diagonal entry is distinct -
 there is no plateau for the optimiser to exploit, so each pair
 contributes its own adjacency cost.
 
-```{r relationship-cor}
+
+``` r
 n_v <- length(items2)
 
 rel2 <- matrix(0, n_v, n_v, dimnames = list(items2, items2))
@@ -244,13 +289,8 @@ rel2 <- rel2 + t(rel2)
 diag(rel2) <- 1
 ```
 
-```{r}
-#| code-fold: true
-#| code-summary: "Code"
-#| label: fig-relationship-cor
-#| fig-cap: "Per-pair relationship matrix as a heatmap. Every off-diagonal cell is unique; the diagonal is fixed at `1`."
-#| fig-width: 6
-#| fig-height: 5
+
+``` r
 rel2_long <- as.data.frame.table(rel2, responseName = "value")
 names(rel2_long)[1:2] <- c("row", "col")
 
@@ -272,6 +312,9 @@ ggplot2::ggplot(rel2_long, ggplot2::aes(x = col, y = row, fill = value)) +
   ggplot2::theme(panel.grid = ggplot2::element_blank())
 ```
 
+
+![Per-pair relationship matrix as a heatmap. Every off-diagonal cell is unique; the diagonal is fixed at `1`.](figures/fig-relationship-cor-1.png){#fig-relationship-cor fig-align="default"}
+
 ## Running the Optimisation
 
 We run `speed()` twice with the same seed: first using the default
@@ -279,7 +322,8 @@ identity-only adjacency, then with the per-pair relationship matrix
 (`relationship = rel2`) and a stronger balance weight set through
 `optim_params()`.
 
-```{r both-runs-cor}
+
+``` r
 default_result2 <- speed(
   design_df2,
   swap = "treatment",
@@ -299,17 +343,36 @@ related_result2 <- speed(
 )
 
 default_result2
+```
+
+```
+## Optimised Experimental Design
+## ----------------------------
+## Score: 2.285714 
+## Iterations Run: 758 
+## Stopped Early: TRUE 
+## Treatments: V1, V2, V3, V4, V5, V6, V7, V8 
+## Seed: 112
+```
+
+``` r
 related_result2
+```
+
+```
+## Optimised Experimental Design
+## ----------------------------
+## Score: 16.30073 
+## Iterations Run: 3435 
+## Stopped Early: TRUE 
+## Treatments: V1, V2, V3, V4, V5, V6, V7, V8 
+## Seed: 112
 ```
 
 ## Visualising the Output
 
-```{r}
-#| code-fold: true
-#| code-summary: "Code"
-#| label: fig-final-treat-cor
-#| fig-cap: "Treatment view: default identity-only adjacency vs. relationship-aware adjacency under per-pair similarities."
-#| fig-width: 10
+
+``` r
 p_def_t2 <- autoplot(default_result2, treatments = "treatment") +
   ggplot2::labs(title = "Default speed: treatments")
 p_rel_t2 <- autoplot(related_result2, treatments = "treatment") +
@@ -317,17 +380,17 @@ p_rel_t2 <- autoplot(related_result2, treatments = "treatment") +
 p_def_t2 + p_rel_t2 + plot_layout(ncol = 2)
 ```
 
+
+![Treatment view: default identity-only adjacency vs. relationship-aware adjacency under per-pair similarities.](figures/fig-final-treat-cor-1.png){#fig-final-treat-cor fig-align="default"}
+
 The default optimisation treats every non-self adjacency as equally costly. With a relationship matrix, the
 algorithm can separate the similar varieties - neighbours of any given variety tend to be the varieties with the
 smallest entries in its row of `rel2`.
 
 The placements of the closely related pairs of treatments:
 
-```{r}
-#| code-fold: true
-#| code-summary: "Code"
-#| label: fig-close-treatments-cor
-#| fig-cap: "Optimised layout. Only varieties involved in the high-similarity pairs are shown."
+
+``` r
 # Plot a layout where cells with NA treatments are greyed and the rest
 # are labelled in red.
 plot_highlighted_layout <- function(layout_df) {
@@ -380,6 +443,9 @@ for (i in 1:3) {
 plots + plot_layout(ncol = 2)
 ```
 
+
+![Optimised layout. Only varieties involved in the high-similarity pairs are shown.](figures/fig-close-treatments-cor-1.png){#fig-close-treatments-cor fig-align="default"}
+
 Without a relationship matrix, these related treatments can be placed next to each other. This can be optimised
 by providing such matrix.
 
@@ -391,19 +457,44 @@ Because the relationship matrix appears in both calls, we use
 `prep_relationship()` to validate and flatten it once and reuse the
 result.
 
-```{r compare-scores}
+
+``` r
 prepped <- prep_relationship(rel)
 
 # Identity-only score: counts only same-treatment adjacencies.
 calculate_adjacency_score(default_result$design_df, swap = "treatment")
-calculate_adjacency_score(related_result$design_df, swap = "treatment")
+```
 
+```
+## [1] 0
+```
+
+``` r
+calculate_adjacency_score(related_result$design_df, swap = "treatment")
+```
+
+```
+## [1] 0
+```
+
+``` r
 # Relationship-aware score: also counts (down-weighted) related-pair
 # adjacencies.
 calculate_adjacency_score(default_result$design_df, swap = "treatment",
                           relationship = prepped)
+```
+
+```
+## [1] 6.8
+```
+
+``` r
 calculate_adjacency_score(related_result$design_df, swap = "treatment",
                           relationship = prepped)
+```
+
+```
+## [1] 0
 ```
 
 Both designs avoid same-treatment neighbours equally well, but under the

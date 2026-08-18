@@ -1,0 +1,79 @@
+# Executes the real vignette sources across the full platform matrix.
+#
+# The vignettes that ship are pre-computed, so R-CMD-check.yaml never runs their
+# R code. This restores that coverage without sitting on the critical path of
+# every push: weekly, on demand, and on any change to the vignette sources.
+on:
+  schedule:
+    # Mondays, 17:00 UTC
+    - cron: "0 17 * * 1"
+  workflow_dispatch:
+  push:
+    paths:
+      - "vignettes/**.qmd.orig"
+      - "data-raw/precompute-vignettes.R"
+      - ".github/workflows/vignettes.yaml"
+
+name: vignettes.yaml
+
+permissions: read-all
+
+jobs:
+  render-vignettes:
+    runs-on: ${{ matrix.config.os }}
+
+    name: vignettes ${{ matrix.config.os }} (${{ matrix.config.r }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: macos-latest,    r: 'release'}
+          - {os: windows-latest,  r: 'release'}
+          - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
+          - {os: ubuntu-latest,   r: 'release'}
+          - {os: ubuntu-latest,   r: 'oldrel-1'}
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: quarto-dev/quarto-actions/setup@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+          http-user-agent: ${{ matrix.config.http-user-agent }}
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::knitr, any::withr, any::pkgload, local::.
+          needs: check
+
+      # Re-runs every chunk in the .qmd.orig sources; fails on any error.
+      - name: Execute vignette sources
+        run: Rscript data-raw/precompute-vignettes.R
+
+      # The generated .qmd must still render to HTML on this platform.
+      - name: Render the generated vignettes
+        run: |
+          for f in vignettes/*.qmd; do
+            quarto render "$f" --to html
+          done
+        shell: bash
+
+      - name: Upload rendered vignettes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vignettes-${{ matrix.config.os }}-${{ matrix.config.r }}
+          path: |
+            vignettes/*.html
+            vignettes/figures/**
+          retention-days: 7

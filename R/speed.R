@@ -22,7 +22,9 @@
 #'   consider for balance (default: `~row + col`).
 #' @param grid_factors A named list specifying grid factors to construct a
 #'   matrix for calculating adjacency score, `dim1` for row and `dim2` for
-#'   column. (default: `list(dim1 = "row", dim2 = "col")`).
+#'   column. (default: `list(dim1 = "row", dim2 = "col")`). The axes apply to
+#'   the whole design, so unlike `swap` they cannot be set per level of a
+#'   hierarchical design.
 #'
 #'   An optional third element, `by`, names a column that groups plots into
 #'   *separate* grids - a multi-environment trial, where each site reuses the
@@ -141,9 +143,19 @@
 #' df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
 #' df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
 #'
+#' # Low iterations keeps the example quick; raise it for a real design.
 #' optimise <- list(
-#'   connectivity = list(spatial_factors = ~site),
-#'   balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+#'   connectivity = list(
+#'     spatial_factors = ~site,
+#'     iterations = 500,
+#'     early_stop_iterations = 100
+#'   ),
+#'   balance = list(
+#'     swap_within = "site",
+#'     spatial_factors = ~ site_col + site_block,
+#'     iterations = 500,
+#'     early_stop_iterations = 100
+#'   )
 #' )
 #'
 #' result <- speed(
@@ -192,6 +204,10 @@ speed <- function(data,
                            seed)
     }
   }
+
+  # Checked for every call shape, since `infer_row_col()` below uses it whether
+  # or not `optimise` was supplied.
+  .verify_grid_factors(grid_factors)
 
   # `by` groups plots into separate grids (a multi-environment trial)
   .verify_grid_by(data, grid_factors)

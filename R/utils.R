@@ -210,6 +210,8 @@ create_speed_input <- function(
       optimise[[optimise_name]] <- list(
         swap = swap[[optimise_name]],
         swap_within = swap_within[[optimise_name]] %||% .DEFAULT$swap_within,
+        # `speed()` rejects a per-level `grid_factors`, so this arm is only
+        # reachable by calling `create_speed_input()` directly.
         grid_factors = if (is.list(grid_factors[[1]])) {
           grid_factors[[optimise_name]] %||% .DEFAULT$grid_factors
         } else {

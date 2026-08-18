@@ -197,6 +197,52 @@
   }
 }
 
+#' Verify the `grid_factors` argument
+#'
+#' @description
+#' `grid_factors` must be a single list naming the two grid axes, since
+#' [infer_row_col()] resolves one pair of axes for the whole design. The axes
+#' cannot vary between levels of a hierarchical design; `by` is what splits a
+#' design into separate grids.
+#'
+#' @rdname verify
+#'
+#' @keywords internal
+.verify_grid_factors <- function(grid_factors) {
+  malformed <- !is.list(grid_factors) ||
+    !all(c("dim1", "dim2") %in% names(grid_factors)) ||
+    !all(vapply(
+      grid_factors[c("dim1", "dim2")],
+      function(d) return(is.character(d) && length(d) == 1),
+      logical(1)
+    ))
+
+  if (malformed) {
+    stop(
+      "`grid_factors` must be a list with `dim1` and `dim2`, each naming a",
+      " single column, e.g. `list(dim1 = \"row\", dim2 = \"col\")`.",
+      if (
+        is.list(grid_factors) &&
+          length(grid_factors) &&
+          is.list(grid_factors[[1]])
+      ) {
+        paste0(
+          "\nGrid axes apply to the whole design and cannot be set per level of",
+          " a hierarchical design. To score parts of the design as separate",
+          " grids, such as the sites of a multi-environment trial, name the",
+          " grouping column with `by`, e.g. `list(dim1 = \"row\",",
+          " dim2 = \"col\", by = \"site\")`."
+        )
+      } else {
+        ""
+      },
+      call. = FALSE
+    )
+  }
+
+  return(invisible(NULL))
+}
+
 #' Verify the `by` element of `grid_factors`
 #'
 #' @description

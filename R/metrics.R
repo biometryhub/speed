@@ -908,16 +908,10 @@ calculate_efficiency_factor <- function(
   # ones. Reported values for estimable designs are unchanged.
   Z <- cbind(1, Z_row, Z_col)
 
-  # Check if Z^TZ is invertible
+  # Moore-Penrose inverse, as for A_RC below: it agrees with solve() when Z has
+  # full column rank, and stays defined if it ever does not.
   ZtZ <- t(Z) %*% Z
-  condition_number <- kappa(ZtZ)
-
-  # Use Moore-Penrose inverse if matrix is near singular
-  if (condition_number > 1e12) {
-    ZtZ_inv <- pseudo_inverse(ZtZ)
-  } else {
-    ZtZ_inv <- solve(ZtZ)
-  }
+  ZtZ_inv <- pseudo_inverse(ZtZ)
 
   # Calculate treatment information matrix A_RC
   # A_RC = X^T (I - P_Z) X

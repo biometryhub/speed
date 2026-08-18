@@ -1,0 +1,6 @@
+b915950bb081035c28f661fdf49d4085  complex_designs.qmd.orig
+7459a08539f93eabda84dc2c70050da7  custom_objective_functions.qmd.orig
+fb237c3e750f35d6e9bed976e4eb2098  factorial.qmd.orig
+8e4bdf52467e3a1a907ff5dbe55191b2  genetic_relationship.qmd.orig
+403c819b4d71b06d044f88ad605858c1  met.qmd.orig
+270e323a8c279449207af1129106ceb8  speed.qmd.orig
