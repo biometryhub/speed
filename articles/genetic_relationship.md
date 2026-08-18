@@ -19,13 +19,6 @@ within-group relatedness varies from “tightly related” to “unrelated”.
 ``` r
 
 library(speed)
-```
-
-    A newer version of speed is available on GitHub (installed: 0.0.10, available: 0.0.11).
-    Update with: devtools::install_github("biometryhub/speed")
-
-``` r
-
 library(patchwork)
 ```
 
@@ -181,7 +174,7 @@ default_result
     Optimised Experimental Design
     ----------------------------
     Score: 4.266667
-    Iterations Run: 2872
+    Iterations Run: 872
     Stopped Early: TRUE
     Treatments: T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16
     Seed: 42 
@@ -357,7 +350,7 @@ default_result2
     Optimised Experimental Design
     ----------------------------
     Score: 2.285714
-    Iterations Run: 2758
+    Iterations Run: 758
     Stopped Early: TRUE
     Treatments: V1, V2, V3, V4, V5, V6, V7, V8
     Seed: 112 

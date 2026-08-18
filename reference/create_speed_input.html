@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.11</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,7 +38,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create Input for Internal speed Function</h1>
-      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/v0.0.10/R/utils.R" class="external-link"><code>R/utils.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/R/utils.R" class="external-link"><code>R/utils.R</code></a></small>
       <div class="d-none name"><code>create_speed_input.Rd</code></div>
     </div>
 
@@ -111,7 +111,9 @@ with names matching <code>swap</code>.</p></dd>
 <dt id="arg-early-stop-iterations">early_stop_iterations<a class="anchor" aria-label="anchor" href="#arg-early-stop-iterations"></a></dt>
 <dd><p>Number of iterations without improvement before
 early stopping (default: 2000). For hierarchical designs, can be a named
-list with names matching <code>swap</code>.</p></dd>
+list with names matching <code>swap</code>. Optimisation also stops as soon as a level
+reaches the lowest score its layout allows, which is only applicable for the
+default <code><a href="objective_functions.html">objective_function()</a></code>; see <a href="summary.design.html">summary()</a>.</p></dd>
 
 
 <dt id="arg-obj-function">obj_function<a class="anchor" aria-label="anchor" href="#arg-obj-function"></a></dt>

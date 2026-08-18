@@ -13,7 +13,7 @@ evaluation metrics that let you interrogate and defend a design."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.11</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,7 @@ evaluation metrics that let you interrogate and defend a design."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Summarise a speed design</h1>
-      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/v0.0.10/R/summary.R" class="external-link"><code>R/summary.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/R/summary.R" class="external-link"><code>R/summary.R</code></a></small>
       <div class="d-none name"><code>summary.design.Rd</code></div>
     </div>
 
@@ -125,7 +125,7 @@ name for a simple design).</p></li>
 <code>block_spread</code>, <code>efficiency</code>, <code>neighbour</code>; each a list with an
 <code>available</code> flag and either its value(s) or a <code>reason</code> it wasn't
 computed.</p></li>
-<li><p><code>score</code> - <code>initial</code>, <code>final</code>, <code>components</code>.</p></li>
+<li><p><code>score</code> - <code>initial</code>, <code>final</code>, <code>optimal</code> (<code>NA</code> when not applicable), <code>components</code>.</p></li>
 <li><p><code>optim</code> - <code>objective</code>, <code>start_temp</code>, <code>cooling_rate</code>,
 <code>iterations_requested</code>, <code>iterations_run</code>, <code>stopped_early</code>.</p></li>
 </ul></li>
@@ -197,13 +197,10 @@ omitted.</p></li>
 <span class="r-in"><span>                spatial_factors <span class="op">=</span> <span class="op">~</span> <span class="va">row</span> <span class="op">+</span> <span class="va">col</span>, iterations <span class="op">=</span> <span class="fl">100</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> row and col are used as row and column, respectively.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Optimising level: single treatment within whole design </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Optimal score reached at iteration 1 for level single treatment within whole design </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">design</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="font-weight: bold;">Design Summary</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ==============</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="font-weight: bold;">Flags</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -----</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BB00BB;">! Ran to iteration cap - may not have converged</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="font-weight: bold;">Structure</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---------</span>
@@ -219,7 +216,8 @@ omitted.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Score:        1  (initial 1 -&gt; final 1)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>               adjacency  0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>               balance    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations:   100 / 100 <span style="color: #BB00BB; font-weight: bold;">(ran to cap)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Optimal:      1  <span style="color: #00BB00;">(reached)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations:   1 / 100 <span style="color: #00BB00;">(stopped early)</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Temperature:  start 100, cooling 0.99</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="font-weight: bold;">Evaluation</span></span>
@@ -237,10 +235,6 @@ omitted.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="font-weight: bold;">Design Summary</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ==============</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="font-weight: bold;">Flags</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -----</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BB00BB;">! Ran to iteration cap - may not have converged</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="font-weight: bold;">Structure</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Layout:       4 rows x 3 cols (12 plots)</span>
@@ -255,7 +249,8 @@ omitted.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Score:        1  (initial 1 -&gt; final 1)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>               adjacency  0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>               balance    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations:   100 / 100 <span style="color: #BB00BB; font-weight: bold;">(ran to cap)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Optimal:      1  <span style="color: #00BB00;">(reached)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations:   1 / 100 <span style="color: #00BB00;">(stopped early)</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Temperature:  start 100, cooling 0.99</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="font-weight: bold;">Evaluation</span></span>

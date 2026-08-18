@@ -12,13 +12,6 @@ informative.
 ``` r
 
 library(speed)
-```
-
-    A newer version of speed is available on GitHub (installed: 0.0.10, available: 0.0.11).
-    Update with: devtools::install_github("biometryhub/speed")
-
-``` r
-
 library(patchwork)
 ```
 
@@ -178,7 +171,7 @@ str(factorial_result)
       ..$ col_column: chr "col"
       ..$ grid_by   : NULL
       ..$ per_level :List of 1
-      .. ..$ single treatment within block:List of 11
+      .. ..$ single treatment within block:List of 12
       .. .. ..$ swap            : chr "treatment"
       .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
       .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv>
@@ -193,6 +186,7 @@ str(factorial_result)
       .. .. ..$ final_score     : num 36.8
       .. .. ..$ final_components: Named num [1:2] 9.43 27.39
       .. .. .. ..- attr(*, "names")= chr [1:2] "main" "interaction"
+      .. .. ..$ optimal_score   : num NA
       ..$ call      : language speed(data = factorial_design, swap = "treatment", swap_within = "block",      spatial_factors = ~row + col, iter| __truncated__ ...
      - attr(*, "class")= chr [1:2] "design" "list"
 
