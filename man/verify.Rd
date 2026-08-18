@@ -4,6 +4,8 @@
 \alias{.verify_speed_inputs}
 \alias{.verify_hierarchical_inputs}
 \alias{.verify_optim_params}
+\alias{.verify_swap_all_replication}
+\alias{.verify_grid_by}
 \title{Verify Inputs for \code{speed}}
 \usage{
 .verify_speed_inputs(
@@ -37,8 +39,13 @@
   cooling_rate,
   random_initialisation,
   adj_weight,
-  bal_weight
+  bal_weight,
+  stop_at_optimal
 )
+
+.verify_swap_all_replication(data, optimise, dummy_group = NULL)
+
+.verify_grid_by(data, grid_factors)
 }
 \arguments{
 \item{data}{A data frame containing the experimental design with spatial
@@ -66,7 +73,9 @@ with names matching \code{swap}.}
 
 \item{early_stop_iterations}{Number of iterations without improvement before
 early stopping (default: 2000). For hierarchical designs, can be a named
-list with names matching \code{swap}.}
+list with names matching \code{swap}. Optimisation also stops as soon as a level
+reaches the lowest score its layout allows, which is only applicable for the
+default \code{\link[=objective_function]{objective_function()}}; see \link[=summary.design]{summary()}.}
 
 \item{quiet}{Logical; if TRUE, suppresses progress messages (default: FALSE)}
 
@@ -76,8 +85,40 @@ reproducibility of results (default: \code{NULL}).}
 \item{obj_function}{Objective function used to calculate score (lower is
 better) (default: \code{\link[=objective_function]{objective_function()}}). For hierarchical designs, can
 be a named list with names matching \code{swap}.}
+
+\item{optimise}{A list of named arguments describing optimising parameters;
+see more in example.}
+
+\item{dummy_group}{Name of the internal placeholder column used for a level
+with no \code{swap_within} boundary, so it can be described as the whole design.}
+
+\item{grid_factors}{A named list specifying grid factors to construct a
+matrix for calculating adjacency score, \code{dim1} for row and \code{dim2} for
+column. (default: \code{list(dim1 = "row", dim2 = "col")}).
+
+An optional third element, \code{by}, names a column that groups plots into
+\emph{separate} grids - a multi-environment trial, where each site reuses the
+same \code{row}/\code{col} numbering. Each grid is then scored on its own and the
+adjacency counts summed, so no adjacency is counted between plots at
+different sites, e.g.
+\code{list(dim1 = "row", dim2 = "col", by = "site")}. Without it, a design whose
+sites share coordinates is refused rather than silently pooled.}
 }
 \description{
 Verify inputs for the \code{speed} function.
+
+\code{swap_all = TRUE} proposes a move by exchanging \emph{every} plot holding one
+treatment with \emph{every} plot holding another. That is a rearrangement of the
+design only when both treatments occupy the same number of plots within the
+swap group; when they do not, the two treatments exchange replication counts
+and the design that comes back is not the design that went in. Error before
+any optimisation happens rather than silently altering replication.
+
+Called on the resolved \code{optimise} list, so it covers simple, legacy
+hierarchical and \verb{optimise = } calls alike, including levels that set
+\code{swap_all} individually.
+
+\code{grid_factors} is a plain list, so a mistyped \code{by} would be ignored and every
+grid silently pooled. Checked before any optimisation happens.
 }
 \keyword{internal}

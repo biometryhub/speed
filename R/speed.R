@@ -23,12 +23,22 @@
 #' @param grid_factors A named list specifying grid factors to construct a
 #'   matrix for calculating adjacency score, `dim1` for row and `dim2` for
 #'   column. (default: `list(dim1 = "row", dim2 = "col")`).
+#'
+#'   An optional third element, `by`, names a column that groups plots into
+#'   *separate* grids - a multi-environment trial, where each site reuses the
+#'   same `row`/`col` numbering. Each grid is then scored on its own and the
+#'   adjacency counts summed, so no adjacency is counted between plots at
+#'   different sites, e.g.
+#'   `list(dim1 = "row", dim2 = "col", by = "site")`. Without it, a design whose
+#'   sites share coordinates is refused rather than silently pooled.
 #' @param iterations Maximum number of iterations for the simulated annealing
 #'   algorithm (default: 10000). For hierarchical designs, can be a named list
 #'   with names matching `swap`.
 #' @param early_stop_iterations Number of iterations without improvement before
 #'   early stopping (default: 2000). For hierarchical designs, can be a named
-#'   list with names matching `swap`.
+#'   list with names matching `swap`. Optimisation also stops as soon as a level
+#'   reaches the lowest score its layout allows, which is only applicable for the
+#'   default [objective_function()]; see [summary()][summary.design()].
 #' @param obj_function Objective function used to calculate score (lower is
 #'   better) (default: [objective_function()]). For hierarchical designs, can
 #'   be a named list with names matching `swap`.
@@ -56,6 +66,12 @@
 #'   named list of treatment vectors (for hierarchical designs)
 #' - **seed** - Random seed used for reproducibility of the design. If not set
 #'   in the function, the seed is set to the third element of `.Random.seed`.
+#' - **metadata** - A list describing how the design was produced: the captured
+#'   `call`, the ordered `levels`, the resolved `row_column` / `col_column`
+#'   names, and a `per_level` list recording each level's swap variable,
+#'   spatial factors, adjacency/balance weights, requested iterations, starting
+#'   temperature, cooling rate, objective function and achieved score. Used by
+#'   [summary()][summary.design()] to recompute per-level evaluation metrics.
 #'
 #' @details
 #' This function provides a very general interface for producing experimental
@@ -163,6 +179,7 @@ speed <- function(data,
                   seed = NULL,
                   ...) {
   rlang::check_dots_used()
+  call <- match.call()
 
   if (is.null(optimise)) {
     # Check if this is a legacy hierarchical design
@@ -176,6 +193,10 @@ speed <- function(data,
     }
   }
 
+  # `by` groups plots into separate grids (a multi-environment trial)
+  .verify_grid_by(data, grid_factors)
+  grid_by <- grid_factors$by
+
   # Infer row and column columns
   inferred <- infer_row_col(data, grid_factors, quiet)
   row_column <- inferred$row
@@ -186,9 +207,14 @@ speed <- function(data,
   data <- factored$df
 
   if (inferred$inferred) {
-    # Sort the data frame to start with to ensure consistency in calculating the adjacency later
+    # Metrics are built from each plot's coordinates now, but neighbour
+    # generation and plotting may still rely on row order, so the sort stays.
     data <- data[do.call(order, data[c(row_column, col_column)]), ]
-    rownames(data) <- seq_len(nrow(data))
+    # Only reset row labels for base data frames; tibbles are positional and
+    # warn on `rownames<-`, and nothing downstream reads the design's row names.
+    if (!inherits(data, "tbl_df")) {
+      rownames(data) <- seq_len(nrow(data))
+    }
   }
 
   # dummy group for swapping within whole design
@@ -208,15 +234,23 @@ speed <- function(data,
     }
   }
 
+  # `swap_all` exchanges whole label sets, which only preserves replication when
+  # the sets are the same size
+  .verify_swap_all_replication(data, optimise, dummy_group)
+
   dots <- list(...)
   .reject_optim_params_in_dots(dots)
   dots <- .prep_dots(dots, optimise, data)
 
   design <- do.call(speed_hierarchical, c(
     list(data = data, optimise = optimise, quiet = quiet, seed = seed,
-         row_column = row_column, col_column = col_column),
+         row_column = row_column, col_column = col_column,
+         grid_by = grid_by),
     dots
   ))
+  # Set here, not passed through do.call(): do.call would evaluate a language
+  # object argument, re-invoking speed() recursively.
+  design$metadata$call <- call
   design$design_df[[dummy_group]] <- NULL
   design$design_df <- to_types(design$design_df, factored$input_types)
 
@@ -241,9 +275,24 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   current_design <- layout_df
   best_design <- current_design
 
+  # Only the treatment column moves during annealing, so build the index once.
+  # `NULL` on failure defers to build_design_matrix(), so a design that cannot
+  # form a grid still runs if its objective never needs one.
+  dots <- list(...)
+  grid_idx <- tryCatch(
+    grid_indices(
+      current_design,
+      dots$row_column %||% "row",
+      dots$col_column %||% "col",
+      by = dots$grid_by
+    ),
+    speed_grid_error = function(e) return(NULL)
+  )
+
   # Sequential optimisation for each hierarchy level
   all_scores <- list()
   all_temperatures <- list()
+  all_optimal_scores <- list()
   total_iterations <- 0  # TODO: Track total iterations across all levels
 
   # Set seed for reproducibility
@@ -257,16 +306,22 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     swap_all_blocks <- optimise_params$swap_all_blocks
     adj_weight <- optimise_params$adj_weight
     bal_weight <- optimise_params$bal_weight
+    stop_at_optimal <- optimise_params$stop_at_optimal
     spatial_cols <- all.vars(opt$spatial_factors)
 
     # Calculate initial score for this level
     current_score_obj <- opt$obj_function(current_design, opt$swap, spatial_cols, adj_weight = adj_weight,
-                                          bal_weight = bal_weight, ...)
+                                          bal_weight = bal_weight, grid_index = grid_idx, ...)
     current_score <- current_score_obj$score
 
     if (!is.numeric(current_score)) {
       stop("`score` from `objective_function` must be numeric.")
     }
+
+    # Lower bound on the score for this level; `NA` when none can be derived
+    optimal_score <- .optimal_score(current_design, opt$swap, spatial_cols, opt$obj_function,
+                                    adj_weight = adj_weight, bal_weight = bal_weight, ...)
+    all_optimal_scores[[level]] <- optimal_score
 
     best_score_obj <- current_score_obj
     best_score <- current_score
@@ -279,6 +334,14 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     for (iter in 1:opt$iterations) {
       scores[iter] <- current_score
       temperatures[iter] <- temp
+
+      # break once optimal
+      if (stop_at_optimal && !is.na(optimal_score) && best_score <= optimal_score + 1e-9) {
+        if (!quiet) cat("Optimal score reached at iteration", iter, "for level", level, "\n")
+        scores <- scores[1:iter]
+        temperatures <- temperatures[1:iter]
+        break
+      }
 
       if (optimise_params$adaptive_swaps) {
         current_swap_count <- max(1, round(swap_count * temp / start_temp))
@@ -295,7 +358,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       # Calculate new score
       new_score_obj <- opt$obj_function(new_design$design,opt$swap, spatial_cols, adj_weight = adj_weight,
                                         bal_weight = bal_weight, current_score_obj = current_score_obj,
-                                        swapped_items = new_design$swapped_items, ...)
+                                        swapped_items = new_design$swapped_items, grid_index = grid_idx, ...)
       new_score <- new_score_obj$score
 
       # Decide whether to accept the new design
@@ -347,6 +410,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   }
 
   # Collect and set up output and results
+  per_level_meta <- list()
   treatments <- list()
   level_scores <- numeric()
   for (level in hierarchy_levels) {
@@ -356,11 +420,38 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     bal_weight <- optimise_params$bal_weight
     spatial_cols <- all.vars(opt$spatial_factors)
 
-    # treatments and score for each level
+    # Capture the full objective return, not just the score, so summary() can
+    # report faithful score components.
     treatments[[level]] <- stringi::stri_sort(unique(as.vector(best_design[[opt$swap]])), numeric = TRUE)
-    level_scores[level] <- opt$obj_function(best_design, opt$swap, spatial_cols, adj_weight = adj_weight,
-                                            bal_weight = bal_weight, ...)$score
+    score_obj <- opt$obj_function(best_design, opt$swap, spatial_cols, adj_weight = adj_weight,
+                                  bal_weight = bal_weight, grid_index = grid_idx, ...)
+    level_scores[level] <- score_obj$score
+    per_level_meta[[level]] <- list(
+      swap             = opt$swap,
+      spatial_factors  = opt$spatial_factors,
+      spatial_cols     = spatial_cols,
+      adj_weight       = adj_weight,
+      bal_weight       = bal_weight,
+      iterations       = opt$iterations,
+      start_temp       = optimise_params$start_temp,
+      cooling_rate     = optimise_params$cooling_rate,
+      obj_function     = opt$obj_function,
+      final_score      = score_obj$score,
+      final_components = score_obj$components,
+      optimal_score    = all_optimal_scores[[level]]
+    )
   }
+
+  .dots <- list(...)
+  # `call` is attached by speed() after this returns, not here.
+  metadata <- list(
+    levels     = hierarchy_levels,
+    row_column = .dots$row_column %||% "row",
+    col_column = .dots$col_column %||% "col",
+    # NULL for a single-grid design, so summary() need not guess the grouping
+    grid_by    = .dots$grid_by,
+    per_level  = per_level_meta
+  )
 
   # Check which levels stopped early
   stopped_early <- sapply(hierarchy_levels, function(level) {
@@ -378,7 +469,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       iterations_run = total_iterations[[1]],
       stopped_early = stopped_early[[1]],
       treatments = treatments[[1]],
-      seed = seed
+      seed = seed,
+      metadata = metadata
     )
   } else {
     output <- list(
@@ -389,7 +481,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       iterations_run = total_iterations,
       stopped_early = stopped_early,
       treatments = treatments,
-      seed = seed
+      seed = seed,
+      metadata = metadata
     )
   }
 
@@ -420,7 +513,14 @@ print.design <- function(x, ...) {
     # Hierarchical design - show each level with its name
     cat("Treatments:\n")
     for (level_name in names(x$treatments)) {
-      cat("  ", level_name, ": ", paste(x$treatments[[level_name]], collapse = ", "), "\n", sep = "")
+      cat(
+        "  ",
+        level_name,
+        ": ",
+        paste(x$treatments[[level_name]], collapse = ", "),
+        "\n",
+        sep = ""
+      )
     }
   } else {
     # Simple design - show treatments as before
@@ -442,12 +542,16 @@ print.design <- function(x, ...) {
 #' @keywords internal
 .reject_optim_params_in_dots <- function(dots) {
   forbidden <- intersect(names(dots), c("adj_weight", "bal_weight"))
-  if (length(forbidden) == 0) return(invisible(NULL))
+  if (length(forbidden) == 0) {
+    return(invisible(NULL))
+  }
   stop(
-    "Argument(s) ", paste(sprintf("`%s`", forbidden), collapse = ", "),
+    "Argument(s) ",
+    paste(sprintf("`%s`", forbidden), collapse = ", "),
     " must be passed via `optim_params()`, not directly to `speed()`. ",
     "For example: `optimise_params = optim_params(",
-    paste0(forbidden[1], " = ..."), ")`.",
+    paste0(forbidden[1], " = ..."),
+    ")`.",
     call. = FALSE
   )
 }
@@ -461,7 +565,9 @@ print.design <- function(x, ...) {
 #' @return `dots`, with `relationship` replaced by the prepped form when present.
 #' @keywords internal
 .prep_dots <- function(dots, optimise, data) {
-  if (is.null(dots$relationship)) return(dots)
+  if (is.null(dots$relationship)) {
+    return(dots)
+  }
   swap_cols <- unique(vapply(optimise, function(o) o$swap, character(1)))
   treatments <- unlist(lapply(swap_cols, function(s) as.character(data[[s]])))
   dots$relationship <- prep_relationship(dots$relationship, treatments)

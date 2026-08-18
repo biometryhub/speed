@@ -1,7 +1,7 @@
 Type: Package
 Package: speed
 Title: Generate Spatially Efficient Experimental Designs
-Version: 0.0.9
+Version: 0.0.11
 Authors@R:
     c(person(given = "Sam",
              family = "Rogers",
@@ -41,6 +41,7 @@ URL: https://biometryhub.github.io/speed/
 BugReports: https://github.com/biometryhub/speed/issues
 Depends: R (>= 4.1)
 Imports:
+    crayon,
     farver,
     ggplot2,
     matrixStats,
@@ -49,14 +50,17 @@ Imports:
     stringi
 Suggests:
     igraph,
+    knitr,
     patchwork,
     quarto,
+    tibble,
     testthat (>= 3.0.0),
     vdiffr,
     withr
-Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: quarto
+Config/testthat/edition: 3
+Config/testthat/parallel: true
 Config/roxygen2/version: 8.0.0

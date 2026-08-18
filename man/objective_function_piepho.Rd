@@ -13,6 +13,8 @@ objective_function_piepho(
   pair_mapping = NULL,
   row_column = "row",
   col_column = "col",
+  by = NULL,
+  grid_index = NULL,
   ...
 )
 }
@@ -33,12 +35,20 @@ objective_function_piepho(
 
 \item{col_column}{Name of column representing the column of the design (default: "col")}
 
+\item{by, grid_index}{Optional grouping of plots into separate grids; see
+\code{\link[=calculate_adjacency_score]{calculate_adjacency_score()}}. Neighbour balance sums across grids, while
+evenness of distribution is scored \strong{per grid} and the scores summed,
+reported both in total and per grid. A grid with no treatment replicated
+inside it contributes \code{0}.}
+
 \item{...}{Extra parameters passed from \link{speed}}
 }
 \value{
 A function which returns a named list of numeric values with one required name \code{score} representing
 the score of the design (lower is better) with a signature \verb{function(design_df, swap, spatial_cols, ...)}.
-See signature
+An objective may optionally return a \code{components} element: a named numeric vector of the additive pieces
+that sum to \code{score} (e.g. \code{c(adjacency = ..., balance = ...)}). When present, \code{\link[=summary.design]{summary.design()}} reports
+this as a faithful score decomposition. See signature
 details in \link{objective_function_signature}.
 }
 \description{

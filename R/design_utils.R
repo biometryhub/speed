@@ -115,6 +115,10 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
     group_data <- new_design[group_filter & !is.na(new_design[[swap]]), ]
     group_treatments <- unique(group_data[[swap]])
 
+    # Counted once: every swap below exchanges equally replicated treatments, so
+    # these counts are unaffected by them
+    group_counts <- tabulate(match(group_data[[swap]], group_treatments), length(group_treatments))
+
     if (nrow(group_data) >= 2) {
       for (i in 1:swap_count) {
         # Only proceed if there are at least 2 different treatments
@@ -123,9 +127,31 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
           next
         }
 
+        # Exchanging treatments of unequal replication would change the replication of
+        # the design. `.verify_swap_all_replication()` only checks the input, and an
+        # earlier level with cross-cutting groups can unbalance a group mid-search.
+        eligible <- group_treatments
+        if (length(unique(group_counts)) > 1) {
+          replications <- table(group_counts)
+          replications <- replications[replications >= 2]
+
+          # No two treatments share a replication, so nothing can be exchanged
+          if (length(replications) == 0) {
+            next
+          }
+
+          # Weighted so the pair below is still drawn uniformly over exchangeable pairs
+          chosen <- if (length(replications) == 1) {
+            names(replications)
+          } else {
+            sample(names(replications), 1, prob = choose(as.integer(replications), 2))
+          }
+          eligible <- group_treatments[group_counts == as.integer(chosen)]
+        }
+
         # Select two different treatments
         # Use sample with replace=FALSE to ensure they're different
-        swap_pair <- sample(group_treatments, 2, replace = FALSE)
+        swap_pair <- sample(eligible, 2, replace = FALSE)
 
         # Find all plots with these treatments in this group
         plots_1 <- which(group_filter & new_design[[swap]] == swap_pair[1])
@@ -365,7 +391,8 @@ apply_splits <- function(df, splits, nrows, ncols, block_nrows, block_ncols) {
     n_child_rows <- parent_nrows / split$nrows
     n_children_per_parent <- n_child_rows * (parent_ncols / split$ncols)
 
-    df[[split_name]] <- (parent_id - 1) * n_children_per_parent +
+    df[[split_name]] <- (parent_id - 1) *
+      n_children_per_parent +
       child_row_idx +
       n_child_rows * (child_col_idx - 1)
 
@@ -383,10 +410,15 @@ apply_splits <- function(df, splits, nrows, ncols, block_nrows, block_ncols) {
           # Recycle once per parent unit so each parent receives a full set
           items_vec <- rep(items_vec, length.out = n_children)
         } else {
-          stop(sprintf(
-            "`items` for split `%s` must have length %d (or divide it); got %d",
-            split_name, n_children, length(items_vec)
-          ), call. = FALSE)
+          stop(
+            sprintf(
+              "`items` for split `%s` must have length %d (or divide it); got %d",
+              split_name,
+              n_children,
+              length(items_vec)
+            ),
+            call. = FALSE
+          )
         }
       }
 
@@ -456,8 +488,12 @@ initialise_split_design_df <- function(splits, rep_dim = c(1, 1)) {
   splits <- add_names(splits)
 
   # fill innermost dim
-  if (is.null(splits[[1]]$nrows)) splits[[1]]$nrows <- 1
-  if (is.null(splits[[1]]$ncols)) splits[[1]]$ncols <- 1
+  if (is.null(splits[[1]]$nrows)) {
+    splits[[1]]$nrows <- 1
+  }
+  if (is.null(splits[[1]]$ncols)) {
+    splits[[1]]$ncols <- 1
+  }
 
   # construct the design with outermost level and rep dim
   outer_split <- splits[[length(splits)]]
@@ -489,7 +525,9 @@ initialise_split_design_df <- function(splits, rep_dim = c(1, 1)) {
       if (length(items) == 1 && is.numeric(items)) {
         items <- paste0("T", seq_len(items))
       }
-      df[[paste0(split_name, "_treatment")]] <- items[(unit_in_parent - 1) %% length(items) + 1]
+      df[[paste0(split_name, "_treatment")]] <- items[
+        (unit_in_parent - 1) %% length(items) + 1
+      ]
     }
 
     parent_id <- df[[split_name]]
@@ -518,7 +556,11 @@ initialise_multiple_designs_df <- function(items, designs, design_col) {
     }
 
     df_sub <- initialise_design_df(
-      items_sub, design_args$nrows, design_args$ncols, design_args$block_nrows, design_args$block_ncols
+      items_sub,
+      design_args$nrows,
+      design_args$ncols,
+      design_args$block_nrows,
+      design_args$block_ncols
     )
     df_sub[[design_col]] <- design_name
     df <- rbind_fill(df, df_sub)
@@ -570,12 +612,19 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
     groups <- c()
     for (i in seq_along(optimise)) {
       groups <- c(groups, optimise[[i]]$swap_within)
-      if (i == 1) next
+      if (i == 1) {
+        next
+      }
 
       now <- as.numeric(Sys.time())
       dummy_col <- paste0(paste(groups, collapse = "_"), "_", now)
       optimise[[i]]$swap_within <- dummy_col
-      design[[dummy_col]] <- apply(design[, groups], 1, paste, collapse = "-") |>
+      design[[dummy_col]] <- apply(
+        design[, groups],
+        1,
+        paste,
+        collapse = "-"
+      ) |>
         factor()
     }
   }
@@ -585,7 +634,12 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
   for (i in seq_len(random_initialisation)) {
     shuffled_design <- design
     for (opt in optimise) {
-      shuffled_design <- shuffle_items(shuffled_design, opt$swap, opt$swap_within, seed + i - 1)
+      shuffled_design <- shuffle_items(
+        shuffled_design,
+        opt$swap,
+        opt$swap_within,
+        seed + i - 1
+      )
     }
 
     # scoring
@@ -594,14 +648,15 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
       spatial_cols <- all.vars(opt$spatial_factors)
       adj_weight <- opt$optimise_params$adj_weight
       bal_weight <- opt$optimise_params$bal_weight
-      current_score <- current_score + opt$obj_function(
-        shuffled_design,
-        opt$swap,
-        spatial_cols,
-        adj_weight = adj_weight,
-        bal_weight = bal_weight,
-        ...
-      )$score
+      current_score <- current_score +
+        opt$obj_function(
+          shuffled_design,
+          opt$swap,
+          spatial_cols,
+          adj_weight = adj_weight,
+          bal_weight = bal_weight,
+          ...
+        )$score
     }
 
     if (current_score < best_score) {
@@ -723,7 +778,10 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
   # rep_dim is c(row_reps, col_reps)
   verify_positive_whole_numbers(rep_dim)
   if (length(rep_dim) != 2) {
-    stop("`rep_dim` must be a length-2 vector `c(row_reps, col_reps)`", call. = FALSE)
+    stop(
+      "`rep_dim` must be a length-2 vector `c(row_reps, col_reps)`",
+      call. = FALSE
+    )
   }
 
   valid_split_args <- c("nrows", "ncols", "items")
@@ -735,8 +793,10 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
   # outermost -> innermost; the outermost's parent is the rep-tiled field
   outer_split <- splits[[length(splits)]]
   parent_name <- "field"
-  parent_nrows <- (if (is.null(outer_split$nrows)) 1 else outer_split$nrows) * rep_dim[[1]]
-  parent_ncols <- (if (is.null(outer_split$ncols)) 1 else outer_split$ncols) * rep_dim[[2]]
+  parent_nrows <- (if (is.null(outer_split$nrows)) 1 else outer_split$nrows) *
+    rep_dim[[1]]
+  parent_ncols <- (if (is.null(outer_split$ncols)) 1 else outer_split$ncols) *
+    rep_dim[[2]]
   for (split_name in rev(names(splits))) {
     split <- splits[[split_name]]
 
@@ -744,44 +804,78 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
     verify_list(split)
     for (arg in names(split)) {
       if (!(arg %in% valid_split_args)) {
-        stop(sprintf("`%s` is an invalid argument in `splits$%s`", arg, split_name), call. = FALSE)
+        stop(
+          sprintf(
+            "`%s` is an invalid argument in `splits$%s`",
+            arg,
+            split_name
+          ),
+          call. = FALSE
+        )
       }
     }
 
     # only the innermost level may omit dimensions (it defaults to 1x1)
-    if (split_name != innermost_name && (is.null(split$nrows) || is.null(split$ncols))) {
-      stop(sprintf(
-        "`nrows` and `ncols` must be provided for split `%s`; only the innermost level may omit them",
-        split_name
-      ), call. = FALSE)
+    if (
+      split_name != innermost_name &&
+        (is.null(split$nrows) || is.null(split$ncols))
+    ) {
+      stop(
+        sprintf(
+          "`nrows` and `ncols` must be provided for split `%s`; only the innermost level may omit them",
+          split_name
+        ),
+        call. = FALSE
+      )
     }
 
     # check unit dimensions are positive whole numbers (innermost defaults to 1x1)
     this_nrows <- if (is.null(split$nrows)) 1 else split$nrows
     this_ncols <- if (is.null(split$ncols)) 1 else split$ncols
     verify_positive_whole_number(
-      this_nrows, this_ncols,
-      var_names = c(sprintf("splits$%s$nrows", split_name), sprintf("splits$%s$ncols", split_name))
+      this_nrows,
+      this_ncols,
+      var_names = c(
+        sprintf("splits$%s$nrows", split_name),
+        sprintf("splits$%s$ncols", split_name)
+      )
     )
 
     # check if fit in parent dimension
     if (parent_nrows %% this_nrows != 0 || parent_ncols %% this_ncols != 0) {
-      stop(sprintf(
-        "split `%s` (%dx%d) does not tile evenly into %s (%dx%d)",
-        split_name, this_nrows, this_ncols, parent_name, parent_nrows, parent_ncols
-      ), call. = FALSE)
+      stop(
+        sprintf(
+          "split `%s` (%dx%d) does not tile evenly into %s (%dx%d)",
+          split_name,
+          this_nrows,
+          this_ncols,
+          parent_name,
+          parent_nrows,
+          parent_ncols
+        ),
+        call. = FALSE
+      )
     }
 
     # check items fill the units in a parent a whole number of times
     items <- split$items
     if (!is.null(items)) {
       n_units <- (parent_nrows * parent_ncols) %/% (this_nrows * this_ncols)
-      n_items <- if (length(items) == 1 && is.numeric(items)) items else length(items)
+      n_items <- if (length(items) == 1 && is.numeric(items)) {
+        items
+      } else {
+        length(items)
+      }
       if (n_units %% n_items != 0) {
-        stop(sprintf(
-          "`items` for split `%s` has length %d, which does not divide the %d units per parent",
-          split_name, n_items, n_units
-        ), call. = FALSE)
+        stop(
+          sprintf(
+            "`items` for split `%s` has length %d, which does not divide the %d units per parent",
+            split_name,
+            n_items,
+            n_units
+          ),
+          call. = FALSE
+        )
       }
     }
 
@@ -795,3 +889,236 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
 #' @rdname initialise_design_df
 #' @export
 initialize_design_df <- initialise_design_df
+
+#' Signal a Coordinate Problem with a Classed Condition
+#'
+#' @description
+#' Carries two phrasings of the same problem: `message`, for someone calling a
+#' metric directly, and `reason`, a fragment `summary()` reports in place of a
+#' metric it cannot compute. Both are defined at the throw site so they cannot
+#' drift, and the class lets callers dispatch without matching on message text.
+#'
+#' @param class Condition subclass naming the specific problem.
+#' @param reason Short phrase for a `summary()` field.
+#' @param ... Pasted together to form the message.
+#'
+#' @keywords internal
+.grid_stop <- function(class, reason, ...) {
+  stop(structure(
+    class = c(class, "speed_grid_error", "error", "condition"),
+    list(message = paste0(...), reason = reason, call = NULL)
+  ))
+}
+
+#' Validate a Design's Coordinates and Build its Grid Index
+#'
+#' @description
+#' Coerces and validates the `row_column`/`col_column` coordinates, returning
+#' everything [build_design_matrix()] needs to place plots on a grid: the
+#' two-column matrix index and the grid's dimensions.
+#'
+#' Split out from [build_design_matrix()] because it is the expensive half and
+#' the *invariant* half: during annealing only the treatment column changes, so
+#' the index can be built once per `speed()` run and reused every iteration.
+#'
+#' @param df A data frame with columns named by `row_column` and `col_column`.
+#' @param row_column Column name of the row position variable (default `"row"`).
+#' @param col_column Column name of the column position variable
+#'   (default `"col"`).
+#'
+#' @return A list with `idx` (an `nrow(df)` x 2 integer matrix of grid
+#'   positions), `nrow` and `ncol` (the grid's dimensions), and `n` (the number
+#'   of plots the index was built for, used to detect a stale index).
+#'
+#' @keywords internal
+grid_index <- function(df, row_column = "row", col_column = "col") {
+  # Checked before coercion: absent columns would otherwise reach max() as empty
+  # vectors and yield -Inf dimensions with a warning, rather than saying what is
+  # wrong.
+  missing_cols <- setdiff(c(row_column, col_column), names(df))
+  if (length(missing_cols)) {
+    .grid_stop(
+      "speed_grid_missing",
+      "no row/column factors",
+      "Cannot place the design on a grid: no ",
+      paste0("`", missing_cols, "`", collapse = " or "),
+      " column."
+    )
+  }
+  # Coercion of non-numeric labels warns; the check below reports it properly.
+  rows <- suppressWarnings(as_numeric_factor(df[[row_column]]))
+  cols <- suppressWarnings(as_numeric_factor(df[[col_column]]))
+
+  if (anyNA(rows) || anyNA(cols)) {
+    .grid_stop(
+      "speed_grid_nonnumeric",
+      sprintf("`%s`/`%s` labels are not numeric", row_column, col_column),
+      "Cannot place the design on a grid: `",
+      row_column,
+      "` and `",
+      col_column,
+      "` must be numeric, or coercible to numeric."
+    )
+  }
+  # Used directly as matrix indices, so they must be positive whole numbers.
+  if (
+    any(rows < 1 | cols < 1) ||
+      any(rows != trunc(rows) | cols != trunc(cols))
+  ) {
+    .grid_stop(
+      "speed_grid_notinteger",
+      sprintf(
+        "`%s`/`%s` are not positive whole numbers",
+        row_column,
+        col_column
+      ),
+      "`",
+      row_column,
+      "` and `",
+      col_column,
+      "` must be positive whole numbers to index a grid."
+    )
+  }
+  idx <- cbind(rows, cols)
+  # Duplicated coordinates would silently overwrite each other. Multi-site
+  # designs reuse row/col per site, so they must be split before scoring.
+  if (anyDuplicated(idx)) {
+    .grid_stop(
+      "speed_grid_duplicate",
+      sprintf(
+        "duplicate `%s`/`%s` coordinates (e.g. a multi-site design)",
+        row_column,
+        col_column
+      ),
+      "Duplicate (",
+      row_column,
+      ", ",
+      col_column,
+      ") coordinates: the design cannot be placed on a single grid. ",
+      "Split multi-site designs by site first."
+    )
+  }
+
+  return(list(
+    idx = idx,
+    nrow = max(rows),
+    ncol = max(cols),
+    n = nrow(df)
+  ))
+}
+
+#' Split a Design into One Grid Index per Grid
+#'
+#' @description
+#' The multi-grid counterpart of [grid_index()]. A multi-environment trial is
+#' several grids that share a treatment set and never share an edge, so it
+#' cannot be one matrix: sites reuse `row`/`col`, and pooling them either
+#' silently overwrites plots or invents adjacencies between sites.
+#'
+#' With `by = NULL` this returns a one-element list, so callers have a single
+#' code path whether or not the design spans grids.
+#'
+#' @inheritParams grid_index
+#' @param by Optional column name grouping plots into grids (e.g. `"site"`).
+#'   `NULL` treats the design as one grid.
+#'
+#' @return A named list with one element per grid, each a list of `rows` (the
+#'   positions in `df` belonging to that grid) and `index` (that grid's
+#'   [grid_index()]). Named `"1"` when `by` is `NULL`.
+#'
+#' @keywords internal
+grid_indices <- function(
+  df,
+  row_column = "row",
+  col_column = "col",
+  by = NULL
+) {
+  if (is.null(by)) {
+    return(list("1" = list(
+      rows = seq_len(nrow(df)),
+      index = grid_index(df, row_column, col_column)
+    )))
+  }
+  if (!by %in% names(df)) {
+    .grid_stop(
+      "speed_grid_missing_by",
+      sprintf("no `%s` column to group grids by", by),
+      "Cannot split the design into grids: no `",
+      by,
+      "` column."
+    )
+  }
+  # drop = TRUE so an unused factor level does not produce an empty grid, which
+  # grid_index() would then reject for having no coordinates.
+  groups <- split(seq_len(nrow(df)), df[[by]], drop = TRUE)
+  out <- lapply(groups, function(rows) {
+    return(list(
+      rows = rows,
+      index = grid_index(df[rows, , drop = FALSE], row_column, col_column)
+    ))
+  })
+  # Carried so consumers can label per-grid output without being told separately
+  # which column the grids came from.
+  attr(out, "by") <- by
+  return(out)
+}
+
+#' Build a Spatial Design Matrix from a Data Frame
+#'
+#' @description
+#' Places each treatment value at the grid position given by its `row_column`
+#' and `col_column` coordinates, returning a character matrix of dimensions
+#' `max(row)` by `max(col)`. Cells with no corresponding row in `df` are `NA`.
+#'
+#' Each plot's position comes from its own coordinates, so the row ordering of
+#' `df` is irrelevant, as is the level order of factor coordinate columns.
+#'
+#' Coordinates are used as-is, never renumbered: a gap in the coordinates is a
+#' real gap in the field (a missing plot, or a buffer that was removed), so
+#' collapsing it would make non-adjacent plots into neighbours. Callers must
+#' therefore cope with `NA` cells.
+#'
+#' @param df A data frame with columns named by `swap`, `row_column`,
+#'   `col_column`.
+#' @param swap Column name of the treatment variable.
+#' @param row_column Column name of the row position variable (default `"row"`).
+#' @param col_column Column name of the column position variable
+#'   (default `"col"`).
+#' @param index Optional pre-built index from [grid_index()]. Supplying one skips
+#'   coordinate coercion and validation, which is the bulk of the work and is
+#'   invariant during annealing. `speed()` builds one per run; anything calling
+#'   this once should leave it `NULL`.
+#'
+#' @return A character matrix of dimensions `max(row)` by `max(col)`.
+#'
+#' @keywords internal
+build_design_matrix <- function(
+  df,
+  swap,
+  row_column = "row",
+  col_column = "col",
+  index = NULL
+) {
+  if (is.null(index)) {
+    index <- grid_index(df, row_column, col_column)
+  } else if (!identical(index$n, nrow(df))) {
+    # Only catches a mismatched index when the plot count differs; callers still
+    # own keeping index and design in step.
+    stop(
+      "`index` was built for ",
+      index$n,
+      " plots but `df` has ",
+      nrow(df),
+      ". Rebuild it with `grid_index()`.",
+      call. = FALSE
+    )
+  }
+
+  design_matrix <- matrix(
+    NA_character_,
+    nrow = index$nrow,
+    ncol = index$ncol
+  )
+  design_matrix[index$idx] <- as.character(df[[swap]])
+  return(design_matrix)
+}
