@@ -156,6 +156,75 @@ objective_function_info <- function(
   return(X1)
 }
 
+#' Build an orthonormal factorial contrast matrix
+#'
+#' Constructs a contrast basis for selected factorial effects while treatments
+#' remain encoded as atomic combinations during optimisation. The returned rows
+#' are orthonormal, so A-optimality is invariant to the particular contrast
+#' coding used by [stats::model.matrix()].
+#'
+#' @param treatment_df One row per treatment combination, containing the
+#'   component factor columns.
+#' @param formula One-sided formula selecting factorial effects, for example
+#'   \code{~ (stage + cultivar + inoculum)^2}.
+#' @param treatment_column Column containing the atomic treatment labels.
+#' @param tolerance Numerical rank tolerance.
+#'
+#' @return A numeric contrast matrix whose columns are named by treatment level.
+#'
+#' @export
+factorial_contrast_matrix <- function(
+  treatment_df,
+  formula,
+  treatment_column = "treatment",
+  tolerance = 1e-10
+) {
+  if (!is.data.frame(treatment_df)) {
+    stop("`treatment_df` must be a data frame.", call. = FALSE)
+  }
+  if (!inherits(formula, "formula") || length(formula) != 2L) {
+    stop("`formula` must be a one-sided formula.", call. = FALSE)
+  }
+  if (!treatment_column %in% names(treatment_df)) {
+    stop("Treatment column `", treatment_column, "` not found.", call. = FALSE)
+  }
+
+  treatment_levels <- as.character(treatment_df[[treatment_column]])
+  if (anyNA(treatment_levels) || anyDuplicated(treatment_levels)) {
+    stop("`treatment_df` must contain one non-missing row per treatment.", call. = FALSE)
+  }
+
+  formula_vars <- all.vars(formula)
+  missing_vars <- setdiff(formula_vars, names(treatment_df))
+  if (length(missing_vars) > 0L) {
+    stop(
+      "Formula variable(s) not found: ", paste(missing_vars, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  model_data <- treatment_df
+  for (column in formula_vars) {
+    if (is.character(model_data[[column]])) {
+      model_data[[column]] <- factor(model_data[[column]])
+    }
+  }
+
+  effect_matrix <- stats::model.matrix(formula, model_data)
+  effect_matrix <- sweep(effect_matrix, 2L, colMeans(effect_matrix), "-")
+  decomposition <- qr(effect_matrix, tol = tolerance)
+  effect_rank <- decomposition$rank
+  if (effect_rank == 0L) {
+    stop("`formula` does not define any treatment contrasts.", call. = FALSE)
+  }
+
+  basis <- qr.Q(decomposition, complete = FALSE)[, seq_len(effect_rank), drop = FALSE]
+  contrasts <- t(basis)
+  rownames(contrasts) <- paste0("contrast_", seq_len(nrow(contrasts)))
+  colnames(contrasts) <- treatment_levels
+  return(contrasts)
+}
+
 #' Prepare a requested contrast space
 #' @noRd
 .prepare_contrast_matrix <- function(contrast_matrix, trt_levels, tolerance) {
