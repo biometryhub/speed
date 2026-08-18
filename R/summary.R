@@ -1132,17 +1132,15 @@ print.summary.design <- function(x, ...) {
   # Why the run ended is the single most useful signal here, so it's
   # colour-highlighted either way. `frozen` is neither convergence nor a cap:
   # the level gave up because nothing could be swapped.
+  ran_to_cap <- crayon::bold(crayon::magenta("(ran to cap)"))
   stop_reason <- switch(
     o$stop_reason,
     optimal = crayon::green("(optimal reached)"),
     no_improvement = crayon::green("(no further improvement)"),
     frozen = crayon::yellow("(no swaps possible)"),
-    iterations = crayon::bold(crayon::magenta("(ran to cap)")),
-    if (o$stopped_early) {
-      crayon::green("(stopped early)")
-    } else {
-      crayon::bold(crayon::magenta("(ran to cap)"))
-    }
+    iterations = ran_to_cap,
+    # `stop_reason` is `NA` for a design saved before it was recorded
+    if (o$stopped_early) crayon::green("(stopped early)") else ran_to_cap
   )
   iter <- paste(
     sprintf(

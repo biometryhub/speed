@@ -223,6 +223,11 @@ speed <- function(data,
   row_column <- inferred$row
   col_column <- inferred$col
 
+  # The level names are the user's own unless `create_speed_input()` has to
+  # synthesise one, which it does only for a scalar `swap` with no `optimise`.
+  # An error may only quote a name back at them if they wrote it.
+  named_levels <- !is.null(optimise) || is.list(swap)
+
   # Normalise the three input shapes into one per-level list
   optimise <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
                                  early_stop_iterations, obj_function, swap_all, optimise_params,
@@ -232,7 +237,7 @@ speed <- function(data,
   # `.verify_inputs()`. Both come before the dummy group column is added below,
   # so it cannot appear in the column names they report.
   .verify_level_columns(data, optimise)
-  .verify_linked_cols(data, optimise, linked_cols)
+  .verify_linked_cols(data, optimise, linked_cols, named_levels)
 
   # convert to factors. Only the columns the optimisation reads, so the rest -
   # linked columns among them - keep whatever class they came in with. The
@@ -378,7 +383,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     # Nothing at this level can move, and no swap it could make would change
     # that, so the level is settled without searching. The starting score is
     # still recorded, as it is the score the level ends on.
-    if (length(groups$swappable) == 0) {
+    frozen <- length(groups$swappable) == 0
+    if (frozen) {
       if (!quiet) cat("No swaps possible for level", level, "\n")
       stop_reason <- "frozen"
       n_kept <- 1
@@ -386,8 +392,10 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       temperatures[1] <- temp
     }
 
-    # Optimisation loop for this level
-    for (iter in seq_len(if (stop_reason == "frozen") 0 else opt$iterations)) {
+    # Optimisation loop for this level. `seq_len()`, not `1:`, because a frozen
+    # level needs a zero-length sequence.
+    n_iterations <- if (frozen) 0L else opt$iterations
+    for (iter in seq_len(n_iterations)) {
       scores[iter] <- current_score
       temperatures[iter] <- temp
 
@@ -444,10 +452,16 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
             "\n")
       }
 
-      # Early stopping
-      if (iter - last_improvement_iter >= opt$early_stop_iterations || new_score < .Machine$double.eps) {
-        if (!quiet) cat("Early stopping at iteration", iter, "for level", level, "\n")
-        stop_reason <- "no_improvement"
+      # Early stopping. Zero is the lowest score any design can reach, so that is
+      # optimal rather than merely out of improvements, even where no lower bound
+      # could be derived to stop at above.
+      reached_zero <- new_score < .Machine$double.eps
+      if (reached_zero || iter - last_improvement_iter >= opt$early_stop_iterations) {
+        if (!quiet) {
+          cat(if (reached_zero) "Optimal score reached at iteration" else "Early stopping at iteration",
+              iter, "for level", level, "\n")
+        }
+        stop_reason <- if (reached_zero) "optimal" else "no_improvement"
         # Record final score and temperature before breaking
         if (iter < opt$iterations) {
           scores[iter + 1] <- current_score

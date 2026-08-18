@@ -3,17 +3,15 @@
 #' @description
 #' Validates the arguments as the user passed them, dispatching to the checker
 #' for the input shape given and running the checks that apply to all three.
-#' Checks needing the resolved per-level list - [.verify_level_columns()],
-#' [.verify_linked_cols()] and [.verify_swap_all_replication()] - cannot run
-#' here, and are called from [speed()] once [create_speed_input()] has built it.
+#' Checks needing the resolved per-level list cannot run here; they are
+#' documented under [.verify_level_columns()] and are called from [speed()] once
+#' [create_speed_input()] has built it.
 #'
 #' @rdname verify
 #'
 #' @inheritParams speed
 #'
-#' @param optimise The `optimise` argument as passed to [speed()] for
-#'   [.verify_inputs()], or the resolved per-level list built by
-#'   [create_speed_input()] for the checks that run after it.
+#' @param optimise The `optimise` argument as passed to [speed()].
 #'
 #' @keywords internal
 .verify_inputs <- function(
@@ -108,6 +106,8 @@
       upper = .Machine$integer.max
     )
   }
+
+  return(invisible(NULL))
 }
 
 #' Verify hierarchical inputs
@@ -152,18 +152,31 @@
   if (!is.null(seed) && !is.numeric(seed)) {
     stop("`seed` must be numeric or NULL")
   }
+
+  return(invisible(NULL))
 }
 
-#' Verify each level's columns exist
+#' Verify Inputs Needing the Resolved `optimise` List
 #'
 #' @description
-#' The `optimise` input shape bypasses both per-shape checkers, so a level
-#' naming a column that is not there reaches the search unchallenged: a bad
-#' `swap_within` leaves [swappable_groups()] with nothing to group by, and the
-#' level is reported as frozen rather than as a mistake. Checked on the resolved
-#' list so all three shapes are covered.
+#' Checks that can only run once [create_speed_input()] has merged the three
+#' input shapes into one per-level list, either because their rules are
+#' cross-level or because they must cover all three shapes alike. [speed()]
+#' calls them after `create_speed_input()`, not from [.verify_inputs()].
 #'
-#' @rdname verify
+#' [.verify_level_columns()] catches a level naming a column that is not there,
+#' which the `optimise` shape would otherwise carry into the search unchallenged:
+#' a bad `swap_within` leaves [swappable_groups()] with nothing to group by, and
+#' the level is reported as frozen rather than as a mistake.
+#'
+#' @rdname verify_resolved
+#'
+#' @inheritParams speed
+#'
+#' @param optimise The resolved per-level list built by [create_speed_input()].
+#' @param named_levels Whether the level names are the user's own. `FALSE` for a
+#'   scalar `swap` with no `optimise`, whose single level name is synthesised, so
+#'   no error may quote it back at them.
 #'
 #' @keywords internal
 .verify_level_columns <- function(data, optimise) {
@@ -186,18 +199,17 @@
 #' @description
 #' Checks the columns named in `linked_cols` after they have been merged into
 #' the per-level `optimise` list, so all three input shapes are covered by one
-#' set of rules. The rules are cross-level, so like
-#' [.verify_swap_all_replication()] this runs on the resolved list rather than
-#' in the per-shape checkers.
+#' set of rules.
 #'
-#' @rdname verify
+#' @rdname verify_resolved
 #'
 #' @keywords internal
-.verify_linked_cols <- function(data, optimise, linked_cols = NULL) {
-  # A simple design's single level name is synthesised by
-  # `create_speed_input()`, so the user cannot have named it in `linked_cols`
-  named_levels <- !identical(attr(optimise, "user_named"), FALSE)
-
+.verify_linked_cols <- function(
+  data,
+  optimise,
+  linked_cols = NULL,
+  named_levels = TRUE
+) {
   if (is.list(linked_cols)) {
     if (!named_levels) {
       stop(
@@ -373,7 +385,7 @@
 #' @param dummy_group Name of the internal placeholder column used for a level
 #'   with no `swap_within` boundary, so it can be described as the whole design.
 #'
-#' @rdname verify
+#' @rdname verify_resolved
 #'
 #' @keywords internal
 .verify_swap_all_replication <- function(data, optimise, dummy_group = NULL) {

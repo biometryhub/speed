@@ -202,10 +202,7 @@ to_types <- function(df, types) {
 #'
 #' @inheritParams speed
 #'
-#' @return The per-level `optimise` list, carrying a `user_named` attribute
-#'   recording whether the level names are the user's or were synthesised here.
-#'   [.verify_linked_cols()] reads it to decide whether an error may quote a
-#'   level name back at them.
+#' @return The per-level `optimise` list.
 #'
 #' @keywords internal
 create_speed_input <- function(
@@ -237,7 +234,6 @@ create_speed_input <- function(
 
   # Name the levels. `optimise` names them itself; otherwise they come from
   # `swap`, or there is the one level described by the arguments.
-  user_named <- TRUE
   if (is.null(optimise)) {
     optimise <- list()
     if (is.list(swap)) {
@@ -245,8 +241,6 @@ create_speed_input <- function(
         optimise[[optimise_name]] <- list()
       }
     } else {
-      # Synthesised, so no error message should quote it back at the user
-      user_named <- FALSE
       optimise[[paste(
         ifelse(swap_all, "all", "single"),
         swap,
@@ -273,8 +267,6 @@ create_speed_input <- function(
       optimise[[optimise_name]]$optimise_params$adj_weight <- 0
     }
   }
-
-  attr(optimise, "user_named") <- user_named
 
   return(optimise)
 }

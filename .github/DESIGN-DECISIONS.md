@@ -14,6 +14,48 @@ commit or discussion if there is one. Add new entries at the top.
 
 ---
 
+## `linked_cols` is not recorded in the design output
+
+*2026-08-18*
+
+`metadata$per_level` records every other per-level argument - `swap`,
+`spatial_factors`, the weights, `iterations`, `start_temp`, `cooling_rate`,
+`obj_function` - so `linked_cols` being absent was raised as convention drift by
+omission, along with the related question of whether `summary()` should report
+which columns travelled.
+
+**Decided: record neither.** It is irrelevant to how the design was optimised -
+linked columns take no part in scoring - and the user knows which columns they
+linked, because they named them. Do not add `linked_cols` to `per_level`, and do
+not add a line for it to `summary()`.
+
+## Carrying a nested treatment with `linked_cols` is a happy accident
+
+*2026-08-18*
+
+`linked_cols` covers two things that read differently: passive companion columns
+that never get optimised, and linking a *later* level's `swap` column at an
+earlier level so a child treatment rides with its parent. Raised as a question of
+whether one argument should mean both, since the second makes the user responsible
+for level order or they get an error.
+
+**Decided: leave as one argument.** The intention is moving columns along with the
+swap column; that this also happens to move a column nested under another is a
+welcome side effect rather than a second feature needing its own vocabulary. The
+point about the two styles is understood and accepted.
+
+## A frozen level reports one iteration run, having proposed none
+
+*2026-08-18*
+
+`iterations_run` derives from `length(scores)`, and the frozen branch seeds
+`scores[1]` so the level's final score is recorded. `summary()` therefore prints
+`Iterations: 1 / 10000 (no swaps possible)` for a level that proposed no swaps,
+and `total_iterations` gains one per frozen level.
+
+**Decided: leave it.** Separating the score series from an iteration count is not
+worth it for this case; the off-by-one is accepted.
+
 ## `stop_reason` is public API from 0.0.11
 
 *2026-08-17*

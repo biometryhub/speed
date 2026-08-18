@@ -380,9 +380,9 @@ They are also returned in their original position and with their original type -
 
 ## Hierarchical Designs
 
-Each level of a hierarchical design swaps its own column, so companion columns have to be matched to the level that moves them. Since the hierarchy is already described level by level through `optimise`, `linked_cols` goes in alongside the other per-level arguments. Here the whole plot treatment carries an irrigation method, and the sub-plot treatment carries a cultivar name:
+Each level of a hierarchical design swaps its own column, so companion columns have to be matched to the level that moves them. Here the whole plot treatment carries an irrigation method, and the sub-plot treatment carries a cultivar name:
 
-```{r linked-hierarchical}
+```{r linked-hierarchical-df}
 split_plot_linked <- initialise_split_design_df(splits = splits, rep_dim = c(4, 1))
 split_plot_linked$irrigation <- unname(
   c(A = "Drip", B = "Flood", C = "None")[split_plot_linked$wholeplot_treatment]
@@ -392,7 +392,19 @@ split_plot_linked$variety <- unname(
     split_plot_linked$subplot_treatment
   ]
 )
+```
 
+`linked_cols` takes a named list whose names match the levels, so the `optimise` list built for the split plot design above can be reused unchanged - useful when it is defined elsewhere and shared between designs:
+
+```{r linked-hierarchical-alt}
+#| eval: false
+speed(split_plot_linked, optimise = optimise,
+      linked_cols = list(wp = "irrigation", sp = "variety"), seed = 42)
+```
+
+Since the hierarchy is already described level by level, `linked_cols` can equally go inside `optimise` alongside the other per-level arguments, which keeps each level's description in one place. Where a level sets `linked_cols` itself, that wins; the argument fills in the levels that do not.
+
+```{r linked-hierarchical}
 optimise_linked <- list(
   wp = list(
     swap = "wholeplot_treatment", swap_within = "block", swap_all = TRUE,
@@ -409,16 +421,6 @@ linked_split <- speed(split_plot_linked, optimise = optimise_linked, seed = 42)
 unique(linked_split$design_df[, c("wholeplot_treatment", "irrigation")])
 unique(linked_split$design_df[, c("subplot_treatment", "variety")])
 ```
-
-The same thing can be said from outside `optimise`, with a named list whose names match the levels - useful when the `optimise` list is defined elsewhere and reused:
-
-```{r linked-hierarchical-alt}
-#| eval: false
-speed(split_plot_linked, optimise = optimise,
-      linked_cols = list(wp = "irrigation", sp = "variety"), seed = 42)
-```
-
-Where a level sets `linked_cols` itself, that wins; the argument fills in the levels that do not.
 
 ::: {.callout-note}
 A bare character vector applies to every level, which in a hierarchical design is only valid when all levels swap the same column - a multi-environment trial, for example. Where levels swap different columns, name the level, since a column can only travel with one `swap` column.

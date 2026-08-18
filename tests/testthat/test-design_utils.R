@@ -86,18 +86,22 @@ test_that("generate_multi_swap_neighbour restricts the pool per group, not per d
   )
 })
 
-test_that("swap_all preserves replication when levels have cross-cutting groups", {
-  # `block` and `site` cut across each other, so swaps at the block level can leave a
-  # site unbalanced part way through the search even though the input passes
-  # `.verify_swap_all_replication()`
-  df <- data.frame(
+# `block` and `site` cut across each other, so swaps at the block level can leave a
+# site unbalanced part way through the search even though the input passes
+# `.verify_swap_all_replication()`
+cross_cutting_df <- function() {
+  return(data.frame(
     row = rep(1:6, times = 2),
     col = rep(1:2, each = 6),
     block = c(1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2),
     site = c("a", "a", "a", "b", "b", "b", "a", "a", "a", "b", "b", "b"),
     lines = c("X", "X", "Z", "Y", "Y", "Z", "Y", "Y", "Z", "X", "X", "Z"),
     stringsAsFactors = FALSE
-  )
+  ))
+}
+
+test_that("swap_all preserves replication when levels have cross-cutting groups", {
+  df <- cross_cutting_df()
 
   for (seed in 1:5) {
     # Some seeds leave a site with no exchangeable pair, which warns; that is covered
@@ -155,17 +159,10 @@ test_that("swappable_groups counts a level with no plots as unswappable", {
 })
 
 test_that("speed() warns when a swap group is left frozen mid-search", {
-  # `block` and `site` cut across each other, so a level 1 swap can leave a site with
-  # no two treatments sharing a replication count. The search cannot move anything
-  # there, which should be reported rather than returned silently.
-  df <- data.frame(
-    row = rep(1:6, times = 2),
-    col = rep(1:2, each = 6),
-    block = c(1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2),
-    site = c("a", "a", "a", "b", "b", "b", "a", "a", "a", "b", "b", "b"),
-    lines = c("X", "X", "Z", "Y", "Y", "Z", "Y", "Y", "Z", "X", "X", "Z"),
-    stringsAsFactors = FALSE
-  )
+  # A level 1 swap can leave a site with no two treatments sharing a replication
+  # count. The search cannot move anything there, which should be reported rather
+  # than returned silently.
+  df <- cross_cutting_df()
 
   expect_warning(
     speed(
@@ -187,14 +184,7 @@ test_that("speed() warns when a swap group is left frozen mid-search", {
 test_that("speed() stops a level once every swap group is frozen", {
   # As above, but the level 1 swaps leave both sites frozen. Nothing can move at
   # level 2 from then on, so it should give up rather than run out its iterations.
-  df <- data.frame(
-    row = rep(1:6, times = 2),
-    col = rep(1:2, each = 6),
-    block = c(1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2),
-    site = c("a", "a", "a", "b", "b", "b", "a", "a", "a", "b", "b", "b"),
-    lines = c("X", "X", "Z", "Y", "Y", "Z", "Y", "Y", "Z", "X", "X", "Z"),
-    stringsAsFactors = FALSE
-  )
+  df <- cross_cutting_df()
 
   run <- function(d) {
     return(suppressWarnings(speed(
@@ -272,6 +262,35 @@ test_that("speed() records why each level stopped", {
     no_improvement$metadata$per_level[[1]]$stop_reason,
     "no_improvement"
   )
+})
+
+test_that("speed() calls a score of zero optimal without a derived lower bound", {
+  df <- data.frame(
+    row = rep(1:4, times = 5),
+    col = rep(1:5, each = 4),
+    treatment = rep(LETTERS[1:4], 5),
+    stringsAsFactors = FALSE
+  )
+
+  # A custom objective, so no lower bound can be derived and `optimal_score` is
+  # `NA`. Reaching zero is still optimal rather than merely out of improvements.
+  obj_runs <- function(layout_df, swap, spatial_cols, ...) {
+    trt <- as.character(layout_df[[swap]])
+    return(list(score = as.numeric(sum(trt[-1] == trt[-length(trt)]))))
+  }
+
+  result <- speed(
+    df,
+    swap = "treatment",
+    obj_function = obj_runs,
+    iterations = 5000,
+    seed = 3,
+    quiet = TRUE
+  )
+
+  expect_equal(result$score, 0)
+  expect_true(is.na(result$metadata$per_level[[1]]$optimal_score))
+  expect_equal(result$metadata$per_level[[1]]$stop_reason, "optimal")
 })
 
 test_that("speed() does not warn when every group can swap", {

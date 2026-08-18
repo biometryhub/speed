@@ -94,26 +94,6 @@ test_that("linked_cols preserves the type of the companion column", {
   expect_equal(levels(result$design_df$trt_fct), levels(df$trt_fct))
 })
 
-test_that("linked_cols actually moves the companion column", {
-  df <- simple_df()
-  result <- speed(
-    df,
-    swap = "treatment",
-    linked_cols = "trt_name",
-    iterations = 100,
-    early_stop_iterations = 30,
-    seed = 42,
-    quiet = TRUE
-  )
-
-  # The optimised design differs from the input, so the companion must have moved too
-  expect_false(identical(
-    as.character(result$design_df$treatment),
-    df$treatment
-  ))
-  expect_false(identical(as.character(result$design_df$trt_name), df$trt_name))
-})
-
 test_that("linked_cols moves an NA companion value with its treatment", {
   df <- simple_df()
   df$trt_name[df$treatment == "A"] <- NA
@@ -151,6 +131,13 @@ test_that("linked_cols keeps companion columns with their treatment", {
     seed = 42,
     quiet = TRUE
   )
+
+  # Both columns actually moved, so the pairing checks below are not vacuous
+  expect_false(identical(
+    as.character(result$design_df$treatment),
+    df$treatment
+  ))
+  expect_false(identical(as.character(result$design_df$trt_name), df$trt_name))
 
   expect_pairing_preserved(df, result$design_df, "trt_name", "treatment")
   expect_setequal(result$design_df$plot_id, df$plot_id)

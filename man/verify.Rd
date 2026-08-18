@@ -4,10 +4,7 @@
 \alias{.verify_inputs}
 \alias{.verify_speed_inputs}
 \alias{.verify_hierarchical_inputs}
-\alias{.verify_level_columns}
-\alias{.verify_linked_cols}
 \alias{.verify_optim_params}
-\alias{.verify_swap_all_replication}
 \alias{.verify_grid_by}
 \title{Verify Inputs for \code{speed}}
 \usage{
@@ -48,10 +45,6 @@
   seed
 )
 
-.verify_level_columns(data, optimise)
-
-.verify_linked_cols(data, optimise, linked_cols = NULL)
-
 .verify_optim_params(
   swap_count,
   swap_all_blocks,
@@ -63,8 +56,6 @@
   bal_weight,
   stop_at_optimal
 )
-
-.verify_swap_all_replication(data, optimise, dummy_group = NULL)
 
 .verify_grid_by(data, grid_factors)
 }
@@ -119,14 +110,7 @@ be a named list with names matching \code{swap}.}
 \item{seed}{A numeric value for random seed. If provided, it ensures
 reproducibility of results (default: \code{NULL}).}
 
-\item{optimise}{The \code{optimise} argument as passed to \code{\link[=speed]{speed()}} for
-\code{\link[=.verify_inputs]{.verify_inputs()}}, or the resolved per-level list built by
-\code{\link[=create_speed_input]{create_speed_input()}} for the checks that run after it.}
-
-\item{linked_cols}{Character vector of column names that travel with the
-\code{swap} column, for example a \code{variety_name} label belonging to a numeric
-\code{variety} code (default: \code{NULL}). For hierarchical designs, can be a named
-list with names matching \code{swap}. See details for more information.}
+\item{optimise}{The \code{optimise} argument as passed to \code{\link[=speed]{speed()}}.}
 
 \item{swap_count}{Number of treatment swaps per iteration (default: 1).}
 
@@ -158,39 +142,13 @@ the best score is used as an initial design (default: 0).}
 its layout allows (default: \code{TRUE}). The bound is only derivable for the default \code{\link[=objective_function]{objective_function()}}
 with non-negative weights and no \code{relationship} matrix; otherwise the level runs to its usual stopping
 rules regardless of this setting.}
-
-\item{dummy_group}{Name of the internal placeholder column used for a level
-with no \code{swap_within} boundary, so it can be described as the whole design.}
 }
 \description{
 Validates the arguments as the user passed them, dispatching to the checker
 for the input shape given and running the checks that apply to all three.
-Checks needing the resolved per-level list - \code{\link[=.verify_level_columns]{.verify_level_columns()}},
-\code{\link[=.verify_linked_cols]{.verify_linked_cols()}} and \code{\link[=.verify_swap_all_replication]{.verify_swap_all_replication()}} - cannot run
-here, and are called from \code{\link[=speed]{speed()}} once \code{\link[=create_speed_input]{create_speed_input()}} has built it.
-
-The \code{optimise} input shape bypasses both per-shape checkers, so a level
-naming a column that is not there reaches the search unchallenged: a bad
-\code{swap_within} leaves \code{\link[=swappable_groups]{swappable_groups()}} with nothing to group by, and the
-level is reported as frozen rather than as a mistake. Checked on the resolved
-list so all three shapes are covered.
-
-Checks the columns named in \code{linked_cols} after they have been merged into
-the per-level \code{optimise} list, so all three input shapes are covered by one
-set of rules. The rules are cross-level, so like
-\code{\link[=.verify_swap_all_replication]{.verify_swap_all_replication()}} this runs on the resolved list rather than
-in the per-shape checkers.
-
-\code{swap_all = TRUE} proposes a move by exchanging \emph{every} plot holding one
-treatment with \emph{every} plot holding another. That is a rearrangement of the
-design only when both treatments occupy the same number of plots within the
-swap group; when they do not, the two treatments exchange replication counts
-and the design that comes back is not the design that went in. Error before
-any optimisation happens rather than silently altering replication.
-
-Called on the resolved \code{optimise} list, so it covers simple, legacy
-hierarchical and \verb{optimise = } calls alike, including levels that set
-\code{swap_all} individually.
+Checks needing the resolved per-level list cannot run here; they are
+documented under \code{\link[=.verify_level_columns]{.verify_level_columns()}} and are called from \code{\link[=speed]{speed()}} once
+\code{\link[=create_speed_input]{create_speed_input()}} has built it.
 
 \code{grid_factors} is a plain list, so a mistyped \code{by} would be ignored and every
 grid silently pooled. Checked before any optimisation happens.

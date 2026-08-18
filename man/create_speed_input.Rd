@@ -77,10 +77,7 @@ list with names matching \code{swap}. See details for more information.}
 see more in example.}
 }
 \value{
-The per-level \code{optimise} list, carrying a \code{user_named} attribute
-recording whether the level names are the user's or were synthesised here.
-\code{\link[=.verify_linked_cols]{.verify_linked_cols()}} reads it to decide whether an error may quote a
-level name back at them.
+The per-level \code{optimise} list.
 }
 \description{
 Create Input for Internal speed Function
