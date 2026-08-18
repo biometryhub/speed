@@ -137,7 +137,7 @@ swappable_groups <- function(design, swap, swap_within, swap_all) {
     "` within `",
     swap_within,
     "` groups ",
-    paste0(sort(unequal), collapse = ", "),
+    paste0(unequal, collapse = ", "),
     ", because `swap_all = TRUE` only exchanges treatments with equal ",
     "replication and no two treatments there share a replication count.",
     " Those groups were left unchanged.",
