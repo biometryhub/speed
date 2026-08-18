@@ -10,9 +10,9 @@
 #   4. Set MIRROR_TARGET below to the destination's SSH URL, then delete
 #      both local key files.
 #
-# `git push --mirror` is a force push that also deletes refs absent from the
-# source, which is what makes the destination an exact copy. Anything
-# committed only to the destination is discarded on the next run.
+# The push force-updates and also deletes refs absent from the source, which
+# is what makes the destination an exact copy. Anything committed only to the
+# destination is discarded on the next run.
 on:
   push:
   delete:
@@ -51,6 +51,11 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
+      # Not `--mirror`: that pushes every ref, including the refs/pull/* refs
+      # GitHub advertises on clone but rejects on push as hidden refs.
+      # Explicit refspecs plus --prune give the same force-and-delete
+      # semantics, scoped to branches and tags.
       - name: Push all branches and tags to the mirror
         working-directory: source.git
-        run: git push --mirror "$MIRROR_TARGET"
+        run: |
+          git push --force --prune "$MIRROR_TARGET"             "refs/heads/*:refs/heads/*"             "refs/tags/*:refs/tags/*"
