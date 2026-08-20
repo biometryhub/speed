@@ -13,6 +13,7 @@
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Generate Spatially Efficient Experimental Designs">
 <meta name="description" content="The Speed package optimises spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It employs customisable optimisation metrics, with a default approach that balances minimising treatment adjacency and maintaining spatial balance. Users can supply their own optimisation metrics to tailor designs to specific experimental requirements. The package also includes visualisation tools that allow users to inspect optimised designs.">
 <meta property="og:description" content="The Speed package optimises spatial experimental designs by rearranging treatments to improve statistical efficiency while maintaining statistical validity. It employs customisable optimisation metrics, with a default approach that balances minimising treatment adjacency and maintaining spatial balance. Users can supply their own optimisation metrics to tailor designs to specific experimental requirements. The package also includes visualisation tools that allow users to inspect optimised designs.">
+<meta property="og:image" content="https://biometryhub.github.io/speed/logo.svg">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -58,8 +59,11 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="speed---spatially-efficient-experimental-designs">speed - Spatially Efficient Experimental Designs<a class="anchor" aria-label="anchor" href="#speed---spatially-efficient-experimental-designs"></a>
-</h1></div>
+<div class="page-header">
+<img src="logo.svg" class="logo" alt=""><h1 id="speed---spatially-efficient-experimental-designs-">speed - Spatially Efficient Experimental Designs 
+<a class="anchor" aria-label="anchor" href="#speed---spatially-efficient-experimental-designs-"></a>
+</h1>
+</div>
 <!-- badges: start -->
 
 <div class="section level2">
@@ -101,7 +105,7 @@
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>You can install the development version of speed from <a href="https://github.com/biometryhub/speed" class="external-link">GitHub</a> with:</p>
+<p>You can install the development version of speed from <a href="https://github.com/biometryhub/speed" class="external-link">GitHub</a> with any of the following options:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># pak</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="https://pak.r-lib.org/" class="external-link">"pak"</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span></span>
@@ -142,6 +146,8 @@
 <p>A simple example optimising a 4×3 completely randomised design with 4 treatments:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://biometryhub.github.io/speed/">speed</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; A newer version of speed is available on GitHub (installed: 0.0.10, available: 0.0.11).</span></span>
+<span><span class="co">#&gt; Update with: devtools::install_github("biometryhub/speed")</span></span>
 <span></span>
 <span><span class="co"># Create a simple design with 3 replicates of 4 treatments</span></span>
 <span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
@@ -239,21 +245,22 @@
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
 <p>If you use <code>speed</code> in your research, please cite:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>To cite package <span class="st">'speed'</span> <span class="cf">in</span> publications use<span class="sc">:</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  Rogers S, Pipattungsakul W, Taylor <span class="fu">J</span> (<span class="dv">2026</span>). _speed<span class="sc">:</span> Generate</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  Spatially Efficient Experimental Designs_. R package version <span class="dv">0</span>.<span class="fl">0.11</span>,</span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="sc">&lt;</span>https<span class="sc">:</span><span class="er">//</span>biometryhub.github.io<span class="sc">/</span>speed<span class="sc">/</span><span class="er">&gt;</span>.</span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>A BibTeX entry <span class="cf">for</span> LaTeX users is</span>
+<div class="sourceCode" id="cb5"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>Warning <span class="cf">in</span> <span class="fu">citation</span>(<span class="st">"speed"</span>)<span class="sc">:</span> could not determine year <span class="cf">for</span> <span class="st">'speed'</span> from package</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>DESCRIPTION file</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>To cite package <span class="st">'speed'</span> <span class="cf">in</span> publications use<span class="sc">:</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  Rogers S, Pipattungsakul W, Taylor <span class="fu">J</span> (????). _speed<span class="sc">:</span> Generate</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  Spatially Efficient Experimental Designs_. R package version <span class="dv">0</span>.<span class="fl">0.10</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="sc">&lt;</span>https<span class="sc">:</span><span class="er">//</span>biometryhub.github.io<span class="sc">/</span>speed<span class="sc">/</span><span class="er">&gt;</span>.</span>
 <span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a></span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>  <span class="sc">@</span>Manual{,</span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>    title <span class="ot">=</span> {speed<span class="sc">:</span> Generate Spatially Efficient Experimental Designs},</span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>    author <span class="ot">=</span> {Sam Rogers and Wasin Pipattungsakul and Julian Taylor},</span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>    year <span class="ot">=</span> {<span class="dv">2026</span>},</span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>    note <span class="ot">=</span> {R package version <span class="dv">0</span>.<span class="fl">0.11</span>},</span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>    url <span class="ot">=</span> {https<span class="sc">:</span><span class="er">//</span>biometryhub.github.io<span class="sc">/</span>speed<span class="sc">/</span>},</span>
-<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>  }</span></code></pre></div>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>A BibTeX entry <span class="cf">for</span> LaTeX users is</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  <span class="sc">@</span>Manual{,</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>    title <span class="ot">=</span> {speed<span class="sc">:</span> Generate Spatially Efficient Experimental Designs},</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>    author <span class="ot">=</span> {Sam Rogers and Wasin Pipattungsakul and Julian Taylor},</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>    note <span class="ot">=</span> {R package version <span class="dv">0</span>.<span class="fl">0.10</span>},</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>    url <span class="ot">=</span> {https<span class="sc">:</span><span class="er">//</span>biometryhub.github.io<span class="sc">/</span>speed<span class="sc">/</span>},</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>  }</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
