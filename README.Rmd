@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# speed - Spatially Efficient Experimental Designs
+# speed - Spatially Efficient Experimental Designs <a href="https://biometryhub.github.io/speed/"><img src="man/figures/logo.svg" align="right" height="139" alt="speed website" /></a>
 
 <!-- badges: start -->
 [![Project Status: Active:  The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
@@ -52,7 +52,7 @@ The `speed` package optimises spatial experimental designs by rearranging treatm
 
 ## Installation
 
-You can install the development version of speed from [GitHub](https://github.com/biometryhub/speed) with:
+You can install the development version of speed from [GitHub](https://github.com/biometryhub/speed) with any of the following options:
 
 ```{r, eval = FALSE}
 # pak

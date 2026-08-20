@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# speed - Spatially Efficient Experimental Designs
+# speed - Spatially Efficient Experimental Designs <a href="https://biometryhub.github.io/speed/"><img src="man/figures/logo.svg" align="right" height="139" alt="speed website" /></a>
 
 <!-- badges: start -->
 
@@ -50,7 +50,8 @@ maintaining statistical validity. It uses simulated annealing to:
 ## Installation
 
 You can install the development version of speed from
-[GitHub](https://github.com/biometryhub/speed) with:
+[GitHub](https://github.com/biometryhub/speed) with any of the following
+options:
 
 ``` r
 # pak
@@ -92,6 +93,8 @@ treatments:
 
 ``` r
 library(speed)
+#> A newer version of speed is available on GitHub (installed: 0.0.10, available: 0.0.11).
+#> Update with: devtools::install_github("biometryhub/speed")
 
 # Create a simple design with 3 replicates of 4 treatments
 df <- data.frame(
@@ -201,10 +204,12 @@ for details).
 
 If you use `speed` in your research, please cite:
 
+    Warning in citation("speed"): could not determine year for 'speed' from package
+    DESCRIPTION file
     To cite package 'speed' in publications use:
 
-      Rogers S, Pipattungsakul W, Taylor J (2026). _speed: Generate
-      Spatially Efficient Experimental Designs_. R package version 0.0.11,
+      Rogers S, Pipattungsakul W, Taylor J (????). _speed: Generate
+      Spatially Efficient Experimental Designs_. R package version 0.0.10,
       <https://biometryhub.github.io/speed/>.
 
     A BibTeX entry for LaTeX users is
@@ -212,8 +217,7 @@ If you use `speed` in your research, please cite:
       @Manual{,
         title = {speed: Generate Spatially Efficient Experimental Designs},
         author = {Sam Rogers and Wasin Pipattungsakul and Julian Taylor},
-        year = {2026},
-        note = {R package version 0.0.11},
+        note = {R package version 0.0.10},
         url = {https://biometryhub.github.io/speed/},
       }
 
