@@ -20,6 +20,13 @@ reference:
       - get_edges
       - get_vertices
       - prep_relationship
+  - subtitle: Fisher information utilities
+    desc: Functions for constructing contrast and covariance inputs for Fisher information objectives
+  - contents:
+      - factorial_contrast_matrix
+      - compute_L_projection
+      - cor_ar1
+      - cor_ar1_ar1
   - title: Output
     desc: Functions for checking designs.
   - contents:
