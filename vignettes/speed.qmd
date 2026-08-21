@@ -329,6 +329,107 @@ autoplot(split_plot_result, treatments = "subplot_treatment", block = "wholeplot
 
 This design has now been optimised at both the whole plot level and the sub-plot level.
 
+# Keeping Related Columns Together
+
+## Overview
+
+Trial data often carries a treatment code alongside one or more descriptive columns that belong with it - a variety name against a short code, a seed lot, a supplier. `speed` rearranges only the column named in `swap`, so those companion columns would stay where they are and quietly become attached to the wrong treatment. The `linked_cols` argument names the columns that should travel with `swap`.
+
+## Example: Variety Names Alongside Treatment Codes
+
+Consider a trial of 6 wheat varieties where the design carries both a treatment code and the cultivar name.
+
+```{r linked-df}
+variety_trial <- initialise_design_df(items = 6, nrows = 6, ncols = 4)
+varieties <- c(T1 = "Scepter", T2 = "Vixen", T3 = "Calibre",
+               T4 = "Rockstar", T5 = "Ballista", T6 = "Denison")
+variety_trial$variety_name <- unname(varieties[variety_trial$treatment])
+head(variety_trial)
+```
+
+Optimising without `linked_cols` moves `treatment` but leaves `variety_name` sitting in its original row order, so the pairing between the two is lost:
+
+```{r linked-without}
+unlinked <- speed(variety_trial, swap = "treatment", seed = 42)
+head(unlinked$design_df)
+```
+
+Naming the column in `linked_cols` carries it along with the treatment it belongs to:
+
+```{r linked-with}
+linked <- speed(variety_trial,
+                swap = "treatment",
+                linked_cols = "variety_name",
+                seed = 42)
+head(linked$design_df)
+```
+
+Every code is now back with its own cultivar:
+
+```{r linked-pairing}
+unique(linked$design_df[, c("treatment", "variety_name")])
+```
+
+Linked columns take no part in scoring, so adding them cannot change the design that is found. The two runs above produce exactly the same layout:
+
+```{r linked-neutral}
+identical(unlinked$design_df$treatment, linked$design_df$treatment)
+```
+
+They are also returned in their original position and with their original type - no extra columns appear in the output.
+
+## Hierarchical Designs
+
+Each level of a hierarchical design swaps its own column, so companion columns have to be matched to the level that moves them. Here the whole plot treatment carries an irrigation method, and the sub-plot treatment carries a cultivar name:
+
+```{r linked-hierarchical-df}
+split_plot_linked <- initialise_split_design_df(splits = splits, rep_dim = c(4, 1))
+split_plot_linked$irrigation <- unname(
+  c(A = "Drip", B = "Flood", C = "None")[split_plot_linked$wholeplot_treatment]
+)
+split_plot_linked$variety <- unname(
+  c(a = "Scepter", b = "Vixen", c = "Calibre", d = "Denison")[
+    split_plot_linked$subplot_treatment
+  ]
+)
+```
+
+`linked_cols` takes a named list whose names match the levels, so the `optimise` list built for the split plot design above can be reused unchanged - useful when it is defined elsewhere and shared between designs:
+
+```{r linked-hierarchical-alt}
+#| eval: false
+speed(split_plot_linked, optimise = optimise,
+      linked_cols = list(wp = "irrigation", sp = "variety"), seed = 42)
+```
+
+Since the hierarchy is already described level by level, `linked_cols` can equally go inside `optimise` alongside the other per-level arguments, which keeps each level's description in one place. Where a level sets `linked_cols` itself, that wins; the argument fills in the levels that do not.
+
+```{r linked-hierarchical}
+optimise_linked <- list(
+  wp = list(
+    swap = "wholeplot_treatment", swap_within = "block", swap_all = TRUE,
+    linked_cols = "irrigation"
+  ),
+  sp = list(
+    swap = "subplot_treatment", swap_within = "wholeplot",
+    linked_cols = "variety"
+  )
+)
+
+linked_split <- speed(split_plot_linked, optimise = optimise_linked, seed = 42)
+
+unique(linked_split$design_df[, c("wholeplot_treatment", "irrigation")])
+unique(linked_split$design_df[, c("subplot_treatment", "variety")])
+```
+
+::: {.callout-note}
+A bare character vector applies to every level, which in a hierarchical design is only valid when all levels swap the same column - a multi-environment trial, for example. Where levels swap different columns, name the level, since a column can only travel with one `swap` column.
+:::
+
+Columns used as `swap_within`, or as spatial or grid factors, cannot be linked: they describe where a plot sits rather than what is on it, so moving them would break the layout being scored.
+
+A `swap` column is the exception. Linking a *later* level's `swap` column at an earlier level carries a child treatment along when its parent moves - linking `subplot_treatment` at the whole plot level keeps each sub-plot treatment with its whole plot treatment, and the sub-plot level then optimises it in place. The carrying level must run first, or it would undo the child level's work.
+
 # Spatial Design Considerations
 
 ## Field Shape and Orientation

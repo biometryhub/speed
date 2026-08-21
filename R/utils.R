@@ -71,17 +71,26 @@ base_type <- function(x) {
 
 #' Convert Data Frame Data to Factors
 #'
+#' Converts the named columns to factors, which is what the SA loop requires.
+#' Names not present in `df` are ignored, so a caller may pass the `"1"` /
+#' `"none"` placeholder used for a level with no `swap_within` boundary. Columns
+#' outside `cols` are left untouched and are not recorded in `input_types`, so
+#' [to_types()] returns them exactly as they came in - the only way to preserve
+#' a class [base_type()] cannot rebuild, such as `Date`.
+#'
 #' @param df A data frame
+#' @param cols Names of the columns to convert (default: every column).
 #'
 #' @returns A list containing:
-#' - **df** - A data frame with factors
+#' - **df** - A data frame with the named columns as factors
 #' - **input_types** - A named character vector of the original base type of
-#'   each column (for restoring via [to_types()])
+#'   each converted column (for restoring via [to_types()])
 #'
 #' @keywords internal
-to_factor <- function(df) {
-  input_types <- vapply(df, base_type, character(1))
-  for (col in names(df)) {
+to_factor <- function(df, cols = names(df)) {
+  cols <- intersect(cols, names(df))
+  input_types <- vapply(df[cols], base_type, character(1))
+  for (col in cols) {
     if (!is.factor(df[[col]])) {
       df[[col]] <- as.factor(df[[col]])
     }
@@ -162,9 +171,38 @@ to_types <- function(df, types) {
 #   return(parsed_args)
 # }
 
+#' Value a Single Level Takes From an Argument of `speed()`
+#'
+#' @description
+#' A named list naming only levels of the design supplies a value per level;
+#' anything else applies whole to every level. Matching on the level names is
+#' what tells `iterations = list(wp = 5, sp = 7)` apart from `grid_factors` and
+#' `optim_params()`, which are named lists of their own fields rather than of
+#' levels.
+#'
+#' @param value An argument of [speed()], as the user passed it.
+#' @param level Name of the level being built.
+#' @param levels Names of every level.
+#'
+#' @return The value for `level`; `NULL` where a per-level list omits it, which
+#'   leaves the caller to fall back to `.DEFAULT`.
+#'
+#' @keywords internal
+.level_value <- function(value, level, levels) {
+  if (
+    is.list(value) && !is.null(names(value)) && all(names(value) %in% levels)
+  ) {
+    return(value[[level]])
+  }
+
+  return(value)
+}
+
 #' Create Input for Internal speed Function
 #'
 #' @inheritParams speed
+#'
+#' @return The per-level `optimise` list.
 #'
 #' @keywords internal
 create_speed_input <- function(
@@ -177,6 +215,7 @@ create_speed_input <- function(
   obj_function,
   swap_all,
   optimise_params,
+  linked_cols = NULL,
   optimise = NULL,
   row_col_inferred = TRUE
 ) {
@@ -189,76 +228,38 @@ create_speed_input <- function(
     "early_stop_iterations",
     "obj_function",
     "swap_all",
-    "optimise_params"
+    "optimise_params",
+    "linked_cols"
   )
 
-  if (!is.null(optimise)) {
-    for (optimise_name in names(optimise)) {
-      for (arg in speed_args) {
-        if (is.null(optimise[[optimise_name]][[arg]])) {
-          optimise[[optimise_name]][[arg]] <- get(arg)
-        }
-      }
-
-      # if (!row_col_inferred) {
-      #   optimise[[optimise_name]]$optimise_params$adj_weight <- 0
-      # }
-    }
-  } else if (is.list(swap)) {
+  # Name the levels. `optimise` names them itself; otherwise they come from
+  # `swap`, or there is the one level described by the arguments.
+  if (is.null(optimise)) {
     optimise <- list()
-    for (optimise_name in names(swap)) {
-      optimise[[optimise_name]] <- list(
-        swap = swap[[optimise_name]],
-        swap_within = swap_within[[optimise_name]] %||% .DEFAULT$swap_within,
-        grid_factors = if (is.list(grid_factors[[1]])) {
-          grid_factors[[optimise_name]] %||% .DEFAULT$grid_factors
-        } else {
-          grid_factors
-        },
-        optimise_params = if (is.list(optimise_params[[1]])) {
-          optimise_params[[optimise_name]] %||% list()
-        } else {
-          optimise_params
-        }
-      )
-
-      for (arg in speed_args) {
-        if (
-          !(arg %in%
-            c("swap", "swap_within", "grid_factors", "optimise_params"))
-        ) {
-          if (is.null(optimise[[optimise_name]][[arg]])) {
-            optimise_var <- get(arg)
-            optimise[[optimise_name]][[arg]] <- if (is.list(optimise_var)) {
-              optimise_var[[optimise_name]] %||% .DEFAULT$spatial_factors
-            } else {
-              optimise_var
-            }
-          }
-        }
+    if (is.list(swap)) {
+      for (optimise_name in names(swap)) {
+        optimise[[optimise_name]] <- list()
       }
+    } else {
+      optimise[[paste(
+        ifelse(swap_all, "all", "single"),
+        swap,
+        "within",
+        ifelse(swap_within %in% c("1", "none"), "whole design", swap_within),
+        sep = " "
+      )]] <- list()
     }
-  } else {
-    optimise <- list()
-    optimise_name <- paste(
-      ifelse(swap_all, "all", "single"),
-      swap,
-      "within",
-      ifelse(swap_within %in% c("1", "none"), "whole design", swap_within),
-      sep = " "
-    )
+  }
 
-    optimise[[optimise_name]] <- list(
-      swap = swap,
-      swap_within = swap_within,
-      spatial_factors = spatial_factors,
-      grid_factors = grid_factors,
-      iterations = iterations,
-      early_stop_iterations = early_stop_iterations,
-      obj_function = obj_function,
-      swap_all = swap_all,
-      optimise_params = optimise_params
-    )
+  # Fill each level from the arguments, so all three input shapes resolve by the
+  # same rule. A value a level sets itself wins; `.DEFAULT` covers a per-level
+  # list that names some levels but not others.
+  for (optimise_name in names(optimise)) {
+    for (arg in speed_args) {
+      optimise[[optimise_name]][[arg]] <- optimise[[optimise_name]][[arg]] %||%
+        .level_value(get(arg), optimise_name, names(optimise)) %||%
+        .DEFAULT[[arg]]
+    }
   }
 
   if (!row_col_inferred) {
@@ -268,6 +269,41 @@ create_speed_input <- function(
   }
 
   return(optimise)
+}
+
+#' Columns a Single Level Treats as Fixed Layout
+#'
+#' @description
+#' The columns that say where a plot sits and which group it belongs to. Unlike
+#' the `swap` column these never move, so they can be neither optimised by
+#' another level nor linked to one.
+#'
+#' @param opt One level of the `optimise` list.
+#'
+#' @return A character vector of column names.
+#'
+#' @keywords internal
+.level_fixed_cols <- function(opt) {
+  return(unique(c(
+    opt$swap_within,
+    all.vars(opt$spatial_factors),
+    unlist(opt$grid_factors)
+  )))
+}
+
+#' Columns a Single Level Optimises or Scores On
+#'
+#' @description
+#' Everything one level of `optimise` needs present in the design: the column it
+#' swaps, plus the fixed layout columns it groups and scores by.
+#'
+#' @inheritParams .level_fixed_cols
+#'
+#' @return A character vector of column names.
+#'
+#' @keywords internal
+.level_optimised_cols <- function(opt) {
+  return(unique(c(opt$swap, .level_fixed_cols(opt))))
 }
 
 `%||%` <- function(a, b) if (!is.null(a)) a else b

@@ -211,8 +211,14 @@ test_that("print.summary.design shows the expected sections", {
   expect_match(out, "Objective:.*objective_function")
   expect_match(out, "adjacency")
   expect_match(out, "balance")
-  # Iterations report run / total plus an explicit convergence note.
-  expect_match(out, "Iterations:.*/.*\\((stopped early|ran to cap)\\)")
+  # Iterations report run / total plus the reason the level stopped.
+  expect_match(
+    out,
+    paste0(
+      "Iterations:.*/.*\\((optimal reached|no further improvement|",
+      "no swaps possible|ran to cap)\\)"
+    )
+  )
 })
 
 test_that("print.summary.design shows per-level blocks and a total for hierarchical", {
@@ -230,13 +236,13 @@ test_that("print.summary.design returns the object invisibly", {
 })
 
 test_that("print.summary.design colours section headings and convergence status", {
-  s <- summary(simple_design(iterations = 5000)) # enough to stop early
+  s <- summary(simple_design(iterations = 5000)) # enough to reach the optimum
 
   # Colour is off by default in non-interactive test runs; strip it either way
   # so the plain-text content is unaffected regardless of terminal support.
   out_plain <- capture_output(print(s))
   expect_match(out_plain, "Structure")
-  expect_match(out_plain, "stopped early")
+  expect_match(out_plain, "optimal reached")
 
   # testthat's reproducible-output setup forces `cli.num_colors = 1`, which
   # crayon checks ahead of `crayon.enabled` - override both to actually force
@@ -245,7 +251,7 @@ test_that("print.summary.design colours section headings and convergence status"
     out <- capture_output(print(s))
   })
   expect_match(out, "\033\\[1mStructure\033\\[22m")
-  expect_match(out, "\033\\[32m\\(stopped early\\)\033\\[39m")
+  expect_match(out, "\033\\[32m\\(optimal reached\\)\033\\[39m")
 
   cap <- summary(prep_design()) # 50 iterations, no early stop -> hits the cap
   # testthat's reproducible-output setup forces `cli.num_colors = 1`, which

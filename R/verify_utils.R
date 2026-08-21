@@ -1,11 +1,70 @@
 #' Verify Inputs for `speed`
 #'
 #' @description
-#' Verify inputs for the `speed` function.
+#' Validates the arguments as the user passed them, dispatching to the checker
+#' for the input shape given and running the checks that apply to all three.
+#' Checks needing the resolved per-level list cannot run here; they are
+#' documented under [.verify_level_columns()] and are called from [speed()] once
+#' [create_speed_input()] has built it.
 #'
 #' @rdname verify
 #'
 #' @inheritParams speed
+#'
+#' @param optimise The `optimise` argument as passed to [speed()].
+#'
+#' @keywords internal
+.verify_inputs <- function(
+  data,
+  swap,
+  swap_within,
+  spatial_factors,
+  grid_factors,
+  iterations,
+  early_stop_iterations,
+  obj_function,
+  quiet,
+  seed,
+  optimise = NULL
+) {
+  if (is.null(optimise)) {
+    # A named list of swap columns is the legacy hierarchical shape
+    if (is.list(swap) && !is.null(names(swap))) {
+      .verify_hierarchical_inputs(
+        data,
+        swap,
+        swap_within,
+        spatial_factors,
+        iterations,
+        early_stop_iterations,
+        obj_function,
+        quiet,
+        seed
+      )
+    } else {
+      .verify_speed_inputs(
+        data,
+        swap,
+        swap_within,
+        spatial_factors,
+        iterations,
+        early_stop_iterations,
+        quiet,
+        seed
+      )
+    }
+  }
+
+  # `by` groups plots into separate grids (a multi-environment trial), and is
+  # checked for every input shape, including `optimise`
+  .verify_grid_by(data, grid_factors)
+
+  return(invisible(NULL))
+}
+
+#' Verify simple inputs
+#'
+#' @rdname verify
 #'
 #' @keywords internal
 .verify_speed_inputs <- function(
@@ -47,6 +106,8 @@
       upper = .Machine$integer.max
     )
   }
+
+  return(invisible(NULL))
 }
 
 #' Verify hierarchical inputs
@@ -91,11 +152,198 @@
   if (!is.null(seed) && !is.numeric(seed)) {
     stop("`seed` must be numeric or NULL")
   }
+
+  return(invisible(NULL))
+}
+
+#' Verify Inputs Needing the Resolved `optimise` List
+#'
+#' @description
+#' Checks that can only run once [create_speed_input()] has merged the three
+#' input shapes into one per-level list, either because their rules are
+#' cross-level or because they must cover all three shapes alike. [speed()]
+#' calls them after `create_speed_input()`, not from [.verify_inputs()].
+#'
+#' [.verify_level_columns()] catches a level naming a column that is not there,
+#' which the `optimise` shape would otherwise carry into the search unchallenged:
+#' a bad `swap_within` leaves [swappable_groups()] with nothing to group by, and
+#' the level is reported as frozen rather than as a mistake.
+#'
+#' @rdname verify_resolved
+#'
+#' @inheritParams speed
+#'
+#' @param optimise The resolved per-level list built by [create_speed_input()].
+#' @param named_levels Whether the level names are the user's own. `FALSE` for a
+#'   scalar `swap` with no `optimise`, whose single level name is synthesised, so
+#'   no error may quote it back at them.
+#'
+#' @keywords internal
+.verify_level_columns <- function(data, optimise) {
+  for (level in names(optimise)) {
+    opt <- optimise[[level]]
+    verify_column_exists(opt$swap, data, "treatment")
+
+    # `"1"` / `"none"` is the placeholder for no boundary, swapped for the dummy
+    # group column later
+    if (!opt$swap_within %in% c("1", "none")) {
+      verify_column_exists(opt$swap_within, data, "constraint")
+    }
+  }
+
+  return(invisible(NULL))
+}
+
+#' Verify linked columns
+#'
+#' @description
+#' Checks the columns named in `linked_cols` after they have been merged into
+#' the per-level `optimise` list, so all three input shapes are covered by one
+#' set of rules.
+#'
+#' @rdname verify_resolved
+#'
+#' @keywords internal
+.verify_linked_cols <- function(
+  data,
+  optimise,
+  linked_cols = NULL,
+  named_levels = TRUE
+) {
+  if (is.list(linked_cols)) {
+    if (!named_levels) {
+      stop(
+        "`linked_cols` must be a character vector for a non-hierarchical ",
+        "design; there are no levels to name.",
+        call. = FALSE
+      )
+    }
+
+    if (is.null(names(linked_cols)) || any(names(linked_cols) == "")) {
+      stop(
+        "`linked_cols` must be a character vector, or a named list with names matching `swap`.",
+        call. = FALSE
+      )
+    }
+
+    unknown <- setdiff(names(linked_cols), names(optimise))
+    if (length(unknown) > 0) {
+      stop(
+        "`linked_cols` has no matching level for ",
+        paste0("'", unknown, "'", collapse = ", "),
+        ". Available levels: ",
+        paste0("'", names(optimise), "'", collapse = ", "),
+        ".",
+        call. = FALSE
+      )
+    }
+  }
+
+  # A simple design's one level is named by `create_speed_input()`, so naming it
+  # back at the user would point them at something they never wrote. Only the
+  # two errors below need it; the rest require a second level to arise at all,
+  # so their level is always one the user chose.
+  at_level <- function(level) {
+    if (!named_levels) {
+      return("")
+    }
+
+    return(paste0(" at level '", level, "'"))
+  }
+
+  owner <- character(0)
+  for (level in names(optimise)) {
+    opt <- optimise[[level]]
+    cols <- opt$linked_cols
+    if (length(cols) == 0) {
+      next
+    }
+
+    verify_character(cols, var_names = "linked_cols")
+
+    earlier <- names(optimise)[seq_len(which(names(optimise) == level) - 1)]
+
+    for (col in cols) {
+      verify_column_exists(col, data, "linked column")
+
+      # Checked across every level, since one level's grouping is fixed for all
+      # of them
+      fixes_layout <- Filter(
+        function(other) {
+          return(col %in% .level_fixed_cols(optimise[[other]]))
+        },
+        names(optimise)
+      )
+      if (length(fixes_layout) > 0) {
+        stop(
+          "`linked_cols` column '",
+          col,
+          "' defines the layout",
+          at_level(fixes_layout[[1]]),
+          " as a swap_within, spatial or grid factor, so it cannot be moved.",
+          call. = FALSE
+        )
+      }
+
+      if (identical(col, opt$swap)) {
+        stop(
+          "`linked_cols` column '",
+          col,
+          "' is the swap column",
+          at_level(level),
+          ", so it cannot also travel with itself.",
+          call. = FALSE
+        )
+      }
+
+      # A child treatment may ride with its parent, but only if the parent moves
+      # first - otherwise this level would undo the child level's optimisation
+      optimised_earlier <- Filter(
+        function(other) {
+          return(identical(col, optimise[[other]]$swap))
+        },
+        earlier
+      )
+      if (length(optimised_earlier) > 0) {
+        stop(
+          "`linked_cols` column '",
+          col,
+          "' is optimised at level '",
+          optimised_earlier[[1]],
+          "', which runs before '",
+          level,
+          "'. Carrying it here would undo that level's work; order the levels so ",
+          "'",
+          level,
+          "' comes first.",
+          call. = FALSE
+        )
+      }
+
+      if (col %in% names(owner) && owner[[col]] != opt$swap) {
+        stop(
+          "`linked_cols` column '",
+          col,
+          "' is linked to both '",
+          owner[[col]],
+          "' and '",
+          opt$swap,
+          "'. A column can only travel with one swap column.",
+          call. = FALSE
+        )
+      }
+      owner[[col]] <- opt$swap
+    }
+  }
+
+  return(invisible(NULL))
 }
 
 #' Verify Optimization Parameters for `speed`
 #'
 #' @rdname verify
+#'
+#' @inheritParams optim_params
 #'
 #' @keywords internal
 .verify_optim_params <- function(
@@ -137,7 +385,7 @@
 #' @param dummy_group Name of the internal placeholder column used for a level
 #'   with no `swap_within` boundary, so it can be described as the whole design.
 #'
-#' @rdname verify
+#' @rdname verify_resolved
 #'
 #' @keywords internal
 .verify_swap_all_replication <- function(data, optimise, dummy_group = NULL) {

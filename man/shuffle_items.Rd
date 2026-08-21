@@ -4,7 +4,7 @@
 \alias{shuffle_items}
 \title{Shuffle Items in A Group}
 \usage{
-shuffle_items(design, swap, swap_within, seed = NULL)
+shuffle_items(design, swap, swap_within, seed = NULL, linked_cols = NULL)
 }
 \arguments{
 \item{design}{Data frame containing the current design}
@@ -17,6 +17,10 @@ treatments, or named list for hierarchical designs}
 
 \item{seed}{A numeric value for random seed. If provided, it ensures
 reproducibility of results (default: \code{NULL}).}
+
+\item{linked_cols}{Character vector of column names moved in lockstep with
+the \code{swap} column, so that a value paired with a treatment stays paired with
+it. \code{NULL} (default) moves the \code{swap} column alone.}
 }
 \value{
 A data frame with the items shuffled

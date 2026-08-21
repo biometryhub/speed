@@ -2792,3 +2792,32 @@ test_that("speed preserves non-consecutive numeric row and column values", {
   expect_setequal(result$design_df$row, c(2, 4, 6, 8))
   expect_setequal(result$design_df$col, seq(10, 50, 10))
 })
+
+test_that("speed returns columns it does not use untouched", {
+  test_data <- data.frame(
+    row = rep(1:4, times = 5),
+    col = rep(1:5, each = 4),
+    treatment = rep(LETTERS[1:4], 5),
+    staff = rep(c("Ana", "Bo", "Cy", "Di", "Ed"), each = 4),
+    # A class `base_type()` cannot rebuild, so it only survives if the column is
+    # never converted to a factor in the first place
+    visited = as.Date("2026-03-01") + rep(0:4, each = 4),
+    stringsAsFactors = FALSE
+  )
+
+  result <- speed(test_data, swap = "treatment", seed = 42, quiet = TRUE)
+
+  expect_equal(names(result$design_df), names(test_data))
+  expect_type(result$design_df$staff, "character")
+  expect_s3_class(result$design_df$visited, "Date")
+
+  # Unrelated columns describe the plot, not the treatment, so they stay put
+  expect_equal(
+    result$design_df[
+      order(result$design_df$row, result$design_df$col),
+      c("staff", "visited")
+    ],
+    test_data[order(test_data$row, test_data$col), c("staff", "visited")],
+    ignore_attr = "row.names"
+  )
+})

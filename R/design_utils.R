@@ -9,6 +9,12 @@
 #' @param swap_all_blocks Whether to perform swaps in all blocks or just one
 #' @param swap_all Whether to swap all matching items or a single item at a time
 #'   (default: FALSE)
+#' @param linked_cols Character vector of column names moved in lockstep with
+#'   the `swap` column, so that a value paired with a treatment stays paired with
+#'   it. `NULL` (default) moves the `swap` column alone.
+#' @param swappable Groups a swap can be proposed in, as returned in the
+#'   `swappable` element of [swappable_groups()]. `NULL` (default) considers
+#'   every group, which costs an iteration whenever an unswappable one is drawn.
 #'
 #' @return A list with the updated design after swapping and information about
 #'   swapped items
@@ -20,23 +26,138 @@ generate_neighbour <- function(design,
                                swap_within,
                                swap_count = getOption("speed.swap_count", 1),
                                swap_all_blocks = getOption("speed.swap_all_blocks", FALSE),
-                               swap_all = FALSE) {
+                               swap_all = FALSE,
+                               linked_cols = NULL,
+                               swappable = NULL) {
   if (swap_all) {
-    return(generate_multi_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks))
+    return(generate_multi_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks, linked_cols,
+                                         swappable))
   } else {
-    return(generate_single_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks))
+    return(generate_single_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks, linked_cols,
+                                          swappable))
   }
+}
+
+#' Exchange Linked Columns Between Two Sets of Plots
+#'
+#' @description
+#' Moves each `linked_cols` column between `plots_1` and `plots_2` position by
+#' position, so a value paired with a treatment follows it. The two sets are
+#' always the same length: trivially so for a single swap, and for `swap_all`
+#' because only treatments of equal replication are exchanged.
+#'
+#' @param design Data frame containing the current design
+#' @param linked_cols Character vector of column names to exchange
+#' @param plots_1,plots_2 Equal-length vectors of row positions
+#'
+#' @return `design`, with the linked columns exchanged
+#'
+#' @keywords internal
+exchange_linked <- function(design, linked_cols, plots_1, plots_2) {
+  # Per column rather than a data frame `[<-`, which benchmarks slower
+  for (col in linked_cols) {
+    held <- design[[col]][plots_1]
+    design[[col]][plots_1] <- design[[col]][plots_2]
+    design[[col]][plots_2] <- held
+  }
+
+  return(design)
+}
+
+#' Groups Where a Swap Can Still Be Proposed
+#'
+#' @description
+#' A group can only be rearranged if it holds two exchangeable treatments.
+#' Whether it does is fixed for the whole of a level, because a level's swaps
+#' permute treatments within a group and so change neither the number of
+#' distinct treatments nor their replication counts. It is therefore settled
+#' once per level rather than rediscovered by sampling.
+#'
+#' @inheritParams generate_neighbour
+#'
+#' @return A list with:
+#' - **swappable** - groups holding an exchangeable pair.
+#' - **unequal_replication** - groups where `swap_all = TRUE` rules out every
+#'   pair, because no two treatments there share a replication count. Kept
+#'   separate from the rest of the unswappable groups because, unlike a group
+#'   holding a single treatment, it is rarely what was intended.
+#'
+#' @keywords internal
+swappable_groups <- function(design, swap, swap_within, swap_all) {
+  groups <- design[[swap_within]]
+  treatments <- as.character(design[[swap]])
+  keep <- !is.na(groups) & !is.na(treatments)
+
+  # One pass over the design rather than a scan per group. Splitting on the
+  # factor keeps every level, so a level the data no longer uses arrives empty
+  # and falls out below rather than being dropped silently.
+  by_group <- split(treatments[keep], groups[keep])
+  counts <- lapply(by_group, function(x) return(as.integer(table(x))))
+
+  # Two distinct treatments are the minimum for any exchange, which also rules
+  # out groups holding fewer than two plots and levels holding none
+  exchangeable <- lengths(counts) >= 2
+
+  # `swap_all` exchanges every plot of one treatment for every plot of another,
+  # so the two treatments must be equally replicated
+  unequal <- exchangeable &
+    swap_all &
+    !vapply(counts, function(x) return(any(duplicated(x))), logical(1))
+
+  return(list(
+    swappable = names(by_group)[exchangeable & !unequal],
+    unequal_replication = names(by_group)[unequal]
+  ))
+}
+
+#' Warn About Groups No `swap_all` Swap Can Reach
+#'
+#' @description
+#' Reported per level rather than up front, because
+#' [.verify_swap_all_replication()] has already errored on unequal replication at
+#' the first level. This can only arise where an earlier level's swaps have
+#' unbalanced a group cutting across theirs.
+#'
+#' @param unequal Group names, as returned in the `unequal_replication` element
+#'   of [swappable_groups()].
+#' @param level Name of the level being optimised.
+#' @param swap_within Column name grouping the swaps at that level.
+#'
+#' @return `NULL`, invisibly.
+#'
+#' @keywords internal
+.warn_unequal_replication <- function(unequal, level, swap_within) {
+  if (length(unequal) == 0) {
+    return(invisible(NULL))
+  }
+
+  warning(
+    "No treatments could be swapped at level `",
+    level,
+    "` within `",
+    swap_within,
+    "` groups ",
+    paste0(unequal, collapse = ", "),
+    ", because `swap_all = TRUE` only exchanges treatments with equal ",
+    "replication and no two treatments there share a replication count.",
+    " Those groups were left unchanged.",
+    call. = FALSE
+  )
+
+  return(invisible(NULL))
 }
 
 #' Generate neighbour for simple (non-hierarchical) designs
 #' @keywords internal
 # fmt: skip
-generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks) {
+generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks,
+                                           linked_cols = NULL, swappable = NULL) {
   new_design <- design
 
-  # Get unique blocks
+  # Only groups a swap can be proposed in, so no iteration is spent on one that
+  # cannot move. Settled once per level by `swappable_groups()`.
   all_blocks <- design[[swap_within]]
-  blocks <- levels(all_blocks)
+  blocks <- swappable %||% levels(all_blocks)
 
   if (swap_all_blocks) {
     # Swap in all blocks
@@ -78,6 +199,7 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
         # Perform the swap only if we have valid treatments to swap
         if (!is.null(to_be_swapped)) {
           new_design[[swap]][rev(swap_pair)] <- to_be_swapped
+          new_design <- exchange_linked(new_design, linked_cols, swap_pair[1], swap_pair[2])
           swapped_items[swapped_idx:(swapped_idx + 1)] <- to_be_swapped
           swapped_idx <- swapped_idx + 2
         }
@@ -91,11 +213,12 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
 #' Generate neighbour for sequential or hierarchical designs
 #' @keywords internal
 # fmt: skip
-generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks) {
+generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks,
+                                          linked_cols = NULL, swappable = NULL) {
   new_design <- design
 
-  # Get unique groups for this level
-  groups <- levels(design[[swap_within]])
+  # Settled once per level by `swappable_groups()`
+  groups <- swappable %||% levels(design[[swap_within]])
 
   if (swap_all_blocks) {
     # Swap in all groups
@@ -135,7 +258,8 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
           replications <- table(group_counts)
           replications <- replications[replications >= 2]
 
-          # No two treatments share a replication, so nothing can be exchanged
+          # No two treatments share a replication, so nothing can be exchanged.
+          # `swappable_groups()` has already reported this group to the caller.
           if (length(replications) == 0) {
             next
           }
@@ -160,6 +284,7 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
         # Swap all instances of these treatments
         new_design[[swap]][plots_1] <- swap_pair[2]
         new_design[[swap]][plots_2] <- swap_pair[1]
+        new_design <- exchange_linked(new_design, linked_cols, plots_1, plots_2)
 
         swapped_items[swapped_idx] <- swap_pair[1]
         swapped_items[swapped_idx + 1] <- swap_pair[2]
@@ -578,7 +703,7 @@ initialise_multiple_designs_df <- function(items, designs, design_col) {
 #'
 #' @keywords internal
 # fmt: skip
-shuffle_items <- function(design, swap, swap_within, seed = NULL) {
+shuffle_items <- function(design, swap, swap_within, seed = NULL, linked_cols = NULL) {
   if (!is.null(seed)) {
     set.seed(seed)
   }
@@ -586,7 +711,12 @@ shuffle_items <- function(design, swap, swap_within, seed = NULL) {
   for (i in levels(design[[swap_within]])) {
     swap_within_filter <- design[[swap_within]] == i & !is.na(design[[swap_within]])
     items <- design[swap_within_filter, ][[swap]]
-    design[swap_within_filter, ][[swap]] <- sample(items)
+    perm <- sample.int(length(items))
+    design[swap_within_filter, ][[swap]] <- items[perm]
+    for (col in linked_cols) {
+      # The same permutation, so a linked value stays with its treatment
+      design[swap_within_filter, ][[col]] <- design[swap_within_filter, ][[col]][perm]
+    }
   }
 
   return(design)
@@ -638,7 +768,8 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
         shuffled_design,
         opt$swap,
         opt$swap_within,
-        seed + i - 1
+        seed + i - 1,
+        opt$linked_cols
       )
     }
 

@@ -131,6 +131,10 @@ lists keyed by level name - `print.design` and downstream code branch on `is.lis
   deprecation cycle.
 - **roxygen2 with markdown** is the documentation source of truth - never edit `man/*.Rd` directly; run
   `devtools::document()` instead.
+- **Keep `@param` entries short** - a sentence or two saying what the argument is, its default, and for
+  hierarchical arguments "For hierarchical designs, can be a named list with names matching `swap`. See
+  details for more information." Anything longer - how the argument interacts with other arguments, worked
+  explanations, edge cases - belongs in `@details` or the vignette, not in the parameter list.
 - **Vignettes are Quarto (`.qmd`)**, not Rmd - `DESCRIPTION` declares `VignetteBuilder: quarto`.
 - **`# fmt: skip`** comments are intentional Air-formatter overrides; leave them in place when editing nearby
   code.
