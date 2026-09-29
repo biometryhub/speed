@@ -22,7 +22,9 @@
 #'   consider for balance (default: `~row + col`).
 #' @param grid_factors A named list specifying grid factors to construct a
 #'   matrix for calculating adjacency score, `dim1` for row and `dim2` for
-#'   column. (default: `list(dim1 = "row", dim2 = "col")`).
+#'   column. (default: `list(dim1 = "row", dim2 = "col")`). The axes apply to
+#'   the whole design, so unlike `swap` they cannot be set per level of a
+#'   hierarchical design.
 #'
 #'   An optional third element, `by`, names a column that groups plots into
 #'   *separate* grids - a multi-environment trial, where each site reuses the
@@ -44,6 +46,10 @@
 #'   be a named list with names matching `swap`.
 #' @param swap_all Logical; Whether to swap all matching items or a single item
 #'   at a time (default: FALSE)
+#' @param linked_cols Character vector of column names that travel with the
+#'   `swap` column, for example a `variety_name` label belonging to a numeric
+#'   `variety` code (default: `NULL`). For hierarchical designs, can be a named
+#'   list with names matching `swap`. See details for more information.
 #' @param optimise_params Parameters used to control the behaviour of
 #'   simulated annealing algorithm. See [optim_params()] for more details.
 #' @param optimise A list of named arguments describing optimising parameters;
@@ -65,12 +71,14 @@
 #' - **treatments** - Vector of unique treatments (for simple designs) or
 #'   named list of treatment vectors (for hierarchical designs)
 #' - **seed** - Random seed used for reproducibility of the design. If not set
-#'   in the function, the seed is set to the third element of `.Random.seed`.
+#'   in the function, the seed is set to the third element of `.Random.seed`, or
+#'   drawn at random if the RNG has not been used yet.
 #' - **metadata** - A list describing how the design was produced: the captured
 #'   `call`, the ordered `levels`, the resolved `row_column` / `col_column`
 #'   names, and a `per_level` list recording each level's swap variable,
 #'   spatial factors, adjacency/balance weights, requested iterations, starting
-#'   temperature, cooling rate, objective function and achieved score. Used by
+#'   temperature, cooling rate, objective function, achieved score and the
+#'   `stop_reason` that ended the level. Used by
 #'   [summary()][summary.design()] to recompute per-level evaluation metrics.
 #'
 #' @details
@@ -88,6 +96,28 @@
 #' arguments can be provided as single values. For more examples and detailed
 #' usage, see the package vignettes.
 #'
+#' `linked_cols` names columns that describe the treatment rather than the plot,
+#' so that a value paired with a treatment stays paired with it wherever the
+#' search moves it. They take no part in scoring, and are returned in their
+#' input class and position. Columns used as `swap_within`, spatial factors or
+#' grid factors cannot be linked, since they describe where a plot is rather
+#' than what is on it.
+#'
+#' A named list links different columns at different levels, e.g.
+#' `list(wp = "wholeplot_label", sp = "subplot_label")`. A bare character vector
+#' applies to every level, which in a hierarchical design is only valid when
+#' every level swaps the same column, as in a multi-environment trial - a column
+#' can only travel with one `swap` column.
+#'
+#' A later level's `swap` column may be linked to an earlier one, which carries a
+#' child treatment along when its parent moves: linking `sp_trt` at the
+#' whole-plot level of a split-plot moves each sub-plot treatment with its
+#' whole-plot treatment, before the sub-plot level then optimises it. The
+#' carrying level must come first, or it would undo the child level's work.
+#'
+#' On a level with `swap_all = TRUE` whole treatment groups move at once, so a
+#' linked column with more than one value per treatment travels with its
+#' treatment group rather than being paired plot for plot.
 #'
 #' @importFrom stringi stri_sort
 #' @importFrom stats runif
@@ -104,6 +134,11 @@
 #' # Optimise the design
 #' result <- speed(df, swap = "treatment", seed = 42)
 #' autoplot(result)
+#'
+#' # Keep a label column travelling with its treatment
+#' df$treatment_name <- paste("Variety", df$treatment)
+#' result <- speed(df, swap = "treatment", linked_cols = "treatment_name", seed = 42)
+#' head(result$design_df)
 #'
 #' # Hierarchical split-plot design
 #' df_split <- data.frame(
@@ -141,9 +176,19 @@
 #' df_initial$site_col <- paste(df_initial$site, df_initial$col, sep = "_")
 #' df_initial$site_block <- paste(df_initial$site, df_initial$block, sep = "_")
 #'
+#' # Low iterations keeps the example quick; raise it for a real design.
 #' optimise <- list(
-#'   connectivity = list(spatial_factors = ~site),
-#'   balance = list(swap_within = "site", spatial_factors = ~ site_col + site_block)
+#'   connectivity = list(
+#'     spatial_factors = ~site,
+#'     iterations = 500,
+#'     early_stop_iterations = 100
+#'   ),
+#'   balance = list(
+#'     swap_within = "site",
+#'     spatial_factors = ~ site_col + site_block,
+#'     iterations = 500,
+#'     early_stop_iterations = 100
+#'   )
 #' )
 #'
 #' result <- speed(
@@ -173,6 +218,7 @@ speed <- function(data,
                   early_stop_iterations = 2000,
                   obj_function = objective_function,
                   swap_all = FALSE,
+                  linked_cols = NULL,
                   optimise = NULL,
                   optimise_params = optim_params(),
                   quiet = FALSE,
@@ -181,20 +227,8 @@ speed <- function(data,
   rlang::check_dots_used()
   call <- match.call()
 
-  if (is.null(optimise)) {
-    # Check if this is a legacy hierarchical design
-    is_legacy <- is.list(swap) && !is.null(names(swap))
-    if (is_legacy) {
-      .verify_hierarchical_inputs(data, swap, swap_within, spatial_factors, iterations, early_stop_iterations,
-                                  obj_function, quiet, seed)
-    } else {
-      .verify_speed_inputs(data, swap, swap_within, spatial_factors, iterations, early_stop_iterations, quiet,
-                           seed)
-    }
-  }
-
-  # `by` groups plots into separate grids (a multi-environment trial)
-  .verify_grid_by(data, grid_factors)
+  .verify_inputs(data, swap, swap_within, spatial_factors, grid_factors, iterations,
+                 early_stop_iterations, obj_function, quiet, seed, optimise)
   grid_by <- grid_factors$by
 
   # Infer row and column columns
@@ -202,8 +236,28 @@ speed <- function(data,
   row_column <- inferred$row
   col_column <- inferred$col
 
-  # convert to factors
-  factored <- to_factor(data)
+  # The level names are the user's own unless `create_speed_input()` has to
+  # synthesise one, which it does only for a scalar `swap` with no `optimise`.
+  # An error may only quote a name back at them if they wrote it.
+  named_levels <- !is.null(optimise) || is.list(swap)
+
+  # Normalise the three input shapes into one per-level list
+  optimise <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
+                                 early_stop_iterations, obj_function, swap_all, optimise_params,
+                                 linked_cols, optimise, inferred$inferred)
+
+  # Checks needing the resolved `optimise` list, so they run here rather than in
+  # `.verify_inputs()`. Both come before the dummy group column is added below,
+  # so it cannot appear in the column names they report.
+  .verify_level_columns(data, optimise)
+  .verify_linked_cols(data, optimise, linked_cols, named_levels)
+
+  # convert only the columns the optimisation reads to factors
+  factored <- to_factor(data, c(
+    unlist(lapply(optimise, .level_optimised_cols)),
+    row_column,
+    col_column
+  ))
   data <- factored$df
 
   if (inferred$inferred) {
@@ -221,11 +275,6 @@ speed <- function(data,
   dummy_group <- paste0("dummy_", as.integer(Sys.time()))
   data[[dummy_group]] <- factor(rep(1, nrow(data)))
 
-  # prepare inputs
-  optimise <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
-                                 early_stop_iterations, obj_function, swap_all, optimise_params, optimise,
-                                 inferred$inferred)
-
   # Handle swap_within for each level
   for (level in names(optimise)) {
     opt <- optimise[[level]]
@@ -234,8 +283,9 @@ speed <- function(data,
     }
   }
 
-  # `swap_all` exchanges whole label sets, which only preserves replication when
-  # the sets are the same size
+  # Needs the dummy group, both to read a whole-design level's swap column and to
+  # describe it. `swap_all` exchanges whole label sets, which only preserves
+  # replication when the sets are the same size.
   .verify_swap_all_replication(data, optimise, dummy_group)
 
   dots <- list(...)
@@ -265,7 +315,7 @@ speed <- function(data,
 speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   # Set seed for reproducibility
   if (is.null(seed)) {
-    seed <- .GlobalEnv$.Random.seed[3]
+    seed <- .GlobalEnv$.Random.seed[3] %||% sample.int(.Machine$integer.max, 1)
   }
 
   hierarchy_levels <- names(optimise)
@@ -293,6 +343,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   all_scores <- list()
   all_temperatures <- list()
   all_optimal_scores <- list()
+  all_stop_reasons <- list()
   total_iterations <- 0  # TODO: Track total iterations across all levels
 
   # Set seed for reproducibility
@@ -308,6 +359,9 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     bal_weight <- optimise_params$bal_weight
     stop_at_optimal <- optimise_params$stop_at_optimal
     spatial_cols <- all.vars(opt$spatial_factors)
+
+    # A level searches from the best design from the previous level
+    current_design <- best_design
 
     # Calculate initial score for this level
     current_score_obj <- opt$obj_function(current_design, opt$swap, spatial_cols, adj_weight = adj_weight,
@@ -330,16 +384,37 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     temperatures <- numeric(opt$iterations)
     last_improvement_iter <- 0
 
-    # Optimisation loop for this level
-    for (iter in 1:opt$iterations) {
+    groups <- swappable_groups(current_design, opt$swap, opt$swap_within, opt$swap_all)
+    .warn_unequal_replication(groups$unequal_replication, level, opt$swap_within)
+
+    # Why the level stopped, and how many recorded scores that leaves. A level
+    # that runs to the end keeps all of them; each `break` below sets both.
+    stop_reason <- "iterations"
+    n_kept <- opt$iterations
+
+    # Nothing at this level can move, so the level is settled without searching.
+    # The starting score is still recorded, as it is the score the level ends on.
+    frozen <- length(groups$swappable) == 0
+    if (frozen) {
+      if (!quiet) cat("No swaps possible for level", level, "\n")
+      stop_reason <- "frozen"
+      n_kept <- 1
+      scores[1] <- current_score
+      temperatures[1] <- temp
+    }
+
+    # Optimisation loop for this level. `seq_len()`, not `1:`, because a frozen
+    # level needs a zero-length sequence.
+    n_iterations <- if (frozen) 0L else opt$iterations
+    for (iter in seq_len(n_iterations)) {
       scores[iter] <- current_score
       temperatures[iter] <- temp
 
       # break once optimal
       if (stop_at_optimal && !is.na(optimal_score) && best_score <= optimal_score + 1e-9) {
         if (!quiet) cat("Optimal score reached at iteration", iter, "for level", level, "\n")
-        scores <- scores[1:iter]
-        temperatures <- temperatures[1:iter]
+        stop_reason <- "optimal"
+        n_kept <- iter
         break
       }
 
@@ -353,7 +428,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
       # Generate new design by swapping treatments at this level
       new_design <- generate_neighbour(current_design, opt$swap, opt$swap_within, current_swap_count,
-                                       current_swap_all_blocks, opt$swap_all)
+                                       current_swap_all_blocks, opt$swap_all, opt$linked_cols,
+                                       groups$swappable)
 
       # Calculate new score
       new_score_obj <- opt$obj_function(new_design$design,opt$swap, spatial_cols, adj_weight = adj_weight,
@@ -366,11 +442,15 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
         current_design <- new_design$design
         current_score <- new_score
         current_score_obj <- new_score_obj
-        if (new_score < best_score) {
+        # Ties move the best design too, so a plateau returns a random point on
+        # it rather than the input; only a strict improvement resets the clock
+        if (new_score <= best_score) {
+          if (new_score < best_score) {
+            last_improvement_iter <- iter
+          }
           best_design <- new_design$design
           best_score_obj <- new_score_obj
           best_score <- new_score
-          last_improvement_iter <- iter
         }
       }
 
@@ -387,25 +467,32 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
             "\n")
       }
 
-      # Early stopping
-      if (iter - last_improvement_iter >= opt$early_stop_iterations || new_score < .Machine$double.eps) {
-        if (!quiet) cat("Early stopping at iteration", iter, "for level", level, "\n")
+      # Zero is the most optimal score any design can reach.
+      reached_zero <- new_score < .Machine$double.eps
+      if (reached_zero || iter - last_improvement_iter >= opt$early_stop_iterations) {
+        if (!quiet) {
+          cat(if (reached_zero) "Optimal score reached at iteration" else "Early stopping at iteration",
+              iter, "for level", level, "\n")
+        }
+        stop_reason <- if (reached_zero) "optimal" else "no_improvement"
         # Record final score and temperature before breaking
         if (iter < opt$iterations) {
           scores[iter + 1] <- current_score
           temperatures[iter + 1] <- temp
-          scores <- scores[1:(iter + 1)]
-          temperatures <- temperatures[1:(iter + 1)]
+          n_kept <- iter + 1
         } else {
-          scores <- scores[1:iter]
-          temperatures <- temperatures[1:iter]
+          n_kept <- iter
         }
         break
       }
     }
 
+    scores <- scores[seq_len(n_kept)]
+    temperatures <- temperatures[seq_len(n_kept)]
+
     all_scores[[level]] <- scores
     all_temperatures[[level]] <- temperatures
+    all_stop_reasons[[level]] <- stop_reason
     total_iterations <- total_iterations + length(scores)
   }
 
@@ -438,7 +525,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       obj_function     = opt$obj_function,
       final_score      = score_obj$score,
       final_components = score_obj$components,
-      optimal_score    = all_optimal_scores[[level]]
+      optimal_score    = all_optimal_scores[[level]],
+      stop_reason      = all_stop_reasons[[level]]
     )
   }
 
@@ -453,11 +541,12 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     per_level  = per_level_meta
   )
 
-  # Check which levels stopped early
-  stopped_early <- sapply(hierarchy_levels, function(level) {
-    length(all_scores[[level]]) < optimise[[level]]$iterations
-  })
-  names(stopped_early) <- hierarchy_levels
+  # Taken from the recorded reason rather than the number of scores kept, so the
+  # two cannot disagree when a level runs out of improvements on its last
+  # iteration.
+  stopped_early <- vapply(hierarchy_levels, function(level) {
+    return(all_stop_reasons[[level]] != "iterations")
+  }, logical(1))
 
   # Finalise output
   if (length(hierarchy_levels) == 1) {

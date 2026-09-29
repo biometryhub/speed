@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 1000 1154.70"
+   width="1000"
+   height="1154.70"
+   version="1.1"
+   id="svg32"
+   sodipodi:docname="logo.svg"
+   inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview32"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="1.4142136"
+     inkscape:cx="605.2834"
+     inkscape:cy="131.16831"
+     inkscape:window-width="1920"
+     inkscape:window-height="1111"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg32" />
+  <defs
+     id="defs32">
+    <inkscape:path-effect
+       effect="perspective-envelope"
+       up_left_point="8.4251079,13.857875"
+       up_right_point="91.205721,14.12037"
+       down_left_point="-21.55641,76.084386"
+       down_right_point="120.09766,76.012818"
+       id="path-effect209"
+       is_visible="true"
+       lpeversion="1"
+       deform_type="perspective"
+       horizontal_mirror="false"
+       vertical_mirror="false"
+       overflow_perspective="false" />
+  </defs>
+  <path
+     d="m 499.5,-1 500,288.68 V 865.03 L 499.5,1153.7 -0.5,865.03 V 287.68 Z"
+     fill="#f7f2e5"
+     id="path1" />
+  <clipPath
+     id="hx">
+    <path
+       d="M 500.00,30.00 L 974.02,303.68 L 974.02,851.03 L 500.00,1124.70 L 25.98,851.03 L 25.98,303.68 Z"
+       id="path2" />
+  </clipPath>
+  <g
+     clip-path="url(#hx)"
+     id="g30"
+     transform="translate(2)">
+    <path
+       d="m 252.71355,456.72014 89.27691,0.47078 -13.70484,46.91048 -101.54317,0.49687 z"
+       fill="#4f8a5b"
+       id="path3"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       d="m 354.38369,456.96186 90.06627,0.4424 -4.89752,46.94261 -99.56982,-0.30714 z"
+       fill="#5b87b8"
+       id="path4"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       d="m 456.09105,457.48828 90.40924,0.0759 3.88145,47.03656 -99.74476,-0.0566 z"
+       fill="#4f8a5b"
+       id="path5"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       d="m 557.70964,457.4656 89.84504,0.58098 13.40157,46.83155 -98.92208,-0.13941 z"
+       fill="#efa43c"
+       id="path6"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       d="m 659.08861,457.57659 89.19664,0.45374 22.89603,47.06517 -97.65545,-0.22443 z"
+       fill="#93a93f"
+       id="path7"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       d="m 224.2,510.8 h 103.6 l -20.7,73.05 -125.7,1.25 z"
+       fill="#93a93f"
+       id="path8"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       d="M 335.99129,510.675 H 441.789 L 432.96848,585.1 H 310.72926 Z"
+       fill="#efa43c"
+       id="path9"
+       style="stroke-width:1.0114" />
+    <path
+       d="m 450.2663,510.60113 h 103.6 l 8.25,74.3 h -119.6 z"
+       fill="#93a93f"
+       id="path10" />
+    <path
+       d="m 562.75653,514.18603 102.34816,0.58272 17.50156,62.78438 -113.64531,0.16406 z"
+       fill="#4f8a5b"
+       id="path11"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       d="m 675.96267,514.8101 101.27646,0.22961 31.68824,63.25413 -113.71487,-0.70819 z"
+       fill="#5b87b8"
+       id="path12"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       d="M 182.45025,585.89289 305.85,586.6 280.6,675.45 140.16447,672.49289 Z"
+       fill="#5b87b8"
+       id="path13"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       d="m 313.70645,586.06967 121.20776,-0.4697 -7.30552,90.77678 -143.32265,-5.20711 z"
+       fill="#4f8a5b"
+       id="path14"
+       style="stroke-width:1.00567"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       d="m 441.67972,585.24645 119.1,1 9.95002,88.95355 -138,3.5 z"
+       fill="#5b87b8"
+       id="path15"
+       style="stroke-width:1.00193"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       d="m 570,586.6 116.2,-0.375 25.9,88.475 -134.37487,1.93934 z"
+       fill="#93a93f"
+       id="path16"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       d="m 696.9,586.6 118.2,-0.5 41.2,86.6 -134.4,1 z"
+       fill="#efa43c"
+       id="path17"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       d="m 137.7,678.2 142.9,2 -33,124.3 -175.1,3 z"
+       fill="#efa43c"
+       id="path18"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       d="M 283.95025,676.37157 426.3,678.2 416.2,801 246.1,807.5 Z"
+       fill="#93a93f"
+       id="path19"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       d="M 430.05025,676.87157 569.5,679.7 583.3,799 417.16447,802.53553 Z"
+       fill="#efa43c"
+       id="path20"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       d="m 578.2,680.7 h 137.4 l 35.12843,122.95685 -163.17107,-1.12132 z"
+       fill="#5b87b8"
+       id="path21"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       d="m 724.9,681.7 134.4,-2 60.95,122.05 -161.26421,0.19975 z"
+       fill="#4f8a5b"
+       id="path22"
+       sodipodi:nodetypes="ccccc" />
+    <defs
+       id="defs23">
+      <linearGradient
+         id="r2"
+         x1="248"
+         y1="0"
+         x2="752"
+         y2="0"
+         gradientUnits="userSpaceOnUse">
+        <stop
+           offset="0"
+           stop-color="#2E7C74"
+           id="stop22" />
+        <stop
+           offset="1"
+           stop-color="#E9B23C"
+           id="stop23" />
+      </linearGradient>
+    </defs>
+    <path
+       d="m 260.3,316.1 a 252,252 0 0 1 479.4,0"
+       fill="none"
+       stroke="url(#r2)"
+       stroke-width="42"
+       stroke-linecap="round"
+       id="path23"
+       style="stroke:url(#r2)" />
+    <g
+       stroke="#14312a"
+       stroke-width="12"
+       stroke-linecap="round"
+       opacity="0.85"
+       id="g28">
+      <path
+         d="M 330.3,286.3 311.7,274.5"
+         id="path24" />
+      <path
+         d="M 403.2,217.9 392.6,198.6"
+         id="path25" />
+      <path
+         d="M 500,193 V 171"
+         id="path26" />
+      <path
+         d="m 596.8,217.9 10.6,-19.3"
+         id="path27" />
+      <path
+         d="m 669.7,286.3 18.6,-11.8"
+         id="path28" />
+    </g>
+    <path
+       d="M 512.7,401.9 582.8,261.5 487.3,386.1 Z"
+       fill="#14312a"
+       id="path29" />
+    <circle
+       cx="500"
+       cy="394"
+       r="26"
+       fill="#14312a"
+       id="circle29" />
+    <circle
+       cx="500"
+       cy="394"
+       r="10"
+       fill="#f7f2e5"
+       id="circle30" />
+    <g
+       inkscape:label="GridCartesian:X5:Y4"
+       transform="matrix(6.0744545,0,0,5.6968316,197.90488,372.32518)"
+       id="g209"
+       inkscape:path-effect="#path-effect209"
+       style="stroke:#f7f2e5;stroke-opacity:1">
+      <g
+         inkscape:label="MajorXGridlines"
+         id="g189"
+         style="stroke:#f7f2e5;stroke-opacity:1">
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:2;stroke-opacity:1"
+           d="M 25.04624,13.91058 6.9650004,76.069976"
+           inkscape:label="MajorXDiv1"
+           id="path186"
+           inkscape:original-d="M 18.8976,0 V 75.5906" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:2;stroke-opacity:1"
+           d="M 41.634842,13.963182 35.390753,76.055615"
+           inkscape:label="MajorXDiv2"
+           id="path187"
+           inkscape:original-d="M 37.7953,0 V 75.5906" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:2;stroke-opacity:1"
+           d="m 58.190834,14.015681 5.530194,62.02562"
+           inkscape:label="MajorXDiv3"
+           id="path188"
+           inkscape:original-d="M 56.6929,0 V 75.5906" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:2;stroke-opacity:1"
+           d="M 74.714487,14.068077 91.956605,76.027036"
+           inkscape:label="MajorXDiv4"
+           id="path189"
+           inkscape:original-d="M 75.5906,0 V 75.5906" />
+      </g>
+      <g
+         inkscape:label="MajorYGridlines"
+         id="g192"
+         style="stroke:#f7f2e5;stroke-opacity:1">
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:2;stroke-opacity:1"
+           d="M 3.5440616,23.988466 95.92313,24.226027"
+           inkscape:label="MajorYDiv1"
+           id="path190"
+           inkscape:original-d="M 0,18.8976 H 94.4882" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:2;stroke-opacity:1"
+           d="M -2.6213094,36.784667 101.87415,36.974325"
+           inkscape:label="MajorYDiv2"
+           id="path191"
+           inkscape:original-d="M 0,37.7953 H 94.4882" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:2;stroke-opacity:1"
+           d="m -10.654607,53.457741 120.269957,0.09982"
+           inkscape:label="MajorYDiv3"
+           id="path192"
+           inkscape:original-d="M 0,56.6929 H 94.4882" />
+      </g>
+      <g
+         inkscape:label="SubMinorYGridlines"
+         id="g208"
+         style="stroke:#f7f2e5;stroke-opacity:1">
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:0;stroke-opacity:1"
+           d="M 7.5319675,15.711584 92.06932,15.970376"
+           inkscape:label="SubminorXDiv0:0:1"
+           id="path193"
+           inkscape:original-d="M 0,3.77953 H 94.4882" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:0;stroke-opacity:1"
+           d="M 6.5999998,17.645879 92.97027,17.900396"
+           inkscape:label="SubminorXDiv0:0:2"
+           id="path194"
+           inkscape:original-d="M 0,7.55906 H 94.4882" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:0;stroke-opacity:1"
+           d="M 5.6266139,19.666137 93.911052,19.915742"
+           inkscape:label="SubminorXDiv0:0:3"
+           id="path195"
+           inkscape:original-d="M 0,11.3386 H 94.4882" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:0;stroke-opacity:1"
+           d="M 4.6089998,21.778191 94.894352,22.022172"
+           inkscape:label="SubminorXDiv0:0:4"
+           id="path196"
+           inkscape:original-d="M 0,15.1181 H 94.4882" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:0;stroke-opacity:1"
+           d="M 2.4283892,26.304039 97.000647,26.534288"
+           inkscape:label="SubminorXDiv1:0:1"
+           id="path197"
+           inkscape:original-d="M 0,22.6772 H 94.4882" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:0;stroke-opacity:1"
+           d="M 1.2583319,28.732488 98.130388,28.954424"
+           inkscape:label="SubminorXDiv1:0:2"
+           id="path198"
+           inkscape:original-d="M 0,26.4567 H 94.4882" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:0;stroke-opacity:1"
+           d="M 0.02978074,31.28234 99.316276,31.494839"
+           inkscape:label="SubminorXDiv1:0:3"
+           id="path199"
+           inkscape:original-d="M 0,30.2362 H 94.4882" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:0;stroke-opacity:1"
+           d="M -1.2617633,33.962934 100.5626,34.164729"
+           inkscape:label="SubminorXDiv1:0:4"
+           id="path200"
+           inkscape:original-d="M 0,34.0157 H 94.4882" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:0;stroke-opacity:1"
+           d="M -4.0542956,39.758823 103.25609,39.934729"
+           inkscape:label="SubminorXDiv2:0:1"
+           id="path201"
+           inkscape:original-d="M 0,41.5748 H 94.4882" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:0;stroke-opacity:1"
+           d="M -5.5668788,42.898183 104.71429,43.058501"
+           inkscape:label="SubminorXDiv2:0:2"
+           id="path202"
+           inkscape:original-d="M 0,45.3543 H 94.4882" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:0;stroke-opacity:1"
+           d="M -7.165924,46.216994 106.25529,46.359638"
+           inkscape:label="SubminorXDiv2:0:3"
+           id="path203"
+           inkscape:original-d="M 0,49.1339 H 94.4882" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:0;stroke-opacity:1"
+           d="M -8.8589704,49.730905 107.88626,49.853497"
+           inkscape:label="SubminorXDiv2:0:4"
+           id="path204"
+           inkscape:original-d="M 0,52.9134 H 94.4882" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:0;stroke-opacity:1"
+           d="m -12.56245,57.417461 124.01415,0.07394"
+           inkscape:label="SubminorXDiv3:0:1"
+           id="path205"
+           inkscape:original-d="M 0,60.4724 H 94.4882" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:0;stroke-opacity:1"
+           d="m -14.593411,61.632712 127.999071,0.04446"
+           inkscape:label="SubminorXDiv3:0:2"
+           id="path206"
+           inkscape:original-d="M 0,64.252 H 94.4882" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:0;stroke-opacity:1"
+           d="m -16.759687,66.128808 132.248467,0.01085"
+           inkscape:label="SubminorXDiv3:0:3"
+           id="path207"
+           inkscape:original-d="M 0,68.0315 H 94.4882" />
+        <path
+           style="fill:none;stroke:#f7f2e5;stroke-width:0;stroke-opacity:1"
+           d="M -19.075331,70.934917 117.71438,70.907353"
+           inkscape:label="SubminorXDiv3:0:4"
+           id="path208"
+           inkscape:original-d="M 0,71.811 H 94.4882" />
+      </g>
+      <path
+         x="0"
+         y="0"
+         width="94.48819"
+         height="75.590553"
+         style="fill:none;stroke:#f7f2e5;stroke-width:2;stroke-opacity:1"
+         inkscape:label="Border"
+         id="rect208"
+         sodipodi:type="rect"
+         d="M 8.4251079,13.857875 91.205712,14.12037 120.09761,76.012753 -21.556378,76.08432 Z" />
+    </g>
+  </g>
+  <path
+     d="M 0,800.0 L 1000.0,800.0 L 1000.0,866.03 L 500,1154.70 L 0,866.03 Z"
+     fill="#14312A"
+     id="path52" />
+  <path
+     d="M274.70000000000005 947.55H300.05Q300.50000000000006 951.9 304.1 954.5999999999999Q307.70000000000005 957.3 312.95000000000005 957.3Q317.75000000000006 957.3 320.37500000000006 955.425Q323.00000000000006 953.55 323.00000000000006 950.55Q323.00000000000006 946.95 319.25000000000006 945.225Q315.50000000000006 943.5 307.1 941.4Q298.1 939.3 292.1 936.9749999999999Q286.1 934.65 281.75 929.625Q277.40000000000003 924.6 277.40000000000003 916.05Q277.40000000000003 908.85 281.375 902.925Q285.35 897.0 293.07500000000005 893.55Q300.8 890.1 311.45000000000005 890.1Q327.20000000000005 890.1 336.27500000000003 897.9000000000001Q345.35 905.7 346.70000000000005 918.6H323.00000000000006Q322.40000000000003 914.25 319.17500000000007 911.7Q315.95000000000005 909.15 310.70000000000005 909.15Q306.20000000000005 909.15 303.80000000000007 910.875Q301.40000000000003 912.6 301.40000000000003 915.6Q301.40000000000003 919.2 305.225 921.0Q309.05 922.8 317.15000000000003 924.6Q326.45000000000005 927.0 332.30000000000007 929.325Q338.15000000000003 931.65 342.57500000000005 936.825Q347.0 942.0 347.15000000000003 950.7Q347.15000000000003 958.05 343.02500000000003 963.825Q338.90000000000003 969.6 331.17500000000007 972.9000000000001Q323.45000000000005 976.2 313.25000000000006 976.2Q302.3 976.2 293.75 972.45Q285.20000000000005 968.7 280.25 962.175Q275.3 955.65 274.70000000000005 947.55Z M411.35 890.1Q421.70000000000005 890.1 430.1 895.35Q438.5 900.6 443.375 910.35Q448.25 920.1 448.25 933.0Q448.25 945.9 443.375 955.7249999999999Q438.5 965.55 430.1 970.875Q421.70000000000005 976.2 411.35 976.2Q402.65000000000003 976.2 395.975 972.6Q389.3 969.0 385.55 963.3V1014.9H359.90000000000003V891.3H385.55V903.15Q389.3 897.3 395.9 893.7Q402.5 890.1 411.35 890.1ZM403.70000000000005 912.45Q396.05 912.45 390.725 918.0Q385.40000000000003 923.55 385.40000000000003 933.15Q385.40000000000003 942.75 390.725 948.3Q396.05 953.85 403.70000000000005 953.85Q411.35 953.85 416.75 948.225Q422.15000000000003 942.6 422.15000000000003 933.0Q422.15000000000003 923.4 416.82500000000005 917.925Q411.5 912.45 403.70000000000005 912.45Z M537.2 939.3H479.15000000000003Q479.75000000000006 947.1 484.17500000000007 951.225Q488.6 955.35 495.05000000000007 955.35Q504.65000000000003 955.35 508.40000000000003 947.25H535.7Q533.6 955.5 528.125 962.1Q522.6500000000001 968.7 514.4000000000001 972.45Q506.15000000000003 976.2 495.95000000000005 976.2Q483.65000000000003 976.2 474.05000000000007 970.95Q464.45000000000005 965.7 459.05000000000007 955.95Q453.65000000000003 946.2 453.65000000000003 933.15Q453.65000000000003 920.1 458.975 910.35Q464.30000000000007 900.6 473.9000000000001 895.35Q483.50000000000006 890.1 495.95000000000005 890.1Q508.1 890.1 517.55 895.2Q527.0 900.3 532.325 909.75Q537.6500000000001 919.2 537.6500000000001 931.8Q537.6500000000001 935.4 537.2 939.3ZM511.40000000000003 925.05Q511.40000000000003 918.45 506.90000000000003 914.55Q502.40000000000003 910.65 495.65000000000003 910.65Q489.20000000000005 910.65 484.77500000000003 914.4Q480.35 918.15 479.30000000000007 925.05Z M626.6 939.3H568.5500000000001Q569.15 947.1 573.575 951.225Q578.0 955.35 584.45 955.35Q594.0500000000001 955.35 597.8000000000001 947.25H625.1Q623.0 955.5 617.5250000000001 962.1Q612.0500000000001 968.7 603.8000000000001 972.45Q595.5500000000001 976.2 585.35 976.2Q573.0500000000001 976.2 563.45 970.95Q553.85 965.7 548.45 955.95Q543.0500000000001 946.2 543.0500000000001 933.15Q543.0500000000001 920.1 548.375 910.35Q553.7 900.6 563.3 895.35Q572.9 890.1 585.35 890.1Q597.5 890.1 606.95 895.2Q616.4 900.3 621.725 909.75Q627.0500000000001 919.2 627.0500000000001 931.8Q627.0500000000001 935.4 626.6 939.3ZM600.8000000000001 925.05Q600.8000000000001 918.45 596.3000000000001 914.55Q591.8000000000001 910.65 585.0500000000001 910.65Q578.6 910.65 574.175 914.4Q569.75 918.15 568.7 925.05Z M669.35 890.1Q677.6 890.1 684.425 893.55Q691.25 897.0 695.15 902.85V864.0H720.8V975.0H695.15V963.0Q691.55 969.0 684.875 972.6Q678.2 976.2 669.35 976.2Q659.0 976.2 650.6 970.875Q642.2 965.55 637.325 955.7249999999999Q632.45 945.9 632.45 933.0Q632.45 920.1 637.325 910.35Q642.2 900.6 650.6 895.35Q659.0 890.1 669.35 890.1ZM676.85 912.45Q669.2 912.45 663.875 917.925Q658.55 923.4 658.55 933.0Q658.55 942.6 663.875 948.225Q669.2 953.85 676.85 953.85Q684.5 953.85 689.825 948.3Q695.15 942.75 695.15 933.15Q695.15 923.55 689.825 918.0Q684.5 912.45 676.85 912.45Z"
+     fill="#F7F2E5"
+     id="path53" />
+  <path
+     d="M 500.00,13.00 L 988.74,295.18 L 988.74,859.53 L 500.00,1141.70 L 11.26,859.53 L 11.26,295.18 Z"
+     fill="none"
+     stroke="#14312A"
+     stroke-width="26"
+     id="path54" />
+</svg>

@@ -2,9 +2,48 @@
 
 ## Major Changes
 
+- Added the `linked_cols` argument to `speed()`, naming columns that should be rearranged along with the
+  `swap` column, for example a `variety_name` label belonging to a numeric `variety` code. For hierarchical
+  designs, pass a named list to link different columns at different levels. (#105)
 - `speed()` now stops as soon as a design reaches the lowest score its layout allows, applicable only to the
   default `objective_function()`. This can be turned off per level with `optim_params(stop_at_optimal =
   FALSE)`. `summary()` now reports the lower bound score alongside the achieved one.
+
+## Minor Changes
+
+- The startup version check now only runs in interactive sessions. Set the `SPEED_NO_VERSION_CHECK`
+  environment variable to disable it entirely.
+- `summary()` now reports why each level stopped - the optimum was reached, no further improvement was
+  found, no swap was possible, or the iteration cap was hit. The reason is also recorded as `stop_reason`
+  in each level's metadata.
+- `speed()` now warns when a `swap_all = TRUE` group holds no two treatments of equal replication, and
+  stops a level immediately when no group in it can be swapped.
+
+## Bug Fixes
+
+- `speed()` no longer fails with "supplied seed is not a valid integer" when `seed` is left unset in a
+  session that has not yet used the random number generator and `random_initialisation` is toggled on.
+- `optim_params(random_initialisation = )` no longer moves plots holding no treatment.
+- `optim_params(random_initialisation = )` now respects `swap_all = TRUE`, so it no longer breaks up the
+  wholeplots or strips of a split-plot or strip-plot design.
+- `speed()` now gives a clear error when `grid_factors` is malformed, instead of failing with
+  "missing value where TRUE/FALSE needed".
+- A two sided formula passed to `spatial_factors` is now rejected instead of silently accepted, and
+  hierarchical designs now run the same `spatial_factors`, `iterations` and `seed` checks as simple ones.
+- Named lists for hierarchical arguments such as `iterations` are now split per level under the `optimise`
+  argument, as they already were when `swap` was a named list. A level the list leaves out now takes that
+  argument's own default rather than the default for `spatial_factors`.
+- Columns that take no part in the optimisation are no longer converted to factors and back, so a class
+  that cannot be rebuilt with `as.<class>()`, such as `Date`, is now returned unchanged instead of as
+  `character`. (#122)
+- Each level of a hierarchical design now starts from the best design found so far, rather than whichever
+  design the previous level's search last accepted. A level could otherwise be optimised, and reported on,
+  against a design that was never returned, or replace an earlier level's better result with a worse one.
+- A design that ties the best score found now replaces it, so a search that ends on a score plateau returns
+  a random arrangement from that plateau rather than the systematic input it was given. Early stopping still
+  counts only strict improvements.
+- The swapped treatments passed to an objective function are now labels rather than factor codes, so
+  `objective_function_piepho()` updates the plots that actually moved.
 
 # speed 0.0.10
 

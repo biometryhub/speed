@@ -1,7 +1,8 @@
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# speed - Spatially Efficient Experimental Designs
+<!-- README.md is generated from README.qmd. Please edit that file -->
+
+# speed - Spatially Efficient Experimental Designs <a href="https://biometryhub.github.io/speed/"><img src="man/figures/logo.svg" align="right" height="139" alt="speed website" /></a>
 
 <!-- badges: start -->
 
@@ -50,7 +51,8 @@ maintaining statistical validity. It uses simulated annealing to:
 ## Installation
 
 You can install the development version of speed from
-[GitHub](https://github.com/biometryhub/speed) with:
+[GitHub](https://github.com/biometryhub/speed) with any of the following
+options:
 
 ``` r
 # pak
@@ -104,15 +106,13 @@ df <- data.frame(
 result <- speed(df, "treatment", seed = 42)
 #> row and col are used as row and column, respectively.
 #> Optimising level: single treatment within whole design 
-#> Level: single treatment within whole design Iteration: 1000 Score: 1 Best: 1 Since Improvement: 475 
-#> Level: single treatment within whole design Iteration: 2000 Score: 1 Best: 1 Since Improvement: 1475 
-#> Early stopping at iteration 2525 for level single treatment within whole design
+#> Optimal score reached at iteration 526 for level single treatment within whole design
 
 # Plot the optimised design
 autoplot(result)
 ```
 
-<img src="man/figures/README-example-1.png" alt="" width="100%" />
+<img src="man/figures/README-example-1.png" style="width:100.0%" />
 
 ``` r
 
@@ -120,7 +120,9 @@ autoplot(result)
 plot_progress(result)
 ```
 
-<img src="man/figures/README-example-2.png" alt="" width="100%" /><img src="man/figures/README-example-3.png" alt="" width="100%" />
+<img src="man/figures/README-example-2.png" style="width:100.0%" />
+
+<img src="man/figures/README-example-3.png" style="width:100.0%" />
 
 ### Blocked design
 
@@ -144,15 +146,13 @@ result <- speed(df,
 )
 #> row and col are used as row and column, respectively.
 #> Optimising level: single treatment within block 
-#> Level: single treatment within block Iteration: 1000 Score: 2.571429 Best: 2.571429 Since Improvement: 543 
-#> Level: single treatment within block Iteration: 2000 Score: 2.571429 Best: 2.571429 Since Improvement: 1543 
-#> Early stopping at iteration 2457 for level single treatment within block
+#> Optimal score reached at iteration 458 for level single treatment within block
 
 # Plot the design with block boundaries
 autoplot(result)
 ```
 
-<img src="man/figures/README-blocks-1.png" alt="" width="100%" />
+<img src="man/figures/README-blocks-1.png" style="width:100.0%" />
 
 ### More Examples
 
@@ -199,23 +199,27 @@ for details).
 
 ## Citation
 
-If you use `speed` in your research, please cite:
+If you use `speed` in your work, please cite it by using:
 
-    To cite package 'speed' in publications use:
+``` r
+citation("speed")
+```
 
-      Rogers S, Pipattungsakul W, Taylor J (2026). _speed: Generate
-      Spatially Efficient Experimental Designs_. R package version 0.0.11,
-      <https://biometryhub.github.io/speed/>.
-
-    A BibTeX entry for LaTeX users is
-
-      @Manual{,
-        title = {speed: Generate Spatially Efficient Experimental Designs},
-        author = {Sam Rogers and Wasin Pipattungsakul and Julian Taylor},
-        year = {2026},
-        note = {R package version 0.0.11},
-        url = {https://biometryhub.github.io/speed/},
-      }
+    #> To cite package 'speed' in publications use:
+    #> 
+    #>   Rogers S, Pipattungsakul W, Taylor J (2026). _speed: Generate
+    #>   Spatially Efficient Experimental Designs_. R package version 0.0.11,
+    #>   <https://biometryhub.github.io/speed/>.
+    #> 
+    #> A BibTeX entry for LaTeX users is
+    #> 
+    #>   @Manual{,
+    #>     title = {speed: Generate Spatially Efficient Experimental Designs},
+    #>     author = {Sam Rogers and Wasin Pipattungsakul and Julian Taylor},
+    #>     year = {2026},
+    #>     note = {R package version 0.0.11},
+    #>     url = {https://biometryhub.github.io/speed/},
+    #>   }
 
 ## License
 
