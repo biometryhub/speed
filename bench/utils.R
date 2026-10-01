@@ -128,7 +128,23 @@ load_run <- function(design_name, tool_name, seed) {
 }
 
 # One row of results for a run; a NULL run scores as NAs
-score_run <- function(run, spec, design_name, tool_name, seed) {
+score_run <- function(
+  run,
+  spec,
+  design_name,
+  tool_name,
+  seed,
+  skip_metrics = FALSE
+) {
+  if (skip_metrics) {
+    return(data.frame(
+      tool = tool_name,
+      design = design_name,
+      seed = seed,
+      run_time = if (is.null(run)) NA_real_ else run$elapsed
+    ))
+  }
+
   metrics <- list(conv = NA, aeff = NA_real_, eeff = NA_real_)
   if (!is.null(run)) {
     metrics <- tryCatch(
@@ -195,12 +211,16 @@ score_run <- function(run, spec, design_name, tool_name, seed) {
 # `<bench_objects_dir()>/<design>-<tool>-<seed>.RData` without scoring or
 # writing a CSV; it returns the saved paths. `from_objects` scores the runs
 # saved that way instead of running the tools, warning about missing ones.
+#
+# `skip_metrics` records only run times, skipping all efficiency and custom
+# metrics.
 run_benchmarks <- function(
   designs,
   seeds,
   csv_prefix = "benchmark",
   save_objects = FALSE,
-  from_objects = FALSE
+  from_objects = FALSE,
+  skip_metrics = FALSE
 ) {
   if (save_objects && from_objects) {
     stop("`save_objects` and `from_objects` cannot both be TRUE.")
@@ -236,7 +256,8 @@ run_benchmarks <- function(
           spec,
           design_name,
           tool_name,
-          seed
+          seed,
+          skip_metrics
         )
         # rewrite every row each run, cheap
         design_results <- dplyr::bind_rows(rows)
