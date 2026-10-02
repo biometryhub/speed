@@ -11,7 +11,7 @@ generate_single_swap_neighbour(
   swap_count,
   swap_all_blocks,
   linked_cols = NULL,
-  swappable = NULL
+  group_plots = NULL
 )
 }
 \description{

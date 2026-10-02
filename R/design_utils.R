@@ -12,9 +12,10 @@
 #' @param linked_cols Character vector of column names moved in lockstep with
 #'   the `swap` column, so that a value paired with a treatment stays paired with
 #'   it. `NULL` (default) moves the `swap` column alone.
-#' @param swappable Groups a swap can be proposed in, as returned in the
-#'   `swappable` element of [swappable_groups()]. `NULL` (default) considers
-#'   every group, which costs an iteration whenever an unswappable one is drawn.
+#' @param group_plots Named list of the plot rows in each group a swap can be
+#'   proposed in, as returned in the `group_plots` element of
+#'   [swappable_groups()]. `NULL` (default) considers every group, which costs
+#'   an iteration whenever an unswappable one is drawn.
 #'
 #' @return A list with the updated design after swapping and information about
 #'   swapped items
@@ -28,14 +29,30 @@ generate_neighbour <- function(design,
                                swap_all_blocks = getOption("speed.swap_all_blocks", FALSE),
                                swap_all = FALSE,
                                linked_cols = NULL,
-                               swappable = NULL) {
+                               group_plots = NULL) {
   if (swap_all) {
     return(generate_multi_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks, linked_cols,
-                                         swappable))
+                                         group_plots))
   } else {
     return(generate_single_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks, linked_cols,
-                                          swappable))
+                                          group_plots))
   }
+}
+
+#' Plot Rows in Each Group
+#'
+#' @description
+#' Rows with a treatment, split by group and fixed for a whole level.
+#'
+#' @inheritParams generate_neighbour
+#'
+#' @return A named list of row positions, one element per level of `swap_within`.
+#'
+#' @keywords internal
+plots_by_group <- function(design, swap, swap_within) {
+  groups <- design[[swap_within]]
+  plots <- which(!is.na(groups) & !is.na(design[[swap]]))
+  return(split(plots, groups[plots]))
 }
 
 #' Exchange Linked Columns Between Two Sets of Plots
@@ -81,17 +98,16 @@ exchange_linked <- function(design, linked_cols, plots_1, plots_2) {
 #'   pair, because no two treatments there share a replication count. Kept
 #'   separate from the rest of the unswappable groups because, unlike a group
 #'   holding a single treatment, it is rarely what was intended.
+#' - **group_plots** - the plot rows in each `swappable` group from [plots_by_group()].
 #'
 #' @keywords internal
 swappable_groups <- function(design, swap, swap_within, swap_all) {
-  groups <- design[[swap_within]]
-  treatments <- as.character(design[[swap]])
-  keep <- !is.na(groups) & !is.na(treatments)
-
   # One pass over the design rather than a scan per group. Splitting on the
   # factor keeps every level, so a level the data no longer uses arrives empty
   # and falls out below rather than being dropped silently.
-  by_group <- split(treatments[keep], groups[keep])
+  all_plots <- plots_by_group(design, swap, swap_within)
+  treatments <- as.character(design[[swap]])
+  by_group <- lapply(all_plots, function(plots) return(treatments[plots]))
   counts <- lapply(by_group, function(x) return(as.integer(table(x))))
 
   # Two distinct treatments are the minimum for any exchange, which also rules
@@ -104,9 +120,11 @@ swappable_groups <- function(design, swap, swap_within, swap_all) {
     swap_all &
     !vapply(counts, function(x) return(any(duplicated(x))), logical(1))
 
+  swappable <- exchangeable & !unequal
   return(list(
-    swappable = names(by_group)[exchangeable & !unequal],
-    unequal_replication = names(by_group)[unequal]
+    swappable = names(by_group)[swappable],
+    unequal_replication = names(by_group)[unequal],
+    group_plots = all_plots[swappable]
   ))
 }
 
@@ -156,104 +174,82 @@ swappable_groups <- function(design, swap, swap_within, swap_all) {
 #' @keywords internal
 # fmt: skip
 generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks,
-                                           linked_cols = NULL, swappable = NULL) {
-  new_design <- design
-
+                                           linked_cols = NULL, group_plots = NULL) {
   # Only groups a swap can be proposed in, so no iteration is spent on one that
   # cannot move. Settled once per level by `swappable_groups()`.
-  all_blocks <- design[[swap_within]]
-  blocks <- swappable %||% levels(all_blocks)
-
-  if (swap_all_blocks) {
-    # Swap in all blocks
-    blocks_to_swap <- blocks
-  } else {
-    # Pick a random block
-    blocks_to_swap <- sample(blocks, 1)
+  group_plots <- group_plots %||% plots_by_group(design, swap, swap_within)
+  if (!swap_all_blocks) {
+    group_plots <- group_plots[sample.int(length(group_plots), 1)]
   }
 
-  swapped_idx <- 1
-  swapped_items <- character(2 * swap_count * length(blocks_to_swap))
+  # Swapped as integer codes, sparing the label matching of factor `[<-` and `==`
+  items <- design[[swap]]
+  codes <- unclass(items)
+  swapped <- integer(2 * swap_count * length(group_plots))
+  n_swapped <- 0L
 
-  # Perform swaps in selected blocks
-  for (block in blocks_to_swap) {
-    # Get indices of plots in this block
-    block_indices <- which(all_blocks == block & !is.na(all_blocks) & !is.na(design[[swap]]))
+  for (plots in group_plots) {
+    # Need at least 2 plots to swap
+    if (length(plots) < 2) {
+      next
+    }
 
-    if (length(block_indices) >= 2) {
-      # Need at least 2 plots to swap
-      for (i in 1:swap_count) {
-        # Select two random plots in this block
-        swap_pair <- sample(block_indices, 2)
-        # `as.character()` because the swap column is a factor, whose values
-        # would otherwise reach `swapped_items` as their integer codes
-        to_be_swapped <- as.character(new_design[[swap]][swap_pair])
+    for (i in seq_len(swap_count)) {
+      pair <- plots[sample.int(length(plots), 2)]
+      code_1 <- codes[pair[1]]
+      code_2 <- codes[pair[2]]
 
-        # If both plots have the same treatment, try to find a different one
-        if (to_be_swapped[1] == to_be_swapped[2]) {
-          different_indices <- block_indices[new_design[[swap]][block_indices] != to_be_swapped[1]]
-
-          # Only proceed with swap if different treatments are available
-          if (length(different_indices) > 0) {
-            swap_pair[[2]] <- sample(different_indices, 1)
-            to_be_swapped[2] <- as.character(new_design[[swap]][[swap_pair[[2]]]])
-          } else {
-            # Skip this swap - no different treatments available
-            to_be_swapped <- NULL
-          }
+      # If both plots have the same treatment, try to find a different one
+      if (code_1 == code_2) {
+        different <- plots[codes[plots] != code_1]
+        if (length(different) == 0) {
+          next
         }
 
-        # Perform the swap only if we have valid treatments to swap
-        if (!is.null(to_be_swapped)) {
-          new_design[[swap]][rev(swap_pair)] <- to_be_swapped
-          new_design <- exchange_linked(new_design, linked_cols, swap_pair[1], swap_pair[2])
-          swapped_items[swapped_idx:(swapped_idx + 1)] <- to_be_swapped
-          swapped_idx <- swapped_idx + 2
-        }
+        pair[2] <- different[sample.int(length(different), 1)]
+        code_2 <- codes[pair[2]]
       }
+
+      codes[pair] <- c(code_2, code_1)
+      design <- exchange_linked(design, linked_cols, pair[1], pair[2])
+      swapped[n_swapped + 1:2] <- c(code_1, code_2)
+      n_swapped <- n_swapped + 2L
     }
   }
 
-  return(list(design = new_design, swapped_items = swapped_items))
+  attributes(codes) <- attributes(items)
+  design[[swap]] <- codes
+
+  return(list(design = design, swapped_items = levels(items)[swapped[seq_len(n_swapped)]]))
 }
 
 #' Generate neighbour for sequential or hierarchical designs
 #' @keywords internal
 # fmt: skip
 generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks,
-                                          linked_cols = NULL, swappable = NULL) {
-  new_design <- design
-
+                                          linked_cols = NULL, group_plots = NULL) {
   # Settled once per level by `swappable_groups()`
-  groups <- swappable %||% levels(design[[swap_within]])
-
-  if (swap_all_blocks) {
-    # Swap in all groups
-    groups_to_swap <- groups
-  } else {
-    # Pick a random group
-    groups_to_swap <- sample(groups, 1)
+  group_plots <- group_plots %||% plots_by_group(design, swap, swap_within)
+  if (!swap_all_blocks) {
+    group_plots <- group_plots[sample.int(length(group_plots), 1)]
   }
 
-  swapped_idx <- 1
-  swapped_items <- character(2 * swap_count * length(groups_to_swap))
+  # Swapped as integer codes, sparing the label matching of factor `[<-` and `==`
+  items <- design[[swap]]
+  codes <- unclass(items)
+  swapped <- integer(2 * swap_count * length(group_plots))
+  n_swapped <- 0L
 
-  # Perform swaps in selected groups
-  for (group in groups_to_swap) {
-    # Get unique treatments within this group
-    group_filter <- new_design[[swap_within]] == group & !is.na(new_design[[swap_within]])
-    group_data <- new_design[group_filter & !is.na(new_design[[swap]]), ]
-    # `as.character()` so everything taken from it - `eligible`, `swap_pair`,
-    # and in turn `swapped_items` - is a treatment label rather than the integer
-    # code a factor contributes to a character vector
-    group_treatments <- as.character(unique(group_data[[swap]]))
+  for (plots in group_plots) {
+    group_codes <- codes[plots]
+    group_treatments <- unique(group_codes)
 
     # Counted once: every swap below exchanges equally replicated treatments, so
     # these counts are unaffected by them
-    group_counts <- tabulate(match(group_data[[swap]], group_treatments), length(group_treatments))
+    group_counts <- tabulate(match(group_codes, group_treatments), length(group_treatments))
 
-    if (nrow(group_data) >= 2) {
-      for (i in 1:swap_count) {
+    if (length(plots) >= 2) {
+      for (i in seq_len(swap_count)) {
         # Only proceed if there are at least 2 different treatments
         if (length(group_treatments) < 2) {
           # Skip this swap - only one treatment in this group
@@ -283,27 +279,28 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
           eligible <- group_treatments[group_counts == as.integer(chosen)]
         }
 
-        # Select two different treatments
-        # Use sample with replace=FALSE to ensure they're different
-        swap_pair <- sample(eligible, 2, replace = FALSE)
+        # Two different treatments; `eligible` always holds at least two here
+        swap_pair <- eligible[sample.int(length(eligible), 2)]
 
-        # Find all plots with these treatments in this group
-        plots_1 <- which(group_filter & new_design[[swap]] == swap_pair[1])
-        plots_2 <- which(group_filter & new_design[[swap]] == swap_pair[2])
+        # Every plot of each treatment in this group
+        group_codes <- codes[plots]
+        plots_1 <- plots[group_codes == swap_pair[1]]
+        plots_2 <- plots[group_codes == swap_pair[2]]
 
-        # Swap all instances of these treatments
-        new_design[[swap]][plots_1] <- swap_pair[2]
-        new_design[[swap]][plots_2] <- swap_pair[1]
-        new_design <- exchange_linked(new_design, linked_cols, plots_1, plots_2)
+        codes[plots_1] <- swap_pair[2]
+        codes[plots_2] <- swap_pair[1]
+        design <- exchange_linked(design, linked_cols, plots_1, plots_2)
 
-        swapped_items[swapped_idx] <- swap_pair[1]
-        swapped_items[swapped_idx + 1] <- swap_pair[2]
-        swapped_idx <- swapped_idx + 2
+        swapped[n_swapped + 1:2] <- swap_pair
+        n_swapped <- n_swapped + 2L
       }
     }
   }
 
-  return(list(design = new_design, swapped_items = swapped_items[1:(swapped_idx - 1)]))
+  attributes(codes) <- attributes(items)
+  design[[swap]] <- codes
+
+  return(list(design = design, swapped_items = levels(items)[swapped[seq_len(n_swapped)]]))
 }
 
 #' Infer 'row' and 'col' with Patterns
