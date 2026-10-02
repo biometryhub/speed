@@ -214,13 +214,16 @@ score_run <- function(
 #
 # `skip_metrics` records only run times, skipping all efficiency and custom
 # metrics.
+#
+# `tools` limits the run to the named tools.
 run_benchmarks <- function(
   designs,
   seeds,
   csv_prefix = "benchmark",
   save_objects = FALSE,
   from_objects = FALSE,
-  skip_metrics = FALSE
+  skip_metrics = FALSE,
+  tools = c("speed", "odw", "digger")
 ) {
   if (save_objects && from_objects) {
     stop("`save_objects` and `from_objects` cannot both be TRUE.")
@@ -235,7 +238,8 @@ run_benchmarks <- function(
     spec <- designs[[design_name]]
     csv_path <- bench_out(sprintf("%s-%s.csv", csv_prefix, design_name))
     rows <- list()
-    for (tool_name in names(spec$tools)) {
+    design_results <- NULL
+    for (tool_name in intersect(names(spec$tools), tools)) {
       run_tool <- spec$tools[[tool_name]]
       for (seed in seeds) {
         run <- if (from_objects) {

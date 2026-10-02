@@ -154,7 +154,7 @@ bench_odw_split <- function() {
     search = odw_search,
     G.param = initial_param_table_split,
     R.param = initial_param_table_split,
-    maxit = 3
+    maxit = 5
   )
 }
 

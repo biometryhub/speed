@@ -98,7 +98,7 @@ bench_odw_2d <- function() {
     search = odw_search,
     G.param = initial_param_table_2d,
     R.param = initial_param_table_2d,
-    maxit = 3
+    maxit = 5
   )
 }
 

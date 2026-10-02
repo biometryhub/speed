@@ -134,7 +134,7 @@ bench_digger_irr <- function(seed = 112) {
 }
 
 # odw - one site at a time, blanks are dropped
-odw_site <- function(df_site, maxit = 3) {
+odw_site <- function(df_site, maxit = 5) {
   planted <- !is.na(df_site$block)
   df_fit <- to_factor(
     df_site[planted, ],
@@ -175,7 +175,7 @@ odw_site <- function(df_site, maxit = 3) {
   return(df_site)
 }
 
-bench_odw_irr <- function(seed = 112, maxit = 3) {
+bench_odw_irr <- function(seed = 112, maxit = 5) {
   df_odw_irr <- sample_block_1(df_initial_irr, seed)
 
   is_sw <- df_odw_irr$site == "sw"

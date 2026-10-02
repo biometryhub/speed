@@ -4,15 +4,15 @@ source("./bench/irregular.R")
 source("./bench/split-plot.R")
 source("./bench/2d-block.R")
 
-# designs <- list(
-#   # `split-plot` = split_design(),
-#   # large = large_design(),
-#   irr = irr_design()
-#   # `2d-block` = two_d_design()
-# )
-#
+designs <- list(
+  `split-plot` = split_design(),
+  large = large_design(),
+  irr = irr_design(),
+  `2d-block` = two_d_design()
+)
+
 # run_benchmarks(designs, 1:10)
-# # run_benchmarks(designs, 1:10, from_objects = TRUE)
+# run_benchmarks(designs, 1:10, tools = "odw")
 
 design_types <- list(
   list(
