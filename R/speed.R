@@ -423,7 +423,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       # Generate new design by swapping treatments at this level
       new_design <- generate_neighbour(current_design, opt$swap, opt$swap_within, current_swap_count,
                                        current_swap_all_blocks, opt$swap_all, opt$linked_cols,
-                                       groups$swappable)
+                                       groups$group_plots)
 
       # Calculate new score
       new_score_obj <- opt$obj_function(new_design$design,opt$swap, spatial_cols, adj_weight = adj_weight,

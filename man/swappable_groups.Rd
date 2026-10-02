@@ -26,6 +26,7 @@ A list with:
 pair, because no two treatments there share a replication count. Kept
 separate from the rest of the unswappable groups because, unlike a group
 holding a single treatment, it is rarely what was intended.
+\item \strong{group_plots} - the plot rows in each \code{swappable} group from \code{\link[=plots_by_group]{plots_by_group()}}.
 }
 }
 \description{
