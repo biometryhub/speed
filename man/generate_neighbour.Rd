@@ -36,7 +36,7 @@ the \code{swap} column, so that a value paired with a treatment stays paired wit
 it. \code{NULL} (default) moves the \code{swap} column alone.}
 
 \item{group_plots}{Named list of the plot rows in each group a swap can be
-proposed in, as returned in the \code{group_plots} element of
+proposed in, as returned in the \code{swappable} element of
 \code{\link[=swappable_groups]{swappable_groups()}}. \code{NULL} (default) considers every group, which costs
 an iteration whenever an unswappable one is drawn.}
 }
