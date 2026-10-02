@@ -34,6 +34,8 @@ objective_function_factorial(
     \item{\code{bal_weight}}{Weight for balance score (default: 1)}
     \item{\code{row_column}}{Name of column representing the row of the design (default: "row")}
     \item{\code{col_column}}{Name of column representing the column of the design (default: "col")}
+    \item{\code{current_score_obj}}{Score object of the design before the swap (default: \code{NULL})}
+    \item{\code{swapped_items}}{Items swapped after \code{current_score_obj} (default: \code{NULL})}
   }}
 }
 \description{

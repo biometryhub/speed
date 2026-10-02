@@ -14,7 +14,9 @@ calculate_adjacency_score(
   ring_type = c("manhattan", "chebyshev"),
   relationship = NULL,
   by = NULL,
-  grid_index = NULL
+  grid_index = NULL,
+  state = NULL,
+  swapped_items = NULL
 )
 }
 \arguments{
@@ -55,9 +57,15 @@ passed to \code{\link[=build_design_matrix]{build_design_matrix()}} to skip coor
 supplies one so the annealing loop does not revalidate every iteration;
 leave it \code{NULL} for a one-off call. Supplying it ignores \code{by}, which the
 indices already encode.}
+
+\item{state}{\code{TRUE} to return the score with a \code{state} attribute, or that
+attribute from a previous call to rescore only \code{swapped_items}. Ignored
+with \code{relationship}. (default \code{NULL})}
+
+\item{swapped_items}{Items swapped since \code{state} (default \code{NULL}).}
 }
 \value{
-A non-negative numeric value: the number of like-treatment edges
+A non-negative numeric value: the number of same-treatment edges
 in the row/column adjacency graph.
 }
 \description{
@@ -66,13 +74,14 @@ that share the same treatment. Lower scores indicate better separation. The
 distance of plots to be considered adjacent can be adjusted with arguments
 provided.
 
-Internally this is a thin wrapper around \code{\link[=adjacency_score_vec]{adjacency_score_vec()}}.
+Identity matches are counted per item with \code{\link[=adjacency_neighbours]{adjacency_neighbours()}};
+a \code{relationship} is scored with \code{\link[=adjacency_score_vec]{adjacency_score_vec()}}.
 
 Pass a \code{relationship} matrix to score neighbour pairs by a graded
 similarity (e.g. genetic relatedness) instead of a strict identity match.
 }
 \examples{
-# Example 1: design with no like-treatment adjacencies
+# Example 1: design with no same-treatment adjacencies
 design_no_adj <- data.frame(
   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
   col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),

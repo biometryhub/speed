@@ -189,7 +189,8 @@ adjacency_score_vec <- function(
 #' distance of plots to be considered adjacent can be adjusted with arguments
 #' provided.
 #'
-#' Internally this is a thin wrapper around [adjacency_score_vec()].
+#' Identity matches are counted per item with [adjacency_neighbours()];
+#' a `relationship` is scored with [adjacency_score_vec()].
 #'
 #' Pass a `relationship` matrix to score neighbour pairs by a graded
 #' similarity (e.g. genetic relatedness) instead of a strict identity match.
@@ -222,12 +223,16 @@ adjacency_score_vec <- function(
 #'   supplies one so the annealing loop does not revalidate every iteration;
 #'   leave it `NULL` for a one-off call. Supplying it ignores `by`, which the
 #'   indices already encode.
+#' @param state `TRUE` to return the score with a `state` attribute, or that
+#'   attribute from a previous call to rescore only `swapped_items`. Ignored
+#'   with `relationship`. (default `NULL`)
+#' @param swapped_items Items swapped since `state` (default `NULL`).
 #'
-#' @return A non-negative numeric value: the number of like-treatment edges
+#' @return A non-negative numeric value: the number of same-treatment edges
 #'   in the row/column adjacency graph.
 #'
 #' @examples
-#' # Example 1: design with no like-treatment adjacencies
+#' # Example 1: design with no same-treatment adjacencies
 #' design_no_adj <- data.frame(
 #'   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
 #'   col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),
@@ -265,16 +270,44 @@ calculate_adjacency_score <- function(
   ring_type = c("manhattan", "chebyshev"),
   relationship = NULL,
   by = NULL,
-  grid_index = NULL
+  grid_index = NULL,
+  state = NULL,
+  swapped_items = NULL
 ) {
   ring_type <- match.arg(ring_type)
+  grid_index <- grid_index %||%
+    grid_indices(layout_df, row_column, col_column, by = by)
 
-  if (is.null(grid_index)) {
-    grid_index <- grid_indices(layout_df, row_column, col_column, by = by)
+  if (is.null(relationship)) {
+    keep_state <- !is.null(state)
+    items <- as.factor(layout_df[[swap]])
+    is_partial <- is.list(state) && !is.null(swapped_items)
+    if (is_partial) {
+      rescored <- levels(items) %in% swapped_items
+      rescored_rows <- which(rescored[as.integer(items)])
+      counts <- adjacency_by_item(items, state$neighbours, rescored_rows)
+      state$counts[rescored] <- counts[rescored]
+    } else {
+      neighbours <- adjacency_neighbours(
+        grid_index,
+        nrow(layout_df),
+        ring_dists,
+        ring_weights,
+        ring_type
+      )
+      rescored_rows <- which(!is.na(items))
+      counts <- adjacency_by_item(items, neighbours, rescored_rows)
+      state <- list(neighbours = neighbours, counts = counts)
+    }
+
+    score <- sum(state$counts)
+    if (keep_state) {
+      return(structure(score, state = state))
+    }
+    return(score)
   }
 
-  # Adjacency counts edges, and no edge crosses a grid boundary, so summing per
-  # grid is exact rather than an approximation.
+  # relationship matrix needs whole calculation
   totals <- vapply(
     grid_index,
     function(g) {
@@ -297,4 +330,89 @@ calculate_adjacency_score <- function(
     numeric(1)
   )
   return(sum(totals))
+}
+
+#' Neighbour Index for Adjacency Scoring
+#'
+#' @description
+#' Row positions of each row's ring neighbours, `NA` = no item
+#'
+#' @inheritParams calculate_adjacency_score
+#' @param grid_index A list of indices from [grid_indices()].
+#' @param n_rows Number of rows.
+#'
+#' @return Integer matrix with one row per row and one column per ring offset,
+#'   with the offset weights in the `weights` attribute.
+#'
+#' @keywords internal
+adjacency_neighbours <- function(
+  grid_index,
+  n_rows,
+  ring_dists = 1,
+  ring_weights = 1,
+  ring_type = c("manhattan", "chebyshev")
+) {
+  ring_type <- match.arg(ring_type)
+
+  # one weight per ring
+  if (length(ring_weights) == 1L) {
+    ring_weights <- rep(ring_weights, length(ring_dists))
+  }
+  stopifnot(length(ring_dists) == length(ring_weights))
+
+  # (dx, dy) of every ring cell
+  rings <- lapply(ring_dists, ring_offsets, ring_type = ring_type)
+  offsets <- do.call(rbind, rings)
+
+  # look up each row's neighbour per offset, one grid at a time
+  neighbours <- matrix(NA_integer_, n_rows, nrow(offsets))
+  for (grid in grid_index) {
+    coords <- grid$index$idx
+    row_at <- matrix(NA_integer_, grid$index$nrow, grid$index$ncol)
+    row_at[coords] <- grid$rows
+
+    for (offset in seq_len(nrow(offsets))) {
+      # negated so each cell holds its neighbour at (dx, dy)
+      shifted <- shift_pad(row_at, -offsets[offset, 1], -offsets[offset, 2])
+      neighbours[grid$rows, offset] <- shifted[coords]
+    }
+  }
+
+  # each offset carries its ring's weight
+  ring_sizes <- vapply(rings, nrow, integer(1))
+  attr(neighbours, "weights") <- rep(ring_weights, ring_sizes)
+  return(neighbours)
+}
+
+#' Same-Item Adjacency per Item
+#'
+#' @description
+#' Weighted same-item edge count per level of `items`, counted from
+#' `rescored_rows` holding rows of the items to be counted.
+#'
+#' @param items Factor of items, one per row.
+#' @param neighbours Neighbour index from [adjacency_neighbours()].
+#' @param rescored_rows Row positions to count from.
+#'
+#' @return Numeric vector with one count per level of `items`.
+#'
+#' @keywords internal
+adjacency_by_item <- function(items, neighbours, rescored_rows) {
+  item_codes <- as.integer(items)
+  rescored_codes <- item_codes[rescored_rows]
+  is_match <- item_codes[neighbours[rescored_rows, , drop = FALSE]] ==
+    rescored_codes
+  is_match[is.na(is_match)] <- FALSE
+  dim(is_match) <- c(length(rescored_rows), ncol(neighbours))
+
+  # weighted sum
+  per_item <- rowsum(
+    drop(is_match %*% attr(neighbours, "weights")),
+    rescored_codes
+  )
+
+  # each edge is seen from both ends
+  counts <- numeric(nlevels(items))
+  counts[as.integer(rownames(per_item))] <- per_item[, 1] / 2
+  return(counts)
 }

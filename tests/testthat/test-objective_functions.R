@@ -21,7 +21,7 @@ test_that("objective_function works with default parameters", {
   result <- objective_function(layout_df, "treatment", c("row", "col"))
 
   expect_type(result, "list")
-  expect_named(result, c("score", "components"))
+  expect_named(result, c("score", "components", "state"))
   expect_type(result$score, "double")
   expect_length(result$score, 1)
 })
@@ -50,8 +50,8 @@ test_that("objective_function works with custom weights", {
 
   expect_type(result1, "list")
   expect_type(result2, "list")
-  expect_named(result1, c("score", "components"))
-  expect_named(result2, c("score", "components"))
+  expect_named(result1, c("score", "components", "state"))
+  expect_named(result2, c("score", "components", "state"))
 
   expect_false(identical(result1$score, result2$score))
 })
@@ -212,7 +212,7 @@ test_that("objective_function handles extra parameters via ...", {
   )
 
   expect_type(result, "list")
-  expect_named(result, c("score", "components"))
+  expect_named(result, c("score", "components", "state"))
 })
 
 # Tests for objective_function_piepho
@@ -779,4 +779,49 @@ test_that("objective_function_factorial falls back to objective_function with in
     factorial_separator = NULL
   )
   expect_equal(result$score, expected_score)
+})
+
+test_that("objective_function partial rescoring matches a full rescore", {
+  set.seed(42)
+  df <- initialise_design_df(paste0("T", 1:20), 12, 10, 6, 5)
+  df[] <- lapply(df, factor)
+  spatial <- c("row", "col", "block")
+
+  rings <- list(
+    list(),
+    list(ring_dists = 1:2, ring_weights = c(1, 0.5), ring_type = "chebyshev")
+  )
+  for (ring in rings) {
+    score <- function(design, ...) {
+      return(do.call(
+        objective_function,
+        c(list(design, "treatment", spatial, ...), ring)
+      ))
+    }
+    obj <- score(df)
+    design <- df
+    for (i in 1:30) {
+      nb <- generate_neighbour(design, "treatment", "block", swap_count = 3)
+      design <- nb$design
+      obj <- score(
+        design,
+        current_score_obj = obj,
+        swapped_items = nb$swapped_items
+      )
+      expect_equal(obj$components, score(design)$components)
+    }
+    expect_equal(
+      obj$components[["adjacency"]],
+      do.call(calculate_adjacency_score, c(list(design, "treatment"), ring))
+    )
+    # independent reference: sum of per-level variances of treatment counts
+    expected_balance <- sum(vapply(
+      spatial,
+      function(el) {
+        return(sum(apply(table(design[[el]], design$treatment), 1, var)))
+      },
+      numeric(1)
+    ))
+    expect_equal(obj$components[["balance"]], expected_balance)
+  }
 })
