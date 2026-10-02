@@ -13,7 +13,7 @@
 #'   the `swap` column, so that a value paired with a treatment stays paired with
 #'   it. `NULL` (default) moves the `swap` column alone.
 #' @param group_plots Named list of the plot rows in each group a swap can be
-#'   proposed in, as returned in the `group_plots` element of
+#'   proposed in, as returned in the `swappable` element of
 #'   [swappable_groups()]. `NULL` (default) considers every group, which costs
 #'   an iteration whenever an unswappable one is drawn.
 #'
@@ -93,12 +93,12 @@ exchange_linked <- function(design, linked_cols, plots_1, plots_2) {
 #' @inheritParams generate_neighbour
 #'
 #' @return A list with:
-#' - **swappable** - groups holding an exchangeable pair.
+#' - **swappable** - the plot rows from [plots_by_group()] of each group
+#'   holding an exchangeable pair.
 #' - **unequal_replication** - groups where `swap_all = TRUE` rules out every
 #'   pair, because no two treatments there share a replication count. Kept
 #'   separate from the rest of the unswappable groups because, unlike a group
 #'   holding a single treatment, it is rarely what was intended.
-#' - **group_plots** - the plot rows in each `swappable` group from [plots_by_group()].
 #'
 #' @keywords internal
 swappable_groups <- function(design, swap, swap_within, swap_all) {
@@ -120,11 +120,9 @@ swappable_groups <- function(design, swap, swap_within, swap_all) {
     swap_all &
     !vapply(counts, function(x) return(any(duplicated(x))), logical(1))
 
-  swappable <- exchangeable & !unequal
   return(list(
-    swappable = names(by_group)[swappable],
-    unequal_replication = names(by_group)[unequal],
-    group_plots = all_plots[swappable]
+    swappable = all_plots[exchangeable & !unequal],
+    unequal_replication = names(by_group)[unequal]
   ))
 }
 

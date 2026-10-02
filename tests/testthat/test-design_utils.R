@@ -136,15 +136,14 @@ test_that("swappable_groups separates unequal replication from other blockers", 
   )
 
   all_swap <- swappable_groups(design, "treatment", "block", swap_all = TRUE)
-  expect_equal(all_swap$swappable, "g2")
+  expect_named(all_swap$swappable, "g2")
   expect_equal(all_swap$unequal_replication, "g1")
 
   # Without `swap_all` a single pair of plots moves, so replication is irrelevant
   # and only the single-treatment group is stuck
   single <- swappable_groups(design, "treatment", "block", swap_all = FALSE)
-  expect_equal(single$swappable, c("g1", "g2"))
+  expect_identical(single$swappable, list(g1 = 1:6, g2 = 7:12))
   expect_length(single$unequal_replication, 0)
-  expect_identical(single$group_plots, list(g1 = 1:6, g2 = 7:12))
 })
 
 test_that("swappable_groups counts a level with no plots as unswappable", {
@@ -155,7 +154,7 @@ test_that("swappable_groups counts a level with no plots as unswappable", {
   )
 
   result <- swappable_groups(design, "treatment", "site", swap_all = TRUE)
-  expect_equal(result$swappable, c("a", "b"))
+  expect_named(result$swappable, c("a", "b"))
   expect_length(result$unequal_replication, 0)
 })
 
