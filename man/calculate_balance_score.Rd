@@ -4,13 +4,7 @@
 \alias{calculate_balance_score}
 \title{Calculate Balance Score for Experimental Design}
 \usage{
-calculate_balance_score(
-  layout_df,
-  swap,
-  spatial_cols,
-  state = NULL,
-  swapped_items = NULL
-)
+calculate_balance_score(layout_df, swap, spatial_cols)
 }
 \arguments{
 \item{layout_df}{A data frame representing the current design}
@@ -18,12 +12,6 @@ calculate_balance_score(
 \item{swap}{A column name of the items to be swapped}
 
 \item{spatial_cols}{Column name(s) of the spatial factors}
-
-\item{state}{\code{TRUE} to return the score with a \code{state} attribute, or that
-attribute from a previous call to rescore only \code{swapped_items}. \code{NULL}
-(default) returns the bare score.}
-
-\item{swapped_items}{Items swapped since \code{state} (default \code{NULL}).}
 }
 \value{
 Numeric value representing the total balance score. Lower values indicate

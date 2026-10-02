@@ -73,22 +73,27 @@ objective_function <- function(layout_df,
   )]
   state <- current_score_obj$state
   adj_score <- 0
-  if (adj_weight != 0) {
-    adj_score <- do.call(
-      calculate_adjacency_score,
-      c(list(layout_df, swap, row_column, col_column, state = state$adjacency %||% TRUE,
+  if (adj_weight != 0 && is.null(ring_args$relationship)) {
+    ring_args$relationship <- NULL
+    state$adjacency <- do.call(
+      adjacency_state,
+      c(list(layout_df, swap, row_column, col_column, state = state$adjacency,
              swapped_items = swapped_items), ring_args)
     )
-    state$adjacency <- attr(adj_score, "state")
-    adj_score <- as.numeric(adj_score)
+    adj_score <- state$adjacency$score
+  } else if (adj_weight != 0) {
+    # relationship matrix needs whole calculation
+    adj_score <- do.call(
+      calculate_adjacency_score,
+      c(list(layout_df, swap, row_column, col_column), ring_args)
+    )
   }
 
   bal_score <- 0
   if (bal_weight != 0) {
-    bal_score <- calculate_balance_score(layout_df, swap, spatial_cols, state = state$balance %||% TRUE,
-                                         swapped_items = swapped_items)
-    state$balance <- attr(bal_score, "state")
-    bal_score <- as.numeric(bal_score)
+    state$balance <- balance_state(layout_df, swap, spatial_cols, state = state$balance,
+                                   swapped_items = swapped_items)
+    bal_score <- state$balance$score
   }
 
   return(list(
@@ -177,10 +182,6 @@ objective_function_factorial <- function(layout_df,
 #'   across spatial factors in an experimental design. Lower scores indicate better balance.
 #'
 #' @inheritParams objective_function_signature
-#' @param state `TRUE` to return the score with a `state` attribute, or that
-#'   attribute from a previous call to rescore only `swapped_items`. `NULL`
-#'   (default) returns the bare score.
-#' @param swapped_items Items swapped since `state` (default `NULL`).
 #'
 #' @return Numeric value representing the total balance score. Lower values indicate
 #'   better balance of treatments across spatial factors.
@@ -194,17 +195,34 @@ objective_function_factorial <- function(layout_df,
 #' calculate_balance_score(layout_df, "treatment", c("row", "col"))
 #'
 #' @export
-calculate_balance_score <- function(
+calculate_balance_score <- function(layout_df, swap, spatial_cols) {
+  return(balance_state(layout_df, swap, spatial_cols)$score)
+}
+
+#' Incremental Balance Score
+#'
+#' @description
+#' Balance score of [calculate_balance_score()] with the state needed to
+#' rescore only `swapped_items` on the next call.
+#'
+#' @inheritParams calculate_balance_score
+#' @param state Result of a previous call, or `NULL` to score from scratch.
+#' @param swapped_items Items swapped since `state` (default `NULL`).
+#'
+#' @return A list with `score` and, per spatial column in `cols`, the count
+#'   matrix and its sums of squares.
+#'
+#' @keywords internal
+balance_state <- function(
   layout_df,
   swap,
   spatial_cols,
   state = NULL,
   swapped_items = NULL
 ) {
-  keep_state <- !is.null(state)
   items <- as.factor(layout_df[[swap]])
   n_items <- nlevels(items)
-  is_partial <- is.list(state) && !is.null(swapped_items)
+  is_partial <- !is.null(state) && !is.null(swapped_items)
 
   rescored <- if (is_partial) {
     levels(items) %in% swapped_items
@@ -214,10 +232,10 @@ calculate_balance_score <- function(
   rescored_rows <- which(rescored[as.integer(items)])
   rescored_col <- match(as.integer(items)[rescored_rows], which(rescored))
 
-  state <- lapply(stats::setNames(spatial_cols, spatial_cols), function(el) {
+  cols <- lapply(stats::setNames(spatial_cols, spatial_cols), function(el) {
     factor_levels <- as.factor(layout_df[[el]])
     n_levels <- nlevels(factor_levels)
-    prev <- if (is_partial) state[[el]]
+    prev <- if (is_partial) state$cols[[el]]
     counts <- prev$counts %||% matrix(0L, n_levels, n_items)
     old_sum_sq <- sum(counts[, rescored]^2)
     counts[, rescored] <- tabulate(
@@ -238,17 +256,14 @@ calculate_balance_score <- function(
   score <- 0
   if (n_items > 1) {
     sums <- vapply(
-      state,
+      cols,
       function(s) return(s$sum_sq - s$total_sq / n_items),
       numeric(1)
     )
     score <- sum(sums) / (n_items - 1)
   }
 
-  if (keep_state) {
-    return(structure(score, state = state))
-  }
-  return(score)
+  return(list(score = score, cols = cols))
 }
 
 #' Smallest Achievable Balance Score

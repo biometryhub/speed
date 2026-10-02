@@ -14,9 +14,7 @@ calculate_adjacency_score(
   ring_type = c("manhattan", "chebyshev"),
   relationship = NULL,
   by = NULL,
-  grid_index = NULL,
-  state = NULL,
-  swapped_items = NULL
+  grid_index = NULL
 )
 }
 \arguments{
@@ -57,12 +55,6 @@ passed to \code{\link[=build_design_matrix]{build_design_matrix()}} to skip coor
 supplies one so the annealing loop does not revalidate every iteration;
 leave it \code{NULL} for a one-off call. Supplying it ignores \code{by}, which the
 indices already encode.}
-
-\item{state}{\code{TRUE} to return the score with a \code{state} attribute, or that
-attribute from a previous call to rescore only \code{swapped_items}. Ignored
-with \code{relationship}. (default \code{NULL})}
-
-\item{swapped_items}{Items swapped since \code{state} (default \code{NULL}).}
 }
 \value{
 A non-negative numeric value: the number of same-treatment edges

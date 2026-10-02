@@ -223,10 +223,6 @@ adjacency_score_vec <- function(
 #'   supplies one so the annealing loop does not revalidate every iteration;
 #'   leave it `NULL` for a one-off call. Supplying it ignores `by`, which the
 #'   indices already encode.
-#' @param state `TRUE` to return the score with a `state` attribute, or that
-#'   attribute from a previous call to rescore only `swapped_items`. Ignored
-#'   with `relationship`. (default `NULL`)
-#' @param swapped_items Items swapped since `state` (default `NULL`).
 #'
 #' @return A non-negative numeric value: the number of same-treatment edges
 #'   in the row/column adjacency graph.
@@ -270,42 +266,27 @@ calculate_adjacency_score <- function(
   ring_type = c("manhattan", "chebyshev"),
   relationship = NULL,
   by = NULL,
-  grid_index = NULL,
-  state = NULL,
-  swapped_items = NULL
+  grid_index = NULL
 ) {
   ring_type <- match.arg(ring_type)
-  grid_index <- grid_index %||%
-    grid_indices(layout_df, row_column, col_column, by = by)
 
   if (is.null(relationship)) {
-    keep_state <- !is.null(state)
-    items <- as.factor(layout_df[[swap]])
-    is_partial <- is.list(state) && !is.null(swapped_items)
-    if (is_partial) {
-      rescored <- levels(items) %in% swapped_items
-      rescored_rows <- which(rescored[as.integer(items)])
-      counts <- adjacency_by_item(items, state$neighbours, rescored_rows)
-      state$counts[rescored] <- counts[rescored]
-    } else {
-      neighbours <- adjacency_neighbours(
-        grid_index,
-        nrow(layout_df),
-        ring_dists,
-        ring_weights,
-        ring_type
-      )
-      rescored_rows <- which(!is.na(items))
-      counts <- adjacency_by_item(items, neighbours, rescored_rows)
-      state <- list(neighbours = neighbours, counts = counts)
-    }
-
-    score <- sum(state$counts)
-    if (keep_state) {
-      return(structure(score, state = state))
-    }
-    return(score)
+    state <- adjacency_state(
+      layout_df,
+      swap,
+      row_column,
+      col_column,
+      ring_dists = ring_dists,
+      ring_weights = ring_weights,
+      ring_type = ring_type,
+      by = by,
+      grid_index = grid_index
+    )
+    return(state$score)
   }
+
+  grid_index <- grid_index %||%
+    grid_indices(layout_df, row_column, col_column, by = by)
 
   # relationship matrix needs whole calculation
   totals <- vapply(
@@ -330,6 +311,59 @@ calculate_adjacency_score <- function(
     numeric(1)
   )
   return(sum(totals))
+}
+
+#' Incremental Same-Item Adjacency
+#'
+#' @description
+#' Same-item adjacency of [calculate_adjacency_score()] with the state needed
+#' to rescore only `swapped_items` on the next call.
+#'
+#' @inheritParams calculate_adjacency_score
+#' @param state Result of a previous call, or `NULL` to score from scratch.
+#' @param swapped_items Items swapped since `state` (default `NULL`).
+#'
+#' @return A list with `score`, `neighbours` from [adjacency_neighbours()] and
+#'   per-item `counts`.
+#'
+#' @keywords internal
+adjacency_state <- function(
+  layout_df,
+  swap,
+  row_column = "row",
+  col_column = "col",
+  ring_dists = 1,
+  ring_weights = 1,
+  ring_type = c("manhattan", "chebyshev"),
+  by = NULL,
+  grid_index = NULL,
+  state = NULL,
+  swapped_items = NULL
+) {
+  ring_type <- match.arg(ring_type)
+  items <- as.factor(layout_df[[swap]])
+
+  if (!is.null(state) && !is.null(swapped_items)) {
+    rescored <- levels(items) %in% swapped_items
+    rescored_rows <- which(rescored[as.integer(items)])
+    counts <- adjacency_by_item(items, state$neighbours, rescored_rows)
+    state$counts[rescored] <- counts[rescored]
+  } else {
+    grid_index <- grid_index %||%
+      grid_indices(layout_df, row_column, col_column, by = by)
+    neighbours <- adjacency_neighbours(
+      grid_index,
+      nrow(layout_df),
+      ring_dists,
+      ring_weights,
+      ring_type
+    )
+    counts <- adjacency_by_item(items, neighbours, which(!is.na(items)))
+    state <- list(neighbours = neighbours, counts = counts)
+  }
+
+  state$score <- sum(state$counts)
+  return(state)
 }
 
 #' Neighbour Index for Adjacency Scoring
