@@ -2,7 +2,8 @@
 ^\.Rproj\.user$
 .devcontainer
 ^LICENSE\.md$
-^README\.Rmd$
+^README\.qmd$
+^\.quarto$
 ^\.github$
 ^_pkgdown\.yml$
 ^docs$

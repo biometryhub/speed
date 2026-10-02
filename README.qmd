@@ -1,17 +1,14 @@
 ---
-output: github_document
+format: gfm
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: "#>"
+    fig.path: "man/figures/README-"
+    out.width: "100%"
 ---
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  fig.path = "man/figures/README-",
-  out.width = "100%"
-)
-```
+<!-- README.md is generated from README.qmd. Please edit that file -->
 
 # speed - Spatially Efficient Experimental Designs <a href="https://biometryhub.github.io/speed/"><img src="man/figures/logo.svg" align="right" height="139" alt="speed website" /></a>
 
@@ -54,7 +51,8 @@ The `speed` package optimises spatial experimental designs by rearranging treatm
 
 You can install the development version of speed from [GitHub](https://github.com/biometryhub/speed) with any of the following options:
 
-```{r, eval = FALSE}
+```{r}
+#| eval: false
 # pak
 if (!require("pak", quietly = TRUE)) install.packages("pak")
 pak::pak("biometryhub/speed")
@@ -89,7 +87,8 @@ See [news](https://biometryhub.github.io/speed/news/index.html).
 
 A simple example optimising a 4×3 completely randomised design with 4 treatments:
 
-```{r example}
+```{r}
+#| label: example
 library(speed)
 
 # Create a simple design with 3 replicates of 4 treatments
@@ -113,7 +112,8 @@ plot_progress(result)
 
 You can also optimise designs within blocks:
 
-```{r blocks}
+```{r}
+#| label: blocks
 # Create a design with blocks
 df <- data.frame(
   row = rep(1:6, each = 4),
@@ -163,11 +163,36 @@ You can customise the objective function and optimisation parameters to suit spe
 
 ## Citation
 
-If you use `speed` in your research, please cite:
+If you use `speed` in your work, please cite it by using:
 
-```{r citation, echo=FALSE, results="hold", comment=""}
+```{r}
+#| label: citation
+#| eval: false 
 citation("speed")
 ```
+
+```{r}
+#| label: citation_run
+#| echo: false
+#| warning: false
+# CRAN populates the publication date automatically, so DESCRIPTION
+# deliberately has no Date field. Without one, citation() can't determine a
+# year and warns, printing "(????)". To render a tidy citation here, copy the
+# installed DESCRIPTION into a temporary library with the current date added
+# and cite from there, leaving the committed DESCRIPTION untouched.
+local({
+  tmp_lib <- file.path(tempdir(), "cite_lib")
+  pkg_dir <- file.path(tmp_lib, "speed")
+  dir.create(pkg_dir, recursive = TRUE, showWarnings = FALSE)
+  desc <- readLines(system.file("DESCRIPTION", package = "speed"))
+  writeLines(
+    c(desc, paste0("Date: ", Sys.Date())),
+    file.path(pkg_dir, "DESCRIPTION")
+  )
+  citation("speed", lib.loc = tmp_lib)
+})
+```
+
 
 ## License
 

@@ -46,7 +46,7 @@ devtools::test()                     # run all testthat tests
 devtools::test(filter = "speed")     # run only tests/testthat/test-speed.R
 testthat::test_file("tests/testthat/test-metrics.R")  # run a single file
 devtools::check()                    # full R CMD check (must pass before PRs)
-devtools::build_readme()             # regenerate README.md from README.Rmd
+devtools::build_readme()             # regenerate README.md from README.qmd
 quarto::quarto_render("vignettes/speed.qmd")  # render a vignette (Quarto, not knitr)
 ```
 

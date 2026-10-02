@@ -21,7 +21,8 @@ treatments, or named list for hierarchical designs}
 \value{
 A list with:
 \itemize{
-\item \strong{swappable} - groups holding an exchangeable pair.
+\item \strong{swappable} - the plot rows from \code{\link[=plots_by_group]{plots_by_group()}} of each group
+holding an exchangeable pair.
 \item \strong{unequal_replication} - groups where \code{swap_all = TRUE} rules out every
 pair, because no two treatments there share a replication count. Kept
 separate from the rest of the unswappable groups because, unlike a group

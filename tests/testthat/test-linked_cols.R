@@ -199,6 +199,38 @@ test_that("linked_cols is score neutral with random initialisation", {
   expect_pairing_preserved(df, with$design_df, "treatment", "trt_name")
 })
 
+test_that("linked_cols follows its treatment through a random start", {
+  df <- simple_df()
+  # Unique per row, so no value-level lookup could reconstruct it
+  df$plot_id <- sprintf("P%02d", seq_len(nrow(df)))
+
+  # One group of 4 treatments replicated 5 times, so `swap_all` exchanges whole
+  # sets of 5 plots where a single swap moves one
+  for (swap_all in c(FALSE, TRUE)) {
+    result <- speed(
+      df,
+      swap = "treatment",
+      linked_cols = c("trt_name", "plot_id"),
+      swap_all = swap_all,
+      optimise_params = optim_params(random_initialisation = 5),
+      iterations = 100,
+      early_stop_iterations = 30,
+      seed = 7,
+      quiet = TRUE
+    )
+
+    # The shuffle moved something, so the pairings below are not vacuous
+    expect_false(identical(
+      as.character(result$design_df$treatment),
+      df$treatment
+    ))
+
+    expect_setequal(result$design_df$plot_id, df$plot_id)
+    expect_pairing_preserved(df, result$design_df, "plot_id", "treatment")
+    expect_pairing_preserved(df, result$design_df, "treatment", "trt_name")
+  }
+})
+
 test_that("linked_cols works with swap_within", {
   df <- simple_df()
   df$block <- rep(1:5, each = 4)

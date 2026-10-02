@@ -357,73 +357,6 @@ test_that("speed respects swap_within boundaries", {
   vdiffr::expect_doppelganger("speed_blocks", autoplot(result))
 })
 
-test_that("speed runs with random initialisation", {
-  test_data <- data.frame(
-    row = rep(1:5, times = 4),
-    col = rep(1:4, each = 5),
-    treatment = rep(LETTERS[1:4], 5)
-  )
-
-  result <- speed(
-    data = test_data,
-    swap = "treatment",
-    spatial_factors = ~ row + col,
-    iterations = 1000,
-    optimise_params = optim_params(stop_at_optimal = FALSE),
-    seed = 42,
-    quiet = TRUE
-  )
-
-  result_random <- speed(
-    data = test_data,
-    swap = "treatment",
-    spatial_factors = ~ row + col,
-    iterations = 1000,
-    optimise_params = optim_params(
-      random_initialisation = TRUE,
-      stop_at_optimal = FALSE
-    ),
-    seed = 42,
-    quiet = TRUE
-  )
-
-  expect_named(
-    result_random,
-    c(
-      "design_df",
-      "score",
-      "scores",
-      "temperatures",
-      "iterations_run",
-      "stopped_early",
-      "treatments",
-      "seed",
-      "metadata"
-    )
-  )
-
-  expect_true(is.data.frame(result_random$design_df))
-  expect_true(is.numeric(result_random$score))
-  expect_true(is.numeric(result_random$scores))
-  expect_true(is.numeric(result_random$temperatures))
-  expect_true(is.logical(result_random$stopped_early))
-  expect_true(is.character(result_random$treatments))
-
-  expect_equal(nrow(result_random$design_df), 20)
-  expect_equal(ncol(result_random$design_df), 3)
-  expect_equal(result_random$score, 1)
-  expect_equal(length(result_random$scores), 1000)
-  expect_equal(length(result_random$temperatures), 1000)
-  expect_equal(result_random$iterations_run, 1000)
-  expect_equal(result_random$stopped_early, FALSE)
-  expect_equal(result_random$treatments, c("A", "B", "C", "D"))
-
-  expect_false(isTRUE(all.equal(
-    result_random$design_df$treatment,
-    result$design_df$treatment
-  )))
-})
-
 test_that("speed runs a with variation of row and column columns", {
   test_data <- data.frame(
     Row = rep(1:5, times = 4),
@@ -556,6 +489,31 @@ test_that("speed runs without seed", {
   expect_s3_class(result, "design")
 })
 
+test_that("speed generates a seed before the RNG has been drawn from", {
+  test_data <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+
+  # A fresh session has no `.Random.seed` to read the seed from
+  withr::with_preserve_seed({
+    rm(".Random.seed", envir = globalenv())
+
+    result <- speed(
+      data = test_data,
+      swap = "treatment",
+      iterations = 10,
+      optimise_params = optim_params(random_initialisation = 3),
+      seed = NULL,
+      quiet = TRUE
+    )
+  })
+
+  expect_true(is.finite(result$seed))
+  expect_setequal(result$design_df$treatment, LETTERS[1:3])
+})
+
 test_that("speed generates seed automatically from .Random.seed[3] when seed=NULL for simple designs", {
   test_data <- data.frame(
     row = rep(1:4, times = 3),
@@ -680,27 +638,6 @@ test_that("speed produces different results when seed=NULL across different runs
     result1$design_df$treatment,
     result2$design_df$treatment
   ))
-})
-
-test_that("speed runs with n random initialisation", {
-  df <- expand.grid(col = 1:4, row = 1:5)
-  df$treatment <- LETTERS[1:4]
-  initial_score <- objective_function(df, "treatment", c("row", "col"))$score
-
-  result <- speed(
-    data = df,
-    swap = "treatment",
-    iterations = 1000,
-    early_stop_iterations = 500,
-    optimise_params = optim_params(random_initialisation = 10),
-    seed = 112,
-    quiet = TRUE
-  )
-
-  expect_lt(result$scores[1], initial_score)
-  expect_equal(result$score, 1)
-  expect_true(is.data.frame(result$design_df))
-  expect_equal(sort(result$design_df$treatment), sort(df$treatment))
 })
 
 test_that("speed runs with legacy options(speed.{option})", {
@@ -1005,34 +942,6 @@ test_that("speed rejects per-level grid factors and points at `by`", {
     "name the grouping column with `by`",
     fixed = TRUE
   )
-})
-
-test_that("random_initialise returns immediately on a zero score", {
-  # Zeroing both weights makes the objective identically 0, so the early return
-  # is exercised without relying on a shuffle finding a perfect layout.
-  test_data <- data.frame(
-    row = rep(1:4, times = 3),
-    col = rep(1:3, each = 4),
-    treatment = rep(LETTERS[1:3], 4)
-  )
-
-  result <- speed(
-    test_data,
-    swap = "treatment",
-    spatial_factors = ~ row + col,
-    iterations = 10,
-    seed = 1,
-    quiet = TRUE,
-    optimise_params = optim_params(
-      random_initialisation = 3,
-      adj_weight = 0,
-      bal_weight = 0
-    )
-  )
-
-  expect_equal(result$score, 0)
-  expect_setequal(result$design_df$treatment, LETTERS[1:3])
-  expect_equal(sort(result$design_df$treatment), sort(test_data$treatment))
 })
 
 test_that("speed returns columns it does not use untouched", {

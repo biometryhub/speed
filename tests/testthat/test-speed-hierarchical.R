@@ -232,7 +232,7 @@ test_that("speed handles MET", {
   expect_equal(sort(design_df$treatment), sort(treatments))
   expect_setequal(unique(table(design_df$treatment, design_df$site)), c(1, 2))
   expect_equal(
-    unique(matrixStats::rowVars(table(design_df$treatment, design_df$site))),
+    unique(apply(table(design_df$treatment, design_df$site), 1, var)),
     0.3
   )
   expect_equal(max(table(design_df$site_row, design_df$treatment)), 1)
@@ -282,7 +282,7 @@ test_that("speed handles MET with unequal site dimensions", {
     early_stop_iterations = 5000,
     optimise = optimise,
     optimise_params = optim_params(
-      random_initialisation = TRUE,
+      random_initialisation = 50,
       adj_weight = 0
     ),
     seed = 112,
@@ -306,7 +306,7 @@ test_that("speed handles MET with unequal site dimensions", {
   )
   expect_setequal(
     table(design_df$treatment, design_df$site) |>
-      matrixStats::rowVars() |>
+      apply(1, var) |>
       round(3) |>
       unique(),
     c(0.3, 0.8)

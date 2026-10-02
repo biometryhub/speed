@@ -105,7 +105,8 @@ named list of score vectors (for hierarchical designs)
 \item \strong{treatments} - Vector of unique treatments (for simple designs) or
 named list of treatment vectors (for hierarchical designs)
 \item \strong{seed} - Random seed used for reproducibility of the design. If not set
-in the function, the seed is set to the third element of \code{.Random.seed}.
+in the function, the seed is set to the third element of \code{.Random.seed}, or
+drawn at random if the RNG has not been used yet.
 \item \strong{metadata} - A list describing how the design was produced: the captured
 \code{call}, the ordered \code{levels}, the resolved \code{row_column} / \code{col_column}
 names, and a \code{per_level} list recording each level's swap variable,

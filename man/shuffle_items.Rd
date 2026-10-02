@@ -4,7 +4,14 @@
 \alias{shuffle_items}
 \title{Shuffle Items in A Group}
 \usage{
-shuffle_items(design, swap, swap_within, seed = NULL, linked_cols = NULL)
+shuffle_items(
+  design,
+  swap,
+  groups,
+  seed = NULL,
+  linked_cols = NULL,
+  swap_all = FALSE
+)
 }
 \arguments{
 \item{design}{Data frame containing the current design}
@@ -12,8 +19,7 @@ shuffle_items(design, swap, swap_within, seed = NULL, linked_cols = NULL)
 \item{swap}{Column name of the treatment to swap, or named list for
 hierarchical designs}
 
-\item{swap_within}{Column name defining groups within which to swap
-treatments, or named list for hierarchical designs}
+\item{groups}{Factor giving the group each plot is shuffled within.}
 
 \item{seed}{A numeric value for random seed. If provided, it ensures
 reproducibility of results (default: \code{NULL}).}
@@ -21,11 +27,17 @@ reproducibility of results (default: \code{NULL}).}
 \item{linked_cols}{Character vector of column names moved in lockstep with
 the \code{swap} column, so that a value paired with a treatment stays paired with
 it. \code{NULL} (default) moves the \code{swap} column alone.}
+
+\item{swap_all}{Whether to swap all matching items or a single item at a time
+(default: FALSE)}
 }
 \value{
 A data frame with the items shuffled
 }
 \description{
-Shuffle Items in A Group
+A shuffle has to move what the search moves, or it starts the search from a
+design the search itself could never reach. \code{swap_all} exchanges whole sets
+of like-treatment plots, so it shuffles treatment labels between those sets;
+a single swap exchanges plots, so it shuffles the plots.
 }
 \keyword{internal}
