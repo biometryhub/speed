@@ -8,6 +8,8 @@
 - `speed()` now stops as soon as a design reaches the lowest score its layout allows, applicable only to the
   default `objective_function()`. This can be turned off per level with `optim_params(stop_at_optimal =
   FALSE)`. `summary()` now reports the lower bound score alongside the achieved one.
+- New `optim_params(target_swaps = )` makes swaps target plots the default `objective_function()` penalises
+  once the given number of iterations has passed, often reaching good designs in far fewer iterations.
 
 ## Minor Changes
 
