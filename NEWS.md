@@ -18,6 +18,7 @@
   in each level's metadata.
 - `speed()` now warns when a `swap_all = TRUE` group holds no two treatments of equal replication, and
   stops a level immediately when no group in it can be swapped.
+- `objective_function()` now rescores only the swapped treatments on each iteration.
 
 ## Bug Fixes
 
