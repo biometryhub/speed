@@ -36,6 +36,9 @@
 
 ### Bug Fixes
 
+- `optim_params(random_initialisation = )` no longer fails with
+  “Duplicate (row, col) coordinates” on multi-site designs with
+  `grid_factors$by`.
 - [`speed()`](https://biometryhub.github.io/speed/reference/speed.md) no
   longer fails with “supplied seed is not a valid integer” when `seed`
   is left unset in a session that has not yet used the random number
