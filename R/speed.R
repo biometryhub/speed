@@ -312,8 +312,9 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     seed <- .GlobalEnv$.Random.seed[3] %||% sample.int(.Machine$integer.max, 1)
   }
 
+  dots <- list(...)
   hierarchy_levels <- names(optimise)
-  layout_df <- random_initialise(data, optimise, seed, ...)
+  layout_df <- random_initialise(data, optimise, seed, by = dots$grid_by, ...)
 
   # Initialise design
   current_design <- layout_df
@@ -322,7 +323,6 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   # Only the treatment column moves during annealing, so build the index once.
   # `NULL` on failure defers to build_design_matrix(), so a design that cannot
   # form a grid still runs if its objective never needs one.
-  dots <- list(...)
   grid_idx <- tryCatch(
     grid_indices(
       current_design,

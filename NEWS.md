@@ -22,6 +22,8 @@
 
 ## Bug Fixes
 
+- `optim_params(random_initialisation = )` no longer fails with "Duplicate (row, col) coordinates" on
+  multi-site designs with `grid_factors$by`.
 - `speed()` no longer fails with "supplied seed is not a valid integer" when `seed` is left unset in a
   session that has not yet used the random number generator and `random_initialisation` is toggled on.
 - `optim_params(random_initialisation = )` no longer moves plots holding no treatment.
