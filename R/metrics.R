@@ -355,6 +355,46 @@ balance_state <- function(
   return(round(bal_weight * bal_min, 10))
 }
 
+#' Penalised Positions
+#'
+#' @description
+#' Positions the default [objective_function()] penalises: those with a
+#' neighbour holding the same `swap` value, and those in a cell of a spatial
+#' factor at least 2 above the smallest count in its level. Any swap that lowers
+#' the score moves at least one of them, so swaps can be targeted at them. Read
+#' from the incremental `state` the objective returns, so it costs no rescoring.
+#'
+#' @inheritParams objective_function_signature
+#' @param score_obj Result of [objective_function()] for `layout_df`.
+#'
+#' @return Integer vector of row positions.
+#'
+#' @keywords internal
+.penalised_positions <- function(layout_df, swap, spatial_cols, score_obj) {
+  codes <- as.integer(as.factor(layout_df[[swap]]))
+  state <- score_obj$state
+  bad <- rep(FALSE, length(codes))
+
+  neighbours <- state$adjacency$neighbours
+  if (!is.null(neighbours)) {
+    # rings with no penalty cannot make a position a conflict
+    neighbours <- neighbours[, attr(neighbours, "weights") > 0, drop = FALSE]
+    hit <- codes[neighbours] == codes
+    dim(hit) <- dim(neighbours)
+    bad <- bad | rowSums(hit, na.rm = TRUE) > 0
+  }
+
+  for (el in names(state$balance$cols)) {
+    counts <- state$balance$cols[[el]]$counts
+    lvl <- as.integer(as.factor(layout_df[[el]]))
+    # gap of 2+ to the lowest count
+    min_count <- apply(counts, 1, min)
+    bad <- bad | counts[cbind(lvl, codes)] >= min_count[lvl] + 2
+  }
+
+  return(which(bad))
+}
+
 #' Objective Function with Metric from Piepho
 #'
 #' @description

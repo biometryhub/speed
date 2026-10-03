@@ -476,3 +476,81 @@ test_that("speed() does not warn when every group can swap", {
     )
   )
 })
+
+targeted_design <- function() {
+  return(data.frame(
+    row = rep(1:4, each = 4),
+    col = rep(1:4, times = 4),
+    block = factor(rep(1:2, each = 8)),
+    treatment = factor(rep(LETTERS[1:8], 2))
+  ))
+}
+
+test_that("targeted swaps always move a target and keep each group's treatments", {
+  design <- targeted_design()
+  targets <- c(2L, 11L)
+
+  set.seed(1)
+  for (i in 1:50) {
+    nb <- generate_neighbour(design, "treatment", "block", swap_count = 1, targets = targets)
+    moved <- which(nb$design$treatment != design$treatment)
+
+    expect_length(moved, 2)
+    expect_true(any(moved %in% targets))
+    expect_equal(table(nb$design$block, nb$design$treatment), table(design$block, design$treatment))
+  }
+})
+
+test_that("targeted swaps with swap_all_blocks still swap in every group", {
+  design <- targeted_design()
+
+  set.seed(1)
+  nb <- generate_neighbour(design, "treatment", "block", swap_count = 1, swap_all_blocks = TRUE,
+                           targets = 2L)
+  moved <- which(nb$design$treatment != design$treatment)
+
+  expect_true(2L %in% moved)
+  expect_true(any(design$block[moved] == "2"))
+})
+
+test_that("empty targets swap exactly as untargeted swaps do", {
+  design <- targeted_design()
+
+  set.seed(1)
+  targeted <- generate_neighbour(design, "treatment", "block", targets = integer(0))
+  set.seed(1)
+  untargeted <- generate_neighbour(design, "treatment", "block")
+
+  expect_identical(targeted, untargeted)
+})
+
+test_that("speed() only targets swaps once target_swaps iterations have passed", {
+  design <- initialise_design_df(rep(paste0("T", 1:8), 4), nrows = 8, ncols = 4)
+  run <- function(target_swaps) {
+    return(speed(design, "treatment", iterations = 200, early_stop_iterations = 200, seed = 1, quiet = TRUE,
+                 optimise_params = optim_params(target_swaps = target_swaps, stop_at_optimal = FALSE)))
+  }
+
+  never <- run(NULL)
+  expect_identical(run(200)$design_df, never$design_df)
+  expect_false(identical(run(0)$scores, never$scores))
+})
+
+test_that("targeted swaps reach an optimum whose counts differ by more than 1", {
+  # A's 4 plots force a 2-0 gap in each row, so A stays targeted and the
+  # even-split bound is never reached
+  design <- data.frame(
+    row = rep(1:2, each = 4),
+    col = rep(1:4, 2),
+    treatment = factor(c("A", "A", "A", "A", "B", "C", "D", "E"))
+  )
+  optimal <- design
+  optimal$treatment <- factor(c("A", "A", "B", "C", "A", "A", "D", "E"))
+  optimal_score <- objective_function(optimal, "treatment", "row", adj_weight = 0)$score
+
+  result <- speed(design, "treatment", spatial_factors = ~row, iterations = 500, seed = 1, quiet = TRUE,
+                  optimise_params = optim_params(adj_weight = 0, target_swaps = 0))
+
+  expect_gt(optimal_score, .balance_score_min(design, "treatment", "row"))
+  expect_equal(result$score, optimal_score)
+})

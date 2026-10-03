@@ -312,8 +312,9 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     seed <- .GlobalEnv$.Random.seed[3] %||% sample.int(.Machine$integer.max, 1)
   }
 
+  dots <- list(...)
   hierarchy_levels <- names(optimise)
-  layout_df <- random_initialise(data, optimise, seed, ...)
+  layout_df <- random_initialise(data, optimise, seed, by = dots$grid_by, ...)
 
   # Initialise design
   current_design <- layout_df
@@ -322,7 +323,6 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   # Only the treatment column moves during annealing, so build the index once.
   # `NULL` on failure defers to build_design_matrix(), so a design that cannot
   # form a grid still runs if its objective never needs one.
-  dots <- list(...)
   grid_idx <- tryCatch(
     grid_indices(
       current_design,
@@ -381,6 +381,17 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     groups <- swappable_groups(current_design, opt$swap, opt$swap_within, opt$swap_all)
     .warn_unequal_replication(groups$unequal_replication, level, opt$swap_within)
 
+    # Penalised plots are only known for a bounded default objective
+    target_after <- if (!opt$swap_all && !is.na(optimal_score)) optimise_params$target_swaps
+    is_swappable <- logical(nrow(current_design))
+    is_swappable[unlist(groups$swappable)] <- TRUE
+    find_targets <- function(design, score_obj) {
+      targets <- .penalised_positions(design, opt$swap, spatial_cols, score_obj)
+      return(targets[is_swappable[targets]])
+    }
+    # `NULL` until targeting starts, then refreshed on every accepted move
+    targets <- NULL
+
     # Why the level stopped, and how many recorded scores that leaves. A level
     # that runs to the end keeps all of them; each `break` below sets both.
     stop_reason <- "iterations"
@@ -420,10 +431,14 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
         current_swap_all_blocks <- swap_all_blocks
       }
 
+      if (is.null(targets) && !is.null(target_after) && iter > target_after) {
+        targets <- find_targets(current_design, current_score_obj)
+      }
+
       # Generate new design by swapping treatments at this level
       new_design <- generate_neighbour(current_design, opt$swap, opt$swap_within, current_swap_count,
                                        current_swap_all_blocks, opt$swap_all, opt$linked_cols,
-                                       groups$swappable)
+                                       groups$swappable, targets)
 
       # Calculate new score
       new_score_obj <- opt$obj_function(new_design$design,opt$swap, spatial_cols, adj_weight = adj_weight,
@@ -436,6 +451,9 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
         current_design <- new_design$design
         current_score <- new_score
         current_score_obj <- new_score_obj
+        if (!is.null(targets)) {
+          targets <- find_targets(current_design, current_score_obj)
+        }
         # Ties move the best design too, so a plateau returns a random point on
         # it rather than the input; only a strict improvement resets the clock
         if (new_score <= best_score) {

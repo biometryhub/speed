@@ -26,6 +26,9 @@
 #'   its layout allows (default: `TRUE`). The bound is only derivable for the default [objective_function()]
 #'   with non-negative weights and no `relationship` matrix; otherwise the level runs to its usual stopping
 #'   rules regardless of this setting.
+#' @param target_swaps Number of iterations after which every swap moves a plot in a penalised position rather
+#'   than a random plot (default: `NULL`, never). Only applies to the default [objective_function()] with
+#'   `swap_all = FALSE` when its lower bound can be derived (see `stop_at_optimal`).
 #'
 #' @returns A named list of optimization parameters.
 #'
@@ -41,7 +44,8 @@ optim_params <- function(
   random_initialisation = 0,
   adj_weight = 1,
   bal_weight = 1,
-  stop_at_optimal = TRUE
+  stop_at_optimal = TRUE,
+  target_swaps = NULL
 ) {
   params <- list(
     swap_count = swap_count,
@@ -52,7 +56,8 @@ optim_params <- function(
     random_initialisation = random_initialisation,
     adj_weight = adj_weight,
     bal_weight = bal_weight,
-    stop_at_optimal = stop_at_optimal
+    stop_at_optimal = stop_at_optimal,
+    target_swaps = target_swaps
   )
 
   # check legacy options

@@ -472,6 +472,31 @@ test_that("`grid_factors$by` is checked before optimising", {
   expect_error(speed_by(1), "must be a single column name", fixed = TRUE)
 })
 
+test_that("random initialisation scores multi-site designs per site", {
+  test_data <- data.frame(
+    site = rep(c("a", "b"), each = 16),
+    row = rep(rep(1:4, each = 4), times = 2),
+    col = rep(1:4, times = 8),
+    block = rep(1:4, each = 8),
+    treatment = rep(LETTERS[1:8], 4)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "block",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col", by = "site"),
+    iterations = 10,
+    optimise_params = optim_params(random_initialisation = 2),
+    seed = 42,
+    quiet = TRUE
+  )
+
+  expect_s3_class(result, "design")
+  expect_equal(nrow(result$design_df), 32)
+})
+
 test_that("speed runs without seed", {
   test_data <- data.frame(
     row = rep(1:5, times = 4),

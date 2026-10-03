@@ -8,6 +8,8 @@
 - `speed()` now stops as soon as a design reaches the lowest score its layout allows, applicable only to the
   default `objective_function()`. This can be turned off per level with `optim_params(stop_at_optimal =
   FALSE)`. `summary()` now reports the lower bound score alongside the achieved one.
+- New `optim_params(target_swaps = )` makes swaps target plots the default `objective_function()` penalises
+  once the given number of iterations has passed, often reaching good designs in far fewer iterations.
 
 ## Minor Changes
 
@@ -22,6 +24,8 @@
 
 ## Bug Fixes
 
+- `optim_params(random_initialisation = )` no longer fails with "Duplicate (row, col) coordinates" on
+  multi-site designs with `grid_factors$by`.
 - `speed()` no longer fails with "supplied seed is not a valid integer" when `seed` is left unset in a
   session that has not yet used the random number generator and `random_initialisation` is toggled on.
 - `optim_params(random_initialisation = )` no longer moves plots holding no treatment.

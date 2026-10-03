@@ -373,12 +373,16 @@
   random_initialisation,
   adj_weight,
   bal_weight,
-  stop_at_optimal
+  stop_at_optimal,
+  target_swaps
 ) {
   verify_positive_whole_number(swap_count)
   verify_non_negative_whole(start_temp)
   verify_boolean(adaptive_swaps, swap_all_blocks, stop_at_optimal)
   verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
+  if (!is.null(target_swaps)) {
+    verify_non_negative_whole(target_swaps)
+  }
   verify_numeric(adj_weight, bal_weight)
 
   if (!(random_initialisation %in% c(TRUE, FALSE))) {

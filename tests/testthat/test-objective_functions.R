@@ -820,3 +820,67 @@ test_that("objective_function partial rescoring matches a full rescore", {
     expect_equal(obj$components[["balance"]], expected_balance)
   }
 })
+
+test_that(".penalised_positions() finds positions with a same-treatment neighbour", {
+  layout_df <- data.frame(
+    row = rep(1:2, each = 3),
+    col = rep(1:3, times = 2),
+    treatment = factor(c("A", "A", "B", "C", "D", "E"))
+  )
+  obj <- objective_function(layout_df, "treatment", character(0), bal_weight = 0)
+
+  expect_equal(.penalised_positions(layout_df, "treatment", character(0), obj), c(1L, 2L))
+})
+
+test_that(".penalised_positions() finds positions over-represented in a spatial level", {
+  layout_df <- data.frame(
+    row = rep(1:2, each = 3),
+    col = rep(1:3, times = 2),
+    treatment = factor(c("A", "B", "A", "B", "C", "C"))
+  )
+  obj <- objective_function(layout_df, "treatment", "row", adj_weight = 0)
+
+  expect_equal(.penalised_positions(layout_df, "treatment", "row", obj), c(1L, 3L, 5L, 6L))
+})
+
+test_that(".penalised_positions() finds counts 2 above the level's rarest treatment", {
+  # A, B and C at 3 sit 2 above D's single plot
+  layout_df <- data.frame(
+    row = 1,
+    col = 1:10,
+    grp = "g",
+    treatment = factor(rep(c("A", "B", "C", "D"), c(3, 3, 3, 1)))
+  )
+  obj <- objective_function(layout_df, "treatment", "grp", adj_weight = 0)
+
+  expect_equal(.penalised_positions(layout_df, "treatment", "grp", obj), 1:9)
+})
+
+test_that(".penalised_positions() flags a count at the floor with a gap of 2 below it", {
+  # Swapping positions 1 and 7 improves the score; row 1's A (2) is at the
+  # floor but 2 above B (0)
+  layout_df <- data.frame(
+    row = rep(1:2, each = 6),
+    col = rep(1:6, 2),
+    treatment = factor(c("A", "A", "C", "C", "C", "C", "B", "B", "A", "C", "C", "C"))
+  )
+  obj <- objective_function(layout_df, "treatment", "row", adj_weight = 0)
+  swapped <- layout_df
+  swapped$treatment[c(1, 7)] <- swapped$treatment[c(7, 1)]
+
+  expect_lt(objective_function(swapped, "treatment", "row", adj_weight = 0)$score, obj$score)
+  expect_equal(.penalised_positions(layout_df, "treatment", "row", obj), c(1:6, 10:12))
+})
+
+test_that(".penalised_positions() finds nothing in an optimal design", {
+  # Latin square: no repeated neighbour, every row and column balanced
+  layout_df <- data.frame(
+    row = rep(1:3, each = 3),
+    col = rep(1:3, times = 3),
+    treatment = factor(c("A", "B", "C", "B", "C", "A", "C", "A", "B"))
+  )
+  obj <- objective_function(layout_df, "treatment", c("row", "col"))
+
+  expect_equal(obj$score, 0)
+  expect_length(.penalised_positions(layout_df, "treatment", c("row", "col"), obj), 0)
+})
