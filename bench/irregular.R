@@ -85,7 +85,11 @@ bench_speed_irr <- function(seed = 112) {
     swap = "treatment",
     swap_within = "block",
     spatial_factors = ~ site_row + site_col,
-    optimise_params = optim_params(random_initialisation = 10, adj_weight = 0),
+    optimise_params = optim_params(
+      random_initialisation = 10,
+      adj_weight = 0,
+      target_swaps = 1000
+    ),
     seed = seed
   )
 }
