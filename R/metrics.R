@@ -50,9 +50,13 @@ objective_function <- function(layout_df,
                                current_score_obj = NULL,
                                swapped_items = NULL,
                                ...) {
+  state <- current_score_obj$state
+  if (is.null(state$n_treatments)) {
+    state$n_treatments <- length(unique(layout_df[[swap]]))
+  }
+
   # Check if there are only two treatments - adjacency becomes deterministic
-  n_treatments <- length(unique(layout_df[[swap]]))
-  if (n_treatments == 2 && adj_weight != 0) {
+  if (state$n_treatments == 2 && adj_weight != 0) {
     warning("Only 2 treatments detected in '", swap, "'. Adjacency optimization becomes deterministic (checkerboard pattern). Setting adjacency weight to 0.",
       call. = FALSE
     )
@@ -71,7 +75,6 @@ objective_function <- function(layout_df,
       "grid_index"
     )
   )]
-  state <- current_score_obj$state
   adj_score <- 0
   if (adj_weight != 0 && is.null(ring_args$relationship)) {
     ring_args$relationship <- NULL
