@@ -27,7 +27,7 @@ bench_speed_large <- function(seed = 112) {
     optimise_params = optim_params(
       random_initialisation = 300,
       adaptive_swaps = TRUE,
-      target_swaps = 1000,
+      target_swaps = 0,
       swap_count = 3
     ),
     seed = seed

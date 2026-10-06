@@ -44,7 +44,7 @@ bench_speed_2d <- function(seed = 112) {
       random_initialisation = 300,
       adaptive_swaps = TRUE,
       swap_count = 3,
-      target_swaps = 1000
+      target_swaps = 0
     ),
     seed = seed
   )

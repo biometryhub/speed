@@ -88,7 +88,7 @@ bench_speed_irr <- function(seed = 112) {
     optimise_params = optim_params(
       random_initialisation = 10,
       adj_weight = 0,
-      target_swaps = 1000
+      target_swaps = 0
     ),
     seed = seed
   )
