@@ -15,9 +15,8 @@
 #' @param swappable Groups a swap can be proposed in, as returned in the
 #'   `swappable` element of [swappable_groups()]. `NULL` (default) considers
 #'   every group, which costs an iteration whenever an unswappable one is drawn.
-#' @param targets Penalised row positions, as returned by
-#'   [.penalised_positions()], each swap moving one of them. `NULL` (default) or
-#'   empty swaps uniformly at random.
+#' @param targets Penalised row positions, as returned by [.penalised_positions()],
+#'   each swap moving one of them. `NULL` swaps randomly (default: NULL)
 #'
 #' @return A list with the updated design after swapping and information about
 #'   swapped items
