@@ -825,7 +825,9 @@ test_that(".penalised_positions() finds positions with a same-treatment neighbou
   layout_df <- data.frame(
     row = rep(1:2, each = 3),
     col = rep(1:3, times = 2),
-    treatment = factor(c("A", "A", "B", "C", "D", "E"))
+    # fmt: skip
+    treatment = factor(c("A", "A", "B",
+                         "C", "D", "E"))
   )
   obj <- objective_function(layout_df, "treatment", character(0), bal_weight = 0)
 
@@ -836,7 +838,9 @@ test_that(".penalised_positions() finds positions over-represented in a spatial 
   layout_df <- data.frame(
     row = rep(1:2, each = 3),
     col = rep(1:3, times = 2),
-    treatment = factor(c("A", "B", "A", "B", "C", "C"))
+    # fmt: skip
+    treatment = factor(c("A", "B", "A",
+                         "B", "C", "C"))
   )
   obj <- objective_function(layout_df, "treatment", "row", adj_weight = 0)
 
@@ -862,7 +866,9 @@ test_that(".penalised_positions() flags a count at the floor with a gap of 2 bel
   layout_df <- data.frame(
     row = rep(1:2, each = 6),
     col = rep(1:6, 2),
-    treatment = factor(c("A", "A", "C", "C", "C", "C", "B", "B", "A", "C", "C", "C"))
+    # fmt: skip
+    treatment = factor(c("A", "A", "C", "C", "C", "C",
+                         "B", "B", "A", "C", "C", "C"))
   )
   obj <- objective_function(layout_df, "treatment", "row", adj_weight = 0)
   swapped <- layout_df
@@ -877,7 +883,10 @@ test_that(".penalised_positions() finds nothing in an optimal design", {
   layout_df <- data.frame(
     row = rep(1:3, each = 3),
     col = rep(1:3, times = 3),
-    treatment = factor(c("A", "B", "C", "B", "C", "A", "C", "A", "B"))
+    # fmt: skip
+    treatment = factor(c("A", "B", "C",
+                         "B", "C", "A",
+                         "C", "A", "B"))
   )
   obj <- objective_function(layout_df, "treatment", c("row", "col"))
 

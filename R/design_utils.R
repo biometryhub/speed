@@ -261,16 +261,14 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
 #' Generate Neighbour by Targeted Swaps
 #'
 #' @description
-#' Each swap moves one of `targets`, exchanging it with a plot of a different
-#' treatment in its group. With `swap_all_blocks`, every group gets
-#' `swap_count` swaps drawn from its own targets, or from all its plots if it
-#' has none.
+#' Each swap moves one of `targets`, exchanging it with a different item in its
+#' group. With `swap_all_blocks`, every group gets `swap_count` swaps drawn
+#' from its own targets, or from all its items if none.
 #'
 #' @inheritParams generate_neighbour
-#' @param targets Penalised row positions, all within `swappable`.
+#' @param targets Penalised row positions within `swappable`
 #'
-#' @return A list with the updated design after swapping and information about
-#'   swapped items
+#' @return A list with the swapped design and swapped items
 #'
 #' @keywords internal
 # fmt: skip

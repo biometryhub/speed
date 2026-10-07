@@ -36,16 +36,14 @@ it. \code{NULL} (default) moves the \code{swap} column alone.}
 \code{swappable} element of \code{\link[=swappable_groups]{swappable_groups()}}. \code{NULL} (default) considers
 every group, which costs an iteration whenever an unswappable one is drawn.}
 
-\item{targets}{Penalised row positions, all within \code{swappable}.}
+\item{targets}{Penalised row positions within \code{swappable}}
 }
 \value{
-A list with the updated design after swapping and information about
-swapped items
+A list with the swapped design and swapped items
 }
 \description{
-Each swap moves one of \code{targets}, exchanging it with a plot of a different
-treatment in its group. With \code{swap_all_blocks}, every group gets
-\code{swap_count} swaps drawn from its own targets, or from all its plots if it
-has none.
+Each swap moves one of \code{targets}, exchanging it with a different item in its
+group. With \code{swap_all_blocks}, every group gets \code{swap_count} swaps drawn
+from its own targets, or from all its items if none.
 }
 \keyword{internal}
