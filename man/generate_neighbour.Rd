@@ -40,9 +40,8 @@ it. \code{NULL} (default) moves the \code{swap} column alone.}
 \code{swappable} element of \code{\link[=swappable_groups]{swappable_groups()}}. \code{NULL} (default) considers
 every group, which costs an iteration whenever an unswappable one is drawn.}
 
-\item{targets}{Penalised row positions, as returned by
-\code{\link[=.penalised_positions]{.penalised_positions()}}, each swap moving one of them. \code{NULL} (default) or
-empty swaps uniformly at random.}
+\item{targets}{Penalised row positions, as returned by \code{\link[=.penalised_positions]{.penalised_positions()}},
+each swap moving one of them. \code{NULL} swaps randomly (default: NULL)}
 }
 \value{
 A list with the updated design after swapping and information about
