@@ -560,7 +560,7 @@ test_that("speed() only targets swaps after target_swaps iterations", {
     )
   }
 
-  never <- run(NULL)
+  never <- run(FALSE)
   expect_identical(run(200)$design_df, never$design_df)
   expect_false(identical(run(0)$scores, never$scores))
 })
@@ -601,7 +601,7 @@ test_that("split-plot targets only the subplot level and keeps linked columns pa
     )
   }
 
-  never <- run(NULL)
+  never <- run(FALSE)
   targeted <- run(0)
 
   # `swap_all` level is never targeted, so it matches the untargeted run

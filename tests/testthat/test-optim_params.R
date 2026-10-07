@@ -160,4 +160,6 @@ test_that("optim_params throws error for invalid inputs", {
   expect_error(optim_params(target_swaps = -1))
   expect_error(optim_params(target_swaps = 1.5))
   expect_error(optim_params(target_swaps = NA))
+  expect_equal(optim_params(target_swaps = TRUE)$target_swaps, 0)
+  expect_error(optim_params(target_swaps = NULL))
 })

@@ -380,7 +380,7 @@
   verify_non_negative_whole(start_temp)
   verify_boolean(adaptive_swaps, swap_all_blocks, stop_at_optimal)
   verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
-  if (!is.null(target_swaps)) {
+  if (!(target_swaps %in% c(TRUE, FALSE))) {
     verify_non_negative_whole(target_swaps)
   }
   verify_numeric(adj_weight, bal_weight)
