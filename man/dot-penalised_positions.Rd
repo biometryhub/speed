@@ -21,8 +21,8 @@ Integer vector of row positions.
 \description{
 Positions the default \code{\link[=objective_function]{objective_function()}} penalises: those with a
 neighbour holding the same \code{swap} value, and those in a cell of a spatial
-factor at least 2 above the smallest count in its level. Any swap that lowers
-the score moves at least one of them, so swaps can be targeted at them. Read
-from the incremental \code{state} the objective returns, so it costs no rescoring.
+factor at least 2 above the smallest count in its level. Any swap that
+lowers the score must move at least one of them. Read from the incremental
+\code{state} returned from the objective function
 }
 \keyword{internal}

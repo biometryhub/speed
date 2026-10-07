@@ -363,9 +363,9 @@ balance_state <- function(
 #' @description
 #' Positions the default [objective_function()] penalises: those with a
 #' neighbour holding the same `swap` value, and those in a cell of a spatial
-#' factor at least 2 above the smallest count in its level. Any swap that lowers
-#' the score moves at least one of them, so swaps can be targeted at them. Read
-#' from the incremental `state` the objective returns, so it costs no rescoring.
+#' factor at least 2 above the smallest count in its level. Any swap that
+#' lowers the score must move at least one of them. Read from the incremental
+#' `state` returned from the objective function
 #'
 #' @inheritParams objective_function_signature
 #' @param score_obj Result of [objective_function()] for `layout_df`.
@@ -378,19 +378,19 @@ balance_state <- function(
   state <- score_obj$state
   bad <- rep(FALSE, length(codes))
 
+  # adjacent, weight > 0
   neighbours <- state$adjacency$neighbours
   if (!is.null(neighbours)) {
-    # rings with no penalty cannot make a position a conflict
     neighbours <- neighbours[, attr(neighbours, "weights") > 0, drop = FALSE]
     hit <- codes[neighbours] == codes
     dim(hit) <- dim(neighbours)
     bad <- bad | rowSums(hit, na.rm = TRUE) > 0
   }
 
+  # balance, count - lowest count >= 2
   for (el in names(state$balance$cols)) {
     counts <- state$balance$cols[[el]]$counts
     lvl <- as.integer(as.factor(layout_df[[el]]))
-    # gap of 2+ to the lowest count
     min_count <- apply(counts, 1, min)
     bad <- bad | counts[cbind(lvl, codes)] >= min_count[lvl] + 2
   }

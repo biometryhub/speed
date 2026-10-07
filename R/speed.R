@@ -381,17 +381,19 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     groups <- swappable_groups(current_design, opt$swap, opt$swap_within, opt$swap_all)
     .warn_unequal_replication(groups$unequal_replication, level, opt$swap_within)
 
-    # Penalised plots are only known for a bounded default objective
-    target_after <- if (!opt$swap_all && !is.na(optimal_score)) optimise_params$target_swaps
+    # target swap
+    target_after <- optimise_params$target_swaps
+    if (opt$swap_all || is.na(optimal_score) || isFALSE(target_after)) {
+      target_after <- NULL
+    }
     is_swappable <- logical(nrow(current_design))
     is_swappable[unlist(groups$swappable)] <- TRUE
     find_targets <- function(design, score_obj) {
       targets <- .penalised_positions(design, opt$swap, spatial_cols, score_obj)
       return(targets[is_swappable[targets]])
     }
-    # `NULL` until targeting starts, then refreshed on every accepted move
-    targets <- NULL
 
+    targets <- NULL
     # Why the level stopped, and how many recorded scores that leaves. A level
     # that runs to the end keeps all of them; each `break` below sets both.
     stop_reason <- "iterations"

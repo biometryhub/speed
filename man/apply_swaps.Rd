@@ -21,8 +21,8 @@ it. \code{NULL} (default) moves the \code{swap} column alone.}
 \item{swap_count}{Number of swaps to perform}
 
 \item{pick_pair}{Function of a \code{swappable} element and the current integer
-codes, returning a list of two plot vectors, each holding a single
-treatment, or \code{NULL} to skip the swap.}
+codes, returning a list of two plot vectors, each holding a single item, or
+\code{NULL} to skip the swap.}
 }
 \value{
 A list with the updated design after swapping and information about
@@ -30,7 +30,6 @@ swapped items
 }
 \description{
 Calls \code{pick_pair} \code{swap_count} times per swappable group and exchanges the
-treatments of the two sets of plots it returns. Treatments are swapped as
-integer codes, sparing the label matching of factor \verb{[<-} and \code{==}.
+items in the pairs returned. Items are swapped as integer codes.
 }
 \keyword{internal}

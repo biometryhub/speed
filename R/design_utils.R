@@ -90,14 +90,13 @@ exchange_linked <- function(design, linked_cols, plots_1, plots_2) {
 #'
 #' @description
 #' Calls `pick_pair` `swap_count` times per swappable group and exchanges the
-#' treatments of the two sets of plots it returns. Treatments are swapped as
-#' integer codes, sparing the label matching of factor `[<-` and `==`.
+#' items in the pairs returned. Items are swapped as integer codes.
 #'
 #' @inheritParams generate_neighbour
 #' @param swappable List with one element per swappable group
 #' @param pick_pair Function of a `swappable` element and the current integer
-#'   codes, returning a list of two plot vectors, each holding a single
-#'   treatment, or `NULL` to skip the swap.
+#' codes, returning a list of two plot vectors, each holding a single item, or
+#' `NULL` to skip the swap.
 #'
 #' @return A list with the updated design after swapping and information about
 #'   swapped items
@@ -123,13 +122,10 @@ apply_swaps <- function(
         next
       }
 
-      code_1 <- codes[pair[[1]][1]]
-      code_2 <- codes[pair[[2]][1]]
-      codes[pair[[1]]] <- code_2
-      codes[pair[[2]]] <- code_1
-      design <- exchange_linked(design, linked_cols, pair[[1]], pair[[2]])
-      swapped[n_swapped + 1:2] <- c(code_1, code_2)
+      swapped[n_swapped + 1:2] <- codes[c(pair[[1]][1], pair[[2]][1])]
       n_swapped <- n_swapped + 2
+      codes[c(pair[[1]], pair[[2]])] <- codes[c(pair[[2]], pair[[1]])]
+      design <- exchange_linked(design, linked_cols, pair[[1]], pair[[2]])
     }
   }
 
@@ -241,7 +237,6 @@ generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count
   }
 
   pick_pair <- function(plots, codes) {
-    # Need at least 2 plots to swap
     if (length(plots) < 2) {
       return(NULL)
     }
@@ -294,14 +289,15 @@ generate_targeted_neighbour <- function(design, swap, swap_within, swap_count, s
 
   pick_pair <- function(pool, codes) {
     candidates <- if (length(pool$targets) > 0) pool$targets else pool$plots
-    plot_1 <- candidates[sample.int(length(candidates), 1)]
+    pos_1 <- candidates[sample.int(length(candidates), 1)]
 
-    partners <- which(groups == groups[plot_1] & codes != codes[plot_1])
-    if (length(partners) == 0) {
+    pos_2_pools <- which(groups == groups[pos_1] & codes != codes[pos_1])
+    if (length(pos_2_pools) == 0) {
       return(NULL)
     }
+    pos_2 <- pos_2_pools[sample.int(length(pos_2_pools), 1)]
 
-    return(list(plot_1, partners[sample.int(length(partners), 1)]))
+    return(list(pos_1, pos_2))
   }
 
   return(apply_swaps(design, swap, linked_cols, pools, swap_count, pick_pair))
