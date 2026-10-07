@@ -50,9 +50,13 @@ objective_function <- function(layout_df,
                                current_score_obj = NULL,
                                swapped_items = NULL,
                                ...) {
+  state <- current_score_obj$state
+  if (is.null(state$n_treatments)) {
+    state$n_treatments <- length(unique(layout_df[[swap]]))
+  }
+
   # Check if there are only two treatments - adjacency becomes deterministic
-  n_treatments <- length(unique(layout_df[[swap]]))
-  if (n_treatments == 2 && adj_weight != 0) {
+  if (state$n_treatments == 2 && adj_weight != 0) {
     warning("Only 2 treatments detected in '", swap, "'. Adjacency optimization becomes deterministic (checkerboard pattern). Setting adjacency weight to 0.",
       call. = FALSE
     )
@@ -71,7 +75,6 @@ objective_function <- function(layout_df,
       "grid_index"
     )
   )]
-  state <- current_score_obj$state
   adj_score <- 0
   if (adj_weight != 0 && is.null(ring_args$relationship)) {
     ring_args$relationship <- NULL
@@ -353,6 +356,46 @@ balance_state <- function(
   bal_min <- .balance_score_min(layout_df, swap, spatial_cols)
   # round as `objective_function()` does
   return(round(bal_weight * bal_min, 10))
+}
+
+#' Penalised Positions
+#'
+#' @description
+#' Positions the default [objective_function()] penalises: those with a
+#' neighbour holding the same `swap` value, and those in a cell of a spatial
+#' factor at least 2 above the smallest count in its level. Any swap that
+#' lowers the score must move at least one of them. Read from the incremental
+#' `state` returned from the objective function
+#'
+#' @inheritParams objective_function_signature
+#' @param score_obj Result of [objective_function()] for `layout_df`.
+#'
+#' @return Integer vector of row positions.
+#'
+#' @keywords internal
+.penalised_positions <- function(layout_df, swap, spatial_cols, score_obj) {
+  codes <- as.integer(as.factor(layout_df[[swap]]))
+  state <- score_obj$state
+  bad <- rep(FALSE, length(codes))
+
+  # adjacent, weight > 0
+  neighbours <- state$adjacency$neighbours
+  if (!is.null(neighbours)) {
+    neighbours <- neighbours[, attr(neighbours, "weights") > 0, drop = FALSE]
+    hit <- codes[neighbours] == codes
+    dim(hit) <- dim(neighbours)
+    bad <- bad | rowSums(hit, na.rm = TRUE) > 0
+  }
+
+  # balance, count - lowest count >= 2
+  for (el in names(state$balance$cols)) {
+    counts <- state$balance$cols[[el]]$counts
+    lvl <- as.integer(as.factor(layout_df[[el]]))
+    min_count <- apply(counts, 1, min)
+    bad <- bad | counts[cbind(lvl, codes)] >= min_count[lvl] + 2
+  }
+
+  return(which(bad))
 }
 
 #' Objective Function with Metric from Piepho
