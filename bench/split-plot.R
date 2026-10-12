@@ -52,8 +52,7 @@ bench_speed_split <- function(seed = 112) {
       swap = "subplot_treatment",
       swap_within = "wholeplot",
       spatial_factors = ~col,
-      optimise_params = optim_params(target_swaps = 0),
-      early_stop_iterations = 10000
+      optimise_params = optim_params(target_swaps = 0)
     )
   )
 
@@ -155,7 +154,7 @@ bench_odw_split <- function() {
     search = odw_search,
     G.param = initial_param_table_split,
     R.param = initial_param_table_split,
-    maxit = 5
+    maxit = 9
   )
 }
 

@@ -4,6 +4,8 @@ source("./bench/irregular.R")
 source("./bench/split-plot.R")
 source("./bench/2d-block.R")
 
+options(scipen = 999)
+
 designs <- list(
   `split-plot` = split_design(),
   large = large_design(),
@@ -11,31 +13,31 @@ designs <- list(
   `2d-block` = two_d_design()
 )
 
-# run_benchmarks(designs, 1:10)
-run_benchmarks(designs, 1:10, from_objects = TRUE, tools = "speed")
+run_benchmarks(designs, save_objects = TRUE, 1:10, tools = 'digger')
+# run_benchmarks(designs, 1:10, from_objects = TRUE, tools = "speed")
 
 # design_types <- list(
 #   list(
 #     file = "benchmark-2d-block.csv",
-#     out = "bench-2d-compare.png",
+#     out = "bench-2d-compare.pdf",
 #     title = "2d blocking design",
 #     adjacency = c(adjacency = "Adjacency - lower better")
 #   ),
 #   list(
 #     file = "benchmark-irr.csv",
-#     out = "bench-irr-compare.png",
+#     out = "bench-irr-compare.pdf",
 #     title = "Irregular design",
 #     adjacency = c(adjacency = "Adjacency - lower better")
 #   ),
 #   list(
 #     file = "benchmark-large.csv",
-#     out = "bench-large-compare.png",
+#     out = "bench-large-compare.pdf",
 #     title = "Large design",
 #     adjacency = c(adjacency = "Adjacency - lower better")
 #   ),
 #   list(
 #     file = "benchmark-split-plot.csv",
-#     out = "bench-split-plot-compare.png",
+#     out = "bench-split-plot-compare.pdf",
 #     title = "Split-plot design",
 #     adjacency = c(sub_adjacency = "Subtreatment adjacency - lower better")
 #   )
@@ -88,53 +90,53 @@ run_benchmarks(designs, 1:10, from_objects = TRUE, tools = "speed")
 #
 #   run_time_metric <- unname(metrics["run_time"])
 #
-#   p <- ggplot(long, aes(tool, value)) +
+#   boxplot <- function(...) {
 #     geom_boxplot(
-#       data = ~ subset(.x, metric != run_time_metric),
+#       ...,
 #       outlier.shape = NA,
-#       alpha = 0.55,
+#       alpha = 0.3,
+#       linewidth = 0.2,
 #       width = 0.6
-#     ) +
+#     )
+#   }
+#
+#   p <- ggplot(long, aes(tool, value)) +
+#     boxplot(data = ~ subset(.x, metric != run_time_metric)) +
 #     geom_jitter(
 #       data = ~ subset(.x, metric != run_time_metric),
 #       width = 0.12,
 #       height = 0,
-#       size = 1.6,
-#       alpha = 0.8
+#       alpha = 0.3
 #     ) +
-#     # run time splits by platform, so its boxes and points dodge
-#     geom_boxplot(
+#     # run time
+#     boxplot(
 #       data = ~ subset(.x, metric == run_time_metric),
-#       aes(fill = platform, colour = platform),
-#       outlier.shape = NA,
-#       alpha = 0.55,
-#       width = 0.6
+#       aes(fill = platform, colour = platform)
 #     ) +
 #     geom_point(
 #       data = ~ subset(.x, metric == run_time_metric),
 #       aes(colour = platform, group = platform),
 #       position = position_jitterdodge(jitter.width = 0.12, dodge.width = 0.6),
-#       size = 1.6,
-#       alpha = 0.8
+#       alpha = 0.3
 #     ) +
 #     geom_blank(data = eff_floors) +
 #     facet_wrap(~metric, scales = "free_y", nrow = 2) +
 #     ggh4x::facetted_pos_scales(
 #       y = list(metric == run_time_metric ~ scale_y_log10())
 #     ) +
-#     scale_fill_brewer(palette = "Set2") +
-#     # Dark2 shares Set2's hues, so borders and dots read darker than the fills
-#     scale_colour_brewer(palette = "Dark2") +
 #     labs(
 #       title = paste0(design_type$title, ": tool comparison"),
 #       subtitle = "10 seeds per tool",
 #       x = NULL,
 #       y = NULL
 #     ) +
-#     theme_bw(base_size = 31) +
-#     theme(strip.text = element_text(face = "bold"))
+#     # theme_bw(base_size = 31) +
+#     theme_bw() +
+#     theme(
+#       strip.text = element_text(face = "bold"),
+#       panel.grid.major.x = element_blank(),
+#       panel.grid.minor.x = element_blank()
+#     )
 #
-#   png(design_type$out, height = 1440, width = 1920)
-#   print(p)
-#   dev.off()
+#   ggsave(design_type$out, p, width = 8, height = 5)
 # }

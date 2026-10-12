@@ -22,13 +22,9 @@ bench_speed_large <- function(seed = 112) {
     swap = "treatment",
     swap_within = "block",
     spatial_factors = ~ row + col,
-    iterations = 1000000,
-    early_stop_iterations = 200000,
     optimise_params = optim_params(
-      random_initialisation = 300,
-      adaptive_swaps = TRUE,
-      target_swaps = 0,
-      swap_count = 3
+      random_initialisation = 10,
+      target_swaps = 0
     ),
     seed = seed
   )
@@ -104,9 +100,8 @@ large_design <- function() {
 }
 
 explore_large <- function() {
-  df_layout <- df_initial_large
   png(bench_out("layout-large.png"), height = 720, width = 720)
-  print(speed::autoplot(as_design(df_layout)))
+  print(speed::autoplot(as_design(df_initial_large)))
   dev.off()
 
   speed_result <- bench_speed_large()

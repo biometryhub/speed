@@ -38,12 +38,8 @@ bench_speed_2d <- function(seed = 112) {
     swap = "treatment",
     swap_within = "row_block",
     spatial_factors = ~col_block,
-    iterations = 1000000,
-    early_stop_iterations = 200000,
     optimise_params = optim_params(
-      random_initialisation = 300,
-      adaptive_swaps = TRUE,
-      swap_count = 3,
+      random_initialisation = 10,
       target_swaps = 0
     ),
     seed = seed
@@ -99,7 +95,7 @@ bench_odw_2d <- function() {
     search = odw_search,
     G.param = initial_param_table_2d,
     R.param = initial_param_table_2d,
-    maxit = 5
+    maxit = 9
   )
 }
 
