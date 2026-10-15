@@ -61,6 +61,8 @@
 <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> now reports why each level stopped - the optimum was reached, no further improvement was found, no swap was possible, or the iteration cap was hit. The reason is also recorded as <code>stop_reason</code> in each level’s metadata.</li>
 <li>
 <code><a href="../reference/speed.html">speed()</a></code> now warns when a <code>swap_all = TRUE</code> group holds no two treatments of equal replication, and stops a level immediately when no group in it can be swapped.</li>
+<li>
+<code><a href="../reference/objective_functions.html">objective_function()</a></code> now rescores only the swapped treatments on each iteration.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-0-11">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-0-11"></a></h3>

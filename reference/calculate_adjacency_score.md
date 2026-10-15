@@ -5,7 +5,9 @@ default, that share the same treatment. Lower scores indicate better
 separation. The distance of plots to be considered adjacent can be
 adjusted with arguments provided.
 
-Internally this is a thin wrapper around
+Identity matches are counted per item with
+[`adjacency_neighbours()`](https://biometryhub.github.io/speed/reference/adjacency_neighbours.md);
+a `relationship` is scored with
 [`adjacency_score_vec()`](https://biometryhub.github.io/speed/reference/adjacency_score_vec.md).
 
 Pass a `relationship` matrix to score neighbour pairs by a graded
@@ -96,7 +98,7 @@ calculate_adjacency_score(
 
 ## Value
 
-A non-negative numeric value: the number of like-treatment edges in the
+A non-negative numeric value: the number of same-treatment edges in the
 row/column adjacency graph.
 
 ## See also
@@ -106,7 +108,7 @@ row/column adjacency graph.
 ## Examples
 
 ``` r
-# Example 1: design with no like-treatment adjacencies
+# Example 1: design with no same-treatment adjacencies
 design_no_adj <- data.frame(
   row = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
   col = c(1, 2, 3, 1, 2, 3, 1, 2, 3),

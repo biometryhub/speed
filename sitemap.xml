@@ -17,10 +17,14 @@
 <url><loc>https://biometryhub.github.io/speed/news/index.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/add_buffers.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/add_names.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/adjacency_by_item.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/adjacency_neighbours.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/adjacency_score_vec.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/adjacency_state.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/apply_splits.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/as_numeric_factor.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/autoplot.html</loc></url>
+<url><loc>https://biometryhub.github.io/speed/reference/balance_state.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/base_type.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/build_design_matrix.html</loc></url>
 <url><loc>https://biometryhub.github.io/speed/reference/calculate_adjacency_score.html</loc></url>

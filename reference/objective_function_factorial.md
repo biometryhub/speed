@@ -65,6 +65,14 @@ objective_function_factorial(
   :   Name of column representing the column of the design (default:
       "col")
 
+  `current_score_obj`
+
+  :   Score object of the design before the swap (default: `NULL`)
+
+  `swapped_items`
+
+  :   Items swapped after `current_score_obj` (default: `NULL`)
+
 ## Examples
 
 ``` r

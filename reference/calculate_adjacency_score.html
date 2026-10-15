@@ -3,13 +3,15 @@
 that share the same treatment. Lower scores indicate better separation. The
 distance of plots to be considered adjacent can be adjusted with arguments
 provided.
-Internally this is a thin wrapper around adjacency_score_vec().
+Identity matches are counted per item with adjacency_neighbours();
+a relationship is scored with adjacency_score_vec().
 Pass a relationship matrix to score neighbour pairs by a graded
 similarity (e.g. genetic relatedness) instead of a strict identity match."><meta property="og:description" content="Counts adjacent plots, immediate horizontal and vertical neighbours by default,
 that share the same treatment. Lower scores indicate better separation. The
 distance of plots to be considered adjacent can be adjusted with arguments
 provided.
-Internally this is a thin wrapper around adjacency_score_vec().
+Identity matches are counted per item with adjacency_neighbours();
+a relationship is scored with adjacency_score_vec().
 Pass a relationship matrix to score neighbour pairs by a graded
 similarity (e.g. genetic relatedness) instead of a strict identity match."><meta property="og:image" content="https://biometryhub.github.io/speed/logo.svg"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -64,7 +66,8 @@ similarity (e.g. genetic relatedness) instead of a strict identity match."><meta
 that share the same treatment. Lower scores indicate better separation. The
 distance of plots to be considered adjacent can be adjusted with arguments
 provided.</p>
-<p>Internally this is a thin wrapper around <code><a href="adjacency_score_vec.html">adjacency_score_vec()</a></code>.</p>
+<p>Identity matches are counted per item with <code><a href="adjacency_neighbours.html">adjacency_neighbours()</a></code>;
+a <code>relationship</code> is scored with <code><a href="adjacency_score_vec.html">adjacency_score_vec()</a></code>.</p>
 <p>Pass a <code>relationship</code> matrix to score neighbour pairs by a graded
 similarity (e.g. genetic relatedness) instead of a strict identity match.</p>
     </div>
@@ -149,7 +152,7 @@ indices already encode.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A non-negative numeric value: the number of like-treatment edges
+    <p>A non-negative numeric value: the number of same-treatment edges
 in the row/column adjacency graph.</p>
     </div>
     <div class="section level2">
@@ -159,7 +162,7 @@ in the row/column adjacency graph.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Example 1: design with no like-treatment adjacencies</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Example 1: design with no same-treatment adjacencies</span></span></span>
 <span class="r-in"><span><span class="va">design_no_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  row <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">3</span>, <span class="fl">3</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  col <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>,</span></span>

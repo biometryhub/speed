@@ -41,7 +41,7 @@ objective_function_piepho(
 
 - swapped_items:
 
-  The items that had just been swapped
+  Items swapped after `current_score_obj` (default: `NULL`)
 
 - pair_mapping:
 
