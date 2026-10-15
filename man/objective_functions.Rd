@@ -15,6 +15,8 @@ objective_function(
   bal_weight = 1,
   row_column = "row",
   col_column = "col",
+  current_score_obj = NULL,
+  swapped_items = NULL,
   ...
 )
 }
@@ -34,6 +36,10 @@ objective_function(
 \item{row_column}{Name of column representing the row of the design (default: "row")}
 
 \item{col_column}{Name of column representing the column of the design (default: "col")}
+
+\item{current_score_obj}{Score object of the design before the swap (default: \code{NULL})}
+
+\item{swapped_items}{Items swapped after \code{current_score_obj} (default: \code{NULL})}
 }
 \value{
 A numeric value representing the score of the design (lower is better)

@@ -34,6 +34,8 @@ objective_function_signature <- function(layout_df,
 #' @param bal_weight Weight for balance score (default: 1)
 #' @param row_column Name of column representing the row of the design (default: "row")
 #' @param col_column Name of column representing the column of the design (default: "col")
+#' @param current_score_obj Score object of the design before the swap (default: `NULL`)
+#' @param swapped_items Items swapped after `current_score_obj` (default: `NULL`)
 #'
 #' @rdname objective_functions
 #' @export
@@ -45,6 +47,8 @@ objective_function <- function(layout_df,
                                bal_weight = 1,
                                row_column = "row",
                                col_column = "col",
+                               current_score_obj = NULL,
+                               swapped_items = NULL,
                                ...) {
   # Check if there are only two treatments - adjacency becomes deterministic
   n_treatments <- length(unique(layout_df[[swap]]))
@@ -67,25 +71,38 @@ objective_function <- function(layout_df,
       "grid_index"
     )
   )]
-  adj_score <- ifelse(adj_weight != 0,
-    do.call(
+  state <- current_score_obj$state
+  adj_score <- 0
+  if (adj_weight != 0 && is.null(ring_args$relationship)) {
+    ring_args$relationship <- NULL
+    state$adjacency <- do.call(
+      adjacency_state,
+      c(list(layout_df, swap, row_column, col_column, state = state$adjacency,
+             swapped_items = swapped_items), ring_args)
+    )
+    adj_score <- state$adjacency$score
+  } else if (adj_weight != 0) {
+    # relationship matrix needs whole calculation
+    adj_score <- do.call(
       calculate_adjacency_score,
       c(list(layout_df, swap, row_column, col_column), ring_args)
-    ),
-    0
-  )
+    )
+  }
 
-  bal_score <- ifelse(bal_weight != 0,
-    calculate_balance_score(layout_df, swap, spatial_cols),
-    0
-  )
+  bal_score <- 0
+  if (bal_weight != 0) {
+    state$balance <- balance_state(layout_df, swap, spatial_cols, state = state$balance,
+                                   swapped_items = swapped_items)
+    bal_score <- state$balance$score
+  }
 
   return(list(
     score = round(adj_weight * adj_score + bal_weight * bal_score, 10),
     components = c(
       adjacency = adj_weight * adj_score,
       balance   = bal_weight * bal_score
-    )
+    ),
+    state = state
   ))
 }
 
@@ -179,16 +196,74 @@ objective_function_factorial <- function(layout_df,
 #'
 #' @export
 calculate_balance_score <- function(layout_df, swap, spatial_cols) {
-  score <- sapply(spatial_cols, function(el) {
-    sum(
-      matrixStats::rowVars(
-        table(layout_df[[el]], layout_df[[swap]]),
-        na.rm = TRUE
-      ),
-      na.rm = TRUE
+  return(balance_state(layout_df, swap, spatial_cols)$score)
+}
+
+#' Incremental Balance Score
+#'
+#' @description
+#' Balance score of [calculate_balance_score()] with the state needed to
+#' rescore only `swapped_items` on the next call.
+#'
+#' @inheritParams calculate_balance_score
+#' @param state Result of a previous call, or `NULL` to score from scratch.
+#' @param swapped_items Items swapped since `state` (default `NULL`).
+#'
+#' @return A list with `score` and, per spatial column in `cols`, the count
+#'   matrix and its sums of squares.
+#'
+#' @keywords internal
+balance_state <- function(
+  layout_df,
+  swap,
+  spatial_cols,
+  state = NULL,
+  swapped_items = NULL
+) {
+  items <- as.factor(layout_df[[swap]])
+  n_items <- nlevels(items)
+  is_partial <- !is.null(state) && !is.null(swapped_items)
+
+  rescored <- if (is_partial) {
+    levels(items) %in% swapped_items
+  } else {
+    rep(TRUE, n_items)
+  }
+  rescored_rows <- which(rescored[as.integer(items)])
+  rescored_col <- match(as.integer(items)[rescored_rows], which(rescored))
+
+  cols <- lapply(stats::setNames(spatial_cols, spatial_cols), function(el) {
+    factor_levels <- as.factor(layout_df[[el]])
+    n_levels <- nlevels(factor_levels)
+    prev <- if (is_partial) state$cols[[el]]
+    counts <- prev$counts %||% matrix(0L, n_levels, n_items)
+    old_sum_sq <- sum(counts[, rescored]^2)
+    counts[, rescored] <- tabulate(
+      as.integer(factor_levels)[rescored_rows] +
+        n_levels * (rescored_col - 1L),
+      n_levels * sum(rescored)
     )
+
+    # no need to calculate the whole sum_sq and total_sq
+    return(list(
+      counts = counts,
+      sum_sq = (prev$sum_sq %||% 0) - old_sum_sq + sum(counts[, rescored]^2),
+      total_sq = prev$total_sq %||% sum(rowSums(counts)^2)
+    ))
   })
-  return(sum(score))
+
+  # variance by rows like rowVars()
+  score <- 0
+  if (n_items > 1) {
+    sums <- vapply(
+      cols,
+      function(s) return(s$sum_sq - s$total_sq / n_items),
+      numeric(1)
+    )
+    score <- sum(sums) / (n_items - 1)
+  }
+
+  return(list(score = score, cols = cols))
 }
 
 #' Smallest Achievable Balance Score
@@ -937,7 +1012,11 @@ calculate_efficiency_factor <- function(
       list(
         message = paste0(
           "Not all treatment contrasts are estimable after eliminating ",
-          "`", row_column, "` and `", col_column, "` effects, so this design ",
+          "`",
+          row_column,
+          "` and `",
+          col_column,
+          "` effects, so this design ",
           "cannot support an efficiency factor."
         ),
         reason = "treatment contrasts not estimable given row + col",

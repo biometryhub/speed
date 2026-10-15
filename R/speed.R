@@ -236,9 +236,7 @@ speed <- function(data,
   row_column <- inferred$row
   col_column <- inferred$col
 
-  # The level names are the user's own unless `create_speed_input()` has to
-  # synthesise one, which it does only for a scalar `swap` with no `optimise`.
-  # An error may only quote a name back at them if they wrote it.
+  # check if named levels provided, otherwise generated later
   named_levels <- !is.null(optimise) || is.list(swap)
 
   # Normalise the three input shapes into one per-level list
@@ -246,9 +244,7 @@ speed <- function(data,
                                  early_stop_iterations, obj_function, swap_all, optimise_params,
                                  linked_cols, optimise, inferred$inferred)
 
-  # Checks needing the resolved `optimise` list, so they run here rather than in
-  # `.verify_inputs()`. Both come before the dummy group column is added below,
-  # so it cannot appear in the column names they report.
+  # checks required after `optimise` resolved
   .verify_level_columns(data, optimise)
   .verify_linked_cols(data, optimise, linked_cols, named_levels)
 
@@ -261,11 +257,9 @@ speed <- function(data,
   data <- factored$df
 
   if (inferred$inferred) {
-    # Metrics are built from each plot's coordinates now, but neighbour
-    # generation and plotting may still rely on row order, so the sort stays.
+    # swapping and plotting may still rely on row order
     data <- data[do.call(order, data[c(row_column, col_column)]), ]
-    # Only reset row labels for base data frames; tibbles are positional and
-    # warn on `rownames<-`, and nothing downstream reads the design's row names.
+    # only reset row labels on base data frames
     if (!inherits(data, "tbl_df")) {
       rownames(data) <- seq_len(nrow(data))
     }
