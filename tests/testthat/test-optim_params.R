@@ -8,7 +8,8 @@ test_that("optim_params works with no arguments", {
     "random_initialisation",
     "adj_weight",
     "bal_weight",
-    "stop_at_optimal"
+    "stop_at_optimal",
+    "target_swaps"
   )
 
   optimize_params <- optim_params()
@@ -27,7 +28,8 @@ test_that("optim_params works with arguments", {
     "random_initialisation",
     "adj_weight",
     "bal_weight",
-    "stop_at_optimal"
+    "stop_at_optimal",
+    "target_swaps"
   )
 
   optimize_params <- optim_params(swap_count = 2)
@@ -57,7 +59,8 @@ test_that("optim_params works with arguments", {
     random_initialisation = 3,
     adj_weight = 2,
     bal_weight = 3,
-    stop_at_optimal = FALSE
+    stop_at_optimal = FALSE,
+    target_swaps = 500
   )
 
   optimize_params <- do.call(optim_params, optimize_params_expected)
@@ -77,7 +80,8 @@ test_that("optim_params works with legacy options", {
     "random_initialisation",
     "adj_weight",
     "bal_weight",
-    "stop_at_optimal"
+    "stop_at_optimal",
+    "target_swaps"
   )
 
   withr::with_options(
@@ -150,4 +154,12 @@ test_that("optim_params throws error for invalid inputs", {
   expect_error(optim_params(stop_at_optimal = "a"))
   expect_error(optim_params(stop_at_optimal = "TRUE"))
   expect_error(optim_params(stop_at_optimal = 1))
+
+  expect_error(optim_params(target_swaps = "a"))
+  expect_error(optim_params(target_swaps = c(10, 20)))
+  expect_error(optim_params(target_swaps = -1))
+  expect_error(optim_params(target_swaps = 1.5))
+  expect_error(optim_params(target_swaps = NA))
+  expect_equal(optim_params(target_swaps = TRUE)$target_swaps, 0)
+  expect_error(optim_params(target_swaps = NULL))
 })

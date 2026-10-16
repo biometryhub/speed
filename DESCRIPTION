@@ -1,7 +1,7 @@
 Type: Package
 Package: speed
 Title: Generate Spatially Efficient Experimental Designs
-Version: 0.0.11
+Version: 0.0.12
 Authors@R: 
     c(person(given = "Sam",
              family = "Rogers",
@@ -54,4 +54,4 @@ Roxygen: list(markdown = TRUE)
 VignetteBuilder: quarto
 Config/testthat/edition: 3
 Config/testthat/parallel: true
-Config/roxygen2/version: 8.0.0
+Config/roxygen2/version: 8.1.1
