@@ -11,3 +11,11 @@ sudo tar -zxvf quarto.tar.gz \
 sudo rm quarto.tar.gz
 sudo ln -s /opt/quarto/${QUARTO_VERSION}/bin/quarto /usr/local/bin/quarto
 sudo apt install -y qpdf
+
+# libgfortran.so.3 for prebuilt benchmark binaries (odw, oldDiGGer)
+GCC6_URL="http://archive.ubuntu.com/ubuntu/pool/universe/g/gcc-6"
+curl -LO "${GCC6_URL}/gcc-6-base_6.4.0-17ubuntu1_amd64.deb"
+curl -LO "${GCC6_URL}/libgfortran3_6.4.0-17ubuntu1_amd64.deb"
+sudo dpkg -i gcc-6-base_6.4.0-17ubuntu1_amd64.deb libgfortran3_6.4.0-17ubuntu1_amd64.deb
+sudo ldconfig
+rm gcc-6-base_6.4.0-17ubuntu1_amd64.deb libgfortran3_6.4.0-17ubuntu1_amd64.deb
