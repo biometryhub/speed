@@ -136,13 +136,13 @@ test_that("swappable_groups separates unequal replication from other blockers", 
   )
 
   all_swap <- swappable_groups(design, "treatment", "block", swap_all = TRUE)
-  expect_equal(all_swap$swappable, "g2")
+  expect_named(all_swap$swappable, "g2")
   expect_equal(all_swap$unequal_replication, "g1")
 
   # Without `swap_all` a single pair of plots moves, so replication is irrelevant
   # and only the single-treatment group is stuck
   single <- swappable_groups(design, "treatment", "block", swap_all = FALSE)
-  expect_equal(single$swappable, c("g1", "g2"))
+  expect_identical(single$swappable, list(g1 = 1:6, g2 = 7:12))
   expect_length(single$unequal_replication, 0)
 })
 
@@ -154,10 +154,32 @@ test_that("swappable_groups counts a level with no plots as unswappable", {
   )
 
   result <- swappable_groups(design, "treatment", "site", swap_all = TRUE)
-  expect_equal(result$swappable, c("a", "b"))
+  expect_named(result$swappable, c("a", "b"))
   expect_length(result$unequal_replication, 0)
 })
 
+test_that("plots_by_group gives each group's rows, leaving out unswappable plots", {
+  design <- data.frame(
+    block = factor(c("b2", "b1", NA, "b2", "b1", "b1")),
+    treatment = factor(c("A", "B", "A", NA, "A", "C"))
+  )
+
+  expect_identical(
+    plots_by_group(design, "treatment", "block"),
+    list(b1 = c(2L, 5L, 6L), b2 = 1L)
+  )
+})
+
+test_that("plots_by_group keeps a level with no plots as an empty group", {
+  design <- data.frame(
+    site = factor(c("a", "a", "b"), levels = c("a", "b", "c")),
+    treatment = factor(c("A", "B", "A"))
+  )
+
+  result <- plots_by_group(design, "treatment", "site")
+  expect_named(result, c("a", "b", "c"))
+  expect_identical(result$c, integer(0))
+})
 test_that("speed() warns when a swap group is left frozen mid-search", {
   # A level 1 swap can leave a site with no two treatments sharing a replication
   # count. The search cannot move anything there, which should be reported rather
