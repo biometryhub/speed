@@ -26,33 +26,43 @@ export(plot_progress)
 export(prep_relationship)
 export(speed)
 importFrom(farver,decode_colour)
-importFrom(ggplot2,aes)
-importFrom(ggplot2,autoplot)
-importFrom(ggplot2,geom_line)
-importFrom(ggplot2,geom_text)
-importFrom(ggplot2,geom_tile)
-importFrom(ggplot2,ggplot)
-importFrom(ggplot2,labs)
-importFrom(ggplot2,scale_fill_manual)
-importFrom(ggplot2,scale_x_continuous)
-importFrom(ggplot2,scale_x_discrete)
-importFrom(ggplot2,scale_y_continuous)
-importFrom(ggplot2,scale_y_discrete)
-importFrom(ggplot2,scale_y_reverse)
-importFrom(ggplot2,theme_bw)
-importFrom(ggplot2,theme_minimal)
+importFrom(ggplot2,
+  aes,
+  autoplot,
+  geom_line,
+  geom_text,
+  geom_tile,
+  ggplot,
+  labs,
+  scale_fill_manual,
+  scale_x_continuous,
+  scale_x_discrete,
+  scale_y_continuous,
+  scale_y_discrete,
+  scale_y_reverse,
+  theme_bw,
+  theme_minimal
+)
 importFrom(grDevices,colorRampPalette)
-importFrom(rlang,check_dots_used)
-importFrom(rlang,enquo)
-importFrom(rlang,quo_is_null)
-importFrom(rlang,quo_name)
-importFrom(rlang,sym)
-importFrom(scales,brewer_pal)
-importFrom(scales,reverse_trans)
-importFrom(scales,viridis_pal)
-importFrom(stats,aggregate)
-importFrom(stats,runif)
-importFrom(stats,setNames)
+importFrom(rlang,
+  check_dots_used,
+  enquo,
+  quo_is_null,
+  quo_name,
+  sym
+)
+importFrom(scales,
+  brewer_pal,
+  reverse_trans,
+  viridis_pal
+)
+importFrom(stats,
+  aggregate,
+  runif,
+  setNames
+)
 importFrom(stringi,stri_sort)
-importFrom(utils,head)
-importFrom(utils,modifyList)
+importFrom(utils,
+  head,
+  modifyList
+)
