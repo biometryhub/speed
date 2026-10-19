@@ -70,7 +70,10 @@ initial_param_table_large <- odw::odw(
   search = odw_search,
   start.values = TRUE
 )$vparameters.table
-initial_param_table_large[2:3, 2] <- 100
+initial_param_table_large[
+  initial_param_table_large[[1]] %in% c("row", "col"),
+  2
+] <- 100
 
 bench_odw_large <- function() {
   odw::odw(

@@ -84,7 +84,10 @@ initial_param_table_2d <- odw::odw(
   search = odw_search,
   start.values = TRUE
 )$vparameters.table
-initial_param_table_2d[2:3, 2] <- 100
+initial_param_table_2d[
+  initial_param_table_2d[[1]] %in% c("col_block", "row_block"),
+  2
+] <- 100
 
 bench_odw_2d <- function() {
   odw::odw(

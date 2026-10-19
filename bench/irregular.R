@@ -157,7 +157,7 @@ odw_site <- function(df_site, maxit = 9) {
     start.values = TRUE
   )$vparameters.table
 
-  param_table[2:3, 2] <- 100
+  param_table[param_table[[1]] %in% c("row", "col"), 2] <- 100
 
   design <- odw::odw(
     random = odw_random_irr,

@@ -118,7 +118,7 @@ initial_param_table_dummy <- odw::odw(
   search = odw_search,
   start.values = TRUE
 )$vparameters.table
-initial_param_table_dummy[2, 2] <- 100
+initial_param_table_dummy[initial_param_table_dummy[[1]] == "row", 2] <- 100
 
 bench_odw_dummy <- function() {
   odw::odw(
@@ -143,7 +143,7 @@ initial_param_table_split <- odw::odw(
   search = odw_search,
   start.values = TRUE
 )$vparameters.table
-initial_param_table_split[2, 2] <- 100
+initial_param_table_split[initial_param_table_split[[1]] == "col", 2] <- 100
 
 bench_odw_split <- function() {
   odw::odw(
