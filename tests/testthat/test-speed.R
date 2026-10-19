@@ -71,6 +71,89 @@ test_that("speed returns correct output structure", {
   vdiffr::expect_doppelganger("speed_small", autoplot(result))
 })
 
+test_that("annealing traverses invalid designs before reaching a valid design", {
+  initial_treatment <- LETTERS[1:4]
+  objective <- function(layout_df, swap, spatial_cols, ...) {
+    moved <- as.character(layout_df$treatment) != initial_treatment
+    return(list(score = if (all(moved)) 0 else Inf))
+  }
+  design <- data.frame(
+    row = rep(1:2, each = 2),
+    col = rep(1:2, times = 2),
+    treatment = initial_treatment
+  )
+
+  result <- speed(
+    design,
+    swap = "treatment",
+    obj_function = objective,
+    iterations = 30,
+    early_stop_iterations = 100,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
+    seed = 1,
+    quiet = TRUE
+  )
+
+  # No single swap can move all four treatments; an invalid step is necessary.
+  expect_equal(result$scores[1:2], c(Inf, Inf))
+  expect_equal(result$score, 0)
+  expect_true(all(as.character(result$design_df$treatment) != initial_treatment))
+})
+
+test_that("annealing rejects an invalid proposal from a finite design", {
+  initial_treatment <- LETTERS[1:4]
+  objective <- function(layout_df, swap, spatial_cols, ...) {
+    score <- if (identical(as.character(layout_df$treatment), initial_treatment)) 0 else Inf
+    return(list(score = score))
+  }
+  design <- data.frame(
+    row = rep(1:2, each = 2),
+    col = rep(1:2, times = 2),
+    treatment = initial_treatment
+  )
+
+  result <- speed(
+    design,
+    swap = "treatment",
+    obj_function = objective,
+    iterations = 1,
+    early_stop_iterations = 10,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
+    seed = 1,
+    quiet = TRUE
+  )
+
+  expect_equal(result$scores, 0)
+  expect_equal(result$score, 0)
+  expect_identical(as.character(result$design_df$treatment), initial_treatment)
+})
+
+test_that("all-invalid annealing runs finish without NaN acceptance", {
+  objective <- function(layout_df, swap, spatial_cols, ...) {
+    return(list(score = Inf))
+  }
+  design <- data.frame(
+    row = rep(1:2, each = 2),
+    col = rep(1:2, times = 2),
+    treatment = LETTERS[1:4]
+  )
+
+  result <- speed(
+    design,
+    swap = "treatment",
+    obj_function = objective,
+    iterations = 5,
+    early_stop_iterations = 10,
+    optimise_params = optim_params(random_initialisation = 2, stop_at_optimal = FALSE),
+    seed = 1,
+    quiet = TRUE
+  )
+
+  expect_equal(result$iterations_run, 5)
+  expect_equal(result$score, Inf)
+  expect_true(all(is.infinite(result$scores)))
+})
+
 test_that("speed throws error for missing columns", {
   test_data <- data.frame(
     row = rep(1:5, times = 4),
@@ -268,6 +351,56 @@ test_that("speed does not stop on the optimal score for custom objectives", {
   expect_no_match(output, "Optimal score reached")
   expect_true(is.na(result$metadata$per_level[[1]]$optimal_score))
   expect_equal(result$iterations_run, 200)
+})
+
+test_that("zero and negative custom scores do not imply optimality", {
+  test_data <- expand.grid(row = 1:2, col = 1:2)
+  test_data$treatment <- c("A", "B", "B", "A")
+
+  for (value in c(0, -1)) {
+    custom_objective <- function(layout_df, swap, spatial_cols, ...) {
+      return(list(score = value))
+    }
+    result <- speed(
+      test_data,
+      swap = "treatment",
+      obj_function = custom_objective,
+      iterations = 20,
+      early_stop_iterations = 100,
+      seed = 1,
+      quiet = TRUE
+    )
+
+    expect_equal(result$iterations_run, 20)
+    expect_equal(result$scores, rep(value, 20))
+    expect_identical(result$metadata$per_level[[1]]$stop_reason, "iterations")
+    expect_false(result$stopped_early)
+  }
+})
+
+test_that("stop_at_optimal also controls stopping at a zero bound", {
+  test_data <- expand.grid(row = 1:2, col = 1:2)
+  test_data$treatment <- c("A", "B", "B", "A")
+
+  for (stop_at_optimal in c(TRUE, FALSE)) {
+    result <- speed(
+      test_data,
+      swap = "treatment",
+      optimise_params = optim_params(
+        adj_weight = 0,
+        bal_weight = 0,
+        stop_at_optimal = stop_at_optimal
+      ),
+      iterations = 20,
+      early_stop_iterations = 100,
+      seed = 1,
+      quiet = TRUE
+    )
+
+    expect_equal(result$metadata$per_level[[1]]$optimal_score, 0)
+    expect_equal(result$iterations_run, if (stop_at_optimal) 1 else 20)
+    expect_equal(result$stopped_early, stop_at_optimal)
+  }
 })
 
 test_that("speed does not stop on the optimal score (NA) for negative weights", {

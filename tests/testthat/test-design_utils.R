@@ -427,7 +427,7 @@ test_that("speed() records why each level stopped", {
   )
 })
 
-test_that("speed() calls a score of zero optimal without a derived lower bound", {
+test_that("speed() stops on no improvement at zero without a derived lower bound", {
   df <- data.frame(
     row = rep(1:4, times = 5),
     col = rep(1:5, each = 4),
@@ -436,7 +436,7 @@ test_that("speed() calls a score of zero optimal without a derived lower bound",
   )
 
   # A custom objective, so no lower bound can be derived and `optimal_score` is
-  # `NA`. Reaching zero is still optimal rather than merely out of improvements.
+  # `NA`. A zero score does not establish optimality.
   obj_runs <- function(layout_df, swap, spatial_cols, ...) {
     trt <- as.character(layout_df[[swap]])
     return(list(score = as.numeric(sum(trt[-1] == trt[-length(trt)]))))
@@ -453,7 +453,8 @@ test_that("speed() calls a score of zero optimal without a derived lower bound",
 
   expect_equal(result$score, 0)
   expect_true(is.na(result$metadata$per_level[[1]]$optimal_score))
-  expect_equal(result$metadata$per_level[[1]]$stop_reason, "optimal")
+  expect_equal(result$metadata$per_level[[1]]$stop_reason, "no_improvement")
+  expect_gt(result$iterations_run, 2000)
 })
 
 test_that("speed() does not warn when every group can swap", {

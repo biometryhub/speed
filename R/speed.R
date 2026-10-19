@@ -432,7 +432,10 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       new_score <- new_score_obj$score
 
       # Decide whether to accept the new design
-      if (new_score < current_score || runif(1) < exp((current_score - new_score) / temp)) {
+      # Allow moves between invalid designs without evaluating Inf - Inf
+      if (new_score < current_score ||
+          (is.infinite(current_score) && new_score == current_score) ||
+          runif(1) < exp((current_score - new_score) / temp)) {
         current_design <- new_design$design
         current_score <- new_score
         current_score_obj <- new_score_obj
@@ -461,14 +464,14 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
             "\n")
       }
 
-      # Zero is the most optimal score any design can reach.
-      reached_zero <- new_score < .Machine$double.eps
-      if (reached_zero || iter - last_improvement_iter >= opt$early_stop_iterations) {
+      # known lower bound for optimality rather than zero
+      reached_optimal <- stop_at_optimal && !is.na(optimal_score) && best_score <= optimal_score + 1e-9
+      if (reached_optimal || iter - last_improvement_iter >= opt$early_stop_iterations) {
         if (!quiet) {
-          cat(if (reached_zero) "Optimal score reached at iteration" else "Early stopping at iteration",
+          cat(if (reached_optimal) "Optimal score reached at iteration" else "Early stopping at iteration",
               iter, "for level", level, "\n")
         }
-        stop_reason <- if (reached_zero) "optimal" else "no_improvement"
+        stop_reason <- if (reached_optimal) "optimal" else "no_improvement"
         # Record final score and temperature before breaking
         if (iter < opt$iterations) {
           scores[iter + 1] <- current_score
