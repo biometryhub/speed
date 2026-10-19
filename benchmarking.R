@@ -55,10 +55,17 @@ for (design_type in design_types) {
     return(df)
   }))
 
+  # total excess duplicates across the spatial factors, if any were scored
+  dupe_cols <- grep("_dupes$", names(results), value = TRUE)
+  has_dupes <- length(dupe_cols) > 0
+  if (has_dupes) {
+    results$dupes <- rowSums(results[dupe_cols])
+  }
+
   metrics <- c(
     run_time = "Run time (s) - lower better",
     aefficiency = "A-efficiency - higher better",
-    eefficiency = "E-efficiency - higher better",
+    if (has_dupes) c(dupes = "Spatial duplicates - lower better"),
     design_type$adjacency
   )
   long <- do.call(
@@ -75,18 +82,25 @@ for (design_type in design_types) {
   long$tool <- factor(long$tool, levels = c("speed", "digger", "odw"))
   long$metric <- factor(long$metric, levels = unname(metrics))
 
-  # pull the efficiency panels' y axes down to min - 0.05, snapped to 0.05
-  eff_floors <- do.call(
-    rbind,
-    lapply(unname(metrics[c("aefficiency", "eefficiency")]), function(m) {
-      values <- long$value[long$metric == m]
+  # pull the efficiency y axis down to min - 0.05, snapped to 0.05
+  eff_metric <- unname(metrics["aefficiency"])
+  eff_values <- long$value[long$metric == eff_metric]
+  floors <- data.frame(
+    tool = long$tool[1],
+    metric = factor(eff_metric, levels = levels(long$metric)),
+    value = floor((min(eff_values, na.rm = TRUE) - 0.05) * 20) / 20
+  )
+  # anchor the duplicates panel at 0
+  if (has_dupes) {
+    floors <- rbind(
+      floors,
       data.frame(
         tool = long$tool[1],
-        metric = factor(m, levels = levels(long$metric)),
-        value = floor((min(values, na.rm = TRUE) - 0.05) * 20) / 20
+        metric = factor(metrics[["dupes"]], levels = levels(long$metric)),
+        value = 0
       )
-    })
-  )
+    )
+  }
 
   run_time_metric <- unname(metrics["run_time"])
 
@@ -119,7 +133,7 @@ for (design_type in design_types) {
       position = position_jitterdodge(jitter.width = 0.12, dodge.width = 0.6),
       alpha = 0.3
     ) +
-    geom_blank(data = eff_floors) +
+    geom_blank(data = floors) +
     facet_wrap(~metric, scales = "free_y", nrow = 2) +
     ggh4x::facetted_pos_scales(
       y = list(metric == run_time_metric ~ scale_y_log10())

@@ -195,7 +195,8 @@ split_design <- function() {
         whole_adjacency = speed::calculate_adjacency_score(
           df,
           "wholeplot_treatment"
-        )
+        ),
+        sub_col_dupes = count_dupes(df, "col", "subplot_treatment")
       )
     },
     tools = list(

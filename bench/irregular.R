@@ -12,10 +12,10 @@ get_metrics_irr <- function(df, cols) {
       speed::calculate_adjacency_score(df[df$site == "sw", ], "treatment")
   )
 
+  # blank plots carry a placeholder treatment
+  planted <- df[!is.na(df$block), ]
   for (col in cols) {
-    uniques <- unique(table(df$treatment, df[[col]]))
-    name <- paste0(col, "_unique_occurence")
-    metrics[[name]] <- paste(uniques, collapse = ",")
+    metrics[[paste0(col, "_dupes")]] <- count_dupes(planted, col)
   }
   for (name in names(metrics)) {
     cat(sprintf("%s: %s\n", name, metrics[[name]]))

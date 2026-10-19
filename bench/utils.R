@@ -30,6 +30,14 @@ to_factor <- function(df, cols) {
   return(df)
 }
 
+# plots beyond the ideal max of each treatment per level of `col`
+count_dupes <- function(df, col, treatment = "treatment") {
+  tab <- table(df[[treatment]], df[[col]])
+  cap <- ceiling(colSums(tab) / nrow(tab))
+
+  return(sum(pmax(sweep(tab, 2, cap), 0)))
+}
+
 get_metrics <- function(df, cols, skip_adj = FALSE) {
   metrics <- if (!skip_adj) {
     list(adjacency = speed::calculate_adjacency_score(df, "treatment"))
@@ -37,9 +45,7 @@ get_metrics <- function(df, cols, skip_adj = FALSE) {
     list()
   }
   for (col in cols) {
-    uniques <- unique(table(df$treatment, df[[col]]))
-    name <- paste0(col, "_unique_occurence")
-    metrics[[name]] <- paste(uniques, collapse = ",")
+    metrics[[paste0(col, "_dupes")]] <- count_dupes(df, col)
   }
   for (name in names(metrics)) {
     cat(sprintf("%s: %s\n", name, metrics[[name]]))
