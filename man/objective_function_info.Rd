@@ -109,6 +109,9 @@ effects remain unchanged.
 D-optimality uses a log determinant, so negative scores are valid and do not
 indicate that the optimum has been reached.
 
+Non-estimable requested contrasts receive an infinite score, so invalid
+designs cannot be preferred to designs with large finite scores.
+
 This function computes the treatment information matrix:
 \deqn{I = X_1^\intercal L X_1}{I = X₁ᵀ L X₁}
 Where \eqn{X_1}{X₁} is the treatment design matrix, and \eqn{L} is the

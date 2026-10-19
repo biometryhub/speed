@@ -61,6 +61,9 @@
 #' D-optimality uses a log determinant, so negative scores are valid and do not
 #' indicate that the optimum has been reached.
 #'
+#' Non-estimable requested contrasts receive an infinite score, so invalid
+#' designs cannot be preferred to designs with large finite scores.
+#'
 #' This function computes the treatment information matrix:
 #' \deqn{I = X_1^\intercal L X_1}{I = X₁ᵀ L X₁}
 #' Where \eqn{X_1}{X₁} is the treatment design matrix, and \eqn{L} is the
@@ -157,7 +160,6 @@ objective_function_info <- function(
     ci$info, ci$trt_levels, contrast_matrix, tolerance
   )
   score <- diagnostics[[paste0(criterion, "_value")]]
-  if (!is.finite(score)) score <- 1e10
 
   result <- list(
     score = score,
@@ -455,8 +457,15 @@ factorial_contrast_matrix <- function(
     stop("Only one of `Sigma` and `L_matrix` can be supplied.", call. = FALSE)
   }
 
-  nuisance_columns <- if (is.null(nuisance_formula)) block_column else all.vars(nuisance_formula)
-  nuisance_data <- as.list(layout_df[intersect(nuisance_columns, names(layout_df))])
+  nuisance_data <- NULL
+  if (is.null(L_matrix)) {
+    nuisance_data <- if (is.null(nuisance_formula)) {
+      layout_df[[block_column]]
+    } else {
+      # Evaluating the formula also captures `.` and variables in its environment.
+      .build_nuisance_matrix(layout_df, block_column, nuisance_formula)
+    }
+  }
 
   if (!is.null(L_matrix)) {
     projection_source <- "L_matrix"

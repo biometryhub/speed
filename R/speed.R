@@ -432,7 +432,10 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       new_score <- new_score_obj$score
 
       # Decide whether to accept the new design
-      if (new_score < current_score || runif(1) < exp((current_score - new_score) / temp)) {
+      # Allow moves between invalid designs without evaluating Inf - Inf
+      if (new_score < current_score ||
+          (is.infinite(current_score) && new_score == current_score) ||
+          runif(1) < exp((current_score - new_score) / temp)) {
         current_design <- new_design$design
         current_score <- new_score
         current_score_obj <- new_score_obj

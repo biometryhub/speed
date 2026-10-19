@@ -71,6 +71,89 @@ test_that("speed returns correct output structure", {
   vdiffr::expect_doppelganger("speed_small", autoplot(result))
 })
 
+test_that("annealing traverses invalid designs before reaching a valid design", {
+  initial_treatment <- LETTERS[1:4]
+  objective <- function(layout_df, swap, spatial_cols, ...) {
+    moved <- as.character(layout_df$treatment) != initial_treatment
+    return(list(score = if (all(moved)) 0 else Inf))
+  }
+  design <- data.frame(
+    row = rep(1:2, each = 2),
+    col = rep(1:2, times = 2),
+    treatment = initial_treatment
+  )
+
+  result <- speed(
+    design,
+    swap = "treatment",
+    obj_function = objective,
+    iterations = 30,
+    early_stop_iterations = 100,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
+    seed = 1,
+    quiet = TRUE
+  )
+
+  # No single swap can move all four treatments; an invalid step is necessary.
+  expect_equal(result$scores[1:2], c(Inf, Inf))
+  expect_equal(result$score, 0)
+  expect_true(all(as.character(result$design_df$treatment) != initial_treatment))
+})
+
+test_that("annealing rejects an invalid proposal from a finite design", {
+  initial_treatment <- LETTERS[1:4]
+  objective <- function(layout_df, swap, spatial_cols, ...) {
+    score <- if (identical(as.character(layout_df$treatment), initial_treatment)) 0 else Inf
+    return(list(score = score))
+  }
+  design <- data.frame(
+    row = rep(1:2, each = 2),
+    col = rep(1:2, times = 2),
+    treatment = initial_treatment
+  )
+
+  result <- speed(
+    design,
+    swap = "treatment",
+    obj_function = objective,
+    iterations = 1,
+    early_stop_iterations = 10,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
+    seed = 1,
+    quiet = TRUE
+  )
+
+  expect_equal(result$scores, 0)
+  expect_equal(result$score, 0)
+  expect_identical(as.character(result$design_df$treatment), initial_treatment)
+})
+
+test_that("all-invalid annealing runs finish without NaN acceptance", {
+  objective <- function(layout_df, swap, spatial_cols, ...) {
+    return(list(score = Inf))
+  }
+  design <- data.frame(
+    row = rep(1:2, each = 2),
+    col = rep(1:2, times = 2),
+    treatment = LETTERS[1:4]
+  )
+
+  result <- speed(
+    design,
+    swap = "treatment",
+    obj_function = objective,
+    iterations = 5,
+    early_stop_iterations = 10,
+    optimise_params = optim_params(random_initialisation = 2, stop_at_optimal = FALSE),
+    seed = 1,
+    quiet = TRUE
+  )
+
+  expect_equal(result$iterations_run, 5)
+  expect_equal(result$score, Inf)
+  expect_true(all(is.infinite(result$scores)))
+})
+
 test_that("speed throws error for missing columns", {
   test_data <- data.frame(
     row = rep(1:5, times = 4),

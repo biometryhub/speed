@@ -93,7 +93,7 @@ test_that("D-optimality criterion works", {
 
 # if treatments never exist in the same block together, you cant compare them,
 # so the design is fully broken
-test_that("disconnected designs have massive penalty", {
+test_that("disconnected designs have infinite scores", {
   df <- data.frame(
     row       = 1:6,
     col       = c(1, 2, 1, 2, 1, 2),
@@ -106,10 +106,31 @@ test_that("disconnected designs have massive penalty", {
     criterion = "A"
   )
 
-  expect_gte(result$score, 1e9)
-  expect_true(is.finite(result$score))
+  expect_equal(result$score, Inf)
+  expect_false(result$estimable)
   expect_equal(result$A_value, Inf)
   expect_equal(result$D_value, Inf)
+})
+
+test_that("large finite contrast variances are preferable to non-estimable targets", {
+  df <- data.frame(
+    row = rep(1:2, each = 4), col = rep(1:4, 2),
+    block = rep(1:2, each = 4), treatment = rep(c("A", "B"), 4)
+  )
+  contrast <- matrix(c(1e6, -1e6), nrow = 1, dimnames = list(NULL, c("A", "B")))
+  connected <- objective_function_info(
+    df, "treatment", c("row", "col"), contrast_matrix = contrast
+  )
+  df$treatment <- rep(c("A", "B"), each = 4)
+  disconnected <- objective_function_info(
+    df, "treatment", c("row", "col"), contrast_matrix = contrast
+  )
+
+  expect_equal(connected$score, 5e11, tolerance = 1e-10)
+  expect_true(connected$estimable)
+  expect_equal(disconnected$score, Inf)
+  expect_false(disconnected$estimable)
+  expect_lt(connected$score, disconnected$score)
 })
 
 test_that("information matrix for an RCBD has the expected rank", {
@@ -361,6 +382,57 @@ test_that("cached projections are rebuilt when nuisance effects change", {
   }
 })
 
+test_that("formula expansion and environment changes invalidate the projection", {
+  df <- initialise_design_df(
+    items = 4, nrows = 3, ncols = 4,
+    block_nrows = 1, block_ncols = 4
+  )
+  df <- df[order(df$row, df$col), ]
+  df$block <- factor(df$block)
+  Sigma <- cor_ar1_ar1(3, 4, 0.6, 0.3)
+
+  for (covariance in list(NULL, Sigma)) {
+    nuisance <- ~ . - treatment - row - col
+    original <- objective_function_info(
+      df, "treatment", c("row", "col"),
+      Sigma = covariance, nuisance_formula = nuisance
+    )
+    proposal <- df
+    proposal$block[c(1, 6)] <- proposal$block[c(6, 1)]
+    cached <- objective_function_info(
+      proposal, "treatment", c("row", "col"),
+      Sigma = covariance, nuisance_formula = nuisance,
+      current_score_obj = original, swapped_items = unique(df$treatment)
+    )
+    full <- objective_function_info(
+      proposal, "treatment", c("row", "col"),
+      Sigma = covariance, nuisance_formula = nuisance
+    )
+    expect_false(isTRUE(all.equal(original$info_matrix, full$info_matrix)))
+    expect_equal(cached$info_matrix, full$info_matrix, tolerance = 1e-10)
+    expect_equal(cached$score, full$score, tolerance = 1e-10)
+
+    adjustment <- rep(c(0, 1, 0, 1), 3)
+    nuisance <- ~ block + adjustment
+    original <- objective_function_info(
+      df, "treatment", c("row", "col"),
+      Sigma = covariance, nuisance_formula = nuisance
+    )
+    adjustment <- rep(c(0, 0, 1, 1), 3)
+    cached <- objective_function_info(
+      df, "treatment", c("row", "col"),
+      Sigma = covariance, nuisance_formula = nuisance,
+      current_score_obj = original, swapped_items = unique(df$treatment)
+    )
+    full <- objective_function_info(
+      df, "treatment", c("row", "col"),
+      Sigma = covariance, nuisance_formula = nuisance
+    )
+    expect_false(isTRUE(all.equal(original$info_matrix, full$info_matrix)))
+    expect_equal(cached$info_matrix, full$info_matrix, tolerance = 1e-10)
+  }
+})
+
 test_that("the default nuisance model requires at least two blocks", {
   df <- data.frame(treatment = rep(c("A", "B"), 2))
   expect_error(objective_function_info(df, "treatment", character()), "at least two blocks")
@@ -392,6 +464,18 @@ test_that("explicit nuisance models can replace the block model", {
     )
     expect_equal(custom$info_matrix, original$info_matrix, tolerance = 1e-12)
     expect_equal(precomputed$info_matrix, original$info_matrix, tolerance = 1e-12)
+  }
+})
+
+test_that("intercept-only nuisance formulas produce the expected information", {
+  df <- data.frame(row = 1:4, col = 1L, treatment = c("A", "B", "A", "B"))
+  for (covariance in list(NULL, diag(4))) {
+    result <- objective_function_info(
+      df, "treatment", c("row", "col"),
+      Sigma = covariance, nuisance_formula = ~ 1
+    )
+    expect_equal(unname(result$info_matrix), matrix(c(1, -1, -1, 1), 2, 2))
+    expect_equal(result$A_value, 0.5, tolerance = 1e-10)
   }
 })
 
