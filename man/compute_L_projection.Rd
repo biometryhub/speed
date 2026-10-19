@@ -47,8 +47,8 @@ effects. If omitted, \code{block_column} is treated as a factor.}
 suitable for the \code{L_matrix} argument to \code{\link[=objective_function_info]{objective_function_info()}}.
 }
 \description{
-This is the projection matrix that removes nuisance effects from the GLS's
-covariance
+Removes nuisance fixed effects from the inverse covariance matrix used in
+generalised least squares (GLS).
 }
 \details{
 A blocked design with at least two observed blocks and no missing block

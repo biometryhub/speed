@@ -23,7 +23,7 @@ component factor columns.}
 \item{tolerance}{Numerical rank tolerance.}
 }
 \value{
-A numeric contrast matrix whose columns are named by treatment level.
+A numeric contrast matrix with columns named by treatment level.
 }
 \description{
 Constructs a contrast basis for selected factorial effects while treatments

@@ -138,7 +138,9 @@ objective_function_info <- function(
   criterion <- match.arg(criterion)
 
   if (!is.null(Sigma) || !is.null(L_matrix)) {
-    plot_order <- .fisher_plot_order(layout_df, row_column, col_column, by, grid_index)
+    plot_order <- .fisher_plot_order(
+      layout_df, row_column, col_column, by, grid_index
+    )
     layout_df <- layout_df[plot_order, , drop = FALSE]
   }
 
@@ -179,8 +181,11 @@ objective_function_info <- function(
 
 #' Order observed plots to match spatial covariance matrices
 #' @noRd
-.fisher_plot_order <- function(layout_df, row_column, col_column, by, grid_index) {
-  grid_index <- grid_index %||% grid_indices(layout_df, row_column, col_column, by)
+.fisher_plot_order <- function(
+  layout_df, row_column, col_column, by, grid_index
+) {
+  grid_index <- grid_index %||%
+    grid_indices(layout_df, row_column, col_column, by)
   plot_order <- unlist(lapply(grid_index, function(g) {
     return(g$rows[order(g$index$idx[, 1], g$index$idx[, 2])])
   }), use.names = FALSE)
@@ -195,7 +200,9 @@ objective_function_info <- function(
 .build_treatment_matrix <- function(treatments, trt_levels, n, v) {
   X1 <- matrix(0, n, v)
   trt_idx <- match(treatments, trt_levels)
-  if (anyNA(trt_idx)) stop("Treatment allocations cannot contain missing values.", call. = FALSE)
+  if (anyNA(trt_idx)) {
+    stop("Treatment allocations cannot contain missing values.", call. = FALSE)
+  }
   X1[cbind(seq_len(n), trt_idx)] <- 1
   return(X1)
 }
@@ -214,7 +221,7 @@ objective_function_info <- function(
 #' @param treatment_column Column containing the atomic treatment labels.
 #' @param tolerance Numerical rank tolerance.
 #'
-#' @return A numeric contrast matrix whose columns are named by treatment level.
+#' @return A numeric contrast matrix with columns named by treatment level.
 #'
 #' @export
 factorial_contrast_matrix <- function(
@@ -235,7 +242,10 @@ factorial_contrast_matrix <- function(
 
   treatment_levels <- as.character(treatment_df[[treatment_column]])
   if (anyNA(treatment_levels) || anyDuplicated(treatment_levels)) {
-    stop("`treatment_df` must contain one non-missing row per treatment.", call. = FALSE)
+    stop(
+      "`treatment_df` must contain one non-missing row per treatment.",
+      call. = FALSE
+    )
   }
 
   formula_vars <- all.vars(formula)
@@ -262,7 +272,10 @@ factorial_contrast_matrix <- function(
     stop("`formula` does not define any treatment contrasts.", call. = FALSE)
   }
 
-  basis <- qr.Q(decomposition, complete = FALSE)[, seq_len(effect_rank), drop = FALSE]
+  basis <- qr.Q(
+    decomposition,
+    complete = FALSE
+  )[, seq_len(effect_rank), drop = FALSE]
   contrasts <- t(basis)
   rownames(contrasts) <- paste0("contrast_", seq_len(nrow(contrasts)))
   colnames(contrasts) <- treatment_levels
@@ -289,39 +302,58 @@ factorial_contrast_matrix <- function(
     }
     if (is.null(colnames(contrast_matrix))) {
       if (ncol(contrast_matrix) != v) {
-        stop("`contrast_matrix` must have one column per treatment.", call. = FALSE)
+        stop(
+          "`contrast_matrix` must have one column per treatment.",
+          call. = FALSE
+        )
       }
       colnames(contrast_matrix) <- trt_levels
     } else {
       missing <- setdiff(trt_levels, colnames(contrast_matrix))
       extra <- setdiff(colnames(contrast_matrix), trt_levels)
       if (length(missing) > 0L || length(extra) > 0L) {
-        stop("Contrast columns must match the treatment levels.", call. = FALSE)
+        stop(
+          "Contrast columns must match the treatment levels.",
+          call. = FALSE
+        )
       }
       contrast_matrix <- contrast_matrix[, trt_levels, drop = FALSE]
     }
   }
 
-  if (nrow(contrast_matrix) > 0L && qr(t(contrast_matrix), tol = tolerance)$rank < nrow(contrast_matrix)) {
-    stop("Rows of `contrast_matrix` must be linearly independent.", call. = FALSE)
+  if (
+    nrow(contrast_matrix) > 0L &&
+      qr(t(contrast_matrix), tol = tolerance)$rank < nrow(contrast_matrix)
+  ) {
+    stop(
+      "Rows of `contrast_matrix` must be linearly independent.",
+      call. = FALSE
+    )
   }
   return(contrast_matrix)
 }
 
 #' Calculate information criteria for a requested contrast space
 #' @noRd
-.information_criteria <- function(info, trt_levels, contrast_matrix, tolerance) {
+.information_criteria <- function(
+  info, trt_levels, contrast_matrix, tolerance
+) {
   info <- (info + t(info)) / 2
   eig <- eigen(info, symmetric = TRUE)
   scale <- max(abs(eig$values))
-  keep <- if (scale == 0) rep(FALSE, length(eig$values)) else eig$values > scale * tolerance
+  keep <- if (scale == 0) {
+    rep(FALSE, length(eig$values))
+  } else {
+    eig$values > scale * tolerance
+  }
   rank <- sum(keep)
   pos_eig <- sort(eig$values[keep], decreasing = TRUE)
 
   info_inverse <- matrix(0, nrow(info), ncol(info))
   if (rank > 0L) {
     vectors <- eig$vectors[, keep, drop = FALSE]
-    info_inverse <- vectors %*% diag(1 / eig$values[keep], nrow = rank) %*% t(vectors)
+    info_inverse <- vectors %*%
+      diag(1 / eig$values[keep], nrow = rank) %*% t(vectors)
   }
 
   contrasts <- .prepare_contrast_matrix(contrast_matrix, trt_levels, tolerance)
@@ -340,7 +372,9 @@ factorial_contrast_matrix <- function(
       A_value <- 0
       D_value <- 0
     } else {
-      contrast_eig <- eigen(contrast_covariance, symmetric = TRUE, only.values = TRUE)$values
+      contrast_eig <- eigen(
+        contrast_covariance, symmetric = TRUE, only.values = TRUE
+      )$values
       contrast_scale <- max(abs(contrast_eig))
       if (all(contrast_eig > contrast_scale * tolerance)) {
         A_value <- sum(diag(contrast_covariance))
@@ -360,13 +394,7 @@ factorial_contrast_matrix <- function(
   ))
 }
 
-#' Function to precompute \eqn{L}
-#'
-#' \eqn{L} is the projection matrix that removes nuisance effects under a
-#' spatial correlation structure, given an \eqn{n \times n}{n * n} covariance
-#' \eqn{\Sigma}{Sigma} and nuisance effects design \eqn{X_2}.
-#'
-#' This only depends on lambda and the block structure, so precompute this.
+#' Build the nuisance design matrix X2
 #' @noRd
 .build_nuisance_matrix <- function(layout_df, block_column, nuisance_formula) {
   if (is.null(nuisance_formula)) {
@@ -379,11 +407,18 @@ factorial_contrast_matrix <- function(
       )
     }
     if (anyNA(blocks)) {
-      stop("Block labels in `", block_column, "` cannot contain missing values.", call. = FALSE)
+      stop(
+        "Block labels in `", block_column, "` cannot contain missing values.",
+        call. = FALSE
+      )
     }
-    return(stats::model.matrix(~ 0 + block, data.frame(block = factor(blocks))))
+    return(
+      stats::model.matrix(~ 0 + block, data.frame(block = factor(blocks)))
+    )
   }
-  if (!inherits(nuisance_formula, "formula") || length(nuisance_formula) != 2L) {
+  if (
+    !inherits(nuisance_formula, "formula") || length(nuisance_formula) != 2L
+  ) {
     stop("`nuisance_formula` must be a one-sided formula.", call. = FALSE)
   }
   return(stats::model.matrix(nuisance_formula, layout_df))
@@ -391,7 +426,9 @@ factorial_contrast_matrix <- function(
 
 #' Build a projection under identity covariance
 #' @noRd
-.build_L_from_df <- function(layout_df, block_column, n, nuisance_formula = NULL, tolerance = 1e-10) {
+.build_L_from_df <- function(
+  layout_df, block_column, n, nuisance_formula = NULL, tolerance = 1e-10
+) {
   X2 <- .build_nuisance_matrix(layout_df, block_column, nuisance_formula)
   crossprod_inverse <- pseudo_inverse(crossprod(X2), tolerance)
   return(diag(n) - X2 %*% crossprod_inverse %*% t(X2))
@@ -462,7 +499,7 @@ factorial_contrast_matrix <- function(
     nuisance_data <- if (is.null(nuisance_formula)) {
       layout_df[[block_column]]
     } else {
-      # Evaluating the formula also captures `.` and variables in its environment.
+      # Evaluation captures `.` and variables in the formula's environment.
       .build_nuisance_matrix(layout_df, block_column, nuisance_formula)
     }
   }
@@ -568,8 +605,8 @@ factorial_contrast_matrix <- function(
 
 #' Compute L projection
 #'
-#' This is the projection matrix that removes nuisance effects from the GLS's
-#' covariance
+#' Removes nuisance fixed effects from the inverse covariance matrix used in
+#' generalised least squares (GLS).
 #'
 #' @param layout_df Data frame representing the spatial layout of the
 #'   experiment.
@@ -603,26 +640,34 @@ compute_L_projection <- function(
   by = NULL,
   grid_index = NULL
 ) {
-  plot_order <- .fisher_plot_order(layout_df, row_column, col_column, by, grid_index)
+  plot_order <- .fisher_plot_order(
+    layout_df, row_column, col_column, by, grid_index
+  )
   layout_df <- layout_df[plot_order, , drop = FALSE]
-  return(.build_L_from_Sigma(layout_df, Sigma, block_column, nuisance_formula, tolerance))
+  return(.build_L_from_Sigma(
+    layout_df, Sigma, block_column, nuisance_formula, tolerance
+  ))
 }
 
 #' Build a projection for data already aligned with Sigma
 #' @noRd
-.build_L_from_Sigma <- function(layout_df, Sigma, block_column, nuisance_formula, tolerance) {
+.build_L_from_Sigma <- function(
+  layout_df, Sigma, block_column, nuisance_formula, tolerance
+) {
   n <- nrow(layout_df)
 
   if (!is.matrix(Sigma)) {
-    stop("Sigma must be a matrix")
+    stop("`Sigma` must be a matrix.", call. = FALSE)
   }
   if (!identical(dim(Sigma), c(n, n))) {
     stop(
-      "Sigma matrix must have dimension equal ",
-      "to dimension of layout_df dataframe"
+      "`Sigma` dimensions must match the number of rows in `layout_df`.",
+      call. = FALSE
     )
   }
-  if (!isSymmetric(Sigma, tol = 1e-8)) stop("Sigma must be symmetric")
+  if (!isSymmetric(Sigma, tol = 1e-8)) {
+    stop("`Sigma` must be symmetric.", call. = FALSE)
+  }
   X2 <- .build_nuisance_matrix(layout_df, block_column, nuisance_formula)
 
   Sigma_inv <- solve(Sigma)
@@ -637,7 +682,7 @@ compute_L_projection <- function(
 
 #' Construct a 1 dimensional lag-1 autoregressive covariance
 #'
-#' @param n Size of the covariance vector to generate
+#' @param n Number of observations.
 #' @param rho Correlation parameter
 #'
 #' @return A symmetric \eqn{(n \times n)} correlation matrix.

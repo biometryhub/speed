@@ -7,7 +7,7 @@
 cor_ar1(n, rho)
 }
 \arguments{
-\item{n}{Size of the covariance vector to generate}
+\item{n}{Number of observations.}
 
 \item{rho}{Correlation parameter}
 }
