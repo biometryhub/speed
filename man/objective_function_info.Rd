@@ -17,6 +17,10 @@ objective_function_info(
   tolerance = 1e-09,
   current_score_obj = NULL,
   swapped_items = NULL,
+  row_column = "row",
+  col_column = "col",
+  by = NULL,
+  grid_index = NULL,
   ...
 )
 }
@@ -35,13 +39,11 @@ optimality.
     - D-optimality: Minimises \eqn{-\log \left| \mathcal{I} \right|}{-
       log(|I|)}}
 
-\item{L_matrix}{Optional precomputed projection matrix. This is an advanced
-alternative to \code{Sigma}; the two cannot be supplied together.}
+\item{L_matrix}{Optional precomputed projection matrix in grid order, as
+returned by \code{\link[=compute_L_projection]{compute_L_projection()}}. Cannot be supplied with \code{Sigma}.}
 
-\item{Sigma}{Optional covariance matrix whose rows and columns follow the row
-order of \code{layout_df}. The projection is computed on the first objective
-call and reused during optimisation. If both \code{Sigma} and \code{L_matrix} are
-\code{NULL}, identity covariance is assumed.}
+\item{Sigma}{Optional covariance matrix in grid order (see Details). If both
+\code{Sigma} and \code{L_matrix} are \code{NULL}, identity covariance is assumed.}
 
 \item{contrast_matrix}{Numeric contrast matrix with one column per treatment
 level. Column names, when supplied, must match the treatment levels. Only
@@ -49,8 +51,9 @@ these contrasts are required to be estimable and contribute to the
 optimality criterion. The default targets the complete treatment-contrast
 space.}
 
-\item{block_column}{Column name of the design's block factor. Used when
-\code{L_matrix} isn't supplied.}
+\item{block_column}{Column name of the design's block factor, with at least
+two observed blocks. Used when neither \code{nuisance_formula} nor \code{L_matrix}
+is supplied.}
 
 \item{nuisance_formula}{Optional one-sided formula describing nuisance
 effects. Used when \code{L_matrix} is not supplied. If omitted,
@@ -66,6 +69,17 @@ after the initial call. Used to reuse invariant matrix calculations.}
 are identified from the cached and proposed allocations so repeated
 treatments and multi-swaps are handled exactly.}
 
+\item{row_column}{Name of the column representing rows (default \code{"row"}).}
+
+\item{col_column}{Name of the column representing columns
+(default \code{"col"}).}
+
+\item{by}{Optional column name grouping plots into grids (e.g. \code{"site"}).
+\code{NULL} treats the design as one grid.}
+
+\item{grid_index}{Optional pre-built list from \code{\link[=grid_indices]{grid_indices()}}, supplied by
+\code{\link[=speed]{speed()}} to reuse coordinate validation. Leave \code{NULL} for direct calls.}
+
 \item{...}{Extra parameters passed from \code{speed}.}
 }
 \value{
@@ -79,6 +93,22 @@ effects, and takes an optional spatial covariance structure for spatial
 optimisation.
 }
 \details{
+The default nuisance model requires a blocked design with at least two
+observed blocks and no missing block labels. An explicit \code{nuisance_formula}
+or \code{L_matrix} can instead specify a different nuisance model.
+
+\code{Sigma} and \code{L_matrix} have one row and column per observed plot, ordered by
+numeric row position and then column position (columns vary fastest),
+regardless of the row order of \code{layout_df}. This matches \code{\link[=cor_ar1_ar1]{cor_ar1_ar1()}}.
+For multiple grids, plots are grouped by the factor levels of \code{by} (sorted
+labels otherwise) before ordering within each grid. For missing plots,
+subset the covariance to the observed positions in this order. The
+projection is cached during optimisation while the covariance and nuisance
+effects remain unchanged.
+
+D-optimality uses a log determinant, so negative scores are valid and do not
+indicate that the optimum has been reached.
+
 This function computes the treatment information matrix:
 \deqn{I = X_1^\intercal L X_1}{I = X₁ᵀ L X₁}
 Where \eqn{X_1}{X₁} is the treatment design matrix, and \eqn{L} is the

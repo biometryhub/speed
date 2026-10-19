@@ -17,7 +17,8 @@ cor_ar1_ar1(n_rows, n_cols, rho_row, rho_col)
 }
 \value{
 A symmetric \eqn{(\text{n_rows} \cdot \text{n_cols}) \times
-  (\text{n_rows} \cdot \text{n_cols})} correlation matrix.
+  (\text{n_rows} \cdot \text{n_cols})} correlation matrix in row-then-column
+grid order (columns vary fastest).
 }
 \description{
 Construct a 2 dimensional lag-1 autoregressive covariance

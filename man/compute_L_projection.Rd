@@ -9,28 +9,50 @@ compute_L_projection(
   Sigma,
   block_column = "block",
   nuisance_formula = NULL,
-  tolerance = 1e-10
+  tolerance = 1e-10,
+  row_column = "row",
+  col_column = "col",
+  by = NULL,
+  grid_index = NULL
 )
 }
 \arguments{
 \item{layout_df}{Data frame representing the spatial layout of the
 experiment.}
 
-\item{Sigma}{Covariance structure to use. Its rows and columns must follow
-the row order of \code{layout_df}.}
+\item{Sigma}{Covariance matrix in numeric row-then-column grid order,
+regardless of the row order of \code{layout_df}.}
 
-\item{block_column}{Column name of the design's block factor in
-\code{layout_df}.}
+\item{block_column}{Column name of the design's block factor, with at least
+two observed blocks. Used when \code{nuisance_formula} is not supplied.}
 
 \item{nuisance_formula}{Optional one-sided formula describing nuisance
 effects. If omitted, \code{block_column} is treated as a factor.}
 
 \item{tolerance}{Numerical tolerance used for generalized inverses.}
+
+\item{row_column}{Name of the column representing rows (default \code{"row"}).}
+
+\item{col_column}{Name of the column representing columns
+(default \code{"col"}).}
+
+\item{by}{Optional column name grouping plots into grids (e.g. \code{"site"}).
+\code{NULL} treats the design as one grid.}
+
+\item{grid_index}{Optional pre-built list from \code{\link[=grid_indices]{grid_indices()}}, supplied by
+\code{\link[=speed]{speed()}} to reuse coordinate validation. Leave \code{NULL} for direct calls.}
 }
 \value{
-\eqn{(n \times n)} numeric matrix.
+\eqn{(n \times n)} numeric matrix in the same grid order as \code{Sigma},
+suitable for the \code{L_matrix} argument to \code{\link[=objective_function_info]{objective_function_info()}}.
 }
 \description{
 This is the projection matrix that removes nuisance effects from the GLS's
 covariance
+}
+\details{
+A blocked design with at least two observed blocks and no missing block
+labels is required unless \code{nuisance_formula} is supplied. See
+\code{\link[=objective_function_info]{objective_function_info()}} for the covariance ordering convention,
+including multiple grids and missing plots.
 }

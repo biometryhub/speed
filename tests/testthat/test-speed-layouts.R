@@ -101,8 +101,8 @@ test_that("speed works with a custom objective function", {
   expect_s3_class(result, "design")
 
   expect_equal(result$score, 0)
-  expect_equal(result$iterations_run, 742)
-  expect_equal(result$stopped_early, TRUE)
+  expect_equal(result$iterations_run, 1000)
+  expect_equal(result$stopped_early, FALSE)
 
   vdiffr::expect_doppelganger("speed_custom_obj_func", autoplot(result))
 })

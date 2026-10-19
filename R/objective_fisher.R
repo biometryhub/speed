@@ -15,19 +15,18 @@
 #'       \right)}{tr(I⁻)}.
 #'     - D-optimality: Minimises \eqn{-\log \left| \mathcal{I} \right|}{-
 #'       log(|I|)}
-#' @param L_matrix Optional precomputed projection matrix. This is an advanced
-#'   alternative to `Sigma`; the two cannot be supplied together.
-#' @param Sigma Optional covariance matrix whose rows and columns follow the row
-#'   order of `layout_df`. The projection is computed on the first objective
-#'   call and reused during optimisation. If both `Sigma` and `L_matrix` are
-#'   `NULL`, identity covariance is assumed.
+#' @param L_matrix Optional precomputed projection matrix in grid order, as
+#'   returned by [compute_L_projection()]. Cannot be supplied with `Sigma`.
+#' @param Sigma Optional covariance matrix in grid order (see Details). If both
+#'   `Sigma` and `L_matrix` are `NULL`, identity covariance is assumed.
 #' @param contrast_matrix Numeric contrast matrix with one column per treatment
 #'   level. Column names, when supplied, must match the treatment levels. Only
 #'   these contrasts are required to be estimable and contribute to the
 #'   optimality criterion. The default targets the complete treatment-contrast
 #'   space.
-#' @param block_column Column name of the design's block factor. Used when
-#'   \code{L_matrix} isn't supplied.
+#' @param block_column Column name of the design's block factor, with at least
+#'   two observed blocks. Used when neither `nuisance_formula` nor `L_matrix`
+#'   is supplied.
 #' @param nuisance_formula Optional one-sided formula describing nuisance
 #'   effects. Used when \code{L_matrix} is not supplied. If omitted,
 #'   \code{block_column} is treated as a factor.
@@ -38,9 +37,30 @@
 #' @param swapped_items The treatments swapped by [speed()]. Changed plot rows
 #'   are identified from the cached and proposed allocations so repeated
 #'   treatments and multi-swaps are handled exactly.
+#' @inheritParams calculate_adjacency_score
+#' @param by Optional column name grouping plots into grids (e.g. `"site"`).
+#'   `NULL` treats the design as one grid.
+#' @param grid_index Optional pre-built list from [grid_indices()], supplied by
+#'   [speed()] to reuse coordinate validation. Leave `NULL` for direct calls.
 #' @param ... Extra parameters passed from \code{speed}.
 #'
 #' @details
+#' The default nuisance model requires a blocked design with at least two
+#' observed blocks and no missing block labels. An explicit `nuisance_formula`
+#' or `L_matrix` can instead specify a different nuisance model.
+#'
+#' `Sigma` and `L_matrix` have one row and column per observed plot, ordered by
+#' numeric row position and then column position (columns vary fastest),
+#' regardless of the row order of `layout_df`. This matches [cor_ar1_ar1()].
+#' For multiple grids, plots are grouped by the factor levels of `by` (sorted
+#' labels otherwise) before ordering within each grid. For missing plots,
+#' subset the covariance to the observed positions in this order. The
+#' projection is cached during optimisation while the covariance and nuisance
+#' effects remain unchanged.
+#'
+#' D-optimality uses a log determinant, so negative scores are valid and do not
+#' indicate that the optimum has been reached.
+#'
 #' This function computes the treatment information matrix:
 #' \deqn{I = X_1^\intercal L X_1}{I = X₁ᵀ L X₁}
 #' Where \eqn{X_1}{X₁} is the treatment design matrix, and \eqn{L} is the
@@ -106,9 +126,18 @@ objective_function_info <- function(
   tolerance = 1e-9,
   current_score_obj = NULL,
   swapped_items = NULL,
+  row_column = "row",
+  col_column = "col",
+  by = NULL,
+  grid_index = NULL,
   ...
 ) {
   criterion <- match.arg(criterion)
+
+  if (!is.null(Sigma) || !is.null(L_matrix)) {
+    plot_order <- .fisher_plot_order(layout_df, row_column, col_column, by, grid_index)
+    layout_df <- layout_df[plot_order, , drop = FALSE]
+  }
 
   fisher_cache <- NULL
   if (!is.null(swapped_items)) {
@@ -144,6 +173,19 @@ objective_function_info <- function(
   )
   attr(result, "fisher_cache") <- ci$cache
   return(result)
+}
+
+#' Order observed plots to match spatial covariance matrices
+#' @noRd
+.fisher_plot_order <- function(layout_df, row_column, col_column, by, grid_index) {
+  grid_index <- grid_index %||% grid_indices(layout_df, row_column, col_column, by)
+  plot_order <- unlist(lapply(grid_index, function(g) {
+    return(g$rows[order(g$index$idx[, 1], g$index$idx[, 2])])
+  }), use.names = FALSE)
+  if (!identical(sort(plot_order), seq_len(nrow(layout_df)))) {
+    stop("`grid_index` must include every plot exactly once.", call. = FALSE)
+  }
+  return(plot_order)
 }
 
 #' Build the treatment indicator matrix X1
@@ -326,10 +368,18 @@ factorial_contrast_matrix <- function(
 #' @noRd
 .build_nuisance_matrix <- function(layout_df, block_column, nuisance_formula) {
   if (is.null(nuisance_formula)) {
-    if (!block_column %in% names(layout_df)) {
-      return(matrix(1, nrow(layout_df), 1L))
+    blocks <- layout_df[[block_column]]
+    if (length(unique(blocks[!is.na(blocks)])) < 2L) {
+      stop(
+        "A blocked design with at least two blocks in `", block_column,
+        "` is required when `nuisance_formula` is not supplied.",
+        call. = FALSE
+      )
     }
-    return(stats::model.matrix(~ 0 + block, data.frame(block = factor(layout_df[[block_column]]))))
+    if (anyNA(blocks)) {
+      stop("Block labels in `", block_column, "` cannot contain missing values.", call. = FALSE)
+    }
+    return(stats::model.matrix(~ 0 + block, data.frame(block = factor(blocks))))
   }
   if (!inherits(nuisance_formula, "formula") || length(nuisance_formula) != 2L) {
     stop("`nuisance_formula` must be a one-sided formula.", call. = FALSE)
@@ -353,6 +403,7 @@ factorial_contrast_matrix <- function(
   input,
   block_column,
   nuisance_formula,
+  nuisance_data,
   tolerance,
   n
 ) {
@@ -361,6 +412,7 @@ factorial_contrast_matrix <- function(
     identical(cache$projection_input, input) &&
     identical(cache$block_column, block_column) &&
     identical(cache$nuisance_formula, nuisance_formula) &&
+    identical(cache$nuisance_data, nuisance_data) &&
     identical(cache$tolerance, tolerance) &&
     is.matrix(cache$L_matrix) &&
     identical(dim(cache$L_matrix), c(n, n))
@@ -403,6 +455,9 @@ factorial_contrast_matrix <- function(
     stop("Only one of `Sigma` and `L_matrix` can be supplied.", call. = FALSE)
   }
 
+  nuisance_columns <- if (is.null(nuisance_formula)) block_column else all.vars(nuisance_formula)
+  nuisance_data <- as.list(layout_df[intersect(nuisance_columns, names(layout_df))])
+
   if (!is.null(L_matrix)) {
     projection_source <- "L_matrix"
     projection_input <- L_matrix
@@ -415,12 +470,13 @@ factorial_contrast_matrix <- function(
       projection_input,
       block_column,
       nuisance_formula,
+      nuisance_data,
       tolerance,
       n
     )) {
       L_matrix <- cache$L_matrix
     } else {
-      L_matrix <- compute_L_projection(
+      L_matrix <- .build_L_from_Sigma(
         layout_df,
         Sigma,
         block_column,
@@ -437,6 +493,7 @@ factorial_contrast_matrix <- function(
       projection_input,
       block_column,
       nuisance_formula,
+      nuisance_data,
       tolerance,
       n
     )) {
@@ -486,6 +543,7 @@ factorial_contrast_matrix <- function(
     projection_input = projection_input,
     block_column = block_column,
     nuisance_formula = nuisance_formula,
+    nuisance_data = nuisance_data,
     tolerance = tolerance
   )
 
@@ -506,15 +564,23 @@ factorial_contrast_matrix <- function(
 #'
 #' @param layout_df Data frame representing the spatial layout of the
 #'   experiment.
-#' @param Sigma Covariance structure to use. Its rows and columns must follow
-#'   the row order of `layout_df`.
-#' @param block_column Column name of the design's block factor in
-#'   \code{layout_df}.
+#' @param Sigma Covariance matrix in numeric row-then-column grid order,
+#'   regardless of the row order of `layout_df`.
+#' @inheritParams objective_function_info
+#' @param block_column Column name of the design's block factor, with at least
+#'   two observed blocks. Used when `nuisance_formula` is not supplied.
 #' @param nuisance_formula Optional one-sided formula describing nuisance
-#'   effects. If omitted, \code{block_column} is treated as a factor.
+#'   effects. If omitted, `block_column` is treated as a factor.
 #' @param tolerance Numerical tolerance used for generalized inverses.
 #'
-#' @return \eqn{(n \times n)} numeric matrix.
+#' @details
+#' A blocked design with at least two observed blocks and no missing block
+#' labels is required unless `nuisance_formula` is supplied. See
+#' [objective_function_info()] for the covariance ordering convention,
+#' including multiple grids and missing plots.
+#'
+#' @return \eqn{(n \times n)} numeric matrix in the same grid order as `Sigma`,
+#'   suitable for the `L_matrix` argument to [objective_function_info()].
 #'
 #' @export
 compute_L_projection <- function(
@@ -522,8 +588,20 @@ compute_L_projection <- function(
   Sigma,
   block_column = "block",
   nuisance_formula = NULL,
-  tolerance = 1e-10
+  tolerance = 1e-10,
+  row_column = "row",
+  col_column = "col",
+  by = NULL,
+  grid_index = NULL
 ) {
+  plot_order <- .fisher_plot_order(layout_df, row_column, col_column, by, grid_index)
+  layout_df <- layout_df[plot_order, , drop = FALSE]
+  return(.build_L_from_Sigma(layout_df, Sigma, block_column, nuisance_formula, tolerance))
+}
+
+#' Build a projection for data already aligned with Sigma
+#' @noRd
+.build_L_from_Sigma <- function(layout_df, Sigma, block_column, nuisance_formula, tolerance) {
   n <- nrow(layout_df)
 
   if (!is.matrix(Sigma)) {
@@ -569,7 +647,8 @@ cor_ar1 <- function(n, rho) {
 #' @param rho_col Correlation parameter along the column direction.
 #'
 #' @return A symmetric \eqn{(\text{n_rows} \cdot \text{n_cols}) \times
-#'   (\text{n_rows} \cdot \text{n_cols})} correlation matrix.
+#'   (\text{n_rows} \cdot \text{n_cols})} correlation matrix in row-then-column
+#'   grid order (columns vary fastest).
 #'
 #' @export
 cor_ar1_ar1 <- function(n_rows, n_cols, rho_row, rho_col) {
