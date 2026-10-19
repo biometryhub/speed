@@ -14,6 +14,7 @@ create_speed_input(
   obj_function,
   swap_all,
   optimise_params,
+  linked_cols = NULL,
   optimise = NULL,
   row_col_inferred = TRUE
 )
@@ -37,7 +38,9 @@ consider for balance (default: \code{~row + col}).}
 
 \item{grid_factors}{A named list specifying grid factors to construct a
 matrix for calculating adjacency score, \code{dim1} for row and \code{dim2} for
-column. (default: \code{list(dim1 = "row", dim2 = "col")}).
+column. (default: \code{list(dim1 = "row", dim2 = "col")}). The axes apply to
+the whole design, so unlike \code{swap} they cannot be set per level of a
+hierarchical design.
 
 An optional third element, \code{by}, names a column that groups plots into
 \emph{separate} grids - a multi-environment trial, where each site reuses the
@@ -67,8 +70,16 @@ at a time (default: FALSE)}
 \item{optimise_params}{Parameters used to control the behaviour of
 simulated annealing algorithm. See \code{\link[=optim_params]{optim_params()}} for more details.}
 
+\item{linked_cols}{Character vector of column names that travel with the
+\code{swap} column, for example a \code{variety_name} label belonging to a numeric
+\code{variety} code (default: \code{NULL}). For hierarchical designs, can be a named
+list with names matching \code{swap}. See details for more information.}
+
 \item{optimise}{A list of named arguments describing optimising parameters;
 see more in example.}
+}
+\value{
+The per-level \code{optimise} list.
 }
 \description{
 Create Input for Internal speed Function

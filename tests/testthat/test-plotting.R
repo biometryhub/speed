@@ -1,6 +1,4 @@
-# Test palette options in autoplot
 test_that("autoplot handles default palette", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
@@ -17,7 +15,6 @@ test_that("autoplot handles default palette", {
     quiet = TRUE
   )
 
-  # Test default palette
   expect_no_error({
     plot <- autoplot(result, palette = "default")
   })
@@ -32,7 +29,6 @@ test_that("autoplot handles default palette", {
 })
 
 test_that("autoplot handles viridis-based palettes", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
@@ -49,7 +45,6 @@ test_that("autoplot handles viridis-based palettes", {
     quiet = TRUE
   )
 
-  # Test viridis palettes
   viridis_palettes <- c(
     "viridis",
     "magma",
@@ -68,7 +63,6 @@ test_that("autoplot handles viridis-based palettes", {
     expect_contains(class(plot), "ggplot")
   }
 
-  # Visual regression tests for key viridis palettes
   vdiffr::expect_doppelganger(
     "autoplot_palette_viridis",
     autoplot(result, palette = "viridis")
@@ -88,7 +82,6 @@ test_that("autoplot handles viridis-based palettes", {
 })
 
 test_that("autoplot handles color-blind friendly palettes", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
@@ -105,7 +98,6 @@ test_that("autoplot handles color-blind friendly palettes", {
     quiet = TRUE
   )
 
-  # Test various color-blind friendly palette specifications
   colorblind_options <- c(
     "colour blind",
     "color blind",
@@ -124,7 +116,6 @@ test_that("autoplot handles color-blind friendly palettes", {
     expect_contains(class(plot), "ggplot")
   }
 
-  # Visual regression test for color-blind palette
   vdiffr::expect_doppelganger(
     "autoplot_palette_colorblind",
     autoplot(result, palette = "colour blind")
@@ -132,7 +123,6 @@ test_that("autoplot handles color-blind friendly palettes", {
 })
 
 test_that("autoplot handles RColorBrewer palettes", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
@@ -149,7 +139,6 @@ test_that("autoplot handles RColorBrewer palettes", {
     quiet = TRUE
   )
 
-  # Test RColorBrewer palettes
   brewer_palettes <- c(
     "BrBG",
     "PiYG",
@@ -171,7 +160,6 @@ test_that("autoplot handles RColorBrewer palettes", {
     expect_contains(class(plot), "ggplot")
   }
 
-  # Visual regression tests for key RColorBrewer palettes
   vdiffr::expect_doppelganger(
     "autoplot_palette_spectral",
     autoplot(result, palette = "Spectral")
@@ -191,7 +179,6 @@ test_that("autoplot handles RColorBrewer palettes", {
 })
 
 test_that("autoplot handles custom color palettes", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:4, times = 2),
     col = rep(1:2, each = 4),
@@ -208,7 +195,6 @@ test_that("autoplot handles custom color palettes", {
     quiet = TRUE
   )
 
-  # Test custom color palette with exact number of colors
   custom_palette <- c("#FF5733", "#33FF57", "#3357FF", "#FF33F5")
 
   expect_no_error({
@@ -225,7 +211,6 @@ test_that("autoplot handles custom color palettes", {
 })
 
 test_that("autoplot palette error handling works correctly", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:4, times = 2),
     col = rep(1:2, each = 4),
@@ -242,7 +227,6 @@ test_that("autoplot palette error handling works correctly", {
     quiet = TRUE
   )
 
-  # Test error when custom palette has wrong number of colors
   expect_error(
     autoplot(result, palette = c("#FF5733", "#33FF57")), # Only 2 colors for 4 treatments
     "palette needs to be a single string to choose a predefined palette, or 4 custom colours"
@@ -256,7 +240,6 @@ test_that("autoplot palette error handling works correctly", {
     "palette needs to be a single string to choose a predefined palette, or 4 custom colours"
   )
 
-  # Test error with invalid palette name
   expect_error(
     autoplot(result, palette = "invalid_palette_name"),
     "Invalid value for palette"
@@ -264,7 +247,6 @@ test_that("autoplot palette error handling works correctly", {
 })
 
 test_that("autoplot palettes work with different numbers of treatments", {
-  # Test with small number of treatments (3)
   small_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
@@ -281,7 +263,6 @@ test_that("autoplot palettes work with different numbers of treatments", {
     quiet = TRUE
   )
 
-  # Test with large number of treatments (8)
   large_data <- data.frame(
     row = rep(1:8, times = 4),
     col = rep(1:4, each = 8),
@@ -298,7 +279,6 @@ test_that("autoplot palettes work with different numbers of treatments", {
     quiet = TRUE
   )
 
-  # Test various palettes work with different treatment numbers
   test_palettes <- c("default", "viridis", "magma", "Spectral", "Set3")
 
   for (palette in test_palettes) {
@@ -311,7 +291,6 @@ test_that("autoplot palettes work with different numbers of treatments", {
     expect_contains(class(large_plot), "ggplot")
   }
 
-  # Visual regression tests
   vdiffr::expect_doppelganger(
     "autoplot_palette_small_treatments",
     autoplot(small_result, palette = "viridis")
@@ -345,7 +324,6 @@ test_that("autoplot palettes work with hierarchical designs", {
     quiet = TRUE
   )
 
-  # Test different palettes work with hierarchical designs
   test_palettes <- c("default", "plasma", "Set3", "RdYlGn")
 
   for (palette in test_palettes) {
@@ -366,7 +344,6 @@ test_that("autoplot palettes work with hierarchical designs", {
     expect_contains(class(sp_plot), "ggplot")
   }
 
-  # Visual regression tests for hierarchical with different palettes
   vdiffr::expect_doppelganger(
     "autoplot_hierarchical_plasma_wp",
     autoplot(result, treatments = "wholeplot_treatment", palette = "plasma")
@@ -378,7 +355,6 @@ test_that("autoplot palettes work with hierarchical designs", {
 })
 
 test_that("autoplot palettes work with blocks", {
-  # Sample data with blocks
   test_data <- data.frame(
     row = rep(1:6, each = 4),
     col = rep(1:4, times = 6),
@@ -396,7 +372,6 @@ test_that("autoplot palettes work with blocks", {
     quiet = TRUE
   )
 
-  # Test different palettes work with blocked designs
   test_palettes <- c("default", "inferno", "Paired", "RdBu")
 
   for (palette in test_palettes) {
@@ -408,7 +383,6 @@ test_that("autoplot palettes work with blocks", {
     expect_contains(class(plot), "ggplot")
   }
 
-  # Visual regression tests for blocks with different palettes
   vdiffr::expect_doppelganger(
     "autoplot_blocks_inferno",
     autoplot(result, palette = "inferno")
@@ -420,7 +394,6 @@ test_that("autoplot palettes work with blocks", {
 })
 
 test_that("autoplot custom palettes work with exact color specifications", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:3, times = 3),
     col = rep(1:3, each = 3),
@@ -437,7 +410,6 @@ test_that("autoplot custom palettes work with exact color specifications", {
     quiet = TRUE
   )
 
-  # Test various custom color formats
   hex_colors <- c("#FF0000", "#00FF00", "#0000FF")
   rgb_colors <- c("red", "green", "blue")
   mixed_colors <- c("#FF5733", "purple", "#32CD32")
@@ -457,7 +429,6 @@ test_that("autoplot custom palettes work with exact color specifications", {
     expect_contains(class(plot), "ggplot")
   }
 
-  # Visual regression tests for custom colors
   vdiffr::expect_doppelganger(
     "autoplot_custom_hex",
     autoplot(result, palette = hex_colors)
@@ -472,9 +443,7 @@ test_that("autoplot custom palettes work with exact color specifications", {
   )
 })
 
-# Test plot_progress function
 test_that("plot_progress executes without errors", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
@@ -491,14 +460,12 @@ test_that("plot_progress executes without errors", {
     quiet = TRUE
   )
 
-  # Should not error when calling plot_progress
   expect_no_error({
     plot_progress(result)
   })
 })
 
 test_that("plot_progress handles simple design optimization results", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
@@ -516,13 +483,11 @@ test_that("plot_progress handles simple design optimization results", {
     quiet = TRUE
   )
 
-  # Capture the output to verify plots are printed
   expect_output(
     plot_progress(result),
     NA # No specific text output expected, just that it executes
   )
 
-  # Verify that result has required components for plot_progress
   expect_true("scores" %in% names(result))
   expect_true("temperatures" %in% names(result))
   expect_true(is.numeric(result$scores))
@@ -532,7 +497,6 @@ test_that("plot_progress handles simple design optimization results", {
 })
 
 test_that("plot_progress handles different iteration lengths", {
-  # Test with short optimization
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
@@ -550,7 +514,6 @@ test_that("plot_progress handles different iteration lengths", {
     quiet = TRUE
   )
 
-  # Test with longer optimization
   long_result <- speed(
     data = test_data,
     swap = "treatment",
@@ -562,7 +525,6 @@ test_that("plot_progress handles different iteration lengths", {
     quiet = TRUE
   )
 
-  # Both should work
   expect_no_error({
     plot_progress(short_result)
   })
@@ -571,13 +533,11 @@ test_that("plot_progress handles different iteration lengths", {
     plot_progress(long_result)
   })
 
-  # Verify lengths match
   expect_equal(length(short_result$scores), 50)
   expect_equal(length(short_result$temperatures), 50)
   expect_equal(length(long_result$scores), 1000)
   expect_equal(length(long_result$temperatures), 1000)
 
-  # Visual regression tests for plot_progress
   vdiffr::expect_doppelganger(
     "plot_progress_short",
     plot_progress(short_result)
@@ -586,7 +546,6 @@ test_that("plot_progress handles different iteration lengths", {
 })
 
 test_that("plot_progress handles early stopping results", {
-  # Create a design that will likely trigger early stopping
   test_data <- data.frame(
     row = rep(1:4, times = 4),
     col = rep(1:4, each = 4),
@@ -604,22 +563,18 @@ test_that("plot_progress handles early stopping results", {
     quiet = TRUE
   )
 
-  # Should work even with early stopping
   expect_no_error({
     plot_progress(result)
   })
 
-  # Verify early stopping occurred
   expect_true(result$stopped_early)
   expect_lt(result$iterations_run, 1000)
 
-  # Verify arrays are the correct length (should match iterations_run)
   expect_equal(length(result$scores), result$iterations_run)
   expect_equal(length(result$temperatures), result$iterations_run)
 })
 
 test_that("plot_progress handles blocked designs", {
-  # Sample data with blocks
   test_data <- data.frame(
     row = rep(1:6, each = 4),
     col = rep(1:4, times = 6),
@@ -637,12 +592,10 @@ test_that("plot_progress handles blocked designs", {
     quiet = TRUE
   )
 
-  # Should work with blocked designs
   expect_no_error({
     plot_progress(result)
   })
 
-  # Verify structure is still simple (not hierarchical)
   expect_true(is.numeric(result$scores))
   expect_true(is.numeric(result$temperatures))
   expect_false(is.list(result$scores))
@@ -650,14 +603,12 @@ test_that("plot_progress handles blocked designs", {
 })
 
 test_that("plot_progress handles results with different optimization patterns", {
-  # Test with different starting configurations to get different optimization patterns
   test_data <- data.frame(
     row = rep(1:5, times = 5),
     col = rep(1:5, each = 5),
     treatment = rep(LETTERS[1:5], 5)
   )
 
-  # Test with different seeds to get different optimization trajectories
   seeds <- c(123, 456, 789)
 
   for (seed in seeds) {
@@ -675,7 +626,6 @@ test_that("plot_progress handles results with different optimization patterns", 
       plot_progress(result)
     })
 
-    # Verify the optimization data has expected properties
     expect_true(all(is.finite(result$scores)))
     expect_true(all(is.finite(result$temperatures)))
     expect_true(all(result$temperatures > 0)) # Temperatures should be positive
@@ -685,7 +635,6 @@ test_that("plot_progress handles results with different optimization patterns", 
 })
 
 test_that("plot_progress error handling for invalid inputs", {
-  # Test with missing scores
   invalid_result_no_scores <- list(
     temperatures = seq(1, 0.01, length.out = 100)
   )
@@ -695,7 +644,6 @@ test_that("plot_progress error handling for invalid inputs", {
     "arguments imply differing number of rows: 2, 0, 100"
   )
 
-  # Test with missing temperatures
   invalid_result_no_temps <- list(
     scores = runif(100, 0, 10)
   )
@@ -705,7 +653,6 @@ test_that("plot_progress error handling for invalid inputs", {
     "arguments imply differing number of rows: 100, 0"
   )
 
-  # Test with mismatched lengths
   invalid_result_mismatch <- list(
     scores = runif(100, 0, 10),
     temperatures = seq(1, 0.01, length.out = 35) # Different length
@@ -718,7 +665,6 @@ test_that("plot_progress error handling for invalid inputs", {
 })
 
 test_that("plot_progress generates expected plot elements", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
@@ -736,7 +682,6 @@ test_that("plot_progress generates expected plot elements", {
     quiet = TRUE
   )
 
-  # Capture the plots using a different approach
   # Since plot_progress() prints directly, we test the underlying data
   df <- data.frame(
     iteration = 1:length(result$scores),
@@ -744,15 +689,12 @@ test_that("plot_progress generates expected plot elements", {
     temperature = result$temperatures
   )
 
-  # Verify the data frame that would be used in plot_progress
   expect_equal(nrow(df), 100)
   expect_equal(ncol(df), 3)
   expect_true(all(c("iteration", "score", "temperature") %in% names(df)))
 
-  # Verify iteration sequence
   expect_equal(df$iteration, 1:100)
 
-  # Verify scores and temperatures are numeric and finite
   expect_true(all(is.numeric(df$score)))
   expect_true(all(is.numeric(df$temperature)))
   expect_true(all(is.finite(df$score)))
@@ -760,7 +702,6 @@ test_that("plot_progress generates expected plot elements", {
 })
 
 test_that("plot_progress works with single iteration result", {
-  # Create a result that stops after 1 iteration
   test_data <- data.frame(
     row = rep(1:3, times = 3),
     col = rep(1:3, each = 3),
@@ -777,19 +718,15 @@ test_that("plot_progress works with single iteration result", {
     quiet = TRUE
   )
 
-  # Should handle single iteration without error
   expect_no_error({
     plot_progress(result)
   })
 
-  # Verify single point data
   expect_equal(length(result$scores), 1)
   expect_equal(length(result$temperatures), 1)
 })
 
-# Test autoplot margin parameter
 test_that("autoplot margin parameter controls plot margins", {
-  # Sample data for testing
   test_data <- data.frame(
     row = rep(1:4, times = 3),
     col = rep(1:3, each = 4),
@@ -806,15 +743,12 @@ test_that("autoplot margin parameter controls plot margins", {
     quiet = TRUE
   )
 
-  # Test default behavior (margin = FALSE)
   plot_no_margin <- autoplot(result, margin = FALSE)
   expect_contains(class(plot_no_margin), "ggplot")
 
-  # Test with margin = TRUE
   plot_with_margin <- autoplot(result, margin = TRUE)
   expect_contains(class(plot_with_margin), "ggplot")
 
-  # Both plots should be generated without error
   expect_no_error({
     autoplot(result, margin = FALSE)
   })
@@ -823,18 +757,15 @@ test_that("autoplot margin parameter controls plot margins", {
     autoplot(result, margin = TRUE)
   })
 
-  # Check that the plots have different scale properties
   # margin = FALSE should have expand = c(0, 0) for both x and y scales
   # margin = TRUE should not have expand = c(0, 0)
 
-  # Build the plots to access their internal structure
   built_no_margin <- ggplot2::ggplot_build(plot_no_margin)
   built_with_margin <- ggplot2::ggplot_build(plot_with_margin)
 
   # The plots should have the same data but different scale ranges
   expect_equal(built_no_margin$data, built_with_margin$data)
 
-  # Visual regression tests to capture the differences
   vdiffr::expect_doppelganger(
     "autoplot_margin_false",
     autoplot(result, margin = FALSE)
@@ -846,7 +777,6 @@ test_that("autoplot margin parameter controls plot margins", {
 })
 
 test_that("autoplot margin parameter works with blocked designs", {
-  # Sample data with blocks for more complex margin testing
   test_data <- data.frame(
     row = rep(1:6, each = 4),
     col = rep(1:4, times = 6),
@@ -864,7 +794,6 @@ test_that("autoplot margin parameter works with blocked designs", {
     quiet = TRUE
   )
 
-  # Test margin parameter with blocked designs
   expect_no_error({
     plot_no_margin_blocked <- autoplot(result, margin = FALSE)
   })
@@ -879,7 +808,6 @@ test_that("autoplot margin parameter works with blocked designs", {
   expect_contains(class(plot_no_margin_blocked), "ggplot")
   expect_contains(class(plot_with_margin_blocked), "ggplot")
 
-  # Visual regression tests for blocked designs with different margin settings
   vdiffr::expect_doppelganger(
     "autoplot_blocked_margin_false",
     autoplot(result, margin = FALSE)
@@ -891,7 +819,6 @@ test_that("autoplot margin parameter works with blocked designs", {
 })
 
 test_that("autoplot margin parameter works with different palettes", {
-  # Test that margin parameter works correctly with different palette options
   test_data <- data.frame(
     row = rep(1:5, times = 4),
     col = rep(1:4, each = 5),
@@ -908,7 +835,6 @@ test_that("autoplot margin parameter works with different palettes", {
     quiet = TRUE
   )
 
-  # Test different combinations of margin and palette parameters
   test_combinations <- list(
     list(margin = FALSE, palette = "viridis"),
     list(margin = TRUE, palette = "viridis"),
@@ -930,7 +856,6 @@ test_that("autoplot margin parameter works with different palettes", {
     expect_contains(class(plot), "ggplot")
   }
 
-  # Visual regression tests for key combinations
   vdiffr::expect_doppelganger(
     "autoplot_margin_false_viridis",
     autoplot(result, margin = FALSE, palette = "viridis")
@@ -939,4 +864,30 @@ test_that("autoplot margin parameter works with different palettes", {
     "autoplot_margin_true_set3",
     autoplot(result, margin = TRUE, palette = "Set3")
   )
+})
+
+test_that("autoplot errors when the requested block column is absent", {
+  test_data <- data.frame(
+    row = rep(1:4, times = 3),
+    col = rep(1:3, each = 4),
+    treatment = rep(LETTERS[1:3], 4)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    iterations = 20,
+    seed = 1,
+    quiet = TRUE
+  )
+
+  # The block column is only validated when it was asked for explicitly; the
+  # default is left alone so unblocked designs still plot.
+  expect_error(
+    autoplot(result, block = "nope"),
+    "'nope' not found in row, col, treatment"
+  )
+  expect_no_error(autoplot(result))
 })

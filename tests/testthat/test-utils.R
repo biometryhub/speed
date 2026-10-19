@@ -1,4 +1,3 @@
-# Test pseudo_inverse function
 test_that("pseudo_inverse calculates Moore-Penrose inverse correctly", {
   # Test with a well-conditioned matrix
   A <- matrix(c(1, 2, 3, 4), nrow = 2, ncol = 2)
@@ -7,15 +6,17 @@ test_that("pseudo_inverse calculates Moore-Penrose inverse correctly", {
   # Check that A * A_inv * A = A (approximately)
   expect_equal(A %*% A_inv %*% A, A, tolerance = 1e-10)
 
-  # Check dimensions
   expect_equal(dim(A_inv), c(2, 2))
+
+  # Agrees with solve() when the matrix is invertible, which is why
+  # calculate_efficiency_factor() can use it unconditionally.
+  expect_equal(A_inv, solve(A), tolerance = 1e-10)
 })
 
 test_that("pseudo_inverse handles singular matrices", {
   # Test with a rank-deficient matrix (singular)
   singular_matrix <- matrix(c(1, 2, 2, 4), nrow = 2, ncol = 2)
 
-  # This should not throw an error but handle the rank deficiency
   result <- pseudo_inverse(singular_matrix)
   expect_true(is.matrix(result))
   expect_equal(dim(result), c(2, 2))
@@ -25,7 +26,6 @@ test_that("pseudo_inverse throws error for zero matrix", {
   # Test with a zero matrix (rank 0)
   zero_matrix <- matrix(0, nrow = 2, ncol = 2)
 
-  # This should throw an error with specific message
   expect_error(
     pseudo_inverse(zero_matrix),
     "zero_matrix has rank 0 - design may be invalid"
@@ -68,7 +68,6 @@ test_that("pseudo_inverse respects tolerance parameter", {
   expect_true(is.matrix(result_small_tol))
 })
 
-# Test env_add_one function
 test_that("env_add_one adds to existing key", {
   env <- new.env()
   env$test_key <- 5
@@ -89,11 +88,9 @@ test_that("env_add_one creates new key with value 1", {
 test_that("env_add_one works with different key types", {
   env <- new.env()
 
-  # Test with character key
   env_add_one(env, "char_key")
   expect_equal(env$char_key, 1)
 
-  # Test incrementing
   env_add_one(env, "char_key")
   expect_equal(env$char_key, 2)
 })
@@ -147,6 +144,41 @@ test_that("infer_row_col can infer row and column", {
   expect_equal(inferred$inferred, TRUE)
   expect_equal(inferred$row, "lane")
   expect_equal(inferred$col, "position")
+})
+
+test_that("infer_row_col reports the columns it inferred from name patterns", {
+  # `grid_factors` names `col`, which is absent, so both axes fall through to
+  # the name patterns rather than being matched outright.
+  expect_message(
+    inferred <- infer_row_col(
+      data.frame(row = rep(1:4, each = 5), range = rep(1:4, times = 5)),
+      quiet = FALSE
+    ),
+    "row and range are used as row and column, respectively"
+  )
+
+  expect_true(inferred$inferred)
+  expect_equal(inferred$row, "row")
+  # A column named `range` is silently adopted as the design's column axis.
+  expect_equal(inferred$col, "range")
+})
+
+test_that("infer_row_col falls back to patterns when grid_factors is malformed", {
+  # Direct callers bypass `.verify_grid_factors()`, so a malformed argument
+  # must not be indexed.
+  df <- data.frame(row = rep(1:4, each = 5), col = rep(1:4, times = 5))
+
+  for (bad in list(
+    NULL,
+    list(),
+    list(dim1 = "row"),
+    list(wp = list(dim1 = "row", dim2 = "col"))
+  )) {
+    inferred <- infer_row_col(df, grid_factors = bad, quiet = TRUE)
+    expect_true(inferred$inferred)
+    expect_equal(inferred$row, "row")
+    expect_equal(inferred$col, "col")
+  }
 })
 
 test_that("infer_row_col raise warning if cannot infer", {
@@ -257,25 +289,21 @@ test_that("to_factor/to_types handle multi-class (vctrs-style) columns", {
   expect_equal(typed_data$numeric_col, test_data$numeric_col)
 })
 
-# test_that("parse_swap_formula parses with defaults", {
-#   swap <- ~ single(treatment)
-#   parsed <- parse_swap_formula(swap)
-#
-#   expect_equal(parsed, list(
-#     "single treatment within whole design" = list("single", "treatment", c("row", "col"), "1")
-#   ))
-# })
+test_that("to_factor only converts the columns it is given", {
+  test_data <- data.frame(
+    treatment = LETTERS[1:3],
+    when = as.Date("2026-01-01") + 0:2
+  )
 
-# test_that("parse_swap_formula parses with multiple terms", {
-#   swap <- ~ single(treatment) + all(sub_treatment, a_row + a_col, block) + single(z, a + b + c, d)
-#   parsed <- parse_swap_formula(swap)
-#
-#   expect_equal(parsed, list(
-#     "single treatment within whole design" = list("single", "treatment", c("row", "col"), "1"),
-#     "all sub_treatment within block" = list("all", "sub_treatment", c("a_row", "a_col"), "block"),
-#     "single z within d" = list("single", "z", c("a", "b", "c"), "d")
-#   ))
-# })
+  factored <- to_factor(test_data, "treatment")
+
+  expect_s3_class(factored$df$treatment, "factor")
+  expect_s3_class(factored$df$when, "Date")
+  # An unconverted column is not recorded, so `to_types()` never touches it -
+  # the only way a class `base_type()` cannot rebuild survives the round trip
+  expect_named(factored$input_types, "treatment")
+  expect_s3_class(to_types(factored$df, factored$input_types)$when, "Date")
+})
 
 test_that("create_speed_input creates an input from a named list", {
   speed_input <- create_speed_input(
@@ -398,6 +426,28 @@ test_that("create_speed_input creates an input from a string", {
   )
 })
 
+test_that("create_speed_input takes grid_factors per level when given them", {
+  # `speed()` refuses a per-level `grid_factors`, so this shape only arrives
+  # from a direct call. A level without an entry falls back to the default.
+  speed_input <- create_speed_input(
+    swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+    swap_within = list(wp = "block", sp = "wholeplot"),
+    spatial_factors = ~ row + col,
+    grid_factors = list(wp = list(dim1 = "range", dim2 = "plot")),
+    iterations = 100,
+    early_stop_iterations = 30,
+    obj_function = objective_function,
+    swap_all = FALSE,
+    optimise_params = list(swap_count = 1, swap_all_blocks = FALSE)
+  )
+
+  expect_equal(
+    speed_input$wp$grid_factors,
+    list(dim1 = "range", dim2 = "plot")
+  )
+  expect_equal(speed_input$sp$grid_factors, .DEFAULT$grid_factors)
+})
+
 test_that("create_speed_input creates an input from optimise argument", {
   optimise <- list(
     connectivity = list(
@@ -489,6 +539,76 @@ test_that("create_speed_input creates an input from optimise argument", {
       optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
     )[ordered_names]
   )
+})
+
+test_that("create_speed_input splits a per-level list the same way for every shape", {
+  args <- list(
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    early_stop_iterations = 2000,
+    obj_function = objective_function,
+    swap_all = FALSE,
+    optimise_params = optim_params(),
+    iterations = list(wp = 5, sp = 7)
+  )
+
+  from_swap <- do.call(
+    create_speed_input,
+    c(args, list(swap = list(wp = "wp_trt", sp = "sp_trt")))
+  )
+  from_optimise <- do.call(
+    create_speed_input,
+    c(
+      args,
+      list(
+        swap = "trt",
+        optimise = list(wp = list(), sp = list())
+      )
+    )
+  )
+
+  expect_equal(from_swap$wp$iterations, 5)
+  expect_equal(from_swap$sp$iterations, 7)
+  expect_equal(from_optimise$wp$iterations, 5)
+  expect_equal(from_optimise$sp$iterations, 7)
+})
+
+test_that("create_speed_input falls back to the argument's own default", {
+  # `sp` is left out of the list, so it takes the `iterations` default rather
+  # than a value belonging to some other argument
+  resolved <- create_speed_input(
+    swap = list(wp = "wp_trt", sp = "sp_trt"),
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = list(wp = 5),
+    early_stop_iterations = 2000,
+    obj_function = objective_function,
+    swap_all = FALSE,
+    optimise_params = optim_params()
+  )
+
+  expect_equal(resolved$wp$iterations, 5)
+  expect_equal(resolved$sp$iterations, .DEFAULT$iterations)
+})
+
+test_that("create_speed_input leaves named lists that are not levels whole", {
+  # `grid_factors` and `optim_params()` name their own fields, not levels
+  resolved <- create_speed_input(
+    swap = list(wp = "wp_trt", sp = "sp_trt"),
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 100,
+    early_stop_iterations = 2000,
+    obj_function = objective_function,
+    swap_all = FALSE,
+    optimise_params = optim_params(start_temp = 42)
+  )
+
+  expect_equal(resolved$wp$grid_factors, list(dim1 = "row", dim2 = "col"))
+  expect_equal(resolved$sp$optimise_params$start_temp, 42)
 })
 
 test_that("add_names adds names to a list", {

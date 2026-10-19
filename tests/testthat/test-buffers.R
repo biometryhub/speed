@@ -1,5 +1,4 @@
 test_that("create_buffers adds edge buffers correctly", {
-  # Create a simple 3x3 design
   design <- data.frame(
     row = rep(1:3, each = 3),
     col = rep(1:3, times = 3),
@@ -8,7 +7,6 @@ test_that("create_buffers adds edge buffers correctly", {
 
   result <- create_buffers(design, type = "edge", blocks = FALSE)
 
-  # Check that buffers were added
   expect_true("buffer" %in% result$treatment)
 
   # Original design should be shifted by 1
@@ -18,12 +16,10 @@ test_that("create_buffers adds edge buffers correctly", {
   expect_equal(min(non_buffers$col), 2)
   expect_equal(max(non_buffers$col), 4)
 
-  # Check number of buffer plots
   buffers <- result[result$treatment == "buffer", ]
   # Edge buffers: top row (5), bottom row (5), left column (3), right column (3) = 16
   expect_equal(nrow(buffers), 16)
 
-  # Check that all edge positions have buffers
   expect_true(all(result[result$row == 1, "treatment"] == "buffer"))
   expect_true(all(result[result$row == 5, "treatment"] == "buffer"))
   expect_true(all(result[result$col == 1, "treatment"] == "buffer"))
@@ -37,15 +33,12 @@ test_that("create_buffers adds edge buffers with alternative syntax", {
     treatment = rep(c("A", "B"), 2)
   )
 
-  # Test "edges" syntax
   result1 <- create_buffers(design, type = "edges", blocks = FALSE)
   expect_true("buffer" %in% result1$treatment)
 
-  # Test "e" syntax
   result2 <- create_buffers(design, type = "e", blocks = FALSE)
   expect_true("buffer" %in% result2$treatment)
 
-  # Test "EDGE" (case insensitive)
   result3 <- create_buffers(design, type = "EDGE", blocks = FALSE)
   expect_true("buffer" %in% result3$treatment)
 
@@ -63,7 +56,6 @@ test_that("create_buffers adds row buffers correctly", {
 
   result <- create_buffers(design, type = "row", blocks = FALSE)
 
-  # Check that buffers were added
   expect_true("buffer" %in% result$treatment)
 
   # Original design rows should be at even positions
@@ -87,7 +79,6 @@ test_that("create_buffers adds column buffers correctly", {
 
   result <- create_buffers(design, type = "column", blocks = FALSE)
 
-  # Check that buffers were added
   expect_true("buffer" %in% result$treatment)
 
   # Original design cols should be at even positions
@@ -136,7 +127,6 @@ test_that("create_buffers works with speed optimised designs", {
     treatment = rep(LETTERS[1:3], 3)
   )
 
-  # Run speed optimisation with few iterations
   result <- speed(
     df,
     swap = "treatment",
@@ -145,15 +135,12 @@ test_that("create_buffers works with speed optimised designs", {
     seed = 42
   )
 
-  # Add edge buffers to optimised design
   buffered_design <- add_buffers(result, type = "edge")
 
-  # Check that buffers were added
   expect_true(inherits(buffered_design, "design"))
   expect_true("buffer" %in% buffered_design$design$treatment)
   expect_gt(nrow(buffered_design$design), nrow(result$design_df))
 
-  # Check that original treatments are preserved
   original_treatments <- sort(unique(result$design_df$treatment))
   buffered_treatments <- sort(unique(buffered_design$design$treatment[
     buffered_design$design$treatment != "buffer"
@@ -168,7 +155,6 @@ test_that("add_buffers preserves optimisation results", {
     treatment = rep(LETTERS[1:4], 2)
   )
 
-  # Run speed optimisation
   result <- speed(
     df,
     swap = "treatment",
@@ -177,14 +163,11 @@ test_that("add_buffers preserves optimisation results", {
     seed = 123
   )
 
-  # Store original score and seed
   original_score <- result$score
   original_seed <- result$seed
 
-  # Add buffers
   buffered_result <- add_buffers(result, type = "row")
 
-  # Check that metadata is preserved
   expect_equal(buffered_result$score, original_score)
   expect_equal(buffered_result$seed, original_seed)
   expect_equal(buffered_result$iterations_run, result$iterations_run)
@@ -197,7 +180,6 @@ test_that("autoplot renders speed optimised design with edge buffers", {
     treatment = rep(LETTERS[1:3], 3)
   )
 
-  # Run speed optimisation
   result <- speed(
     df,
     swap = "treatment",
@@ -206,16 +188,12 @@ test_that("autoplot renders speed optimised design with edge buffers", {
     seed = 42
   )
 
-  # Add edge buffers
   buffered_result <- add_buffers(result, type = "edge")
 
-  # Create plot
   p <- autoplot(buffered_result)
 
-  # Verify it's a ggplot object
   expect_contains(class(p), "ggplot")
 
-  # Visual regression test
   vdiffr::expect_doppelganger("speed-optimised-edge-buffers", p)
 })
 
@@ -312,13 +290,11 @@ test_that("buffers work with different palette options", {
   )
   buffered_result <- add_buffers(result, type = "edge")
 
-  # Test with colour blind palette
   p_cb <- autoplot(buffered_result, palette = "colour blind")
   expect_s3_class(p_cb, "ggplot")
 
   vdiffr::expect_doppelganger("buffers-colourblind-palette", p_cb)
 
-  # Test with plasma palette
   p_plasma <- autoplot(buffered_result, palette = "plasma")
   expect_s3_class(p_plasma, "ggplot")
 
@@ -370,18 +346,14 @@ test_that("create_buffers maintains treatment positions correctly", {
     seed = 42
   )
 
-  # Add edge buffers
   result_buffered <- add_buffers(result, type = "edge")
 
-  # Extract non-buffer treatments
   non_buffers <- result_buffered$design[
     result_buffered$design$treatment != "buffer",
   ]
 
-  # Check that we have the same number of treatments
   expect_equal(nrow(non_buffers), nrow(result$design_df))
 
-  # Check that all original treatments are present
   expect_setequal(non_buffers$treatment, result$design_df$treatment)
 })
 
@@ -400,7 +372,6 @@ test_that("multiple buffer types can be visualized", {
     seed = 42
   )
 
-  # Test different buffer types
   buffer_types <- c("edge", "row", "column", "double row", "double column")
 
   for (type in buffer_types) {
@@ -457,7 +428,6 @@ test_that("buffers work with rotation and size parameters", {
   )
   buffered_result <- add_buffers(result, type = "edge")
 
-  # Test with rotation
   p_rotated <- autoplot(buffered_result, rotation = 45, size = 3)
   expect_s3_class(p_rotated, "ggplot")
 
@@ -483,13 +453,11 @@ test_that("hierarchical designs can have buffers added", {
     seed = 42
   )
 
-  # Add buffers to hierarchical design
   buffered_result <- add_buffers(result, type = "edge")
 
   expect_true(inherits(buffered_result, "design"))
   expect_true("buffer" %in% buffered_result$design$subplot_treatment)
 
-  # Test plotting
   expect_no_error({
     p_wp <- autoplot(buffered_result, treatments = "wholeplot_treatment")
     p_sp <- autoplot(
@@ -518,7 +486,6 @@ test_that("buffers are displayed as white in plots", {
 
   p <- autoplot(buffered_result)
 
-  # Extract plot data to verify buffer color
   plot_build <- ggplot2::ggplot_build(p)
   fill_colors <- unique(plot_build$data[[1]]$fill)
 
@@ -580,7 +547,6 @@ test_that("buffers work correctly with early stopping", {
     seed = 42
   )
 
-  # Add buffers to early-stopped design
   buffered_result <- add_buffers(result, type = "edge")
 
   expect_true(inherits(buffered_result, "design"))
@@ -589,7 +555,6 @@ test_that("buffers work correctly with early stopping", {
 })
 
 test_that("add_buffers handles design objects that are lists", {
-  # Create a design object that's a list
   df <- data.frame(
     row = rep(1:3, each = 3),
     col = rep(1:3, times = 3),
@@ -602,7 +567,6 @@ test_that("add_buffers handles design objects that are lists", {
   )
   class(design_obj) <- c("design", "list")
 
-  # Should handle the list structure correctly
   result <- add_buffers(design_obj, type = "edge")
 
   expect_true(inherits(result, "design"))
@@ -622,7 +586,6 @@ test_that("add_buffers works with different buffer types", {
   )
   class(design_obj) <- "design"
 
-  # Test different buffer types
   result_edge <- add_buffers(design_obj, type = "edge")
   result_row <- add_buffers(design_obj, type = "row")
   result_col <- add_buffers(design_obj, type = "column")
@@ -643,11 +606,9 @@ test_that("create_buffers handles design without treatment column", {
     variety = rep(c("V1", "V2"), 2) # Not named "treatment"
   )
 
-  # Call create_buffers without specifying treatment_cols
   # Should not error, but should not set any treatment values either
   result <- create_buffers(df, type = "edge", blocks = FALSE)
 
-  # Should have added buffer rows
   expect_gt(nrow(result), nrow(df))
 
   # But variety column should have NAs for buffer plots (not "buffer")
@@ -659,7 +620,6 @@ test_that("create_buffers handles design without treatment column", {
   ]
   expect_true(all(is.na(buffer_rows$variety)))
 
-  # Now test with explicit treatment_cols parameter
   result2 <- create_buffers(
     df,
     type = "edge",

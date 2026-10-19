@@ -123,7 +123,6 @@ test_that("adjacency_score_vec applies per-ring weights", {
   )
   ring_2_only <- weighted - unweighted
 
-  # check if there are matches
   expect_true(any(ring_2_only > 0))
   # ring 2 contribution is scaled by (10 - 1) = 9 per matching neighbour
   expect_true(all(ring_2_only %% 9 == 0))
@@ -186,6 +185,31 @@ test_that("calculate_adjacency_score with identity relationship matches default"
     ),
     calculate_adjacency_score(design, "swap")
   )
+})
+
+test_that("calculate_adjacency_score matches identity relationship across rings", {
+  treatments <- paste0("T", 1:4)
+  d <- initialise_design_df(treatments, 6, 8, 3, 4)
+  d$treatment <- sample(d$treatment)
+  rel_mat <- diag(4)
+  dimnames(rel_mat) <- list(treatments, treatments)
+
+  for (ring_type in c("manhattan", "chebyshev")) {
+    args <- list(
+      d,
+      "treatment",
+      ring_dists = 1:2,
+      ring_weights = c(1, 0.3),
+      ring_type = ring_type
+    )
+    expect_equal(
+      do.call(calculate_adjacency_score, args),
+      do.call(
+        calculate_adjacency_score,
+        c(args, list(relationship = prep_relationship(rel_mat)))
+      )
+    )
+  }
 })
 
 test_that("prep_relationship validates input", {

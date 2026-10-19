@@ -9,6 +9,12 @@
 #' @param swap_all_blocks Whether to perform swaps in all blocks or just one
 #' @param swap_all Whether to swap all matching items or a single item at a time
 #'   (default: FALSE)
+#' @param linked_cols Character vector of column names moved in lockstep with
+#'   the `swap` column, so that a value paired with a treatment stays paired with
+#'   it. `NULL` (default) moves the `swap` column alone.
+#' @param swappable Groups a swap can be proposed in, as returned in the
+#'   `swappable` element of [swappable_groups()]. `NULL` (default) considers
+#'   every group, which costs an iteration whenever an unswappable one is drawn.
 #'
 #' @return A list with the updated design after swapping and information about
 #'   swapped items
@@ -20,107 +26,226 @@ generate_neighbour <- function(design,
                                swap_within,
                                swap_count = getOption("speed.swap_count", 1),
                                swap_all_blocks = getOption("speed.swap_all_blocks", FALSE),
-                               swap_all = FALSE) {
+                               swap_all = FALSE,
+                               linked_cols = NULL,
+                               swappable = NULL) {
   if (swap_all) {
-    return(generate_multi_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks))
+    return(generate_multi_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks, linked_cols,
+                                         swappable))
   } else {
-    return(generate_single_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks))
+    return(generate_single_swap_neighbour(design, swap, swap_within, swap_count, swap_all_blocks, linked_cols,
+                                          swappable))
   }
+}
+
+#' Plot Rows in Each Group
+#'
+#' @description
+#' Rows with a treatment, split by group and fixed for a whole level.
+#'
+#' @inheritParams generate_neighbour
+#'
+#' @return A named list of row positions, one element per level of `swap_within`.
+#'
+#' @keywords internal
+plots_by_group <- function(design, swap, swap_within) {
+  groups <- design[[swap_within]]
+  plots <- which(!is.na(groups) & !is.na(design[[swap]]))
+  return(split(plots, groups[plots]))
+}
+
+#' Exchange Linked Columns Between Two Sets of Plots
+#'
+#' @description
+#' Moves each `linked_cols` column between `plots_1` and `plots_2` position by
+#' position, so a value paired with a treatment follows it. The two sets are
+#' always the same length: trivially so for a single swap, and for `swap_all`
+#' because only treatments of equal replication are exchanged.
+#'
+#' @param design Data frame containing the current design
+#' @param linked_cols Character vector of column names to exchange
+#' @param plots_1,plots_2 Equal-length vectors of row positions
+#'
+#' @return `design`, with the linked columns exchanged
+#'
+#' @keywords internal
+exchange_linked <- function(design, linked_cols, plots_1, plots_2) {
+  # Per column rather than a data frame `[<-`, which benchmarks slower
+  for (col in linked_cols) {
+    held <- design[[col]][plots_1]
+    design[[col]][plots_1] <- design[[col]][plots_2]
+    design[[col]][plots_2] <- held
+  }
+
+  return(design)
+}
+
+#' Groups Where a Swap Can Still Be Proposed
+#'
+#' @description
+#' A group can only be rearranged if it holds two exchangeable treatments.
+#' Whether it does is fixed for the whole of a level, because a level's swaps
+#' permute treatments within a group and so change neither the number of
+#' distinct treatments nor their replication counts. It is therefore settled
+#' once per level rather than rediscovered by sampling.
+#'
+#' @inheritParams generate_neighbour
+#'
+#' @return A list with:
+#' - **swappable** - groups holding an exchangeable pair.
+#' - **unequal_replication** - groups where `swap_all = TRUE` rules out every
+#'   pair, because no two treatments there share a replication count. Kept
+#'   separate from the rest of the unswappable groups because, unlike a group
+#'   holding a single treatment, it is rarely what was intended.
+#'
+#' @keywords internal
+swappable_groups <- function(design, swap, swap_within, swap_all) {
+  # One pass over the design rather than a scan per group. Splitting on the
+  # factor keeps every level, so a level the data no longer uses arrives empty
+  # and falls out below rather than being dropped silently.
+  all_plots <- plots_by_group(design, swap, swap_within)
+  treatments <- as.character(design[[swap]])
+  by_group <- lapply(all_plots, function(plots) return(treatments[plots]))
+  counts <- lapply(by_group, function(x) return(as.integer(table(x))))
+
+  # Two distinct treatments are the minimum for any exchange, which also rules
+  # out groups holding fewer than two plots and levels holding none
+  exchangeable <- lengths(counts) >= 2
+
+  # `swap_all` exchanges every plot of one treatment for every plot of another,
+  # so the two treatments must be equally replicated
+  unequal <- exchangeable &
+    swap_all &
+    !vapply(counts, function(x) return(any(duplicated(x))), logical(1))
+
+  return(list(
+    swappable = all_plots[exchangeable & !unequal],
+    unequal_replication = names(by_group)[unequal]
+  ))
+}
+
+#' Warn About Groups No `swap_all` Swap Can Reach
+#'
+#' @description
+#' Reported per level rather than up front, because
+#' [.verify_swap_all_replication()] has already errored on unequal replication at
+#' the first level. This can only arise where an earlier level's swaps have
+#' unbalanced a group cutting across theirs.
+#'
+#' @param unequal Group names, as returned in the `unequal_replication` element
+#'   of [swappable_groups()].
+#' @param level Name of the level being optimised.
+#' @param swap_within Column name grouping the swaps at that level.
+#'
+#' @return `NULL`, invisibly.
+#'
+#' @keywords internal
+.warn_unequal_replication <- function(unequal, level, swap_within) {
+  if (length(unequal) == 0) {
+    return(invisible(NULL))
+  }
+
+  warning(
+    "No treatments could be swapped at level '",
+    level,
+    "' within '",
+    swap_within,
+    "' group ",
+    unequal[1],
+    if (length(unequal) > 1) {
+      paste0(", and in ", length(unequal) - 1, " other group(s)")
+    } else {
+      ""
+    },
+    ", because `swap_all = TRUE` only exchanges treatments with equal ",
+    "replication and no two treatments there share a replication count.",
+    " Those groups were left unchanged.",
+    call. = FALSE
+  )
+
+  return(invisible(NULL))
 }
 
 #' Generate neighbour for simple (non-hierarchical) designs
 #' @keywords internal
 # fmt: skip
-generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks) {
-  new_design <- design
-
-  # Get unique blocks
-  all_blocks <- design[[swap_within]]
-  blocks <- levels(all_blocks)
-
-  if (swap_all_blocks) {
-    # Swap in all blocks
-    blocks_to_swap <- blocks
-  } else {
-    # Pick a random block
-    blocks_to_swap <- sample(blocks, 1)
+generate_single_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks,
+                                           linked_cols = NULL, swappable = NULL) {
+  # Only groups a swap can be proposed in, so no iteration is spent on one that
+  # cannot move. Settled once per level by `swappable_groups()`.
+  swappable <- swappable %||% plots_by_group(design, swap, swap_within)
+  if (!swap_all_blocks) {
+    swappable <- swappable[sample.int(length(swappable), 1)]
   }
 
-  swapped_idx <- 1
-  swapped_items <- character(2 * swap_count * length(blocks_to_swap))
+  # Swapped as integer codes, sparing the label matching of factor `[<-` and `==`
+  items <- design[[swap]]
+  codes <- unclass(items)
+  swapped <- integer(2 * swap_count * length(swappable))
+  n_swapped <- 0L
 
-  # Perform swaps in selected blocks
-  for (block in blocks_to_swap) {
-    # Get indices of plots in this block
-    block_indices <- which(all_blocks == block & !is.na(all_blocks) & !is.na(design[[swap]]))
+  for (plots in swappable) {
+    # Need at least 2 plots to swap
+    if (length(plots) < 2) {
+      next
+    }
 
-    if (length(block_indices) >= 2) {
-      # Need at least 2 plots to swap
-      for (i in 1:swap_count) {
-        # Select two random plots in this block
-        swap_pair <- sample(block_indices, 2)
-        to_be_swapped <- new_design[[swap]][swap_pair]
+    for (i in seq_len(swap_count)) {
+      pair <- plots[sample.int(length(plots), 2)]
+      code_1 <- codes[pair[1]]
+      code_2 <- codes[pair[2]]
 
-        # If both plots have the same treatment, try to find a different one
-        if (to_be_swapped[1] == to_be_swapped[2]) {
-          different_indices <- block_indices[new_design[[swap]][block_indices] != to_be_swapped[1]]
-
-          # Only proceed with swap if different treatments are available
-          if (length(different_indices) > 0) {
-            swap_pair[[2]] <- sample(different_indices, 1)
-            to_be_swapped[2] <- new_design[[swap]][[swap_pair[[2]]]]
-          } else {
-            # Skip this swap - no different treatments available
-            to_be_swapped <- NULL
-          }
+      # If both plots have the same treatment, try to find a different one
+      if (code_1 == code_2) {
+        different <- plots[codes[plots] != code_1]
+        if (length(different) == 0) {
+          next
         }
 
-        # Perform the swap only if we have valid treatments to swap
-        if (!is.null(to_be_swapped)) {
-          new_design[[swap]][rev(swap_pair)] <- to_be_swapped
-          swapped_items[swapped_idx:(swapped_idx + 1)] <- to_be_swapped
-          swapped_idx <- swapped_idx + 2
-        }
+        pair[2] <- different[sample.int(length(different), 1)]
+        code_2 <- codes[pair[2]]
       }
+
+      codes[pair] <- c(code_2, code_1)
+      design <- exchange_linked(design, linked_cols, pair[1], pair[2])
+      swapped[n_swapped + 1:2] <- c(code_1, code_2)
+      n_swapped <- n_swapped + 2L
     }
   }
 
-  return(list(design = new_design, swapped_items = swapped_items))
+  attributes(codes) <- attributes(items)
+  design[[swap]] <- codes
+
+  return(list(design = design, swapped_items = levels(items)[swapped[seq_len(n_swapped)]]))
 }
 
 #' Generate neighbour for sequential or hierarchical designs
 #' @keywords internal
 # fmt: skip
-generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks) {
-  new_design <- design
-
-  # Get unique groups for this level
-  groups <- levels(design[[swap_within]])
-
-  if (swap_all_blocks) {
-    # Swap in all groups
-    groups_to_swap <- groups
-  } else {
-    # Pick a random group
-    groups_to_swap <- sample(groups, 1)
+generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count, swap_all_blocks,
+                                          linked_cols = NULL, swappable = NULL) {
+  # Settled once per level by `swappable_groups()`
+  swappable <- swappable %||% plots_by_group(design, swap, swap_within)
+  if (!swap_all_blocks) {
+    swappable <- swappable[sample.int(length(swappable), 1)]
   }
 
-  swapped_idx <- 1
-  swapped_items <- character(2 * swap_count * length(groups_to_swap))
+  # Swapped as integer codes, sparing the label matching of factor `[<-` and `==`
+  items <- design[[swap]]
+  codes <- unclass(items)
+  swapped <- integer(2 * swap_count * length(swappable))
+  n_swapped <- 0L
 
-  # Perform swaps in selected groups
-  for (group in groups_to_swap) {
-    # Get unique treatments within this group
-    group_filter <- new_design[[swap_within]] == group & !is.na(new_design[[swap_within]])
-    group_data <- new_design[group_filter & !is.na(new_design[[swap]]), ]
-    group_treatments <- unique(group_data[[swap]])
+  for (plots in swappable) {
+    group_codes <- codes[plots]
+    group_treatments <- unique(group_codes)
 
     # Counted once: every swap below exchanges equally replicated treatments, so
     # these counts are unaffected by them
-    group_counts <- tabulate(match(group_data[[swap]], group_treatments), length(group_treatments))
+    group_counts <- tabulate(match(group_codes, group_treatments), length(group_treatments))
 
-    if (nrow(group_data) >= 2) {
-      for (i in 1:swap_count) {
+    if (length(plots) >= 2) {
+      for (i in seq_len(swap_count)) {
         # Only proceed if there are at least 2 different treatments
         if (length(group_treatments) < 2) {
           # Skip this swap - only one treatment in this group
@@ -135,7 +260,8 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
           replications <- table(group_counts)
           replications <- replications[replications >= 2]
 
-          # No two treatments share a replication, so nothing can be exchanged
+          # No two treatments share a replication, so nothing can be exchanged.
+          # `swappable_groups()` has already reported this group to the caller.
           if (length(replications) == 0) {
             next
           }
@@ -149,26 +275,28 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
           eligible <- group_treatments[group_counts == as.integer(chosen)]
         }
 
-        # Select two different treatments
-        # Use sample with replace=FALSE to ensure they're different
-        swap_pair <- sample(eligible, 2, replace = FALSE)
+        # Two different treatments; `eligible` always holds at least two here
+        swap_pair <- eligible[sample.int(length(eligible), 2)]
 
-        # Find all plots with these treatments in this group
-        plots_1 <- which(group_filter & new_design[[swap]] == swap_pair[1])
-        plots_2 <- which(group_filter & new_design[[swap]] == swap_pair[2])
+        # Every plot of each treatment in this group
+        group_codes <- codes[plots]
+        plots_1 <- plots[group_codes == swap_pair[1]]
+        plots_2 <- plots[group_codes == swap_pair[2]]
 
-        # Swap all instances of these treatments
-        new_design[[swap]][plots_1] <- swap_pair[2]
-        new_design[[swap]][plots_2] <- swap_pair[1]
+        codes[plots_1] <- swap_pair[2]
+        codes[plots_2] <- swap_pair[1]
+        design <- exchange_linked(design, linked_cols, plots_1, plots_2)
 
-        swapped_items[swapped_idx] <- swap_pair[1]
-        swapped_items[swapped_idx + 1] <- swap_pair[2]
-        swapped_idx <- swapped_idx + 2
+        swapped[n_swapped + 1:2] <- swap_pair
+        n_swapped <- n_swapped + 2L
       }
     }
   }
 
-  return(list(design = new_design, swapped_items = swapped_items[1:(swapped_idx - 1)]))
+  attributes(codes) <- attributes(items)
+  design[[swap]] <- codes
+
+  return(list(design = design, swapped_items = levels(items)[swapped[seq_len(n_swapped)]]))
 }
 
 #' Infer 'row' and 'col' with Patterns
@@ -190,7 +318,13 @@ generate_multi_swap_neighbour <- function(design, swap, swap_within, swap_count,
 #' @keywords internal
 # fmt: skip
 infer_row_col <- function(layout_df, grid_factors = list(dim1 = "row", dim2 = "col"), quiet = FALSE) {
-  if (grid_factors$dim1 %in% names(layout_df) && grid_factors$dim2 %in% names(layout_df)) {
+  # Direct callers bypass `.verify_grid_factors()`, so fall back to the name
+  # patterns below rather than indexing a malformed `grid_factors`.
+  named_dims <- is.list(grid_factors) &&
+    all(c("dim1", "dim2") %in% names(grid_factors)) &&
+    all(lengths(grid_factors[c("dim1", "dim2")]) == 1)
+
+  if (named_dims && grid_factors$dim1 %in% names(layout_df) && grid_factors$dim2 %in% names(layout_df)) {
     row_col <- grid_factors$dim1
     col_col <- grid_factors$dim2
     if (!quiet) {
@@ -571,22 +705,83 @@ initialise_multiple_designs_df <- function(items, designs, design_col) {
 
 #' Shuffle Items in A Group
 #'
+#' @description
+#' A shuffle has to move what the search moves, or it starts the search from a
+#' design the search itself could never reach. `swap_all` exchanges whole sets
+#' of like-treatment plots, so it shuffles treatment labels between those sets;
+#' a single swap exchanges plots, so it shuffles the plots.
+#'
 #' @inheritParams generate_neighbour
 #' @inheritParams speed
+#' @param groups Factor giving the group each plot is shuffled within.
 #'
 #' @return A data frame with the items shuffled
 #'
 #' @keywords internal
 # fmt: skip
-shuffle_items <- function(design, swap, swap_within, seed = NULL) {
+shuffle_items <- function(design, swap, groups, seed = NULL, linked_cols = NULL, swap_all = FALSE) {
   if (!is.null(seed)) {
     set.seed(seed)
   }
 
-  for (i in levels(design[[swap_within]])) {
-    swap_within_filter <- design[[swap_within]] == i & !is.na(design[[swap_within]])
-    items <- design[swap_within_filter, ][[swap]]
-    design[swap_within_filter, ][[swap]] <- sample(items)
+  movable <- !is.na(design[[swap]])
+
+  if (isTRUE(swap_all)) {
+    return(shuffle_item_sets(design, swap, groups, linked_cols, movable))
+  }
+
+  return(shuffle_single_items(design, swap, groups, linked_cols, movable))
+}
+
+#' Shuffle one plot at a time within each group
+#' @inheritParams shuffle_items
+#' @param movable Logical vector marking the plots free to move.
+#' @keywords internal
+shuffle_single_items <- function(design, swap, groups, linked_cols, movable) {
+  for (group in levels(groups)) {
+    # A plot in no group drops out: `NA == group` is `NA`, which `which()` drops
+    plots <- which(groups == group & movable)
+    permuted <- plots[sample.int(length(plots))]
+    design[[swap]][plots] <- design[[swap]][permuted]
+    for (col in linked_cols) {
+      # The same permutation, so a linked value stays with its treatment
+      design[[col]][plots] <- design[[col]][permuted]
+    }
+  }
+
+  return(design)
+}
+
+#' Shuffle whole sets of like-treatment plots within each group
+#' @inheritParams shuffle_single_items
+#' @keywords internal
+shuffle_item_sets <- function(design, swap, groups, linked_cols, movable) {
+  # Read upfront, so a linked value is taken from the plots a treatment came
+  # from rather than from ones already written to
+  linked <- design[linked_cols]
+
+  for (group in levels(groups)) {
+    plots <- which(groups == group & movable)
+    labels <- as.character(design[[swap]][plots])
+    treatments <- unique(labels)
+    counts <- tabulate(match(labels, treatments), length(treatments))
+
+    # shuffle within groups of equal reps
+    for (eligible in split(treatments, counts)) {
+      if (length(eligible) < 2) {
+        next
+      }
+
+      permuted <- sample(eligible)
+      held_by <- lapply(eligible, function(label) return(plots[labels == label]))
+      for (i in seq_along(eligible)) {
+        design[[swap]][held_by[[i]]] <- permuted[i]
+        from <- held_by[[match(permuted[i], eligible)]]
+        for (col in linked_cols) {
+          design[[col]][held_by[[i]]] <- linked[[col]][from]
+        }
+      }
+    }
   }
 
   return(design)
@@ -608,37 +803,32 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
     return(design)
   }
 
-  if (length(optimise) > 1) {
-    groups <- c()
-    for (i in seq_along(optimise)) {
-      groups <- c(groups, optimise[[i]]$swap_within)
-      if (i == 1) {
-        next
-      }
-
-      now <- as.numeric(Sys.time())
-      dummy_col <- paste0(paste(groups, collapse = "_"), "_", now)
-      optimise[[i]]$swap_within <- dummy_col
-      design[[dummy_col]] <- apply(
-        design[, groups],
-        1,
-        paste,
-        collapse = "-"
-      ) |>
-        factor()
-    }
-  }
+  # A level shuffles within its own groups and every earlier level's, so a later
+  # shuffle cannot undo the grouping an earlier one kept.
+  swap_within <- vapply(
+    optimise,
+    function(opt) return(opt$swap_within),
+    character(1)
+  )
+  groups <- lapply(seq_along(optimise), function(i) {
+    return(interaction(design[swap_within[seq_len(i)]], drop = TRUE))
+  })
 
   best_score <- Inf
   best_design <- design
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
   for (i in seq_len(random_initialisation)) {
     shuffled_design <- design
-    for (opt in optimise) {
+    for (level in seq_along(optimise)) {
+      opt <- optimise[[level]]
       shuffled_design <- shuffle_items(
         shuffled_design,
         opt$swap,
-        opt$swap_within,
-        seed + i - 1
+        groups[[level]],
+        linked_cols = opt$linked_cols,
+        swap_all = opt$swap_all
       )
     }
 
@@ -667,10 +857,6 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
       best_score <- current_score
       best_design <- shuffled_design
     }
-  }
-
-  for (opt in optimise[-1]) {
-    best_design[[opt$swap_within]] <- NULL
   }
 
   return(best_design)

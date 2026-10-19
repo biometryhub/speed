@@ -27,7 +27,7 @@ objective_function_piepho(
 
 \item{current_score_obj}{A named list containing the current score}
 
-\item{swapped_items}{The items that had just been swapped}
+\item{swapped_items}{Items swapped after \code{current_score_obj} (default: \code{NULL})}
 
 \item{pair_mapping}{A named vector of pairs generated from \link{create_pair_mapping}}
 
