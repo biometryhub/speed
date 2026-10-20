@@ -116,30 +116,39 @@ two_d_design <- function() {
   ))
 }
 
-autoplot_2d <- function(df, title = NULL) {
+# `hl_dupes` dims plots that are neither adjacent nor off-balance
+autoplot_2d <- function(df, hl_dupes = TRUE) {
   rows <- autoplot_bench(df, block = "row_block")
   cols <- autoplot_bench(df, block = "col_block")
+  if (hl_dupes) {
+    design_df <- if (is.data.frame(df)) df else df$design_df
+    rows <- hl_tiles(
+      rows,
+      design_df,
+      flag_hl(design_df, "treatment", "row_block")
+    )
+    cols <- hl_tiles(
+      cols,
+      design_df,
+      flag_hl(design_df, "treatment", "col_block")
+    )
+  }
 
-  return(
-    rows +
-      cols +
-      patchwork::plot_layout(ncol = 2) +
-      patchwork::plot_annotation(
-        title = title,
-        theme = theme(plot.title = element_text(hjust = 0.5))
-      )
-  )
+  return(rows + cols + patchwork::plot_layout(ncol = 2))
 }
 
 explore_two_d <- function() {
+  width <- 16
+  height <- width / 2
+
   ggsave(
     bench_out("layout-2d-block.pdf"),
     autoplot_2d(as_design(df_initial_2d)),
-    width = 6,
-    height = 3
+    width = width,
+    height = height
   )
 
-  speed_result <- bench_speed_2d()
+  speed_result <- bench_speed_2d(1)
   design_df <- speed_result$design_df
   print(get_metrics(design_df, c("col_block", "row_block")))
   print(efficiency(design_df, "treatment", units_2d))
@@ -153,12 +162,12 @@ explore_two_d <- function() {
 
   ggsave(
     bench_out("speed-2d-block.pdf"),
-    autoplot_2d(as_design(design_df), "speed"),
-    width = 6,
-    height = 3
+    autoplot_2d(as_design(design_df)),
+    width = width,
+    height = height
   )
 
-  df_digger <- digger_2d_df()
+  df_digger <- digger_2d_df(1)
   print(get_metrics(df_digger, c("col_block", "row_block")))
   print(efficiency(df_digger, "treatment", units_2d))
   # Source.units   df1 Source.treatments df2 aefficiency eefficiency order
@@ -171,9 +180,9 @@ explore_two_d <- function() {
 
   ggsave(
     bench_out("digger-2d-block.pdf"),
-    autoplot_2d(as_design(df_digger), "DiGGer"),
-    width = 6,
-    height = 3
+    autoplot_2d(as_design(df_digger)),
+    width = width,
+    height = height
   )
 
   df_odw <- bench_odw_2d()$design
@@ -182,9 +191,9 @@ explore_two_d <- function() {
 
   ggsave(
     bench_out("odw-2d-block.pdf"),
-    autoplot_2d(as_design(df_odw), "ODW"),
-    width = 6,
-    height = 3
+    autoplot_2d(as_design(df_odw)),
+    width = width,
+    height = height
   )
 
   return(invisible(NULL))

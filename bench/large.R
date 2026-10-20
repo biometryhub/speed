@@ -102,12 +102,20 @@ large_design <- function() {
   ))
 }
 
+# `hl_dupes` dims plots that are neither adjacent nor off-balance
+autoplot_large <- function(df, hl_dupes = TRUE) {
+  return(autoplot_hl(df, c("row", "col", "block"), hl_dupes))
+}
+
 explore_large <- function() {
+  width <- 6
+  height <- 6
+
   ggsave(
     bench_out("layout-large.pdf"),
-    autoplot_bench(as_design(df_initial_large)),
-    width = 6,
-    height = 6
+    autoplot_large(as_design(df_initial_large)),
+    width = width,
+    height = height
   )
 
   speed_result <- bench_speed_large()
@@ -126,9 +134,9 @@ explore_large <- function() {
 
   ggsave(
     bench_out("speed-large.pdf"),
-    autoplot_bench(speed_result) + ggtitle("speed"),
-    width = 6,
-    height = 6
+    autoplot_large(speed_result),
+    width = width,
+    height = height
   )
 
   df_digger <- digger_large_df()
@@ -143,9 +151,9 @@ explore_large <- function() {
 
   ggsave(
     bench_out("digger-large.pdf"),
-    autoplot_bench(as_design(df_digger)) + ggtitle("DiGGer"),
-    width = 6,
-    height = 6
+    autoplot_large(as_design(df_digger)),
+    width = width,
+    height = height
   )
 
   df_odw <- bench_odw_large()$design
@@ -162,9 +170,9 @@ explore_large <- function() {
 
   ggsave(
     bench_out("odw-large.pdf"),
-    autoplot_bench(as_design(df_odw)) + ggtitle("ODW"),
-    width = 6,
-    height = 6
+    autoplot_large(as_design(df_odw)),
+    width = width,
+    height = height
   )
 
   return(invisible(NULL))

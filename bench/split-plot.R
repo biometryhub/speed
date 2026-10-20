@@ -207,30 +207,39 @@ split_design <- function() {
   ))
 }
 
-autoplot_split <- function(df, title = NULL) {
+# `hl_dupes` bolds labels of adjacent or off-balance plots
+autoplot_split <- function(df, hl_dupes = TRUE) {
   whole <- autoplot_bench(df, treatments = "wholeplot_treatment")
   sub <- autoplot_bench(
     df,
     treatments = "subplot_treatment",
     block = "wholeplot"
   )
-  return(
-    whole +
-      sub +
-      patchwork::plot_layout(ncol = 2) +
-      patchwork::plot_annotation(
-        title = title,
-        theme = theme(plot.title = element_text(hjust = 0.5))
-      )
-  )
+  if (hl_dupes) {
+    design_df <- if (is.data.frame(df)) df else df$design_df
+    whole <- hl_tiles(
+      whole,
+      design_df,
+      flag_hl(design_df, "wholeplot_treatment", "block", "wholeplot")
+    )
+    sub <- hl_tiles(
+      sub,
+      design_df,
+      flag_hl(design_df, "subplot_treatment", c("wholeplot", "col"))
+    )
+  }
+  return(whole + sub + patchwork::plot_layout(ncol = 2))
 }
 
 explore_split <- function() {
+  width <- 4
+  height <- 5.4
+
   ggsave(
     bench_out("layout-split.pdf"),
     autoplot_split(as_design(df_initial_split)),
-    width = 4,
-    height = 6
+    width = width,
+    height = height
   )
 
   speed_result <- bench_speed_split(1)
@@ -245,9 +254,9 @@ explore_split <- function() {
 
   ggsave(
     bench_out("speed-split.pdf"),
-    autoplot_split(speed_result, "speed"),
-    width = 4,
-    height = 6
+    autoplot_split(speed_result),
+    width = width,
+    height = height
   )
 
   df_digger <- digger_split_df(1)
@@ -261,9 +270,9 @@ explore_split <- function() {
 
   ggsave(
     bench_out("digger-split.pdf"),
-    autoplot_split(as_design(df_digger), "DiGGer"),
-    width = 4,
-    height = 6
+    autoplot_split(as_design(df_digger)),
+    width = width,
+    height = height
   )
 
   df_odw <- odw_split_df()
@@ -277,9 +286,9 @@ explore_split <- function() {
 
   ggsave(
     bench_out("odw-split.pdf"),
-    autoplot_split(as_design(df_odw), "ODW"),
-    width = 4,
-    height = 6
+    autoplot_split(as_design(df_odw)),
+    width = width,
+    height = height
   )
 
   return(invisible(NULL))

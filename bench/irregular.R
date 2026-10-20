@@ -206,11 +206,14 @@ irr_design <- function() {
 }
 
 explore_irr <- function() {
+  width <- 8
+  height <- 5
+
   ggsave(
     bench_out("layout-irr.pdf"),
     autoplot_irr(df_initial_irr),
-    width = 8,
-    height = 5
+    width = width,
+    height = height
   )
 
   design_df <- bench_speed_irr()$design_df
@@ -227,9 +230,9 @@ explore_irr <- function() {
 
   ggsave(
     bench_out("speed-irr.pdf"),
-    autoplot_irr(design_df, "speed"),
-    width = 8,
-    height = 5
+    autoplot_irr(design_df),
+    width = width,
+    height = height
   )
 
   digger_result_irr <- bench_digger_irr()
@@ -250,9 +253,9 @@ explore_irr <- function() {
 
   ggsave(
     bench_out("digger-irr.pdf"),
-    autoplot_irr(digger_result_irr, "DiGGer"),
-    width = 8,
-    height = 5
+    autoplot_irr(digger_result_irr),
+    width = width,
+    height = height
   )
 
   odw_result_irr <- bench_odw_irr()
@@ -270,9 +273,9 @@ explore_irr <- function() {
 
   ggsave(
     bench_out("odw-irr.pdf"),
-    autoplot_irr(odw_result_irr, "ODW"),
-    width = 8,
-    height = 5
+    autoplot_irr(odw_result_irr),
+    width = width,
+    height = height
   )
 
   return(invisible(NULL))

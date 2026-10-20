@@ -96,6 +96,11 @@ small_design <- function() {
   ))
 }
 
+# `hl_dupes` dims plots that are neither adjacent nor off-balance
+autoplot_small <- function(df, hl_dupes = TRUE) {
+  return(autoplot_hl(df, c("row", "col", "block"), hl_dupes))
+}
+
 explore_small <- function() {
   df_layout <- df_initial_small
   df_layout$plot_in_block <- df_initial_small$treatment
@@ -122,7 +127,7 @@ explore_small <- function() {
 
   ggsave(
     bench_out("speed-small.pdf"),
-    autoplot_bench(speed_result),
+    autoplot_small(speed_result),
     width = 480,
     height = 1080,
     units = "px",
@@ -142,7 +147,7 @@ explore_small <- function() {
 
   ggsave(
     bench_out("digger-small.pdf"),
-    autoplot_bench(as_design(df_digger)),
+    autoplot_small(as_design(df_digger)),
     width = 480,
     height = 500,
     units = "px",
@@ -162,7 +167,7 @@ explore_small <- function() {
 
   ggsave(
     bench_out("odw-small.pdf"),
-    autoplot_bench(as_design(df_odw)),
+    autoplot_small(as_design(df_odw)),
     width = 500,
     height = 500,
     units = "px",

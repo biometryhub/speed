@@ -79,6 +79,7 @@ as_design <- function(df) {
 # lightened inferno, skipping its near-black end
 bench_palette <- function(n) {
   return(colorspace::lighten(
+    # to not use too dark and too light colors
     viridisLite::inferno(n, begin = 0.15, end = 0.95),
     0.6
   ))
@@ -109,6 +110,81 @@ autoplot_bench <- function(object, treatments = "treatment", ...) {
     ) +
       theme(plot.title = element_text(hjust = 0.5))
   )
+}
+
+# plots with a like-treatment neighbour outside their own `unit`
+flag_adjacent <- function(df, treatment, unit = NULL) {
+  row <- as.integer(as.character(df$row))
+  col <- as.integer(as.character(df$col))
+  key <- paste(row, col)
+  trt <- as.character(df[[treatment]])
+  grp <- if (is.null(unit)) seq_len(nrow(df)) else as.character(df[[unit]])
+
+  flags <- logical(nrow(df))
+  for (offset in list(c(-1, 0), c(1, 0), c(0, -1), c(0, 1))) {
+    j <- match(paste(row + offset[1], col + offset[2]), key)
+    flags <- flags | (!is.na(j) & trt[j] == trt & grp[j] != grp)
+  }
+
+  return(flags)
+}
+
+# plots whose treatment exceeds its ideal count in a level of any of `factors`,
+# counting each `unit` once
+flag_dupes <- function(df, treatment, factors, unit = NULL) {
+  units <- if (is.null(unit)) df else df[!duplicated(df[[unit]]), ]
+
+  flags <- logical(nrow(df))
+  for (col in factors) {
+    tab <- table(units[[treatment]], units[[col]])
+    over <- sweep(tab, 2, ceiling(colSums(tab) / nrow(tab))) > 0
+    idx <- cbind(as.character(df[[treatment]]), as.character(df[[col]]))
+    flags <- flags | over[idx]
+  }
+
+  return(flags)
+}
+
+# plots that are adjacent or off-balance in any of `factors`
+flag_hl <- function(df, treatment, factors, unit = NULL) {
+  return(
+    flag_adjacent(df, treatment, unit) |
+      flag_dupes(df, treatment, factors, unit)
+  )
+}
+
+# dim tiles and labels of unflagged plots
+hl_tiles <- function(plot, df, flags, dim_alpha = 0.38) {
+  key <- paste(df$row, df$col)
+  for (layer in plot$layers) {
+    if (!inherits(layer$geom, c("GeomText", "GeomTile"))) {
+      next
+    }
+    # layers without their own data inherit the plot's
+    if (!is.data.frame(layer$data)) {
+      layer$data <- plot$data
+    }
+    hl <- flags[match(paste(layer$data$row, layer$data$col), key)] %in% TRUE
+    layer$aes_params$alpha <- ifelse(hl, 1, dim_alpha)
+    if (inherits(layer$geom, "GeomText")) {
+      layer$data$.fontface <- ifelse(hl, "bold", "plain")
+      layer$mapping$fontface <- rlang::quo(.data$.fontface)
+    }
+  }
+
+  return(plot + theme(panel.grid = element_blank()))
+}
+
+# autoplot_bench() dimming plots that are neither adjacent nor off-balance in
+# any of `factors`
+autoplot_hl <- function(df, factors, hl_dupes = TRUE) {
+  plot <- autoplot_bench(df)
+  if (hl_dupes) {
+    design_df <- if (is.data.frame(df)) df else df$design_df
+    plot <- hl_tiles(plot, design_df, flag_hl(design_df, "treatment", factors))
+  }
+
+  return(plot)
 }
 
 bench_objects_dir <- function() {
@@ -380,23 +456,30 @@ plot_layout_irr <- function(df, fill, title = NULL) {
   )
 }
 
-autoplot_irr <- function(df, title = NULL) {
-  sw <- plot_layout_irr(df[df$site == "sw", ], "block", "SW")
+# `hl_dupes` dims plots that are neither adjacent nor off-balance
+autoplot_irr <- function(df, hl_dupes = TRUE) {
+  is_sw <- df$site == "sw"
+  sw <- plot_layout_irr(df[is_sw, ], "block", "SW")
+  se <- plot_layout_irr(df[!is_sw, ], "block", "SE")
+  if (hl_dupes) {
+    planted <- !is.na(df$block)
+    flags <- logical(nrow(df))
+    # adjacency per site, the two share (row, col) coordinates
+    for (in_site in list(planted & is_sw, planted & !is_sw)) {
+      flags[in_site] <- flag_adjacent(df[in_site, ], "treatment")
+    }
+    flags[planted] <- flags[planted] |
+      flag_dupes(df[planted, ], "treatment", c("site_row", "site_col", "block"))
+    sw <- hl_tiles(sw, df[is_sw, ], flags[is_sw])
+    se <- hl_tiles(se, df[!is_sw, ], flags[!is_sw])
+  }
+
   sw_x <- sw$scales$get_scales("x")
   sw_x$trans <- scales::reverse_trans()
 
-  se <- plot_layout_irr(df[df$site == "se", ], "block", "SE")
   se_y <- se$scales$get_scales("y")
   se_y$position <- "right"
-  return(
-    sw +
-      se +
-      patchwork::plot_layout(ncol = 2) +
-      patchwork::plot_annotation(
-        title = title,
-        theme = theme(plot.title = element_text(size = 23, hjust = 0.5))
-      )
-  )
+  return(sw + se + patchwork::plot_layout(ncol = 2))
 }
 
 highlight_plot <- function(
