@@ -103,9 +103,12 @@ large_design <- function() {
 }
 
 explore_large <- function() {
-  png(bench_out("layout-large.png"), height = 720, width = 720)
-  print(speed::autoplot(as_design(df_initial_large)))
-  dev.off()
+  ggsave(
+    bench_out("layout-large.pdf"),
+    autoplot_bench(as_design(df_initial_large)),
+    width = 6,
+    height = 6
+  )
 
   speed_result <- bench_speed_large()
   speed_result$score
@@ -121,9 +124,12 @@ explore_large <- function() {
   # row#col      1243 treatment          249      0.8046      0.4681   249
   #                   Residual           994
 
-  png(bench_out("speed-large.png"), height = 720, width = 720)
-  speed::autoplot(speed_result)
-  dev.off()
+  ggsave(
+    bench_out("speed-large.pdf"),
+    autoplot_bench(speed_result) + ggtitle("speed"),
+    width = 6,
+    height = 6
+  )
 
   df_digger <- digger_large_df()
   print(get_metrics(df_digger, c("row", "col", "block")))
@@ -135,9 +141,12 @@ explore_large <- function() {
   # row#col      1243 treatment          249      0.7988      0.4177   249
   #                   Residual           994
 
-  png(bench_out("digger-large.png"), height = 720, width = 720)
-  speed::autoplot(as_design(df_digger))
-  dev.off()
+  ggsave(
+    bench_out("digger-large.pdf"),
+    autoplot_bench(as_design(df_digger)) + ggtitle("DiGGer"),
+    width = 6,
+    height = 6
+  )
 
   df_odw <- bench_odw_large()$design
   print(get_metrics(df_odw, c("row", "col", "block")))
@@ -151,9 +160,12 @@ explore_large <- function() {
   # row#col        361 treatment          39      0.9433      0.7756    22
   #                    Residual          322
 
-  png(bench_out("odw-large.png"), height = 720, width = 720)
-  print(speed::autoplot(as_design(df_odw)))
-  dev.off()
+  ggsave(
+    bench_out("odw-large.pdf"),
+    autoplot_bench(as_design(df_odw)) + ggtitle("ODW"),
+    width = 6,
+    height = 6
+  )
 
   return(invisible(NULL))
 }

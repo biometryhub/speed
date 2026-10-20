@@ -76,6 +76,41 @@ as_design <- function(df) {
   return(df)
 }
 
+# lightened inferno, skipping its near-black end
+bench_palette <- function(n) {
+  return(colorspace::lighten(
+    viridisLite::inferno(n, begin = 0.15, end = 0.95),
+    0.6
+  ))
+}
+
+scale_fill_bench <- function(values, ...) {
+  if (is.numeric(values)) {
+    return(scale_fill_gradientn(colours = bench_palette(256), ...))
+  }
+
+  lvls <- levels(as.factor(values))
+  return(scale_fill_manual(
+    values = stats::setNames(bench_palette(length(lvls)), lvls),
+    ...
+  ))
+}
+
+# speed::autoplot() with bench_palette()
+autoplot_bench <- function(object, treatments = "treatment", ...) {
+  df <- if (is.data.frame(object)) object else object$design_df
+  ntrt <- length(setdiff(unique(as.character(df[[treatments]])), "buffer"))
+  return(
+    speed::autoplot(
+      object,
+      treatments = !!treatments,
+      palette = bench_palette(ntrt),
+      ...
+    ) +
+      theme(plot.title = element_text(hjust = 0.5))
+  )
+}
+
 bench_objects_dir <- function() {
   return(bench_out("objects"))
 }
@@ -302,12 +337,12 @@ contrast_colour <- function(fills) {
 tile_colour <- function(values, na_colour = "grey") {
   if (is.numeric(values)) {
     colours <- scales::col_numeric(
-      viridisLite::viridis(256),
+      bench_palette(256),
       range(values, na.rm = TRUE)
     )(values)
   } else {
     values <- as.factor(values)
-    colours <- viridisLite::viridis(nlevels(values))[as.integer(values)]
+    colours <- bench_palette(nlevels(values))[as.integer(values)]
   }
   colours[is.na(colours)] <- na_colour
 
@@ -315,11 +350,8 @@ tile_colour <- function(values, na_colour = "grey") {
 }
 
 plot_layout_irr <- function(df, fill, title = NULL) {
-  scale_args <- list(na.value = "grey")
-  if (is.numeric(df[[fill]])) {
-    scale_fill <- scale_fill_viridis_c
-  } else {
-    scale_fill <- scale_fill_viridis_d
+  scale_args <- list(df[[fill]], na.value = "grey")
+  if (!is.numeric(df[[fill]])) {
     scale_args$drop <- FALSE
   }
   df$label_colour <- contrast_colour(
@@ -331,7 +363,7 @@ plot_layout_irr <- function(df, fill, title = NULL) {
       geom_tile(color = "black") +
       geom_text(aes(label = treatment, colour = label_colour), size = 5) +
       scale_colour_identity() +
-      do.call(scale_fill, scale_args) +
+      do.call(scale_fill_bench, scale_args) +
       scale_x_continuous(
         expand = c(0, 0),
         breaks = 1:max(df$col),
@@ -348,7 +380,7 @@ plot_layout_irr <- function(df, fill, title = NULL) {
   )
 }
 
-autoplot_irr <- function(df) {
+autoplot_irr <- function(df, title = NULL) {
   sw <- plot_layout_irr(df[df$site == "sw", ], "block", "SW")
   sw_x <- sw$scales$get_scales("x")
   sw_x$trans <- scales::reverse_trans()
@@ -356,5 +388,72 @@ autoplot_irr <- function(df) {
   se <- plot_layout_irr(df[df$site == "se", ], "block", "SE")
   se_y <- se$scales$get_scales("y")
   se_y$position <- "right"
-  return(sw + se + patchwork::plot_layout(ncol = 2))
+  return(
+    sw +
+      se +
+      patchwork::plot_layout(ncol = 2) +
+      patchwork::plot_annotation(
+        title = title,
+        theme = theme(plot.title = element_text(size = 23, hjust = 0.5))
+      )
+  )
+}
+
+highlight_plot <- function(
+  df,
+  fill,
+  hl = NULL,
+  label_hl = TRUE,
+  label_non_hl = FALSE
+) {
+  # non-highlighted tiles fall back to the grey na.value
+  df$col <- as.integer(df$col)
+  df$row <- as.integer(df$row)
+  df$.fill <- df[[fill]]
+  labels <- NULL
+  if (!is.null(hl)) {
+    is_hl <- df[[fill]] %in% hl
+    df$.fill[!is_hl] <- NA
+    df$.label <- as.character(df[[fill]])
+    labels <- list(
+      if (label_non_hl) {
+        geom_text(
+          aes(label = .data$.label),
+          data = df[!is_hl, ],
+          size = 2,
+          color = "black",
+          na.rm = TRUE
+        )
+      },
+      if (label_hl) {
+        geom_text(
+          aes(label = .data$.label),
+          data = df[is_hl, ],
+          size = 2,
+          color = "black",
+          na.rm = TRUE,
+          fontface = "bold"
+        )
+      }
+    )
+  }
+
+  return(
+    ggplot(df, aes(col, row, fill = .data$.fill)) +
+      geom_tile(color = "darkgray") +
+      labels +
+      scale_fill_bench(df[[fill]], na.value = "grey") +
+      scale_x_continuous(expand = c(0, 0), breaks = 1:max(as.integer(df$col))) +
+      scale_y_continuous(
+        expand = c(0, 0),
+        breaks = 1:max(as.integer(df$row)),
+        trans = scales::reverse_trans()
+      ) +
+      theme_bw() +
+      labs(fill = fill) +
+      theme(
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()
+      )
+  )
 }

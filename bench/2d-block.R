@@ -116,17 +116,28 @@ two_d_design <- function() {
   ))
 }
 
-autoplot_2d <- function(df) {
-  rows <- speed::autoplot(df, block = "row_block")
-  cols <- speed::autoplot(df, block = "col_block")
+autoplot_2d <- function(df, title = NULL) {
+  rows <- autoplot_bench(df, block = "row_block")
+  cols <- autoplot_bench(df, block = "col_block")
 
-  return(rows + cols + patchwork::plot_layout(ncol = 2))
+  return(
+    rows +
+      cols +
+      patchwork::plot_layout(ncol = 2) +
+      patchwork::plot_annotation(
+        title = title,
+        theme = theme(plot.title = element_text(hjust = 0.5))
+      )
+  )
 }
 
 explore_two_d <- function() {
-  png(bench_out("layout-2d-block.png"), height = 720, width = 1440)
-  print(autoplot_2d(as_design(df_initial_2d)))
-  dev.off()
+  ggsave(
+    bench_out("layout-2d-block.pdf"),
+    autoplot_2d(as_design(df_initial_2d)),
+    width = 6,
+    height = 3
+  )
 
   speed_result <- bench_speed_2d()
   design_df <- speed_result$design_df
@@ -140,9 +151,12 @@ explore_two_d <- function() {
   # row#col        361 treatment          99      0.8911      0.4824    33
   #                    Residual          262
 
-  png(bench_out("speed-2d-block.png"), height = 720, width = 1440)
-  print(autoplot_2d(as_design(design_df)))
-  dev.off()
+  ggsave(
+    bench_out("speed-2d-block.pdf"),
+    autoplot_2d(as_design(design_df), "speed"),
+    width = 6,
+    height = 3
+  )
 
   df_digger <- digger_2d_df()
   print(get_metrics(df_digger, c("col_block", "row_block")))
@@ -155,17 +169,23 @@ explore_two_d <- function() {
   # row#col        361 treatment          99      0.8925      0.5016    33
   #                    Residual          262
 
-  png(bench_out("digger-2d-block.png"), height = 720, width = 1440)
-  print(autoplot_2d(as_design(df_digger)))
-  dev.off()
+  ggsave(
+    bench_out("digger-2d-block.pdf"),
+    autoplot_2d(as_design(df_digger), "DiGGer"),
+    width = 6,
+    height = 3
+  )
 
-  # df_odw <- bench_odw_2d()$design
-  # print(get_metrics(df_odw, c("col_block", "row_block")))
-  # print(efficiency(df_odw, "treatment", units_2d))
-  #
-  # png(bench_out("odw-2d-block.png"), height = 720, width = 1440)
-  # print(autoplot_2d(as_design(df_odw)))
-  # dev.off()
+  df_odw <- bench_odw_2d()$design
+  print(get_metrics(df_odw, c("col_block", "row_block")))
+  print(efficiency(df_odw, "treatment", units_2d))
+
+  ggsave(
+    bench_out("odw-2d-block.pdf"),
+    autoplot_2d(as_design(df_odw), "ODW"),
+    width = 6,
+    height = 3
+  )
 
   return(invisible(NULL))
 }

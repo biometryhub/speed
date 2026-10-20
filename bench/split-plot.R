@@ -207,22 +207,33 @@ split_design <- function() {
   ))
 }
 
-autoplot_split <- function(df) {
-  whole <- speed::autoplot(df, treatments = "wholeplot_treatment")
-  sub <- speed::autoplot(
+autoplot_split <- function(df, title = NULL) {
+  whole <- autoplot_bench(df, treatments = "wholeplot_treatment")
+  sub <- autoplot_bench(
     df,
     treatments = "subplot_treatment",
     block = "wholeplot"
   )
-  return(whole + sub + patchwork::plot_layout(ncol = 2))
+  return(
+    whole +
+      sub +
+      patchwork::plot_layout(ncol = 2) +
+      patchwork::plot_annotation(
+        title = title,
+        theme = theme(plot.title = element_text(hjust = 0.5))
+      )
+  )
 }
 
 explore_split <- function() {
-  png(bench_out("layout-split.png"), height = 720, width = 480)
-  print(autoplot_split(as_design(df_initial_split)))
-  dev.off()
+  ggsave(
+    bench_out("layout-split.pdf"),
+    autoplot_split(as_design(df_initial_split)),
+    width = 4,
+    height = 6
+  )
 
-  speed_result <- bench_speed_split()
+  speed_result <- bench_speed_split(1)
   print(speed_result$score)
   split_metrics(speed_result$design_df)
   # Source.units         df1 Source.treatments   df2 aefficiency eefficiency order
@@ -232,11 +243,14 @@ explore_split <- function() {
   # col[block:wholeplot]  36 subplot_treatment     3      1.0000      1.0000     1
   #                          Residual             33
 
-  png(bench_out("speed-split.png"), height = 720, width = 480)
-  print(autoplot_split(speed_result))
-  dev.off()
+  ggsave(
+    bench_out("speed-split.pdf"),
+    autoplot_split(speed_result, "speed"),
+    width = 4,
+    height = 6
+  )
 
-  df_digger <- digger_split_df()
+  df_digger <- digger_split_df(1)
   split_metrics(df_digger)
   # Source.units         df1 Source.treatments   df2 aefficiency eefficiency order
   # block                  3
@@ -245,9 +259,12 @@ explore_split <- function() {
   # col[block:wholeplot]  36 subplot_treatment     3      1.0000      1.0000     1
   #                          Residual             33
 
-  png(bench_out("digger-split.png"), height = 720, width = 480)
-  print(autoplot_split(as_design(df_digger)))
-  dev.off()
+  ggsave(
+    bench_out("digger-split.pdf"),
+    autoplot_split(as_design(df_digger), "DiGGer"),
+    width = 4,
+    height = 6
+  )
 
   df_odw <- odw_split_df()
   split_metrics(df_odw)
@@ -258,9 +275,12 @@ explore_split <- function() {
   # col[block:wholeplot]  36 subplot_treatment     3      1.0000      1.0000     1
   #                          Residual             33
 
-  png(bench_out("odw-split.png"), height = 720, width = 480)
-  print(autoplot_split(as_design(df_odw)))
-  dev.off()
+  ggsave(
+    bench_out("odw-split.pdf"),
+    autoplot_split(as_design(df_odw), "ODW"),
+    width = 4,
+    height = 6
+  )
 
   return(invisible(NULL))
 }

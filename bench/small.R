@@ -99,9 +99,14 @@ small_design <- function() {
 explore_small <- function() {
   df_layout <- df_initial_small
   df_layout$plot_in_block <- df_initial_small$treatment
-  png(bench_out("layout-small.png"), height = 500, width = 500)
-  print(speed::autoplot(as_design(df_layout), treatments = "plot_in_block"))
-  dev.off()
+  ggsave(
+    bench_out("layout-small.pdf"),
+    autoplot_bench(as_design(df_layout), treatments = "plot_in_block"),
+    width = 500,
+    height = 500,
+    units = "px",
+    dpi = 72
+  )
 
   speed_result <- bench_speed_small()
   design_df <- speed_result$design_df
@@ -115,9 +120,14 @@ explore_small <- function() {
   # row#col       48 treatment          14      0.6160      0.2696    14
   #                  Residual           34
 
-  png(bench_out("speed-small.png"), height = 1080, width = 480)
-  print(speed::autoplot(speed_result))
-  dev.off()
+  ggsave(
+    bench_out("speed-small.pdf"),
+    autoplot_bench(speed_result),
+    width = 480,
+    height = 1080,
+    units = "px",
+    dpi = 72
+  )
 
   df_digger <- digger_small_df()
   get_metrics(df_digger, c("col", "block"))
@@ -130,9 +140,14 @@ explore_small <- function() {
   # row#col       48 treatment          14      0.6488      0.3475    14
   #                  Residual           34
 
-  png(bench_out("digger-small.png"), height = 500, width = 480)
-  print(speed::autoplot(as_design(df_digger)))
-  dev.off()
+  ggsave(
+    bench_out("digger-small.pdf"),
+    autoplot_bench(as_design(df_digger)),
+    width = 480,
+    height = 500,
+    units = "px",
+    dpi = 72
+  )
 
   df_odw <- bench_odw_small()$design
   get_metrics(df_odw, c("col", "block"))
@@ -145,9 +160,14 @@ explore_small <- function() {
   # row#col       48 treatment          14      0.6823      0.4618    14
   #                  Residual           34
 
-  png(bench_out("odw-small.png"), height = 500, width = 500)
-  print(speed::autoplot(as_design(df_odw)))
-  dev.off()
+  ggsave(
+    bench_out("odw-small.pdf"),
+    autoplot_bench(as_design(df_odw)),
+    width = 500,
+    height = 500,
+    units = "px",
+    dpi = 72
+  )
 
   return(invisible(NULL))
 }

@@ -206,9 +206,12 @@ irr_design <- function() {
 }
 
 explore_irr <- function() {
-  png(bench_out("layout-irr.png"), height = 1000, width = 1600)
-  print(autoplot_irr(df_initial_irr))
-  dev.off()
+  ggsave(
+    bench_out("layout-irr.pdf"),
+    autoplot_irr(df_initial_irr),
+    width = 8,
+    height = 5
+  )
 
   design_df <- bench_speed_irr()$design_df
   get_metrics_irr(design_df, c("site_col", "site_row", "block"))
@@ -222,9 +225,12 @@ explore_irr <- function() {
   #  row#col[site] 1013 treatment          221      0.9003      0.5465    93
   #                     Residual           792
 
-  png(bench_out("speed-irr.png"), height = 1000, width = 1600)
-  print(autoplot_irr(design_df))
-  dev.off()
+  ggsave(
+    bench_out("speed-irr.pdf"),
+    autoplot_irr(design_df, "speed"),
+    width = 8,
+    height = 5
+  )
 
   digger_result_irr <- bench_digger_irr()
   get_metrics_irr(digger_result_irr, c("site_col", "site_row", "block"))
@@ -242,9 +248,12 @@ explore_irr <- function() {
   # row#col[site] 1013 treatment          221      0.9024      0.6024    93
   #                    Residual           792
 
-  png(bench_out("digger-irr.png"), height = 1000, width = 1600)
-  print(autoplot_irr(digger_result_irr))
-  dev.off()
+  ggsave(
+    bench_out("digger-irr.pdf"),
+    autoplot_irr(digger_result_irr, "DiGGer"),
+    width = 8,
+    height = 5
+  )
 
   odw_result_irr <- bench_odw_irr()
   get_metrics_irr(odw_result_irr, c("site_col", "site_row", "block"))
@@ -259,9 +268,12 @@ explore_irr <- function() {
   # row#col[site] 1013 treatment          221      0.9032      0.5991    93
   #                    Residual           792
 
-  png(bench_out("odw-irr.png"), height = 1000, width = 1600)
-  print(autoplot_irr(odw_result_irr))
-  dev.off()
+  ggsave(
+    bench_out("odw-irr.pdf"),
+    autoplot_irr(odw_result_irr, "ODW"),
+    width = 8,
+    height = 5
+  )
 
   return(invisible(NULL))
 }
