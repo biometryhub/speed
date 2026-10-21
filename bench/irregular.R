@@ -206,8 +206,8 @@ irr_design <- function() {
 }
 
 explore_irr <- function() {
-  width <- 8
-  height <- 5
+  width <- 22
+  height <- width / 2
 
   ggsave(
     bench_out("layout-irr.pdf"),
@@ -216,7 +216,7 @@ explore_irr <- function() {
     height = height
   )
 
-  design_df <- bench_speed_irr()$design_df
+  design_df <- bench_speed_irr(1)$design_df
   get_metrics_irr(design_df, c("site_col", "site_row", "block"))
   print(efficiency(design_df, "treatment", ~ site / (block + row * col)))
   #  Source.units  df1  Source.treatments df2  aefficiency eefficiency order
@@ -235,7 +235,7 @@ explore_irr <- function() {
     height = height
   )
 
-  digger_result_irr <- bench_digger_irr()
+  digger_result_irr <- bench_digger_irr(1)
   get_metrics_irr(digger_result_irr, c("site_col", "site_row", "block"))
   print(efficiency(
     digger_result_irr,

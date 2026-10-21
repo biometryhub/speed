@@ -97,15 +97,15 @@ scale_fill_bench <- function(values, ...) {
   ))
 }
 
-# speed::autoplot() with bench_palette()
+# autoplot() with bench_palette()
 autoplot_bench <- function(object, treatments = "treatment", ...) {
   df <- if (is.data.frame(object)) object else object$design_df
-  ntrt <- length(setdiff(unique(as.character(df[[treatments]])), "buffer"))
+  n_treatments <- length(unique(df[[treatments]]))
   return(
     speed::autoplot(
       object,
       treatments = !!treatments,
-      palette = bench_palette(ntrt),
+      palette = bench_palette(n_treatments),
       ...
     ) +
       theme(plot.title = element_text(hjust = 0.5))
@@ -457,19 +457,27 @@ plot_layout_irr <- function(df, fill, title = NULL) {
 }
 
 # `hl_dupes` dims plots that are neither adjacent nor off-balance
-autoplot_irr <- function(df, hl_dupes = TRUE) {
+# `hl` bolds labels of plots whose treatment is in it
+autoplot_irr <- function(df, hl_dupes = TRUE, hl = NULL) {
   is_sw <- df$site == "sw"
   sw <- plot_layout_irr(df[is_sw, ], "block", "SW")
   se <- plot_layout_irr(df[!is_sw, ], "block", "SE")
-  if (hl_dupes) {
-    planted <- !is.na(df$block)
-    flags <- logical(nrow(df))
-    # adjacency per site, the two share (row, col) coordinates
-    for (in_site in list(planted & is_sw, planted & !is_sw)) {
-      flags[in_site] <- flag_adjacent(df[in_site, ], "treatment")
+  if (hl_dupes || !is.null(hl)) {
+    flags <- df$treatment %in% hl
+    if (hl_dupes) {
+      planted <- !is.na(df$block)
+      # adjacency per site, the two share (row, col) coordinates
+      for (in_site in list(planted & is_sw, planted & !is_sw)) {
+        flags[in_site] <- flags[in_site] |
+          flag_adjacent(df[in_site, ], "treatment")
+      }
+      flags[planted] <- flags[planted] |
+        flag_dupes(
+          df[planted, ],
+          "treatment",
+          c("site_row", "site_col", "block")
+        )
     }
-    flags[planted] <- flags[planted] |
-      flag_dupes(df[planted, ], "treatment", c("site_row", "site_col", "block"))
     sw <- hl_tiles(sw, df[is_sw, ], flags[is_sw])
     se <- hl_tiles(se, df[!is_sw, ], flags[!is_sw])
   }
@@ -480,63 +488,4 @@ autoplot_irr <- function(df, hl_dupes = TRUE) {
   se_y <- se$scales$get_scales("y")
   se_y$position <- "right"
   return(sw + se + patchwork::plot_layout(ncol = 2))
-}
-
-highlight_plot <- function(
-  df,
-  fill,
-  hl = NULL,
-  label_hl = TRUE,
-  label_non_hl = FALSE
-) {
-  # non-highlighted tiles fall back to the grey na.value
-  df$col <- as.integer(df$col)
-  df$row <- as.integer(df$row)
-  df$.fill <- df[[fill]]
-  labels <- NULL
-  if (!is.null(hl)) {
-    is_hl <- df[[fill]] %in% hl
-    df$.fill[!is_hl] <- NA
-    df$.label <- as.character(df[[fill]])
-    labels <- list(
-      if (label_non_hl) {
-        geom_text(
-          aes(label = .data$.label),
-          data = df[!is_hl, ],
-          size = 2,
-          color = "black",
-          na.rm = TRUE
-        )
-      },
-      if (label_hl) {
-        geom_text(
-          aes(label = .data$.label),
-          data = df[is_hl, ],
-          size = 2,
-          color = "black",
-          na.rm = TRUE,
-          fontface = "bold"
-        )
-      }
-    )
-  }
-
-  return(
-    ggplot(df, aes(col, row, fill = .data$.fill)) +
-      geom_tile(color = "darkgray") +
-      labels +
-      scale_fill_bench(df[[fill]], na.value = "grey") +
-      scale_x_continuous(expand = c(0, 0), breaks = 1:max(as.integer(df$col))) +
-      scale_y_continuous(
-        expand = c(0, 0),
-        breaks = 1:max(as.integer(df$row)),
-        trans = scales::reverse_trans()
-      ) +
-      theme_bw() +
-      labs(fill = fill) +
-      theme(
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()
-      )
-  )
 }

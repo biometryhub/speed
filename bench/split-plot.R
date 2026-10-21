@@ -1,14 +1,17 @@
-# Split plot: 3 wholeplot treatments x 4 subplot treatments, 12 rows, 4 columns
-n_subplot_treatments <- 4
-n_subplot_reps <- 12
-n_wholeplot_treatments <- 3
-n_wholeplot_reps <- 4
-block_nrows_split <- 3
-block_ncols_split <- 4
+# Split plot: 4 wholeplot treatments x 6 subplot treatments, 6 blocks (3x2),
+# 12 rows, 12 columns
+n_subplot_treatments <- 6
+n_subplot_reps <- 24
+n_wholeplot_treatments <- 4
+n_wholeplot_reps <- 6
+block_nrows_split <- 4
+block_ncols_split <- 6
+block_rep_dim <- c(3, 2)
 wholeplot_nrows <- 1
-wholeplot_ncols <- 4
+wholeplot_ncols <- 6
 n_rows_split <- 12
-n_cols_split <- 4
+n_cols_split <- 12
+n_wholeplot_cols <- n_cols_split / wholeplot_ncols
 odw_search <- "tabu+rw"
 
 # Hierarchical split-plot design
@@ -22,7 +25,7 @@ df_initial_split <- speed::initialise_split_design_df(
     ),
     block = list(nrows = block_nrows_split, ncols = block_ncols_split)
   ),
-  rep_dim = c(n_wholeplot_reps, 1)
+  rep_dim = block_rep_dim
 ) |>
   (function(df) df[order(df$row, df$col), ])() |>
   to_factor(
@@ -45,6 +48,7 @@ bench_speed_split <- function(seed = 112) {
       swap = "wholeplot_treatment",
       swap_within = "block",
       swap_all = TRUE,
+      spatial_factors = ~row,
       optimise_params = optim_params(bal_weight = 0),
       early_stop_iterations = 1000
     ),
@@ -60,15 +64,17 @@ bench_speed_split <- function(seed = 112) {
 }
 
 # digger - optimised separately:
-# - wholeplot treatments from a one-column design
+# - wholeplot treatments from a design with one column per wholeplot column
 # - subplot treatments from the full design with each wholeplot as a block
 bench_digger_whole_split <- function(seed = 112) {
   DiGGer::ibDiGGer(
     numberOfTreatments = n_wholeplot_treatments,
     rowsInDesign = n_rows_split,
-    columnsInDesign = 1,
-    rowsInBlock = block_nrows_split,
-    columnsInBlock = 1,
+    columnsInDesign = n_wholeplot_cols,
+    rowsInBlock = 1,
+    columnsInBlock = n_wholeplot_cols,
+    rowsInReplicate = block_nrows_split,
+    columnsInReplicate = 1,
     maxInterchanges = 1000,
     rngSeeds = rep(seed, 2)
   )
@@ -92,8 +98,11 @@ digger_split_df <- function(seed = 112) {
   whole_design <- DiGGer::getDesign(bench_digger_whole_split(seed))
   sub_design <- DiGGer::getDesign(bench_digger_sub_split(seed))
   df <- df_initial_split
-  df$wholeplot_treatment <- rep(LETTERS[c(whole_design)], each = n_cols_split)
   # digger designs are row x col matrices, df_initial_split is row-major
+  df$wholeplot_treatment <- rep(
+    LETTERS[c(t(whole_design))],
+    each = wholeplot_ncols
+  )
   df$subplot_treatment <- letters[c(t(sub_design))]
 
   return(df)
@@ -103,7 +112,7 @@ digger_split_df <- function(seed = 112) {
 df_dummy_odw <- speed::initialise_design_df(
   as.factor(rep(LETTERS[1:n_wholeplot_treatments], n_wholeplot_reps)),
   n_rows_split,
-  1,
+  n_wholeplot_cols,
   block_nrows_split,
   1
 ) |>
@@ -139,7 +148,7 @@ initial_param_table_split <- odw::odw(
   random = ~ subplot_treatment + col,
   data = df_initial_odw_split,
   permute = ~subplot_treatment,
-  swap = ~row,
+  swap = ~wholeplot,
   search = odw_search,
   start.values = TRUE
 )$vparameters.table
@@ -150,7 +159,7 @@ bench_odw_split <- function() {
     random = ~ subplot_treatment + col,
     data = df_initial_odw_split,
     permute = ~subplot_treatment,
-    swap = ~row,
+    swap = ~wholeplot,
     search = odw_search,
     G.param = initial_param_table_split,
     R.param = initial_param_table_split,
@@ -160,10 +169,10 @@ bench_odw_split <- function() {
 
 odw_split_df <- function() {
   df <- bench_odw_split()$design
-  df$wholeplot_treatment <- rep(
-    bench_odw_dummy()$design$treatment,
-    each = n_cols_split
-  )
+  # dummy design is column-major, df is row-major
+  df_whole <- bench_odw_dummy()$design
+  df_whole <- df_whole[order(df_whole$row, df_whole$col), ]
+  df$wholeplot_treatment <- rep(df_whole$treatment, each = wholeplot_ncols)
 
   return(df)
 }
@@ -232,8 +241,8 @@ autoplot_split <- function(df, hl_dupes = TRUE) {
 }
 
 explore_split <- function() {
-  width <- 4
-  height <- 5.4
+  width <- 8
+  height <- 4.4
 
   ggsave(
     bench_out("layout-split.pdf"),
