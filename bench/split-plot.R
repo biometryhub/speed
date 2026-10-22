@@ -89,7 +89,7 @@ bench_digger_sub_split <- function(seed = 112) {
     columnsInBlock = wholeplot_ncols,
     rowsInReplicate = n_rows_split,
     columnsInReplicate = 1,
-    maxInterchanges = 10000,
+    maxInterchanges = 20000,
     rngSeeds = rep(seed, 2)
   )
 }
