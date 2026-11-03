@@ -24,17 +24,12 @@ balance_state(
 \item{swapped_items}{Items swapped since \code{state} (default \code{NULL}).}
 }
 \value{
-A list with \code{score}, the item \code{codes} per plot, and per spatial
-column in \code{cols}, its level codes and sums of squares.
+A list with \code{score}, the item \code{codes} per plot, and \code{cols}, holding
+each column's level codes and sums of squares.
 }
 \description{
 Balance score of \code{\link[=calculate_balance_score]{calculate_balance_score()}} with the state needed to
-rescore only \code{swapped_items} on the next call.
-}
-\details{
-The state keeps the item codes per plot and, per spatial column, its cached
-level codes and running sums of squared counts. Spatial columns are assumed
-fixed across swaps. Plots holding a swapped item are the same before and
-after the swaps, so only those plots are recounted, under old and new codes.
+rescore only \code{swapped_items} on the next call. Plots holding a swapped
+item are recounted under the old and new item codes.
 }
 \keyword{internal}

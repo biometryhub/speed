@@ -203,20 +203,15 @@ calculate_balance_score <- function(layout_df, swap, spatial_cols) {
 #'
 #' @description
 #' Balance score of [calculate_balance_score()] with the state needed to
-#' rescore only `swapped_items` on the next call.
+#' rescore only `swapped_items` on the next call. Plots holding a swapped
+#' item are recounted under the old and new item codes.
 #'
 #' @inheritParams calculate_balance_score
 #' @param state Result of a previous call, or `NULL` to score from scratch.
 #' @param swapped_items Items swapped since `state` (default `NULL`).
 #'
-#' @details
-#' The state keeps the item codes per plot and, per spatial column, its cached
-#' level codes and running sums of squared counts. Spatial columns are assumed
-#' fixed across swaps. Plots holding a swapped item are the same before and
-#' after the swaps, so only those plots are recounted, under old and new codes.
-#'
-#' @return A list with `score`, the item `codes` per plot, and per spatial
-#'   column in `cols`, its level codes and sums of squares.
+#' @return A list with `score`, the item `codes` per plot, and `cols`, holding
+#'   each column's level codes and sums of squares.
 #'
 #' @keywords internal
 balance_state <- function(
@@ -231,17 +226,13 @@ balance_state <- function(
   codes <- as.integer(items)
   is_partial <- !is.null(state$codes) && !is.null(swapped_items)
 
-  rescored <- if (is_partial) {
-    levels(items) %in% swapped_items
-  } else {
-    rep(TRUE, n_items)
-  }
+  rescored <- !is_partial | levels(items) %in% swapped_items
   n_rescored <- sum(rescored)
   item_row <- integer(n_items)
   item_row[rescored] <- seq_len(n_rescored)
   plots <- which(rescored[codes])
 
-  # sum of squared counts of the rescored items over the levels of a column
+  # sum of squared counts of the rescored items over a column
   rescored_sq <- function(level, plot_codes, n_levels) {
     counts <- tabulate(
       level + n_levels * (item_row[plot_codes] - 1L),
@@ -250,12 +241,17 @@ balance_state <- function(
     return(sum(counts^2))
   }
 
-  cols <- lapply(stats::setNames(spatial_cols, spatial_cols), function(el) {
-    prev <- if (is_partial) state$cols[[el]]
+  cols <- lapply(stats::setNames(spatial_cols, spatial_cols), function(col) {
+    prev <- if (is_partial) state$cols[[col]]
     spatial <- prev$spatial
     if (is.null(spatial)) {
-      f <- as.factor(layout_df[[el]])
-      spatial <- list(codes = as.integer(f), n_levels = nlevels(f))
+      f <- as.factor(layout_df[[col]])
+      level_counts <- tabulate(as.integer(f)[!is.na(codes)], nlevels(f))
+      spatial <- list(
+        codes = as.integer(f),
+        n_levels = nlevels(f),
+        total_sq = sum(level_counts^2)
+      )
     }
     level <- spatial$codes[plots]
     old_sq <- if (is_partial) {
@@ -267,9 +263,7 @@ balance_state <- function(
 
     return(list(
       spatial = spatial,
-      sum_sq = (prev$sum_sq %||% 0) - old_sq + new_sq,
-      # set on a full call, where `plots` holds every plot with an item
-      total_sq = prev$total_sq %||% sum(tabulate(level, spatial$n_levels)^2)
+      sum_sq = (prev$sum_sq %||% 0) - old_sq + new_sq
     ))
   })
 
@@ -278,7 +272,7 @@ balance_state <- function(
   if (n_items > 1) {
     sums <- vapply(
       cols,
-      function(s) return(s$sum_sq - s$total_sq / n_items),
+      function(s) return(s$sum_sq - s$spatial$total_sq / n_items),
       numeric(1)
     )
     score <- sum(sums) / (n_items - 1)
