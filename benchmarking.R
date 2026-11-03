@@ -3,8 +3,11 @@ source("./bench/large.R")
 source("./bench/irregular.R")
 source("./bench/split-plot.R")
 source("./bench/2d-block.R")
+source("./bench/distribution.R")
 
 options(scipen = 999)
+
+# OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
 
 # designs <- list(
 #   `split-plot` = split_design(),
@@ -15,6 +18,36 @@ options(scipen = 999)
 #
 # # run_benchmarks(designs, 1:10)
 # run_benchmarks(designs, 1:10, from_object = TRUE)
+
+# distribution of optimal designs
+spec_dist <- dist_spec(n_treatments = 3, n_cols = 4)
+enum_dist <- explore_dist(spec_dist)
+dist_runs <- sapply(
+  names(dist_tools(spec_dist)),
+  run_dist,
+  spec = spec_dist,
+  seeds = seq_len(1000),
+  simplify = FALSE
+)
+dist_tests <- lapply(dist_runs, test_dist, enum_dist)
+print(dist_tests)
+save_dist <- function(name, p) {
+  ggsave(
+    bench_out(sprintf("distribution-%s-%s.pdf", spec_dist$name, name)),
+    p,
+    width = 8,
+    height = 5
+  )
+  return(invisible(NULL))
+}
+speed_tools <- c("speed", "speed_ts0", "speed_ri1", "speed_ts0_ri1")
+save_dist(
+  "speed",
+  plot_hits(dist_runs[speed_tools], enum_dist) + labs(title = "speed settings")
+)
+all_tools <- c("speed", "speed_ts0_ri1", "digger", "odw")
+save_dist("optimal", plot_hits(dist_runs[all_tools], enum_dist))
+save_dist("all", plot_coverage(dist_runs[all_tools], enum_dist))
 
 design_types <- list(
   list(
