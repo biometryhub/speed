@@ -22,6 +22,8 @@
 #'   the best score is used as an initial design (default: 0).
 #' @param adj_weight Weight for adjacency score (default: 1).
 #' @param bal_weight Weight for balance score (default: 1).
+#' @param conc_weight Weight for the concurrence score, used only with `concurrence_factors` in [speed()]
+#'   (default: 1).
 #' @param stop_at_optimal Logical; if `TRUE`, stops the level as soon as the best score reaches the lowest score
 #'   its layout allows (default: `TRUE`). The bound is only derivable for the default [objective_function()]
 #'   with non-negative weights and no `relationship` matrix; otherwise the level runs to its usual stopping
@@ -41,6 +43,7 @@ optim_params <- function(
   random_initialisation = 0,
   adj_weight = 1,
   bal_weight = 1,
+  conc_weight = 1,
   stop_at_optimal = TRUE
 ) {
   params <- list(
@@ -52,6 +55,7 @@ optim_params <- function(
     random_initialisation = random_initialisation,
     adj_weight = adj_weight,
     bal_weight = bal_weight,
+    conc_weight = conc_weight,
     stop_at_optimal = stop_at_optimal
   )
 

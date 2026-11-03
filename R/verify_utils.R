@@ -207,6 +207,16 @@
     if (!opt$swap_within %in% c("1", "none")) {
       verify_column_exists(opt$swap_within, data, "constraint")
     }
+
+    cf <- opt$concurrence_factors
+    if (!is.null(cf)) {
+      if (!inherits(cf, "formula") || length(cf) != 2) {
+        stop("`concurrence_factors` must be a one sided formula", call. = FALSE)
+      }
+      for (col in all.vars(cf)) {
+        verify_column_exists(col, data, "concurrence factor")
+      }
+    }
   }
 
   return(invisible(NULL))
@@ -373,13 +383,14 @@
   random_initialisation,
   adj_weight,
   bal_weight,
+  conc_weight,
   stop_at_optimal
 ) {
   verify_positive_whole_number(swap_count)
   verify_non_negative_whole(start_temp)
   verify_boolean(adaptive_swaps, swap_all_blocks, stop_at_optimal)
   verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
-  verify_numeric(adj_weight, bal_weight)
+  verify_numeric(adj_weight, bal_weight, conc_weight)
 
   if (!(random_initialisation %in% c(TRUE, FALSE))) {
     verify_non_negative_whole(random_initialisation)

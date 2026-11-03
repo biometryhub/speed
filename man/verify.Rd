@@ -55,6 +55,7 @@
   random_initialisation,
   adj_weight,
   bal_weight,
+  conc_weight,
   stop_at_optimal
 )
 
@@ -142,6 +143,9 @@ the best score is used as an initial design (default: 0).}
 \item{adj_weight}{Weight for adjacency score (default: 1).}
 
 \item{bal_weight}{Weight for balance score (default: 1).}
+
+\item{conc_weight}{Weight for the concurrence score, used only with \code{concurrence_factors} in \code{\link[=speed]{speed()}}
+(default: 1).}
 
 \item{stop_at_optimal}{Logical; if \code{TRUE}, stops the level as soon as the best score reaches the lowest score
 its layout allows (default: \code{TRUE}). The bound is only derivable for the default \code{\link[=objective_function]{objective_function()}}

@@ -8,6 +8,7 @@ test_that("optim_params works with no arguments", {
     "random_initialisation",
     "adj_weight",
     "bal_weight",
+    "conc_weight",
     "stop_at_optimal"
   )
 
@@ -27,6 +28,7 @@ test_that("optim_params works with arguments", {
     "random_initialisation",
     "adj_weight",
     "bal_weight",
+    "conc_weight",
     "stop_at_optimal"
   )
 
@@ -57,6 +59,7 @@ test_that("optim_params works with arguments", {
     random_initialisation = 3,
     adj_weight = 2,
     bal_weight = 3,
+    conc_weight = 4,
     stop_at_optimal = FALSE
   )
 
@@ -77,6 +80,7 @@ test_that("optim_params works with legacy options", {
     "random_initialisation",
     "adj_weight",
     "bal_weight",
+    "conc_weight",
     "stop_at_optimal"
   )
 
@@ -146,6 +150,7 @@ test_that("optim_params throws error for invalid inputs", {
 
   expect_error(optim_params(bal_weight = "a"))
   expect_error(optim_params(bal_weight = c(1, 2)))
+  expect_error(optim_params(conc_weight = "a"))
 
   expect_error(optim_params(stop_at_optimal = "a"))
   expect_error(optim_params(stop_at_optimal = "TRUE"))
