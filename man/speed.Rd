@@ -9,6 +9,7 @@ speed(
   swap,
   swap_within = "1",
   spatial_factors = ~row + col,
+  concurrence_factors = NULL,
   grid_factors = list(dim1 = "row", dim2 = "col"),
   iterations = 10000,
   early_stop_iterations = 2000,
@@ -41,6 +42,12 @@ See details for more information.}
 
 \item{spatial_factors}{A one-sided formula specifying spatial factors to
 consider for balance (default: \code{~row + col}).}
+
+\item{concurrence_factors}{A one-sided formula of spatial factors whose
+groups should give every treatment pair an even amount of direct
+comparison (default: \code{NULL}). When given, the objective function becomes
+\code{\link[=objective_function_connectivity]{objective_function_connectivity()}}. For hierarchical designs, can be a
+named list with names matching \code{swap}. See details for more information.}
 
 \item{grid_factors}{A named list specifying grid factors to construct a
 matrix for calculating adjacency score, \code{dim1} for row and \code{dim2} for
@@ -154,6 +161,13 @@ child treatment along when its parent moves: linking \code{sp_trt} at the
 whole-plot level of a split-plot moves each sub-plot treatment with its
 whole-plot treatment, before the sub-plot level then optimises it. The
 carrying level must come first, or it would undo the child level's work.
+
+\code{concurrence_factors} targets efficiency rather than spread: it adds a term
+penalising the variance of how often each treatment pair shares a group of
+its terms, weighted by \code{1/k} for a group of \code{k} plots (see
+\code{\link[=objective_function_connectivity]{objective_function_connectivity()}}). It is typically the same as
+\code{spatial_factors}, its weight is set by \code{optim_params(conc_weight = ...)}, and
+it cannot be combined with a custom \code{obj_function}.
 
 On a level with \code{swap_all = TRUE} whole treatment groups move at once, so a
 linked column with more than one value per treatment travels with its

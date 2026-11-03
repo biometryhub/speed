@@ -8,6 +8,9 @@
 - `speed()` now stops as soon as a design reaches the lowest score its layout allows, applicable only to the
   default `objective_function()`. This can be turned off per level with `optim_params(stop_at_optimal =
   FALSE)`. `summary()` now reports the lower bound score alongside the achieved one.
+- Added the `concurrence_factors` argument to `speed()`, which switches to the new
+  `objective_function_connectivity()` to even out how often treatment pairs share a group, improving design
+  efficiency. Its weight is set with `optim_params(conc_weight = ...)`.
 
 ## Minor Changes
 

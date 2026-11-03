@@ -346,6 +346,9 @@ summary.design <- function(
   if (!is.function(fn)) {
     return("unknown")
   }
+  if (!is.null(attr(fn, "objective_name"))) {
+    return(attr(fn, "objective_name"))
+  }
   known <- list(
     objective_function = objective_function,
     objective_function_factorial = objective_function_factorial,
