@@ -384,9 +384,15 @@
   adj_weight,
   bal_weight,
   conc_weight,
-  stop_at_optimal
+  stop_at_optimal,
+  plateau_window,
+  plateau_tol
 ) {
   verify_positive_whole_number(swap_count)
+  if (!is.null(plateau_window)) {
+    verify_positive_whole_number(plateau_window)
+  }
+  verify_between(plateau_tol, lower = 0)
   verify_non_negative_whole(start_temp)
   verify_boolean(adaptive_swaps, swap_all_blocks, stop_at_optimal)
   verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)

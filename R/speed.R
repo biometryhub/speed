@@ -391,6 +391,13 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     temperatures <- numeric(opt$iterations)
     last_improvement_iter <- 0
 
+    # Best components over the last `plateau_window` iterations, as a ring buffer
+    plateau_window <- optimise_params$plateau_window
+    if (!is.null(plateau_window)) {
+      best_components <- .score_components(best_score_obj)
+      plateau_ring <- matrix(0, plateau_window, length(best_components))
+    }
+
     groups <- swappable_groups(current_design, opt$swap, opt$swap_within, opt$swap_all)
     .warn_unequal_replication(groups$unequal_replication, level, opt$swap_within)
 
@@ -458,6 +465,9 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
           best_design <- new_design$design
           best_score_obj <- new_score_obj
           best_score <- new_score
+          if (!is.null(plateau_window)) {
+            best_components <- .score_components(best_score_obj)
+          }
         }
       }
 
@@ -476,12 +486,25 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
       # Zero is the most optimal score any design can reach.
       reached_zero <- new_score < .Machine$double.eps
-      if (reached_zero || iter - last_improvement_iter >= opt$early_stop_iterations) {
+
+      plateaued <- FALSE
+      if (!is.null(plateau_window)) {
+        # the slot still holds the best components from `plateau_window` iterations ago
+        slot <- (iter - 1) %% plateau_window + 1
+        plateaued <- iter > plateau_window &&
+          .is_plateau(plateau_ring[slot, ], best_components, optimise_params$plateau_tol)
+        plateau_ring[slot, ] <- best_components
+      }
+
+      if (reached_zero || plateaued || iter - last_improvement_iter >= opt$early_stop_iterations) {
+        stop_reason <- if (reached_zero) "optimal" else if (plateaued) "plateau" else "no_improvement"
         if (!quiet) {
-          cat(if (reached_zero) "Optimal score reached at iteration" else "Early stopping at iteration",
+          cat(switch(stop_reason,
+                     optimal = "Optimal score reached at iteration",
+                     plateau = "Plateau reached at iteration",
+                     "Early stopping at iteration"),
               iter, "for level", level, "\n")
         }
-        stop_reason <- if (reached_zero) "optimal" else "no_improvement"
         # Record final score and temperature before breaking
         if (iter < opt$iterations) {
           scores[iter + 1] <- current_score
@@ -669,4 +692,33 @@ print.design <- function(x, ...) {
   treatments <- unlist(lapply(swap_cols, function(s) as.character(data[[s]])))
   dots$relationship <- prep_relationship(dots$relationship, treatments)
   dots
+}
+
+#' Score Components Watched by the Plateau Stop
+#'
+#' @param score_obj A list returned by an objective function.
+#'
+#' @return The numeric `components`, or `score` when there are none.
+#'
+#' @keywords internal
+.score_components <- function(score_obj) {
+  components <- unlist(score_obj$components)
+  if (!is.numeric(components) || length(components) == 0) {
+    components <- score_obj$score
+  }
+  return(unname(components))
+}
+
+#' Whether Every Score Component Has Plateaued
+#'
+#' @param old,new Components at the start and end of the window.
+#' @param tol Relative improvement below which a component has plateaued.
+#'
+#' @return `TRUE` if every non-zero component of `old` improved by less than
+#'   `tol`.
+#'
+#' @keywords internal
+.is_plateau <- function(old, new, tol) {
+  live <- old > 0
+  return(all((old[live] - new[live]) / old[live] < tol))
 }

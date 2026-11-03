@@ -14,6 +14,8 @@
 
 ## Minor Changes
 
+- Added `plateau_window` and `plateau_tol` to `optim_params()`, stopping a level once every score component
+  has improved by less than `plateau_tol` over the last `plateau_window` iterations.
 - The startup version check now only runs in interactive sessions. Set the `SPEED_NO_VERSION_CHECK`
   environment variable to disable it entirely.
 - `summary()` now reports why each level stopped - the optimum was reached, no further improvement was

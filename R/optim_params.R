@@ -28,6 +28,16 @@
 #'   its layout allows (default: `TRUE`). The bound is only derivable for the default [objective_function()]
 #'   with non-negative weights and no `relationship` matrix; otherwise the level runs to its usual stopping
 #'   rules regardless of this setting.
+#' @param plateau_window Number of iterations over which to check for a plateau (default: `NULL`, no plateau
+#'   stop). See details for more information.
+#' @param plateau_tol Relative improvement below which a score component counts as plateaued (default: 0.01).
+#'
+#' @details
+#' With `plateau_window` set, a level stops once every score component of the best design has improved by
+#' less than `plateau_tol` (relative) over the last `plateau_window` iterations. Components are read from the
+#' `components` returned by the objective function, so a small component such as the concurrence term of
+#' [objective_function_connectivity()] is not masked by a large one; objectives without `components` fall back
+#' to `score`. Components that are already zero are ignored.
 #'
 #' @returns A named list of optimization parameters.
 #'
@@ -44,7 +54,9 @@ optim_params <- function(
   adj_weight = 1,
   bal_weight = 1,
   conc_weight = 1,
-  stop_at_optimal = TRUE
+  stop_at_optimal = TRUE,
+  plateau_window = NULL,
+  plateau_tol = 0.01
 ) {
   params <- list(
     swap_count = swap_count,
@@ -56,7 +68,9 @@ optim_params <- function(
     adj_weight = adj_weight,
     bal_weight = bal_weight,
     conc_weight = conc_weight,
-    stop_at_optimal = stop_at_optimal
+    stop_at_optimal = stop_at_optimal,
+    plateau_window = plateau_window,
+    plateau_tol = plateau_tol
   )
 
   # check legacy options

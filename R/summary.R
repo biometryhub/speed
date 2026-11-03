@@ -92,7 +92,7 @@
 #'   - `score` - `initial`, `final`, `optimal` (`NA` when not applicable), `components`.
 #'   - `optim` - `objective`, `start_temp`, `cooling_rate`,
 #'     `iterations_requested`, `iterations_run`, `stopped_early`, and
-#'     `stop_reason`: one of `"optimal"`, `"no_improvement"`, `"frozen"` or
+#'     `stop_reason`: one of `"optimal"`, `"no_improvement"`, `"plateau"`, `"frozen"` or
 #'     `"iterations"` (`NA` for designs produced before it was recorded).
 #' - **score** - the overall optimised score (summed across levels for a
 #'   hierarchical design).
@@ -1139,6 +1139,7 @@ print.summary.design <- function(x, ...) {
     o$stop_reason,
     optimal = crayon::green("(optimal reached)"),
     no_improvement = crayon::green("(no further improvement)"),
+    plateau = crayon::green("(plateau reached)"),
     frozen = crayon::yellow("(no swaps possible)"),
     iterations = ran_to_cap,
     # `stop_reason` is `NA` for a design saved before it was recorded

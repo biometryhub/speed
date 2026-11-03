@@ -56,7 +56,9 @@
   adj_weight,
   bal_weight,
   conc_weight,
-  stop_at_optimal
+  stop_at_optimal,
+  plateau_window,
+  plateau_tol
 )
 
 .verify_grid_factors(grid_factors)
@@ -151,6 +153,11 @@ the best score is used as an initial design (default: 0).}
 its layout allows (default: \code{TRUE}). The bound is only derivable for the default \code{\link[=objective_function]{objective_function()}}
 with non-negative weights and no \code{relationship} matrix; otherwise the level runs to its usual stopping
 rules regardless of this setting.}
+
+\item{plateau_window}{Number of iterations over which to check for a plateau (default: \code{NULL}, no plateau
+stop). See details for more information.}
+
+\item{plateau_tol}{Relative improvement below which a score component counts as plateaued (default: 0.01).}
 }
 \description{
 Validates the arguments as the user passed them, dispatching to the checker

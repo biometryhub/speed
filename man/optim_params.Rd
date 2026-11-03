@@ -14,7 +14,9 @@ optim_params(
   adj_weight = 1,
   bal_weight = 1,
   conc_weight = 1,
-  stop_at_optimal = TRUE
+  stop_at_optimal = TRUE,
+  plateau_window = NULL,
+  plateau_tol = 0.01
 )
 }
 \arguments{
@@ -51,6 +53,11 @@ the best score is used as an initial design (default: 0).}
 its layout allows (default: \code{TRUE}). The bound is only derivable for the default \code{\link[=objective_function]{objective_function()}}
 with non-negative weights and no \code{relationship} matrix; otherwise the level runs to its usual stopping
 rules regardless of this setting.}
+
+\item{plateau_window}{Number of iterations over which to check for a plateau (default: \code{NULL}, no plateau
+stop). See details for more information.}
+
+\item{plateau_tol}{Relative improvement below which a score component counts as plateaued (default: 0.01).}
 }
 \value{
 A named list of optimization parameters.
@@ -58,6 +65,13 @@ A named list of optimization parameters.
 \description{
 Create and verify optimization parameters. These parameters are used to control the behaviour of
 simulated annealing algorithm.
+}
+\details{
+With \code{plateau_window} set, a level stops once every score component of the best design has improved by
+less than \code{plateau_tol} (relative) over the last \code{plateau_window} iterations. Components are read from the
+\code{components} returned by the objective function, so a small component such as the concurrence term of
+\code{\link[=objective_function_connectivity]{objective_function_connectivity()}} is not masked by a large one; objectives without \code{components} fall back
+to \code{score}. Components that are already zero are ignored.
 }
 \seealso{
 \code{\link[=speed]{speed()}} for examples

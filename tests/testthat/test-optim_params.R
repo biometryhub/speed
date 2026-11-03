@@ -9,7 +9,9 @@ test_that("optim_params works with no arguments", {
     "adj_weight",
     "bal_weight",
     "conc_weight",
-    "stop_at_optimal"
+    "stop_at_optimal",
+    "plateau_window",
+    "plateau_tol"
   )
 
   optimize_params <- optim_params()
@@ -29,7 +31,9 @@ test_that("optim_params works with arguments", {
     "adj_weight",
     "bal_weight",
     "conc_weight",
-    "stop_at_optimal"
+    "stop_at_optimal",
+    "plateau_window",
+    "plateau_tol"
   )
 
   optimize_params <- optim_params(swap_count = 2)
@@ -60,7 +64,9 @@ test_that("optim_params works with arguments", {
     adj_weight = 2,
     bal_weight = 3,
     conc_weight = 4,
-    stop_at_optimal = FALSE
+    stop_at_optimal = FALSE,
+    plateau_window = 500,
+    plateau_tol = 0.02
   )
 
   optimize_params <- do.call(optim_params, optimize_params_expected)
@@ -81,7 +87,9 @@ test_that("optim_params works with legacy options", {
     "adj_weight",
     "bal_weight",
     "conc_weight",
-    "stop_at_optimal"
+    "stop_at_optimal",
+    "plateau_window",
+    "plateau_tol"
   )
 
   withr::with_options(
@@ -155,4 +163,51 @@ test_that("optim_params throws error for invalid inputs", {
   expect_error(optim_params(stop_at_optimal = "a"))
   expect_error(optim_params(stop_at_optimal = "TRUE"))
   expect_error(optim_params(stop_at_optimal = 1))
+
+  expect_error(optim_params(plateau_window = 0))
+  expect_error(optim_params(plateau_window = 1.5))
+  expect_error(optim_params(plateau_window = "a"))
+  expect_error(optim_params(plateau_tol = -0.1))
+  expect_error(optim_params(plateau_tol = "a"))
+})
+
+test_that(".is_plateau needs every non-zero component to stall", {
+  expect_true(.is_plateau(c(10, 1), c(9.95, 0.995), 0.01))
+  expect_false(.is_plateau(c(10, 1), c(9.95, 0.9), 0.01))
+  # zero components are ignored, a worse one counts as stalled
+  expect_true(.is_plateau(c(0, 1), c(0, 1.2), 0.01))
+  expect_true(.is_plateau(c(0, 0), c(0, 0), 0.01))
+})
+
+test_that(".score_components falls back to the score", {
+  expect_equal(.score_components(list(score = 3, components = c(a = 1, b = 2))), c(1, 2))
+  expect_equal(.score_components(list(score = 3)), 3)
+  expect_equal(.score_components(list(score = 3, components = list(a = 1, b = 2))), c(1, 2))
+})
+
+test_that("plateau_window stops a level once the best components stall", {
+  df <- initialise_design_df(1:8, nrows = 6, ncols = 4, block_nrows = 2, block_ncols = 4)
+  run <- function(params) {
+    return(speed(
+      df, "treatment",
+      swap_within = "block",
+      concurrence_factors = ~ row + col,
+      iterations = 3000, early_stop_iterations = 3000,
+      optimise_params = params,
+      quiet = TRUE, seed = 1
+    ))
+  }
+
+  full <- run(optim_params(stop_at_optimal = FALSE))
+  plateau <- run(optim_params(stop_at_optimal = FALSE, plateau_window = 200, plateau_tol = 0.01))
+
+  expect_equal(plateau$metadata$per_level[[1]]$stop_reason, "plateau")
+  expect_true(plateau$stopped_early)
+  n <- length(plateau$scores)
+  expect_lt(n, length(full$scores))
+  # same seed, same path up to the stop
+  expect_equal(plateau$scores[seq_len(n - 1)], full$scores[seq_len(n - 1)])
+
+  off <- run(optim_params(stop_at_optimal = FALSE, plateau_window = NULL))
+  expect_identical(off$scores, full$scores)
 })
