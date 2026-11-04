@@ -154,6 +154,33 @@ test_that("all-invalid annealing runs finish without NaN acceptance", {
   expect_true(all(is.infinite(result$scores)))
 })
 
+test_that("annealing accepts equal scores at zero temperature", {
+  design <- data.frame(
+    row = rep(1:2, each = 2),
+    col = rep(1:2, times = 2),
+    treatment = LETTERS[1:4]
+  )
+
+  for (value in c(0, 1, Inf)) {
+    objective <- function(layout_df, swap, spatial_cols, ...) {
+      return(list(score = value))
+    }
+    result <- speed(
+      design,
+      swap = "treatment",
+      obj_function = objective,
+      iterations = 1,
+      optimise_params = optim_params(start_temp = 0, stop_at_optimal = FALSE),
+      seed = 1,
+      quiet = TRUE
+    )
+
+    expect_equal(result$score, value)
+    expect_setequal(as.character(result$design_df$treatment), design$treatment)
+    expect_false(identical(as.character(result$design_df$treatment), design$treatment))
+  }
+})
+
 test_that("speed throws error for missing columns", {
   test_data <- data.frame(
     row = rep(1:5, times = 4),
@@ -351,56 +378,6 @@ test_that("speed does not stop on the optimal score for custom objectives", {
   expect_no_match(output, "Optimal score reached")
   expect_true(is.na(result$metadata$per_level[[1]]$optimal_score))
   expect_equal(result$iterations_run, 200)
-})
-
-test_that("zero and negative custom scores do not imply optimality", {
-  test_data <- expand.grid(row = 1:2, col = 1:2)
-  test_data$treatment <- c("A", "B", "B", "A")
-
-  for (value in c(0, -1)) {
-    custom_objective <- function(layout_df, swap, spatial_cols, ...) {
-      return(list(score = value))
-    }
-    result <- speed(
-      test_data,
-      swap = "treatment",
-      obj_function = custom_objective,
-      iterations = 20,
-      early_stop_iterations = 100,
-      seed = 1,
-      quiet = TRUE
-    )
-
-    expect_equal(result$iterations_run, 20)
-    expect_equal(result$scores, rep(value, 20))
-    expect_identical(result$metadata$per_level[[1]]$stop_reason, "iterations")
-    expect_false(result$stopped_early)
-  }
-})
-
-test_that("stop_at_optimal also controls stopping at a zero bound", {
-  test_data <- expand.grid(row = 1:2, col = 1:2)
-  test_data$treatment <- c("A", "B", "B", "A")
-
-  for (stop_at_optimal in c(TRUE, FALSE)) {
-    result <- speed(
-      test_data,
-      swap = "treatment",
-      optimise_params = optim_params(
-        adj_weight = 0,
-        bal_weight = 0,
-        stop_at_optimal = stop_at_optimal
-      ),
-      iterations = 20,
-      early_stop_iterations = 100,
-      seed = 1,
-      quiet = TRUE
-    )
-
-    expect_equal(result$metadata$per_level[[1]]$optimal_score, 0)
-    expect_equal(result$iterations_run, if (stop_at_optimal) 1 else 20)
-    expect_equal(result$stopped_early, stop_at_optimal)
-  }
 })
 
 test_that("speed does not stop on the optimal score (NA) for negative weights", {

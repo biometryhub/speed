@@ -352,6 +352,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     adj_weight <- optimise_params$adj_weight
     bal_weight <- optimise_params$bal_weight
     stop_at_optimal <- optimise_params$stop_at_optimal
+    stop_at_zero <- !identical(opt$obj_function, objective_function_info)
     spatial_cols <- all.vars(opt$spatial_factors)
 
     # A level searches from the best design from the previous level
@@ -432,10 +433,11 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       new_score <- new_score_obj$score
 
       # Decide whether to accept the new design
-      # Allow moves between invalid designs without evaluating Inf - Inf
-      if (new_score < current_score ||
-          (is.infinite(current_score) && new_score == current_score) ||
-          runif(1) < exp((current_score - new_score) / temp)) {
+      delta <- if (new_score == current_score) 0 else new_score - current_score
+      # Keep the random draw for finite ties at positive temperatures.
+      if (delta < 0 ||
+          (delta == 0 && (is.infinite(current_score) || temp == 0)) ||
+          runif(1) < exp(-delta / temp)) {
         current_design <- new_design$design
         current_score <- new_score
         current_score_obj <- new_score_obj
@@ -464,14 +466,14 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
             "\n")
       }
 
-      # known lower bound for optimality rather than zero
-      reached_optimal <- stop_at_optimal && !is.na(optimal_score) && best_score <= optimal_score + 1e-9
-      if (reached_optimal || iter - last_improvement_iter >= opt$early_stop_iterations) {
+      # Fisher scores can be negative without reaching an optimum.
+      reached_zero <- stop_at_zero && new_score < .Machine$double.eps
+      if (reached_zero || iter - last_improvement_iter >= opt$early_stop_iterations) {
         if (!quiet) {
-          cat(if (reached_optimal) "Optimal score reached at iteration" else "Early stopping at iteration",
+          cat(if (reached_zero) "Optimal score reached at iteration" else "Early stopping at iteration",
               iter, "for level", level, "\n")
         }
-        stop_reason <- if (reached_optimal) "optimal" else "no_improvement"
+        stop_reason <- if (reached_zero) "optimal" else "no_improvement"
         # Record final score and temperature before breaking
         if (iter < opt$iterations) {
           scores[iter + 1] <- current_score

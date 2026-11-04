@@ -45,11 +45,11 @@ returned by \code{\link[=compute_L_projection]{compute_L_projection()}}. Cannot 
 \item{Sigma}{Optional covariance matrix in grid order (see Details). If both
 \code{Sigma} and \code{L_matrix} are \code{NULL}, identity covariance is assumed.}
 
-\item{contrast_matrix}{Numeric contrast matrix with one column per treatment
-level. Column names, when supplied, must match the treatment levels. Only
-these contrasts are required to be estimable and contribute to the
-optimality criterion. The default targets the complete treatment-contrast
-space.}
+\item{contrast_matrix}{Named numeric contrast matrix with one column per
+treatment level. Column names must match the treatment levels exactly once;
+columns are matched by name, not position. Only these contrasts are required
+to be estimable and contribute to the optimality criterion. The default
+targets the complete treatment-contrast space.}
 
 \item{block_column}{Column name of the design's block factor, with at least
 two observed blocks. Used when neither \code{nuisance_formula} nor \code{L_matrix}

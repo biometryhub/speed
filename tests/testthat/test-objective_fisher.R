@@ -173,6 +173,86 @@ test_that("a requested estimable contrast does not require full connectedness", 
   expect_true(is.finite(targeted$score))
 })
 
+test_that("custom contrasts require treatment column names", {
+  df <- initialise_design_df(
+    items = 10, nrows = 2, ncols = 10,
+    block_nrows = 1, block_ncols = 10
+  )
+  Sigma <- cor_ar1_ar1(2, 10, rho_row = 0.6, rho_col = 0.3)
+  contrast <- matrix(c(1, -1, rep(0, 8)), nrow = 1)
+
+  expect_error(
+    objective_function_info(
+      df, "treatment", c("row", "col"),
+      Sigma = Sigma, contrast_matrix = contrast
+    ),
+    "must have column names"
+  )
+  expect_error(
+    speed(
+      df, swap = "treatment", swap_within = "block",
+      obj_function = objective_function_info,
+      Sigma = Sigma, contrast_matrix = contrast,
+      iterations = 20, seed = 1, quiet = TRUE
+    ),
+    "must have column names"
+  )
+})
+
+test_that("named contrasts match treatments rather than column positions", {
+  df <- initialise_design_df(
+    items = 10, nrows = 2, ncols = 10,
+    block_nrows = 1, block_ncols = 10
+  )
+  df <- df[order(df$row, df$col), ]
+  treatments <- paste0("T", 1:10)
+  df$treatment <- factor(df$treatment, levels = treatments)
+  Sigma <- cor_ar1_ar1(2, 10, rho_row = 0.6, rho_col = 0.3)
+  contrast <- matrix(
+    c(1, -1, rep(0, 8)), nrow = 1,
+    dimnames = list("T1 - T2", treatments)
+  )
+
+  # T2's coefficient is T2 - T1 in this full-rank reference model.
+  model <- model.matrix(~ factor(block) + treatment, df)
+  covariance <- solve(crossprod(model, solve(Sigma, model)))
+  variance <- covariance["treatmentT2", "treatmentT2"]
+  df$treatment <- as.character(df$treatment)
+  reordered <- df[rev(seq_len(nrow(df))), ]
+  reordered$treatment <- factor(reordered$treatment, levels = rev(treatments))
+
+  for (layout in list(df, reordered)) {
+    for (columns in list(seq_along(treatments), rev(seq_along(treatments)))) {
+      result <- objective_function_info(
+        layout, "treatment", c("row", "col"),
+        Sigma = Sigma, contrast_matrix = contrast[, columns, drop = FALSE]
+      )
+      expect_equal(result$A_value, variance, tolerance = 1e-10)
+      expect_equal(result$D_value, log(variance), tolerance = 1e-10)
+      expect_equal(unname(result$contrast_matrix[, "T2"]), -1)
+      expect_equal(unname(result$contrast_matrix[, "T10"]), 0)
+    }
+  }
+})
+
+test_that("contrast columns identify each treatment exactly once", {
+  treatments <- c("T1", "T2", "T10")
+  contrast <- matrix(c(1, -1, 0), nrow = 1,
+    dimnames = list(NULL, treatments))
+
+  expect_error(
+    .prepare_contrast_matrix(cbind(contrast, T2 = 0), treatments, 1e-9),
+    "one column per treatment"
+  )
+  for (last_name in c("T2", "unknown", "", NA_character_)) {
+    colnames(contrast) <- c("T1", "T2", last_name)
+    expect_error(
+      .prepare_contrast_matrix(contrast, treatments, 1e-9),
+      "must match the treatment levels"
+    )
+  }
+})
+
 test_that("incremental calculation matches full recalculation", {
   df <- data.frame(
     row       = rep(1:3, each = 4),

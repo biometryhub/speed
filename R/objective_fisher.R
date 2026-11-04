@@ -300,25 +300,27 @@ factorial_contrast_matrix <- function(
     if (any(!is.finite(contrast_matrix))) {
       stop("`contrast_matrix` must contain only finite values.", call. = FALSE)
     }
-    if (is.null(colnames(contrast_matrix))) {
-      if (ncol(contrast_matrix) != v) {
-        stop(
-          "`contrast_matrix` must have one column per treatment.",
-          call. = FALSE
-        )
-      }
-      colnames(contrast_matrix) <- trt_levels
-    } else {
-      missing <- setdiff(trt_levels, colnames(contrast_matrix))
-      extra <- setdiff(colnames(contrast_matrix), trt_levels)
-      if (length(missing) > 0L || length(extra) > 0L) {
-        stop(
-          "Contrast columns must match the treatment levels.",
-          call. = FALSE
-        )
-      }
-      contrast_matrix <- contrast_matrix[, trt_levels, drop = FALSE]
+    if (ncol(contrast_matrix) != v) {
+      stop(
+        "`contrast_matrix` must have one column per treatment.",
+        call. = FALSE
+      )
     }
+    if (is.null(colnames(contrast_matrix))) {
+      stop(
+        "`contrast_matrix` must have column names matching the treatment levels.",
+        call. = FALSE
+      )
+    }
+    missing <- setdiff(trt_levels, colnames(contrast_matrix))
+    extra <- setdiff(colnames(contrast_matrix), trt_levels)
+    if (length(missing) > 0L || length(extra) > 0L) {
+      stop(
+        "Contrast columns must match the treatment levels.",
+        call. = FALSE
+      )
+    }
+    contrast_matrix <- contrast_matrix[, trt_levels, drop = FALSE]
   }
 
   if (
