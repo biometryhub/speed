@@ -13,6 +13,13 @@ test_that("pseudo_inverse calculates Moore-Penrose inverse correctly", {
   expect_equal(A_inv, solve(A), tolerance = 1e-10)
 })
 
+test_that("pseudo_inverse handles 1x1 matrices", {
+  for (value in c(2, 0.5)) {
+    A <- matrix(value, nrow = 1, ncol = 1)
+    expect_equal(pseudo_inverse(A), matrix(1 / value, nrow = 1, ncol = 1))
+  }
+})
+
 test_that("pseudo_inverse handles singular matrices", {
   # Test with a rank-deficient matrix (singular)
   singular_matrix <- matrix(c(1, 2, 2, 4), nrow = 2, ncol = 2)
