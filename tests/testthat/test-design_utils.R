@@ -128,6 +128,7 @@ test_that("swappable_groups separates unequal replication from other blockers", 
     # g2: equal replication, exchangeable
     # g3: a single treatment, unswappable but unremarkable
     block = factor(rep(c("g1", "g2", "g3"), each = 6)),
+    # fmt: skip
     treatment = factor(c(
       "A", "A", "A", "B", "B", "C",
       "A", "A", "B", "B", "C", "C",
@@ -235,6 +236,7 @@ test_that("speed() stops a level once every swap group is frozen", {
   unused_level$site <- factor(df$site, levels = c("a", "b", "c"))
   expect_length(run(unused_level)$scores$lvl2, 1)
 
+  # fmt: skip
   single_treatment <- rbind(
     df,
     data.frame(
@@ -383,7 +385,7 @@ test_that("a level ending on a score plateau returns a random point on it", {
   }
 
   # ... but the seed decides which tied arrangement comes back
-  layouts <- lapply(results, function(r) return(r$design_df$wholeplot_treatment))
+  layouts <- lapply(results, function(r) r$design_df$wholeplot_treatment)
   expect_gt(length(unique(layouts)), 1)
 })
 
@@ -395,7 +397,13 @@ test_that("speed() records why each level stopped", {
     trt = rep(c("A", "B", "C"), times = 4)
   )
 
-  optimal <- speed(df, swap = "trt", swap_within = "block", seed = 1, quiet = TRUE)
+  optimal <- speed(
+    df,
+    swap = "trt",
+    swap_within = "block",
+    seed = 1,
+    quiet = TRUE
+  )
   expect_equal(optimal$metadata$per_level[[1]]$stop_reason, "optimal")
 
   # No lower bound to stop at, and too few iterations to run out of improvements
@@ -475,4 +483,166 @@ test_that("speed() does not warn when every group can swap", {
       quiet = TRUE
     )
   )
+})
+
+targeted_design <- function() {
+  data.frame(
+    row = rep(1:4, each = 4),
+    col = rep(1:4, times = 4),
+    block = factor(rep(1:2, each = 8)),
+    treatment = factor(rep(LETTERS[1:8], 2))
+  )
+}
+
+test_that("targeted swaps always move a target and keep each group's treatments", {
+  design <- targeted_design()
+  targets <- c(2, 11)
+
+  set.seed(1)
+  two_moved <- hits_target <- same_counts <- logical(50)
+  for (i in 1:50) {
+    nb <- generate_neighbour(
+      design,
+      "treatment",
+      "block",
+      swap_count = 1,
+      targets = targets
+    )
+    moved <- which(nb$design$treatment != design$treatment)
+
+    two_moved[i] <- length(moved) == 2
+    hits_target[i] <- any(moved %in% targets)
+    same_counts[i] <- identical(
+      table(nb$design$block, nb$design$treatment),
+      table(design$block, design$treatment)
+    )
+  }
+
+  # check no failure
+  expect_equal(which(!two_moved), integer(0))
+  expect_equal(which(!hits_target), integer(0))
+  expect_equal(which(!same_counts), integer(0))
+})
+
+test_that("targeted swaps with swap_all_blocks works", {
+  design <- targeted_design()
+
+  set.seed(1)
+  # targeting row 2 -> block 1
+  nb <- generate_neighbour(
+    design,
+    "treatment",
+    "block",
+    swap_count = 1,
+    swap_all_blocks = TRUE,
+    targets = 2
+  )
+  moved <- which(nb$design$treatment != design$treatment)
+
+  expect_true(2 %in% moved)
+  # swap made in block 2
+  expect_true(any(design$block[moved] == 2))
+})
+
+test_that("speed() only targets swaps after target_swaps iterations", {
+  design <- initialise_design_df(rep(paste0("T", 1:8), 4), nrows = 8, ncols = 4)
+  run <- function(target_swaps) {
+    speed(
+      design,
+      "treatment",
+      iterations = 200,
+      seed = 1,
+      quiet = TRUE,
+      optimise_params = optim_params(
+        target_swaps = target_swaps,
+        stop_at_optimal = FALSE
+      )
+    )
+  }
+
+  never <- run(FALSE)
+  expect_identical(run(200)$design_df, never$design_df)
+  expect_false(identical(run(0)$scores, never$scores))
+})
+
+test_that("split-plot targets only the subplot level and keeps linked columns paired", {
+  design <- data.frame(
+    row = rep(1:12, each = 4),
+    col = rep(1:4, times = 12),
+    block = rep(1:4, each = 12),
+    wholeplot = rep(1:12, each = 4),
+    wholeplot_treatment = rep(rep(LETTERS[1:3], each = 4), times = 4),
+    subplot_treatment = rep(letters[1:4], times = 12)
+  )
+  design$subplot_name <- paste0("sp-", design$subplot_treatment)
+
+  run <- function(target_swaps) {
+    speed(
+      design,
+      optimise = list(
+        wp = list(
+          swap = "wholeplot_treatment",
+          swap_within = "block",
+          swap_all = TRUE
+        ),
+        sp = list(
+          swap = "subplot_treatment",
+          swap_within = "wholeplot",
+          linked_cols = "subplot_name"
+        )
+      ),
+      iterations = 300,
+      optimise_params = optim_params(
+        target_swaps = target_swaps,
+        stop_at_optimal = FALSE
+      ),
+      seed = 1,
+      quiet = TRUE
+    )
+  }
+
+  never <- run(FALSE)
+  targeted <- run(0)
+
+  # `swap_all` level is never targeted, so it matches the untargeted run
+  expect_identical(targeted$scores$wp, never$scores$wp)
+  expect_false(identical(targeted$scores$sp, never$scores$sp))
+
+  out <- targeted$design_df
+  expect_identical(
+    table(out$wholeplot, out$subplot_treatment),
+    table(design$wholeplot, design$subplot_treatment)
+  )
+  expect_identical(
+    table(out$block, out$wholeplot_treatment),
+    table(design$block, design$wholeplot_treatment)
+  )
+  expect_identical(out$subplot_name, paste0("sp-", out$subplot_treatment))
+})
+
+test_that("targeted swaps reach an optimum whose counts differ by more than 1", {
+  design <- data.frame(
+    row = rep(1:2, each = 4),
+    col = rep(1:4, 2),
+    # fmt: skip
+    treatment = c("A", "A", "A", "A",
+                  "B", "C", "D", "E")
+  )
+  optimal <- design
+  # fmt: skip
+  optimal$treatment <- c("A", "B", "A", "C",
+                         "E", "A", "D", "A")
+  optimal_score <- objective_function(optimal, "treatment", c("row", "col"))
+
+  result <- speed(
+    design,
+    "treatment",
+    spatial_factors = ~ row + col,
+    iterations = 500,
+    seed = 1,
+    quiet = TRUE,
+    optimise_params = optim_params(target_swaps = 0)
+  )
+
+  expect_equal(result$score, optimal_score$score)
 })

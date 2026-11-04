@@ -1,3 +1,11 @@
+# speed 0.0.12
+
+## Major Changes
+
+- New `optim_params(target_swaps = )` makes swaps target plots the default `objective_function()` penalises
+  once the given number of iterations has passed. This makes searching for optimal designs take fewer
+  iterations.
+
 # speed 0.0.11
 
 ## Major Changes

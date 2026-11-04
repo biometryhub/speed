@@ -13,7 +13,8 @@ optim_params(
   random_initialisation = 0,
   adj_weight = 1,
   bal_weight = 1,
-  stop_at_optimal = TRUE
+  stop_at_optimal = TRUE,
+  target_swaps = FALSE
 )
 }
 \arguments{
@@ -47,6 +48,10 @@ the best score is used as an initial design (default: 0).}
 its layout allows (default: \code{TRUE}). The bound is only derivable for the default \code{\link[=objective_function]{objective_function()}}
 with non-negative weights and no \code{relationship} matrix; otherwise the level runs to its usual stopping
 rules regardless of this setting.}
+
+\item{target_swaps}{Number of iterations after which every swap moves a plot in a penalised position.
+\code{TRUE} targets from the start and \code{FALSE} never targets (default: \code{FALSE}). Only applies to the default
+\code{\link[=objective_function]{objective_function()}} with \code{swap_all = FALSE} when its lower bound can be derived (see \code{stop_at_optimal}).}
 }
 \value{
 A named list of optimization parameters.

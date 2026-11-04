@@ -1063,7 +1063,7 @@ test_that("a MET design reports one efficiency per site and never a pooled one",
     swap_within = "site",
     spatial_factors = ~ row + col + site,
     grid_factors = list(dim1 = "row", dim2 = "col", by = "site"),
-    iterations = 100,
+    iterations = 1000,
     seed = 42,
     quiet = TRUE
   )

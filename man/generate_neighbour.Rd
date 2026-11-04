@@ -12,7 +12,8 @@ generate_neighbour(
   swap_all_blocks = getOption("speed.swap_all_blocks", FALSE),
   swap_all = FALSE,
   linked_cols = NULL,
-  swappable = NULL
+  swappable = NULL,
+  targets = NULL
 )
 }
 \arguments{
@@ -38,6 +39,9 @@ it. \code{NULL} (default) moves the \code{swap} column alone.}
 \item{swappable}{Groups a swap can be proposed in, as returned in the
 \code{swappable} element of \code{\link[=swappable_groups]{swappable_groups()}}. \code{NULL} (default) considers
 every group, which costs an iteration whenever an unswappable one is drawn.}
+
+\item{targets}{Penalised row positions, as returned by \code{\link[=.penalised_positions]{.penalised_positions()}},
+each swap moving one of them. \code{NULL} swaps randomly (default: NULL)}
 }
 \value{
 A list with the updated design after swapping and information about
