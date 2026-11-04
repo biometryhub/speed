@@ -83,7 +83,7 @@ objective_function_connectivity <- function(
     rescored <- which(!is_partial | levels(items) %in% swapped_items)
     item_row <- integer(nlevels(items))
     item_row[rescored] <- seq_along(rescored)
-    plots <- which(item_row[codes] > 0L)
+    rescored_plots <- which(item_row[codes] > 0L)
 
     state$codes <- codes
     state$concurrence <- weighted_concurrence_sums(
@@ -91,7 +91,7 @@ objective_function_connectivity <- function(
       n_pairs,
       codes,
       prev$codes,
-      plots,
+      rescored_plots,
       item_row,
       rescored,
       if (is_partial) prev$concurrence
@@ -135,8 +135,7 @@ objective_function_connectivity <- function(
 #' Resolve the Concurrence Groupings
 #'
 #' @description
-#' Caches the codes, sizes, weights and members of the finest groupings of
-#' `concurrence_factors`.
+#' Caches the codes, sizes, weights, and members of the finest groupings.
 #'
 #' @inheritParams objective_function_connectivity
 #'
@@ -150,7 +149,7 @@ resolve_connectivity_terms <- function(layout_df, concurrence_factors) {
   for (term in terms) {
     factors <- strsplit(term, ":", fixed = TRUE)[[1]]
     group <- as.factor(interaction(layout_df[factors], drop = TRUE))
-    # drop singleton groups
+    # drop groups of single plots
     if (max(tabulate(group)) < 2) {
       next
     }
@@ -165,20 +164,20 @@ resolve_connectivity_terms <- function(layout_df, concurrence_factors) {
       n_groups = nlevels(group),
       weight = 1 / size,
       size = size,
-      # plots ordered by group, group g at start[g] + 0:(size[g] - 1)
+      # plot by group, group i is members[group_start[i] + 0:(size[i] - 1)]
       members = order(codes, na.last = NA),
-      start = cumsum(c(1L, size[-length(size)]))
+      group_start = cumsum(c(1L, size[-length(size)]))
     ))
   })
 
   return(concurrence_groups)
 }
 
-#' Drop Groupings Coarser Than Another
+#' Drop Coarser Groupings
 #'
 #' @description
-#' A grouping is coarser than another when each of the other's groups lies
-#' within one of its groups. If groupings are identical, the first is kept.
+#' A grouping is coarser than another when two or more of the other's groups fit
+#' within one of its groups. The first is kept for identical groupings.
 #'
 #' @param groups A named list of factors over plots.
 #'
@@ -190,9 +189,11 @@ finest_groupings <- function(groups) {
   keep <- rep(TRUE, length(groups))
   for (i in seq_along(groups)) {
     for (j in seq_along(groups)[-i]) {
-      if (!(n_levels[[j]] > n_levels[[i]] || j < i)) {
+      if (j > i && n_levels[[j]] <= n_levels[[i]]) {
         next
       }
+
+      # check if groups[[j]] fits in groups[[i]]
       joint <- interaction(groups[[j]], groups[[i]], drop = TRUE)
       if (nlevels(joint) == n_levels[[j]]) {
         keep[i] <- FALSE
@@ -200,6 +201,7 @@ finest_groupings <- function(groups) {
       }
     }
   }
+
   return(groups[keep])
 }
 
@@ -209,39 +211,69 @@ finest_groupings <- function(groups) {
 #' Weighted concurrence rows of the rescored items for each element of
 #' `codes_list`, built from the groups their plots fall in.
 #'
-#' @param plots Plots holding a rescored item.
-#' @param item_row Row of each item among the rescored ones, 0 if not rescored.
-#' @param groupings Cached concurrence groupings.
+#' @details
+#' Items A-D in two blocks of three plots, rescoring A and D:
+#'
+#' ```r
+#' g <- resolve_connectivity_terms(
+#'   data.frame(block = rep(1:2, each = 3)), ~block
+#' )
+#' codes <- c(1L, 2L, 3L, 1L, 2L, 4L) # A B C | A B D
+#' W <- concurrence_rows(
+#'   g, list(codes), rescored_plots = c(1, 4, 6), item_row = c(1, 0, 0, 2)
+#' )
+#' W
+#' #> [[1]]
+#' #>           [,1]      [,2]      [,3]      [,4]
+#' #> [1,] 0.6666667 0.6666667 0.3333333 0.3333333
+#' #> [2,] 0.3333333 0.3333333 0.0000000 0.3333333
+#' ```
+#'
+#' Row 1 is A and row 2 is D; e.g. A and B share both blocks, so W\[A, B\] =
+#' 1/3 + 1/3. W[1, 1] (A, A) and W[2, 4] (D, D) are omitted later.
+#'
+#' @param rescored_plots Plots holding a rescored item.
+#' @param item_row Row of output corresponding to rescored items, 0 if not rescored.
+#' @param groupings Concurrence groupings.
 #' @param codes_list A list of treatment codes per plot.
 #'
 #' @return A list of row matrices, one per element of `codes_list`.
 #'
 #' @keywords internal
-concurrence_rows <- function(groupings, codes_list, plots, item_row) {
+concurrence_rows <- function(groupings, codes_list, rescored_plots, item_row) {
   n_items <- length(item_row)
   n_rescored <- max(0L, item_row)
-  rows <- lapply(codes_list, function(codes) return(item_row[codes[plots]]))
+  # rescored row a of the item at each of `rescored_plots`
+  rows <- lapply(
+    codes_list,
+    function(codes) return(item_row[codes[rescored_plots]])
+  )
   w_rows <- lapply(codes_list, function(codes) return(0))
   for (g in groupings) {
-    plot_group <- g$group[plots]
-    # touched groups in increasing order; NA groups drop out of tabulate()
-    touched <- which(tabulate(plot_group, g$n_groups) > 0L)
-    n_touched <- length(touched)
+    rescored_plot_group <- g$group[rescored_plots]
+    rescored_groups <- which(tabulate(rescored_plot_group, g$n_groups) > 0L)
+    n_rescored_groups <- length(rescored_groups)
+    # pos[h]: column of group h among rescored_groups; a + n_rescored *
+    # (pos - 1) is the column-major index of inc[a, pos]
     pos <- integer(g$n_groups)
-    pos[touched] <- seq_len(n_touched)
-    inc_offset <- n_rescored * (pos[plot_group] - 1L)
-    size <- g$size[touched]
-    member <- g$members[sequence(size, from = g$start[touched])]
-    member_group <- rep.int(seq_len(n_touched), size)
-    weight <- g$weight[touched]
+    pos[rescored_groups] <- seq_len(n_rescored_groups)
+    inc_offset <- n_rescored * (pos[rescored_plot_group] - 1L)
+    size <- g$size[rescored_groups]
+    # all plots of rescored_groups and their column among them
+    member <- g$members[sequence(size, from = g$group_start[rescored_groups])]
+    member_group <- rep.int(seq_len(n_rescored_groups), size)
+    weight <- g$weight[rescored_groups]
     for (k in seq_along(codes_list)) {
-      inc <- tabulate(rows[[k]] + inc_offset, n_rescored * n_touched)
-      dim(inc) <- c(n_rescored, n_touched)
+      # inc[a, h] = n[h, a], count of rescored item a in rescored group h
+      inc <- tabulate(rows[[k]] + inc_offset, n_rescored * n_rescored_groups)
+      dim(inc) <- c(n_rescored, n_rescored_groups)
+      # counts[h, b] = n[h, b], count of any item b in rescored group h
       counts <- tabulate(
-        member_group + n_touched * (codes_list[[k]][member] - 1L),
-        n_touched * n_items
+        member_group + n_rescored_groups * (codes_list[[k]][member] - 1L),
+        n_rescored_groups * n_items
       )
-      dim(counts) <- c(n_touched, n_items)
+      dim(counts) <- c(n_rescored_groups, n_items)
+      # W[a, b] += sum_h w[h] n[h, a] n[h, b]; weight recycles down rows h
       w_rows[[k]] <- w_rows[[k]] + inc %*% (counts * weight)
     }
   }
@@ -251,8 +283,7 @@ concurrence_rows <- function(groupings, codes_list, plots, item_row) {
 #' Incremental Weighted Concurrence Score
 #'
 #' @description
-#' Variance of the weighted concurrence across treatment pairs, from running
-#' sums updated with the rescored items' old and new rows.
+#' Variance of the weighted concurrence across treatment pairs.
 #'
 #' @inheritParams concurrence_rows
 #' @param codes,prev_codes Treatment codes per plot, now and before the swaps.
@@ -268,14 +299,14 @@ weighted_concurrence_sums <- function(
   n_pairs,
   codes,
   prev_codes,
-  plots,
+  rescored_plots,
   item_row,
   rescored,
   prev
 ) {
   is_partial <- !is.null(prev)
   codes_list <- if (is_partial) list(codes, prev_codes) else list(codes)
-  w_rows <- concurrence_rows(groupings, codes_list, plots, item_row)
+  w_rows <- concurrence_rows(groupings, codes_list, rescored_plots, item_row)
   new_rows <- w_rows[[1]]
 
   # swap out the pairs touching rescored items, old W for new
