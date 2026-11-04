@@ -3,6 +3,8 @@
 Balance score of
 [`calculate_balance_score()`](https://biometryhub.github.io/speed/reference/calculate_balance_score.md)
 with the state needed to rescore only `swapped_items` on the next call.
+Plots holding a swapped item are recounted under the old and new item
+codes.
 
 ## Usage
 
@@ -40,5 +42,5 @@ balance_state(
 
 ## Value
 
-A list with `score` and, per spatial column in `cols`, the count matrix
-and its sums of squares.
+A list with `score`, the item `codes` per plot, and `cols`, holding each
+column's level codes and sums of squares.

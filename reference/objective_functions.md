@@ -111,32 +111,39 @@ objective_function(layout_df, "treatment", c("row", "col"))
 #> $state$balance$score
 #> [1] 9
 #> 
+#> $state$balance$codes
+#> [1] 1 2 3 1 2 3 1 2 3
+#> 
 #> $state$balance$cols
 #> $state$balance$cols$row
-#> $state$balance$cols$row$counts
-#>      [,1] [,2] [,3]
-#> [1,]    1    1    1
-#> [2,]    1    1    1
-#> [3,]    1    1    1
+#> $state$balance$cols$row$spatial
+#> $state$balance$cols$row$spatial$codes
+#> [1] 1 1 1 2 2 2 3 3 3
+#> 
+#> $state$balance$cols$row$spatial$n_levels
+#> [1] 3
+#> 
+#> $state$balance$cols$row$spatial$total_sq
+#> [1] 27
+#> 
 #> 
 #> $state$balance$cols$row$sum_sq
 #> [1] 9
 #> 
-#> $state$balance$cols$row$total_sq
-#> [1] 27
-#> 
 #> 
 #> $state$balance$cols$col
-#> $state$balance$cols$col$counts
-#>      [,1] [,2] [,3]
-#> [1,]    3    0    0
-#> [2,]    0    3    0
-#> [3,]    0    0    3
+#> $state$balance$cols$col$spatial
+#> $state$balance$cols$col$spatial$codes
+#> [1] 1 2 3 1 2 3 1 2 3
 #> 
-#> $state$balance$cols$col$sum_sq
+#> $state$balance$cols$col$spatial$n_levels
+#> [1] 3
+#> 
+#> $state$balance$cols$col$spatial$total_sq
 #> [1] 27
 #> 
-#> $state$balance$cols$col$total_sq
+#> 
+#> $state$balance$cols$col$sum_sq
 #> [1] 27
 #> 
 #> 
