@@ -19,11 +19,11 @@
 #'   returned by [compute_L_projection()]. Cannot be supplied with `Sigma`.
 #' @param Sigma Optional covariance matrix in grid order (see Details). If both
 #'   `Sigma` and `L_matrix` are `NULL`, identity covariance is assumed.
-#' @param contrast_matrix Numeric contrast matrix with one column per treatment
-#'   level. Column names, when supplied, must match the treatment levels. Only
-#'   these contrasts are required to be estimable and contribute to the
-#'   optimality criterion. The default targets the complete treatment-contrast
-#'   space.
+#' @param contrast_matrix Named numeric contrast matrix with one column per
+#'   treatment level. Column names must match the treatment levels exactly once;
+#'   columns are matched by name, not position. Only these contrasts are required
+#'   to be estimable and contribute to the optimality criterion. The default
+#'   targets the complete treatment-contrast space.
 #' @param block_column Column name of the design's block factor, with at least
 #'   two observed blocks. Used when neither `nuisance_formula` nor `L_matrix`
 #'   is supplied.

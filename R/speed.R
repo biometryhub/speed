@@ -434,10 +434,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
       # Decide whether to accept the new design
       delta <- if (new_score == current_score) 0 else new_score - current_score
-      # Keep the random draw for finite ties at positive temperatures.
-      if (delta < 0 ||
-          (delta == 0 && (is.infinite(current_score) || temp == 0)) ||
-          runif(1) < exp(-delta / temp)) {
+      if (delta <= 0 || runif(1) < exp(-delta / temp)) {
         current_design <- new_design$design
         current_score <- new_score
         current_score_obj <- new_score_obj

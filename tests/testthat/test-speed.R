@@ -181,6 +181,38 @@ test_that("annealing accepts equal scores at zero temperature", {
   }
 })
 
+test_that("annealing accepts ties without drawing an acceptance probability", {
+  design <- data.frame(
+    row = rep(1:2, each = 2),
+    col = rep(1:2, times = 2),
+    treatment = LETTERS[1:4]
+  )
+  proposal <- design
+  proposal$treatment[c(1, 2)] <- proposal$treatment[c(2, 1)]
+  objective <- function(layout_df, swap, spatial_cols, ...) {
+    return(list(score = 1))
+  }
+  local_mocked_bindings(
+    generate_neighbour = function(...) {
+      return(list(design = proposal, swapped_items = c("A", "B")))
+    },
+    runif = function(...) {
+      stop("A tied score should not require an acceptance draw.")
+    }
+  )
+
+  result <- speed(
+    design,
+    swap = "treatment",
+    obj_function = objective,
+    iterations = 1,
+    seed = 1,
+    quiet = TRUE
+  )
+
+  expect_identical(as.character(result$design_df$treatment), proposal$treatment)
+})
+
 test_that("speed throws error for missing columns", {
   test_data <- data.frame(
     row = rep(1:5, times = 4),
