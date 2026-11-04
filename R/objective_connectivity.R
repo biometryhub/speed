@@ -2,26 +2,17 @@
 #'
 #' @description
 #' Extends [objective_function()] with a weighted concurrence term that pushes
-#' every pair of treatments toward the same amount of direct comparison. It
-#' targets design efficiency without building the information matrix that
-#' [calculate_efficiency_factor()] needs. [speed()] uses it in place of
-#' [objective_function()] when `concurrence_factors` is given.
+#' all pairs of treatments toward the same amount of direct comparison. [speed()]
+#' uses it in place of [objective_function()] when `concurrence_factors` is given.
 #'
 #' @details
-#' The terms of `concurrence_factors` are expanded the usual way (`a * b`
-#' becomes `a + b + a:b`), and the finest of them (those whose groups are not
-#' unions of another term's groups) are pooled into a weighted concurrence
-#' matrix `W = sum_t N_t K_t^-1 N_t'`: a pair of treatments earns `1/k` for
-#' every group of `k` plots it shares. The variance of the off-diagonal of `W`
-#' is penalised. Coarser terms (e.g. `block` when `row` is nested in it) add no
-#' information and are left out, as are terms whose groups all hold one plot.
+#' Each term of expanded `concurrence_factors` splits the plots into groups. All
+#' pairs of treatments are counted per group with larger weights for smaller
+#' groups, then the variance of the weighted count across pairs is penalised.
 #'
-#' Adjacency and balance come from [objective_function()]. All three terms are
-#' updated incrementally (see [objective_function_signature]): for concurrence
-#' the state holds the treatment codes and scalar running sums, and the `W` rows
-#' of `swapped_items` are recomputed from their old and new codes. The groupings
-#' are resolved once and cached in the returned list, so spatial columns are
-#' assumed fixed across swaps.
+#' Only the finest terms are used. For example, if complete rows are nested in
+#' a block, `row` is considered finer, then `~ block + row` scores only rows.
+#' Terms holding one plot like `row:col` are dropped.
 #'
 #' @inheritParams objective_function
 #' @param conc_weight Weight for the concurrence term (default: 1).
@@ -34,11 +25,9 @@
 #' @seealso [objective_function()], [calculate_efficiency_factor()]
 #'
 #' @examples
-#' df <- initialise_design_df(1:8, nrows = 6, ncols = 4, block_nrows = 2,
-#'                            block_ncols = 4)
+#' df <- initialise_design_df(1:8, 6, 4, 2, 4)
 #' objective_function_connectivity(
-#'   df, "treatment", c("row", "col"),
-#'   concurrence_factors = ~ block + row
+#'   df, "treatment", c("row", "col"), concurrence_factors = ~ block + row
 #' )
 #'
 #' @export
@@ -56,29 +45,22 @@ objective_function_connectivity <- function(
   col_column = "col",
   ...
 ) {
-  if (is.null(concurrence_factors)) {
-    stop(
-      "`concurrence_factors` is required for ",
-      "`objective_function_connectivity()`.",
-      call. = FALSE
-    )
-  }
-
   items <- layout_df[[swap]]
   if (!is.factor(items)) {
     items <- as.factor(items)
   }
 
-  # Resolve the groupings on the first call only
+  # Verify and resolve groupings once
   groupings <- current_score_obj$connectivity_terms
   n_pairs <- current_score_obj$n_pairs
   if (is.null(groupings)) {
+    .verify_concurrence_factors(layout_df, concurrence_factors)
     groupings <- resolve_connectivity_terms(layout_df, concurrence_factors)
     n_items <- nlevels(items)
     n_pairs <- n_items * (n_items - 1) / 2
   }
 
-  # Adjacency and balance, both incremental, from the base objective
+  # Adjacency and balance
   base <- objective_function(
     layout_df,
     swap,
@@ -95,15 +77,10 @@ objective_function_connectivity <- function(
 
   conc_component <- 0
   if (conc_weight != 0 && length(groupings) > 0) {
-    # Plots holding a swapped item are the same before and after the swaps
     prev <- current_score_obj$state
     codes <- as.integer(items)
     is_partial <- !is.null(prev$codes) && !is.null(swapped_items)
-    rescored <- if (is_partial) {
-      which(levels(items) %in% swapped_items)
-    } else {
-      seq_len(nlevels(items))
-    }
+    rescored <- which(!is_partial | levels(items) %in% swapped_items)
     item_row <- integer(nlevels(items))
     item_row[rescored] <- seq_along(rescored)
     plots <- which(item_row[codes] > 0L)
@@ -131,11 +108,35 @@ objective_function_connectivity <- function(
   ))
 }
 
+#' Verify concurrence factors
+#'
+#' @description
+#' Checks `concurrence_factors` is a one-sided formula of columns in `layout_df`.
+#'
+#' @inheritParams objective_function_connectivity
+#'
+#' @keywords internal
+.verify_concurrence_factors <- function(layout_df, concurrence_factors) {
+  if (is.null(concurrence_factors)) {
+    stop(
+      "`concurrence_factors` is required for `objective_function_connectivity`",
+      call. = FALSE
+    )
+  }
+
+  verify_one_sided_formula(concurrence_factors)
+  for (col in all.vars(concurrence_factors)) {
+    verify_column_exists(col, layout_df, "concurrence factor")
+  }
+
+  return(invisible(NULL))
+}
+
 #' Resolve the Concurrence Groupings
 #'
 #' @description
-#' Caches the codes, sizes, `1/k` weights and members of the finest groupings
-#' of `concurrence_factors`.
+#' Caches the codes, sizes, weights and members of the finest groupings of
+#' `concurrence_factors`.
 #'
 #' @inheritParams objective_function_connectivity
 #'
@@ -143,26 +144,17 @@ objective_function_connectivity <- function(
 #'
 #' @keywords internal
 resolve_connectivity_terms <- function(layout_df, concurrence_factors) {
-  labels <- attr(stats::terms(concurrence_factors), "term.labels")
+  terms <- attr(stats::terms(concurrence_factors), "term.labels")
   groups <- list()
 
-  for (label in labels) {
-    factors <- strsplit(label, ":", fixed = TRUE)[[1]]
-    missing_factors <- setdiff(factors, names(layout_df))
-    if (length(missing_factors) > 0) {
-      stop(
-        "`concurrence_factors` column(s) not found: ",
-        paste0(missing_factors, collapse = ", "),
-        call. = FALSE
-      )
-    }
-
+  for (term in terms) {
+    factors <- strsplit(term, ":", fixed = TRUE)[[1]]
     group <- as.factor(interaction(layout_df[factors], drop = TRUE))
-    # singleton groups compare nothing
+    # drop singleton groups
     if (max(tabulate(group)) < 2) {
       next
     }
-    groups[[label]] <- group
+    groups[[term]] <- group
   }
 
   concurrence_groups <- lapply(finest_groupings(groups), function(group) {
@@ -186,7 +178,7 @@ resolve_connectivity_terms <- function(layout_df, concurrence_factors) {
 #'
 #' @description
 #' A grouping is coarser than another when each of the other's groups lies
-#' within one of its groups. Of identical groupings the first is kept.
+#' within one of its groups. If groupings are identical, the first is kept.
 #'
 #' @param groups A named list of factors over plots.
 #'
@@ -214,15 +206,15 @@ finest_groupings <- function(groups) {
 #' Rows of the Weighted Concurrence Matrix
 #'
 #' @description
-#' The `W` rows of the rescored items for each element of `codes_list`, built
-#' from the groups their plots fall in.
+#' Weighted concurrence rows of the rescored items for each element of
+#' `codes_list`, built from the groups their plots fall in.
 #'
 #' @param plots Plots holding a rescored item.
 #' @param item_row Row of each item among the rescored ones, 0 if not rescored.
 #' @param groupings Cached concurrence groupings.
 #' @param codes_list A list of treatment codes per plot.
 #'
-#' @return A list of `W` row matrices, one per element of `codes_list`.
+#' @return A list of row matrices, one per element of `codes_list`.
 #'
 #' @keywords internal
 concurrence_rows <- function(groupings, codes_list, plots, item_row) {
@@ -259,8 +251,8 @@ concurrence_rows <- function(groupings, codes_list, plots, item_row) {
 #' Incremental Weighted Concurrence Score
 #'
 #' @description
-#' The variance of the off-diagonal of `W`, from running sums updated with the
-#' rescored items' old and new `W` rows; `W` itself is never stored.
+#' Variance of the weighted concurrence across treatment pairs, from running
+#' sums updated with the rescored items' old and new rows.
 #'
 #' @inheritParams concurrence_rows
 #' @param codes,prev_codes Treatment codes per plot, now and before the swaps.
@@ -310,8 +302,8 @@ weighted_concurrence_sums <- function(
 #' Sum Over Off-Diagonal Pairs Touching Some Rows
 #'
 #' @description
-#' Sums unordered off-diagonal pairs with an end in `rescored`, from the
-#' `rescored` rows of a symmetric matrix.
+#' Sums the off-diagonal pairs with at least one end in `rescored`, each counted
+#' once, from the `rescored` rows of a symmetric matrix.
 #'
 #' @param rows The `rescored` rows of a symmetric matrix.
 #' @param rescored Row (and column) indices of `rows` in that matrix.

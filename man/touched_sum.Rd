@@ -15,7 +15,7 @@ touched_sum(rows, rescored)
 A single number.
 }
 \description{
-Sums unordered off-diagonal pairs with an end in \code{rescored}, from the
-\code{rescored} rows of a symmetric matrix.
+Sums the off-diagonal pairs with at least one end in \code{rescored}, each counted
+once, from the \code{rescored} rows of a symmetric matrix.
 }
 \keyword{internal}

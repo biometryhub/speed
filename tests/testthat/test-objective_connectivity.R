@@ -3,10 +3,17 @@ conn_df <- function() {
   return(df)
 }
 
-test_that("connectivity objective requires concurrence_factors", {
+test_that("connectivity objective verifies concurrence_factors", {
+  df <- conn_df()
   expect_error(
-    objective_function_connectivity(conn_df(), "treatment", c("row", "col")),
+    objective_function_connectivity(df, "treatment", c("row", "col")),
     "`concurrence_factors` is required"
+  )
+  expect_error(
+    objective_function_connectivity(
+      df, "treatment", c("row", "col"), concurrence_factors = ~missing
+    ),
+    "'missing' not found"
   )
 })
 
@@ -28,10 +35,6 @@ test_that("coarser terms are dropped from the concurrence groups", {
   df <- conn_df()
   groupings <- resolve_connectivity_terms(df, ~ block + row)
   expect_length(groupings, 1)
-  expect_error(
-    resolve_connectivity_terms(df, ~missing),
-    "not found"
-  )
 })
 
 test_that("adjacency and balance match the base objective", {
@@ -70,6 +73,33 @@ test_that("incremental updates match a full rescore", {
   expect_equal(incremental$components, full$components)
 })
 
+test_that("incremental updates stay exact over a chain of swaps", {
+  set.seed(1)
+  df <- conn_df()
+  df$treatment <- factor(df$treatment)
+  score <- function(design, ...) {
+    return(objective_function_connectivity(
+      design, "treatment", c("row", "col"),
+      concurrence_factors = ~ block + row + col, ...
+    ))
+  }
+  obj <- score(df)
+
+  # multi-item swaps, about half accepted as in the SA loop
+  for (i in seq_len(100)) {
+    nb <- generate_neighbour(df, "treatment", "block", swap_count = sample(1:3, 1))
+    new_obj <- score(nb$design, current_score_obj = obj, swapped_items = nb$swapped_items)
+    if (runif(1) < 0.5) {
+      df <- nb$design
+      obj <- new_obj
+    }
+  }
+
+  full <- score(df)
+  expect_equal(obj$score, full$score)
+  expect_equal(obj$components, full$components)
+})
+
 test_that("speed switches to the connectivity objective with concurrence_factors", {
   df <- conn_df()
   res <- speed(
@@ -86,6 +116,46 @@ test_that("speed switches to the connectivity objective with concurrence_factors
 
   plain <- speed(df, "treatment", iterations = 10, quiet = TRUE, seed = 1)
   expect_identical(plain$metadata$per_level[[1]]$obj_function, objective_function)
+})
+
+test_that("concurrence_factors and conc_weight apply per level", {
+  df_split <- data.frame(
+    row = rep(1:12, each = 4),
+    col = rep(1:4, times = 12),
+    block = rep(1:4, each = 12),
+    wholeplot = rep(1:12, each = 4),
+    wholeplot_treatment = rep(rep(LETTERS[1:3], each = 4), times = 4),
+    subplot_treatment = rep(letters[1:4], 12)
+  )
+  res <- speed(
+    df_split,
+    swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+    swap_within = list(wp = "block", sp = "wholeplot"),
+    concurrence_factors = list(sp = ~row),
+    optimise_params = list(
+      wp = optim_params(),
+      sp = optim_params(conc_weight = 2)
+    ),
+    iterations = 20, quiet = TRUE, seed = 1
+  )
+  wp <- res$metadata$per_level$wp
+  sp <- res$metadata$per_level$sp
+  expect_identical(wp$obj_function, objective_function)
+  expect_null(wp$concurrence_factors)
+  expect_equal(.objective_name(sp$obj_function), "objective_function_connectivity")
+  expect_equal(sp$concurrence_factors, ~row)
+
+  # sp's bound objective carries conc_weight = 2; shuffled so rows are uneven
+  set.seed(2)
+  shuffled <- df_split
+  shuffled$subplot_treatment <- sample(shuffled$subplot_treatment)
+  conc <- function(fn, ...) {
+    res <- fn(shuffled, "subplot_treatment", c("row", "col"), ...)
+    return(res$components[["concurrence"]])
+  }
+  unit <- conc(objective_function_connectivity, concurrence_factors = ~row)
+  expect_gt(unit, 0)
+  expect_equal(conc(sp$obj_function), 2 * unit)
 })
 
 test_that("speed accepts the connectivity objective by name", {

@@ -34,7 +34,7 @@ weighted_concurrence_sums(
 A list with \code{score}, \code{sum_off} and \code{sum_off_sq}.
 }
 \description{
-The variance of the off-diagonal of \code{W}, from running sums updated with the
-rescored items' old and new \code{W} rows; \code{W} itself is never stored.
+Variance of the weighted concurrence across treatment pairs, from running
+sums updated with the rescored items' old and new rows.
 }
 \keyword{internal}

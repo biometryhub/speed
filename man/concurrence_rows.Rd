@@ -16,10 +16,10 @@ concurrence_rows(groupings, codes_list, plots, item_row)
 \item{item_row}{Row of each item among the rescored ones, 0 if not rescored.}
 }
 \value{
-A list of \code{W} row matrices, one per element of \code{codes_list}.
+A list of row matrices, one per element of \code{codes_list}.
 }
 \description{
-The \code{W} rows of the rescored items for each element of \code{codes_list}, built
-from the groups their plots fall in.
+Weighted concurrence rows of the rescored items for each element of
+\code{codes_list}, built from the groups their plots fall in.
 }
 \keyword{internal}

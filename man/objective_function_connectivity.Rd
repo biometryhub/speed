@@ -51,33 +51,22 @@ A named list with \code{score} (numeric, lower is better), \code{components},
 }
 \description{
 Extends \code{\link[=objective_function]{objective_function()}} with a weighted concurrence term that pushes
-every pair of treatments toward the same amount of direct comparison. It
-targets design efficiency without building the information matrix that
-\code{\link[=calculate_efficiency_factor]{calculate_efficiency_factor()}} needs. \code{\link[=speed]{speed()}} uses it in place of
-\code{\link[=objective_function]{objective_function()}} when \code{concurrence_factors} is given.
+all pairs of treatments toward the same amount of direct comparison. \code{\link[=speed]{speed()}}
+uses it in place of \code{\link[=objective_function]{objective_function()}} when \code{concurrence_factors} is given.
 }
 \details{
-The terms of \code{concurrence_factors} are expanded the usual way (\code{a * b}
-becomes \code{a + b + a:b}), and the finest of them (those whose groups are not
-unions of another term's groups) are pooled into a weighted concurrence
-matrix \verb{W = sum_t N_t K_t^-1 N_t'}: a pair of treatments earns \code{1/k} for
-every group of \code{k} plots it shares. The variance of the off-diagonal of \code{W}
-is penalised. Coarser terms (e.g. \code{block} when \code{row} is nested in it) add no
-information and are left out, as are terms whose groups all hold one plot.
+Each term of expanded \code{concurrence_factors} splits the plots into groups. All
+pairs of treatments are counted per group with larger weights for smaller
+groups, then the variance of the weighted count across pairs is penalised.
 
-Adjacency and balance come from \code{\link[=objective_function]{objective_function()}}. All three terms are
-updated incrementally (see \link{objective_function_signature}): for concurrence
-the state holds the treatment codes and scalar running sums, and the \code{W} rows
-of \code{swapped_items} are recomputed from their old and new codes. The groupings
-are resolved once and cached in the returned list, so spatial columns are
-assumed fixed across swaps.
+Only the finest terms are used. For example, if complete rows are nested in
+a block, \code{row} is considered finer, then \code{~ block + row} scores only rows.
+Terms holding one plot like \code{row:col} are dropped.
 }
 \examples{
-df <- initialise_design_df(1:8, nrows = 6, ncols = 4, block_nrows = 2,
-                           block_ncols = 4)
+df <- initialise_design_df(1:8, 6, 4, 2, 4)
 objective_function_connectivity(
-  df, "treatment", c("row", "col"),
-  concurrence_factors = ~ block + row
+  df, "treatment", c("row", "col"), concurrence_factors = ~ block + row
 )
 
 }

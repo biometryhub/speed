@@ -14,6 +14,6 @@ finest_groupings(groups)
 }
 \description{
 A grouping is coarser than another when each of the other's groups lies
-within one of its groups. Of identical groupings the first is kept.
+within one of its groups. If groupings are identical, the first is kept.
 }
 \keyword{internal}
