@@ -330,6 +330,7 @@ test_that("create_speed_input creates an input from a named list", {
       early_stop_iterations = 1000,
       obj_function = objective_function,
       swap_all = TRUE,
+      obj_args = list(adj_weight = 1, bal_weight = 1),
       optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
     )[ordered_names]
   )
@@ -344,6 +345,7 @@ test_that("create_speed_input creates an input from a named list", {
       early_stop_iterations = 1000,
       obj_function = objective_function,
       swap_all = TRUE,
+      obj_args = list(adj_weight = 1, bal_weight = 1),
       optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
     )[ordered_names]
   )
@@ -359,6 +361,7 @@ test_that("create_speed_input creates an input from a named list", {
       early_stop_iterations = 10000,
       obj_function = objective_function,
       swap_all = TRUE,
+      obj_args = list(adj_weight = 1, bal_weight = 1),
       optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
     )[ordered_names]
   )
@@ -373,6 +376,7 @@ test_that("create_speed_input creates an input from a named list", {
       early_stop_iterations = 10000,
       obj_function = objective_function,
       swap_all = TRUE,
+      obj_args = list(adj_weight = 1, bal_weight = 1),
       optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
     )[ordered_names]
   )
@@ -404,7 +408,8 @@ test_that("create_speed_input creates an input from a string", {
         early_stop_iterations = 1000,
         obj_function = objective_function,
         swap_all = FALSE,
-        optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
+        optimise_params = list(swap_count = 5, swap_all_blocks = TRUE),
+        obj_args = list(adj_weight = 1, bal_weight = 1)
       )
     )[ordered_names]
   )
@@ -420,7 +425,8 @@ test_that("create_speed_input creates an input from a string", {
         early_stop_iterations = 1000,
         obj_function = objective_function,
         swap_all = FALSE,
-        optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
+        optimise_params = list(swap_count = 5, swap_all_blocks = TRUE),
+        obj_args = list(adj_weight = 1, bal_weight = 1)
       )
     )[ordered_names]
   )
@@ -493,6 +499,7 @@ test_that("create_speed_input creates an input from optimise argument", {
       early_stop_iterations = 1000,
       obj_function = objective_function,
       swap_all = FALSE,
+      obj_args = list(adj_weight = 1, bal_weight = 1),
       optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
     )[ordered_names]
   )
@@ -507,6 +514,7 @@ test_that("create_speed_input creates an input from optimise argument", {
       early_stop_iterations = 1000,
       obj_function = objective_function,
       swap_all = FALSE,
+      obj_args = list(adj_weight = 1, bal_weight = 1),
       optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
     )[ordered_names]
   )
@@ -522,6 +530,7 @@ test_that("create_speed_input creates an input from optimise argument", {
       early_stop_iterations = 1000,
       obj_function = objective_function,
       swap_all = FALSE,
+      obj_args = list(adj_weight = 1, bal_weight = 1),
       optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
     )[ordered_names]
   )
@@ -536,6 +545,7 @@ test_that("create_speed_input creates an input from optimise argument", {
       early_stop_iterations = 1000,
       obj_function = objective_function,
       swap_all = FALSE,
+      obj_args = list(adj_weight = 1, bal_weight = 1),
       optimise_params = list(swap_count = 5, swap_all_blocks = TRUE)
     )[ordered_names]
   )
@@ -574,6 +584,7 @@ test_that("create_speed_input splits a per-level list the same way for every sha
   expect_equal(from_optimise$sp$iterations, 7)
 })
 
+# TODO: refactor with create_default_speed_input
 test_that("create_speed_input falls back to the argument's own default", {
   # `sp` is left out of the list, so it takes the `iterations` default rather
   # than a value belonging to some other argument
@@ -609,6 +620,65 @@ test_that("create_speed_input leaves named lists that are not levels whole", {
 
   expect_equal(resolved$wp$grid_factors, list(dim1 = "row", dim2 = "col"))
   expect_equal(resolved$sp$optimise_params$start_temp, 42)
+})
+
+test_that("create_speed_input resolves obj_args per level", {
+  resolved <- create_speed_input(
+    swap = "trt",
+    swap_within = "1",
+    spatial_factors = ~ row + col,
+    grid_factors = list(dim1 = "row", dim2 = "col"),
+    iterations = 100,
+    early_stop_iterations = 2000,
+    obj_function = objective_function,
+    swap_all = FALSE,
+    optimise_params = optim_params(),
+    optimise = list(wp = list(obj_args = list(adj_weight = 0)), sp = list()),
+    dots = list(adj_weight = 3, ring_dists = 1)
+  )
+
+  expect_equal(resolved$wp$obj_args$adj_weight, 0)
+  expect_equal(resolved$sp$obj_args$adj_weight, 3)
+  expect_equal(resolved$wp$obj_args$ring_dists, 1)
+  expect_equal(resolved$sp$obj_args$ring_dists, 1)
+  expect_equal(resolved$sp$obj_args$bal_weight, 1)
+})
+
+test_that("create_speed_input resolves obj_args > dots > optim_params weights", {
+  resolve <- function(row_col_inferred = TRUE) {
+    return(create_speed_input(
+      swap = "trt",
+      swap_within = "1",
+      spatial_factors = ~ row + col,
+      grid_factors = list(dim1 = "row", dim2 = "col"),
+      iterations = 100,
+      early_stop_iterations = 2000,
+      obj_function = objective_function,
+      swap_all = FALSE,
+      optimise_params = list(),
+      optimise = list(
+        a = list(
+          obj_args = list(bal_weight = 1),
+          optimise_params = optim_params(adj_weight = 3, bal_weight = 3)
+        ),
+        b = list(optimise_params = optim_params(adj_weight = 3, bal_weight = 3)),
+        c = list(optimise_params = optim_params(bal_weight = 3))
+      ),
+      row_col_inferred = row_col_inferred,
+      dots = list(adj_weight = 2, bal_weight = 2)
+    ))
+  }
+
+  expect_warning(resolved <- resolve(), "is deprecated")
+
+  expect_equal(resolved$a$obj_args[c("adj_weight", "bal_weight")], list(adj_weight = 2, bal_weight = 1))
+  expect_equal(resolved$b$obj_args[c("adj_weight", "bal_weight")], list(adj_weight = 2, bal_weight = 2))
+  expect_equal(resolved$c$obj_args[c("adj_weight", "bal_weight")], list(adj_weight = 2, bal_weight = 2))
+  expect_null(resolved$a$optimise_params$adj_weight)
+
+  # uninferred rows/cols force adj_weight to 0 over every source
+  expect_warning(uninferred <- resolve(row_col_inferred = FALSE), "is deprecated")
+  expect_equal(uninferred$a$obj_args$adj_weight, 0)
 })
 
 test_that("add_names adds names to a list", {

@@ -130,7 +130,8 @@ met_result <- speed(
   early_stop_iterations = 5000,
   optimise = optimise,
   grid_factors = list(dim1 = "row", dim2 = "col", by = "site"),
-  optimise_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
+  optimise_params = optim_params(random_initialisation = TRUE),
+  adj_weight = 0,
   seed = 112
 )
 ```
@@ -369,7 +370,8 @@ met_result <- speed(
   iterations = 50000,
   optimise = optimise,
   grid_factors = list(dim1 = "row", dim2 = "col", by = "site"),
-  optimise_params = optim_params(random_initialisation = 10, adj_weight = 0),
+  optimise_params = optim_params(random_initialisation = 10),
+  adj_weight = 0,
   seed = 112
 )
 ```
@@ -669,7 +671,8 @@ met_result <- speed(
   iterations = 50000,
   optimise = optimise,
   grid_factors = list(dim1 = "row", dim2 = "col", by = "site"),
-  optimise_params = optim_params(random_initialisation = 30, adj_weight = 0),
+  optimise_params = optim_params(random_initialisation = 30),
+  adj_weight = 0,
   seed = 112
 )
 ```

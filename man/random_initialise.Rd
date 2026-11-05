@@ -13,7 +13,9 @@ see more in example.}
 \item{seed}{A numeric value for random seed. If provided, it ensures
 reproducibility of results (default: \code{NULL}).}
 
-\item{...}{Other arguments passed through to objective functions.}
+\item{...}{Other arguments passed to objective functions. For hierarchical
+designs, set an \code{obj_args} field in \code{optimise}. See details for more
+information.}
 }
 \value{
 A data frame with the items shuffled

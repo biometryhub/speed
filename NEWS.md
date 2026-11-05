@@ -8,6 +8,10 @@
 - `speed()` now stops as soon as a design reaches the lowest score its layout allows, applicable only to the
   default `objective_function()`. This can be turned off per level with `optim_params(stop_at_optimal =
   FALSE)`. `summary()` now reports the lower bound score alongside the achieved one.
+- Added an `obj_args` field to `optimise` levels in `speed()` to pass different objective function arguments
+  to each level. `adj_weight` and `bal_weight` now go to `speed()` directly or through `obj_args`; setting
+  them in `optim_params()` is deprecated, and `optim_params()` now returns `NULL` for them unless set.
+  Per-level weights for a `swap = list(...)` design now need the `optimise` form.
 
 ## Minor Changes
 

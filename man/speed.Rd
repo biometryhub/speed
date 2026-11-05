@@ -89,7 +89,9 @@ simulated annealing algorithm. See \code{\link[=optim_params]{optim_params()}} f
 \item{seed}{A numeric value for random seed. If provided, it ensures
 reproducibility of results (default: \code{NULL}).}
 
-\item{...}{Other arguments passed through to objective functions.}
+\item{...}{Other arguments passed to objective functions. For hierarchical
+designs, set an \code{obj_args} field in \code{optimise}. See details for more
+information.}
 }
 \value{
 A list containing:
@@ -158,6 +160,13 @@ carrying level must come first, or it would undo the child level's work.
 On a level with \code{swap_all = TRUE} whole treatment groups move at once, so a
 linked column with more than one value per treatment travels with its
 treatment group rather than being paired plot for plot.
+
+Arguments for the objective function, such as \code{adj_weight}, \code{bal_weight} or
+\code{relationship}, can be passed with \code{...}, or set per level with an \code{obj_args}
+field of a level in \code{optimise}, e.g.,
+\code{optimise = list(wp = list(..., obj_args = list(adj_weight = 0)))}.
+A level's \code{obj_args} override \code{...} argument by argument. Setting
+\code{adj_weight} and \code{bal_weight} through \code{\link[=optim_params]{optim_params()}} is deprecated.
 }
 \examples{
 # Create a simple design with 3 replicates of 4 treatments in a 4x3 layout
@@ -231,7 +240,8 @@ result <- speed(
   data = df_initial,
   swap = "lines",
   optimise = optimise,
-  optimise_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
+  optimise_params = optim_params(random_initialisation = TRUE),
+  adj_weight = 0,
   seed = 112,
   quiet = TRUE
 )
