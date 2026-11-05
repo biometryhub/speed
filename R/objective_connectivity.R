@@ -135,7 +135,7 @@ objective_function_connectivity <- function(
 #' Resolve the Concurrence Groupings
 #'
 #' @description
-#' Caches the codes, sizes, weights, and members of the finest groupings.
+#' Caches the codes, sizes, weights, and member plots of the finest groupings.
 #'
 #' @inheritParams objective_function_connectivity
 #'
@@ -158,15 +158,15 @@ resolve_connectivity_terms <- function(layout_df, concurrence_factors) {
 
   concurrence_groups <- lapply(finest_groupings(groups), function(group) {
     codes <- as.integer(group)
-    size <- tabulate(codes, nlevels(group))
+    sizes <- tabulate(codes, nlevels(group))
     return(list(
-      group = codes,
+      plot_groups = codes,
       n_groups = nlevels(group),
-      weight = 1 / size,
-      size = size,
-      # plot by group, group i is members[group_start[i] + 0:(size[i] - 1)]
+      weights = 1 / sizes,
+      sizes = sizes,
+      # plots by group, group i is members[group_starts[i] + 0:(sizes[i] - 1)]
       members = order(codes, na.last = NA),
-      group_start = cumsum(c(1L, size[-length(size)]))
+      group_starts = cumsum(c(1L, sizes[-length(sizes)]))
     ))
   })
 
@@ -242,39 +242,50 @@ finest_groupings <- function(groups) {
 #' @keywords internal
 concurrence_rows <- function(groupings, codes_list, rescored_plots, item_row) {
   n_items <- length(item_row)
-  n_rescored <- max(0L, item_row)
+  n_rescored <- max(0, item_row)
   # rescored row a of the item at each of `rescored_plots`
   rows <- lapply(
     codes_list,
     function(codes) return(item_row[codes[rescored_plots]])
   )
-  w_rows <- lapply(codes_list, function(codes) return(0))
+  w_rows <- rep(list(matrix(0, n_rescored, n_items)), length(codes_list))
+  # e.g. following @details example: b1 = A B C, b2 = A B D, rescoring A and D
+  # codes_list = list(c(1, 2, 3, 1, 2, 4)), item_row = c(1, 0, 0, 2)
+  # rescored_plots = c(1, 4, 6), rows = c(1, 1, 2), groupings = list(block = g)
+  # g = list(
+  #   plot_groups = c(1, 1, 1, 2, 2, 2), n_groups = 2, weights = c(1/3, 1/3),
+  #   sizes = c(3, 3), members = 1:6, group_starts = c(1, 4)
+  # )
+  # TODO: outer loop could be vectorized with ~5-10% gain - need more testing
   for (g in groupings) {
-    rescored_plot_group <- g$group[rescored_plots]
-    rescored_groups <- which(tabulate(rescored_plot_group, g$n_groups) > 0L)
-    n_rescored_groups <- length(rescored_groups)
-    # pos[h]: column of group h among rescored_groups; a + n_rescored *
-    # (pos - 1) is the column-major index of inc[a, pos]
-    pos <- integer(g$n_groups)
-    pos[rescored_groups] <- seq_len(n_rescored_groups)
-    inc_offset <- n_rescored * (pos[rescored_plot_group] - 1L)
-    size <- g$size[rescored_groups]
-    # all plots of rescored_groups and their column among them
-    member <- g$members[sequence(size, from = g$group_start[rescored_groups])]
-    member_group <- rep.int(seq_len(n_rescored_groups), size)
-    weight <- g$weight[rescored_groups]
+    # e.g. c(1, 2, 2)
+    plot_groups <- g$plot_groups[rescored_plots]
+    # groups holding a rescored plot, e.g. c(1, 2)
+    groups <- unique(plot_groups)
+    groups <- groups[!is.na(groups)]
+    n_groups <- length(groups)
+    # for correct indexing, e.g. c(0, 2, 2)
+    offset <- n_rescored * (match(plot_groups, groups) - 1)
+    sizes <- g$sizes[groups]
+    # e.g. members = 1:6, member_groups = c(1, 1, 1, 2, 2, 2)
+    members <- g$members[sequence(sizes, from = g$group_starts[groups])]
+    member_groups <- rep.int(seq_len(n_groups), sizes)
+    weights <- g$weights[groups]
     for (k in seq_along(codes_list)) {
-      # inc[a, h] = n[h, a], count of rescored item a in rescored group h
-      inc <- tabulate(rows[[k]] + inc_offset, n_rescored * n_rescored_groups)
-      dim(inc) <- c(n_rescored, n_rescored_groups)
-      # counts[h, b] = n[h, b], count of any item b in rescored group h
-      counts <- tabulate(
-        member_group + n_rescored_groups * (codes_list[[k]][member] - 1L),
-        n_rescored_groups * n_items
+      # e.g. tabulate(c(1, 3, 4), 4) -> rbind(A = c(1, 1), D = c(0, 1))
+      # 1 A in group 1, 1 A and D in group 2
+      rescored_counts <- tabulate(rows[[k]] + offset, n_rescored * n_groups)
+      dim(rescored_counts) <- c(n_rescored, n_groups)
+      # e.g. rbind(b1 = c(1, 1, 1, 0), b2 = c(1, 1, 0, 1)), columns are A-D
+      member_counts <- tabulate(
+        member_groups + n_groups * (codes_list[[k]][members] - 1),
+        n_groups * n_items
       )
-      dim(counts) <- c(n_rescored_groups, n_items)
-      # W[a, b] += sum_h w[h] n[h, a] n[h, b]; weight recycles down rows h
-      w_rows[[k]] <- w_rows[[k]] + inc %*% (counts * weight)
+      dim(member_counts) <- c(n_groups, n_items)
+      # e.g. b1 b2           A B C D             A B C D
+      #   A [ 1  1 ] %*% b1 [1 1 1 0] / 3  =  A [2 2 1 1] / 3
+      #   D [ 0  1 ]     b2 [1 1 0 1]         D [1 1 0 1]
+      w_rows[[k]] <- w_rows[[k]] + rescored_counts %*% (member_counts * weights)
     }
   }
   return(w_rows)
@@ -291,7 +302,7 @@ concurrence_rows <- function(groupings, codes_list, rescored_plots, item_row) {
 #' @param rescored Codes of the rescored items.
 #' @param prev The previous concurrence state.
 #'
-#' @return A list with `score`, `sum_off` and `sum_off_sq`.
+#' @return A list with `score`, `sum_pairs` and `sum_pairs_sq`.
 #'
 #' @keywords internal
 weighted_concurrence_sums <- function(
@@ -309,44 +320,51 @@ weighted_concurrence_sums <- function(
   w_rows <- concurrence_rows(groupings, codes_list, rescored_plots, item_row)
   new_rows <- w_rows[[1]]
 
-  # swap out the pairs touching rescored items, old W for new
-  old_sum <- old_sum_sq <- 0
+  mask <- rescored_mask(rescored, ncol(new_rows))
   if (is_partial) {
     old_rows <- w_rows[[2]]
-    old_sum <- touched_sum(old_rows, rescored)
-    old_sum_sq <- touched_sum(old_rows * old_rows, rescored)
+    weighted_diff <- mask * (new_rows - old_rows)
+    sum_pairs <- prev$sum_pairs + sum(weighted_diff)
+    sum_pairs_sq <- prev$sum_pairs_sq +
+      sum(weighted_diff * (new_rows + old_rows))
+  } else {
+    weighted_new <- mask * new_rows
+    sum_pairs <- sum(weighted_new)
+    sum_pairs_sq <- sum(weighted_new * new_rows)
   }
-  sum_off <- (prev$sum_off %||% 0) - old_sum + touched_sum(new_rows, rescored)
-  sum_off_sq <- (prev$sum_off_sq %||% 0) -
-    old_sum_sq +
-    touched_sum(new_rows * new_rows, rescored)
 
   # var = (sum(x^2) - sum(x)^2 / n) / (n - 1)
   score <- 0
   if (n_pairs >= 2) {
-    score <- (sum_off_sq - sum_off^2 / n_pairs) / (n_pairs - 1)
+    score <- (sum_pairs_sq - sum_pairs^2 / n_pairs) / (n_pairs - 1)
   }
 
-  return(list(score = score, sum_off = sum_off, sum_off_sq = sum_off_sq))
+  return(list(
+    score = score,
+    sum_pairs = sum_pairs,
+    sum_pairs_sq = sum_pairs_sq
+  ))
 }
 
-#' Sum Over Off-Diagonal Pairs Touching Some Rows
+#' A Mask for Pairs With a Rescored Item
 #'
 #' @description
-#' Sums the off-diagonal pairs with at least one end in `rescored`, each counted
-#' once, from the `rescored` rows of a symmetric matrix.
+#' A mask over the `rescored` rows so that each off-diagonal pair with at least
+#' one item in `rescored` is counted once.
 #'
-#' @param rows The `rescored` rows of a symmetric matrix.
-#' @param rescored Row (and column) indices of `rows` in that matrix.
+#' @param rescored Codes of the rescored items.
+#' @param n_items Number of items.
 #'
-#' @return A single number.
+#' @return A `length(rescored)` by `n_items` matrix: 0 for diagonal, 1/2 for
+#'   rescored pairs (appear twice), 1 otherwise.
 #'
 #' @keywords internal
-touched_sum <- function(rows, rescored) {
-  inner <- rows[, rescored, drop = FALSE]
-  diag_sum <- sum(diag(inner))
-  # pairs within rescored appear twice in `rows`
-  return(sum(rows) - diag_sum - (sum(inner) - diag_sum) / 2)
+rescored_mask <- function(rescored, n_items) {
+  n_rescored <- length(rescored)
+  mask <- matrix(1, n_rescored, n_items)
+  mask[, rescored] <- 0.5
+  mask[cbind(seq_len(n_rescored), rescored)] <- 0
+  return(mask)
 }
 
 #' Connectivity Objective for a Level
