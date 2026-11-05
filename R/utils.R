@@ -256,6 +256,17 @@ create_speed_input <- function(
   }
 
   # `concurrence_factors` swaps the default objective for the connectivity one
+  has_concurrence <- vapply(
+    optimise,
+    function(opt) return(!is.null(opt$concurrence_factors)),
+    logical(1)
+  )
+  if (length(optimise) > 1 && any(has_concurrence)) {
+    stop(
+      "`concurrence_factors` is not supported for hierarchical designs yet.",
+      call. = FALSE
+    )
+  }
   for (optimise_name in names(optimise)) {
     opt <- optimise[[optimise_name]]
     if (is.null(opt$concurrence_factors)) {

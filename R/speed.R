@@ -23,8 +23,8 @@
 #' @param concurrence_factors A one-sided formula of spatial factors whose
 #'   groups should give every treatment pair an even amount of direct
 #'   comparison (default: `NULL`). When given, the objective function becomes
-#'   [objective_function_connectivity()]. For hierarchical designs, can be a
-#'   named list with names matching `swap`. See details for more information.
+#'   [objective_function_connectivity()]. Not yet supported for hierarchical
+#'   designs. See details for more information.
 #' @param grid_factors A named list specifying grid factors to construct a
 #'   matrix for calculating adjacency score, `dim1` for row and `dim2` for
 #'   column. (default: `list(dim1 = "row", dim2 = "col")`). The axes apply to

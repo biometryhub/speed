@@ -118,7 +118,7 @@ test_that("speed switches to the connectivity objective with concurrence_factors
   expect_identical(plain$metadata$per_level[[1]]$obj_function, objective_function)
 })
 
-test_that("concurrence_factors and conc_weight apply per level", {
+test_that("concurrence_factors is rejected for hierarchical designs", {
   df_split <- data.frame(
     row = rep(1:12, each = 4),
     col = rep(1:4, times = 12),
@@ -127,35 +127,32 @@ test_that("concurrence_factors and conc_weight apply per level", {
     wholeplot_treatment = rep(rep(LETTERS[1:3], each = 4), times = 4),
     subplot_treatment = rep(letters[1:4], 12)
   )
-  res <- speed(
-    df_split,
-    swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
-    swap_within = list(wp = "block", sp = "wholeplot"),
-    concurrence_factors = list(sp = ~row),
-    optimise_params = list(
-      wp = optim_params(),
-      sp = optim_params(conc_weight = 2)
+  msg <- "not supported for hierarchical designs"
+  expect_error(
+    speed(
+      df_split,
+      swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+      swap_within = list(wp = "block", sp = "wholeplot"),
+      concurrence_factors = list(sp = ~row),
+      iterations = 1, quiet = TRUE
     ),
-    iterations = 20, quiet = TRUE, seed = 1
+    msg
   )
-  wp <- res$metadata$per_level$wp
-  sp <- res$metadata$per_level$sp
-  expect_identical(wp$obj_function, objective_function)
-  expect_null(wp$concurrence_factors)
-  expect_equal(.objective_name(sp$obj_function), "objective_function_connectivity")
-  expect_equal(sp$concurrence_factors, ~row)
-
-  # sp's bound objective carries conc_weight = 2; shuffled so rows are uneven
-  set.seed(2)
-  shuffled <- df_split
-  shuffled$subplot_treatment <- sample(shuffled$subplot_treatment)
-  conc <- function(fn, ...) {
-    res <- fn(shuffled, "subplot_treatment", c("row", "col"), ...)
-    return(res$components[["concurrence"]])
-  }
-  unit <- conc(objective_function_connectivity, concurrence_factors = ~row)
-  expect_gt(unit, 0)
-  expect_equal(conc(sp$obj_function), 2 * unit)
+  expect_error(
+    speed(
+      df_split,
+      optimise = list(
+        wp = list(swap = "wholeplot_treatment", swap_within = "block"),
+        sp = list(
+          swap = "subplot_treatment",
+          swap_within = "wholeplot",
+          concurrence_factors = ~row
+        )
+      ),
+      iterations = 1, quiet = TRUE
+    ),
+    msg
+  )
 })
 
 test_that("speed accepts the connectivity objective by name", {
