@@ -244,11 +244,9 @@ test_that("random_initialise returns immediately on a zero score", {
     iterations = 10,
     seed = 1,
     quiet = TRUE,
-    optimise_params = optim_params(
-      random_initialisation = 3,
-      adj_weight = 0,
-      bal_weight = 0
-    )
+    optimise_params = optim_params(random_initialisation = 3),
+    adj_weight = 0,
+    bal_weight = 0
   )
 
   expect_equal(result$score, 0)

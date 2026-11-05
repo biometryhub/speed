@@ -836,16 +836,10 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
     current_score <- 0
     for (opt in optimise) {
       spatial_cols <- all.vars(opt$spatial_factors)
-      adj_weight <- opt$optimise_params$adj_weight
-      bal_weight <- opt$optimise_params$bal_weight
       current_score <- current_score +
-        opt$obj_function(
-          shuffled_design,
-          opt$swap,
-          spatial_cols,
-          adj_weight = adj_weight,
-          bal_weight = bal_weight,
-          ...
+        do.call(
+          opt$obj_function,
+          c(list(shuffled_design, opt$swap, spatial_cols, ...), opt$obj_args)
         )$score
     }
 

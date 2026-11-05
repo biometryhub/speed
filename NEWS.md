@@ -1,3 +1,11 @@
+# speed 0.0.12
+
+## Major Changes
+
+- Added an `obj_args` field to `optimise` levels in `speed()` for per-level objective function arguments.
+  `adj_weight` and `bal_weight` now go to `speed()` or `obj_args`; setting them in `optim_params()` is
+  deprecated, and `optim_params()` returns `NULL` as default.
+
 # speed 0.0.11
 
 ## Major Changes

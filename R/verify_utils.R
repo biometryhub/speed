@@ -357,6 +357,29 @@
   return(invisible(NULL))
 }
 
+#' Verify a Level's `obj_args`
+#'
+#' @rdname verify
+#'
+#' @param obj_args One level's `obj_args`.
+#'
+#' @keywords internal
+.verify_obj_args <- function(obj_args) {
+  if (is.null(obj_args)) {
+    return(invisible(NULL))
+  }
+
+  arg_names <- names(obj_args)
+  if (
+    !is.list(obj_args) ||
+      (length(obj_args) > 0 && (is.null(arg_names) || any(arg_names == "")))
+  ) {
+    stop("`obj_args` must be a named list.", call. = FALSE)
+  }
+
+  return(invisible(NULL))
+}
+
 #' Verify Optimization Parameters for `speed`
 #'
 #' @rdname verify
@@ -379,7 +402,13 @@
   verify_non_negative_whole(start_temp)
   verify_boolean(adaptive_swaps, swap_all_blocks, stop_at_optimal)
   verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
-  verify_numeric(adj_weight, bal_weight)
+  # `NULL` when unset (both are deprecated)
+  if (!is.null(adj_weight)) {
+    verify_numeric(adj_weight)
+  }
+  if (!is.null(bal_weight)) {
+    verify_numeric(bal_weight)
+  }
 
   if (!(random_initialisation %in% c(TRUE, FALSE))) {
     verify_non_negative_whole(random_initialisation)
