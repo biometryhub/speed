@@ -9,32 +9,31 @@ weighted_concurrence_sums(
   n_pairs,
   codes,
   prev_codes,
-  plots,
+  rescored_plots,
   item_row,
   rescored,
   prev
 )
 }
 \arguments{
-\item{groupings}{Cached concurrence groupings.}
+\item{groupings}{Concurrence groupings.}
 
 \item{n_pairs}{Number of unordered treatment pairs.}
 
 \item{codes, prev_codes}{Treatment codes per plot, now and before the swaps.}
 
-\item{plots}{Plots holding a rescored item.}
+\item{rescored_plots}{Plots holding a rescored item.}
 
-\item{item_row}{Row of each item among the rescored ones, 0 if not rescored.}
+\item{item_row}{Row of output corresponding to rescored items, 0 if not rescored.}
 
 \item{rescored}{Codes of the rescored items.}
 
 \item{prev}{The previous concurrence state.}
 }
 \value{
-A list with \code{score}, \code{sum_off} and \code{sum_off_sq}.
+A list with \code{score}, \code{sum_pairs} and \code{sum_pairs_sq}.
 }
 \description{
-Variance of the weighted concurrence across treatment pairs, from running
-sums updated with the rescored items' old and new rows.
+Variance of the weighted concurrence across treatment pairs.
 }
 \keyword{internal}

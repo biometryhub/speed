@@ -10,7 +10,6 @@ objective_function_connectivity(
   spatial_cols,
   adj_weight = 1,
   bal_weight = 1,
-  conc_weight = 1,
   concurrence_factors = NULL,
   current_score_obj = NULL,
   swapped_items = NULL,
@@ -29,8 +28,6 @@ objective_function_connectivity(
 \item{adj_weight}{Weight for adjacency score (default: 1)}
 
 \item{bal_weight}{Weight for balance score (default: 1)}
-
-\item{conc_weight}{Weight for the concurrence term (default: 1).}
 
 \item{concurrence_factors}{A one-sided formula of spatial factors whose terms
 define the concurrence groups.}

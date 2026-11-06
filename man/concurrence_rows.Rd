@@ -4,16 +4,16 @@
 \alias{concurrence_rows}
 \title{Rows of the Weighted Concurrence Matrix}
 \usage{
-concurrence_rows(groupings, codes_list, plots, item_row)
+concurrence_rows(groupings, codes_list, rescored_plots, item_row)
 }
 \arguments{
-\item{groupings}{Cached concurrence groupings.}
+\item{groupings}{Concurrence groupings.}
 
 \item{codes_list}{A list of treatment codes per plot.}
 
-\item{plots}{Plots holding a rescored item.}
+\item{rescored_plots}{Plots holding a rescored item.}
 
-\item{item_row}{Row of each item among the rescored ones, 0 if not rescored.}
+\item{item_row}{Row of output corresponding to rescored items, 0 if not rescored.}
 }
 \value{
 A list of row matrices, one per element of \code{codes_list}.
@@ -21,5 +21,25 @@ A list of row matrices, one per element of \code{codes_list}.
 \description{
 Weighted concurrence rows of the rescored items for each element of
 \code{codes_list}, built from the groups their plots fall in.
+}
+\details{
+Items A-D in two blocks of three plots, rescoring A and D:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{g <- resolve_connectivity_terms(
+  data.frame(block = rep(1:2, each = 3)), ~block
+)
+codes <- c(1L, 2L, 3L, 1L, 2L, 4L) # A B C | A B D
+W <- concurrence_rows(
+  g, list(codes), rescored_plots = c(1, 4, 6), item_row = c(1, 0, 0, 2)
+)
+W
+#> [[1]]
+#>           [,1]      [,2]      [,3]      [,4]
+#> [1,] 0.6666667 0.6666667 0.3333333 0.3333333
+#> [2,] 0.3333333 0.3333333 0.0000000 0.3333333
+}\if{html}{\out{</div>}}
+
+Row 1 is A and row 2 is D; e.g. A and B share both blocks, so W[A, B] =
+1/3 + 1/3. W[1, 1] (A, A) and W[2, 4] (D, D) are omitted later.
 }
 \keyword{internal}

@@ -82,8 +82,8 @@ see more in example.}
 \item{concurrence_factors}{A one-sided formula of spatial factors whose
 groups should give every treatment pair an even amount of direct
 comparison (default: \code{NULL}). When given, the objective function becomes
-\code{\link[=objective_function_connectivity]{objective_function_connectivity()}}. For hierarchical designs, can be a
-named list with names matching \code{swap}. See details for more information.}
+\code{\link[=objective_function_connectivity]{objective_function_connectivity()}}, so \code{obj_function} must not be
+provided. Not yet supported for hierarchical designs.}
 }
 \value{
 The per-level \code{optimise} list.

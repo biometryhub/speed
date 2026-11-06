@@ -16,7 +16,6 @@ define the concurrence groups.}
 A list of concurrence groupings.
 }
 \description{
-Caches the codes, sizes, weights and members of the finest groupings of
-\code{concurrence_factors}.
+Caches the codes, sizes, weights, and member plots of the finest groupings.
 }
 \keyword{internal}

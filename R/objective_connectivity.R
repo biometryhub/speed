@@ -228,7 +228,7 @@ finest_groupings <- function(groups) {
 #' ```
 #'
 #' Row 1 is A and row 2 is D; e.g. A and B share both blocks, so W\[A, B\] =
-#' 1/3 + 1/3. W[1, 1] (A, A) and W[2, 4] (D, D) are omitted later.
+#' 1/3 + 1/3. W\[1, 1\] (A, A) and W\[2, 4\] (D, D) are omitted later.
 #'
 #' @param rescored_plots Plots holding a rescored item.
 #' @param item_row Row of output corresponding to rescored items, 0 if not rescored.

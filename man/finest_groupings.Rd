@@ -2,7 +2,7 @@
 % Please edit documentation in R/objective_connectivity.R
 \name{finest_groupings}
 \alias{finest_groupings}
-\title{Drop Groupings Coarser Than Another}
+\title{Drop Coarser Groupings}
 \usage{
 finest_groupings(groups)
 }
@@ -13,7 +13,7 @@ finest_groupings(groups)
 \code{groups} without the coarser groupings.
 }
 \description{
-A grouping is coarser than another when each of the other's groups lies
-within one of its groups. If groupings are identical, the first is kept.
+A grouping is coarser than another when two or more of the other's groups fit
+within one of its groups. The first is kept for identical groupings.
 }
 \keyword{internal}
