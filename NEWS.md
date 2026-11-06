@@ -1,3 +1,11 @@
+# speed 0.0.12
+
+## Major Changes
+
+- Added the `concurrence_factors` argument to `speed()`. When provided, the objective function switches to
+  `objective_function_connectivity()` that evens out how often treatment pairs appear across groups to improve
+  design efficiency. Hierarchical designs are not yet supported.
+
 # speed 0.0.11
 
 ## Major Changes

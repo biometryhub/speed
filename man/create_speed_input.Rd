@@ -16,7 +16,8 @@ create_speed_input(
   optimise_params,
   linked_cols = NULL,
   optimise = NULL,
-  row_col_inferred = TRUE
+  row_col_inferred = TRUE,
+  concurrence_factors = NULL
 )
 }
 \arguments{
@@ -77,6 +78,12 @@ list with names matching \code{swap}. See details for more information.}
 
 \item{optimise}{A list of named arguments describing optimising parameters;
 see more in example.}
+
+\item{concurrence_factors}{A one-sided formula of spatial factors whose
+groups should give every treatment pair an even amount of direct
+comparison (default: \code{NULL}). When given, the objective function becomes
+\code{\link[=objective_function_connectivity]{objective_function_connectivity()}}, so \code{obj_function} must not be
+provided. Not yet supported for hierarchical designs.}
 }
 \value{
 The per-level \code{optimise} list.
