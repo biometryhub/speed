@@ -272,19 +272,14 @@ create_speed_input <- function(
     if (is.null(opt$concurrence_factors)) {
       next
     }
-    is_supported <- identical(opt$obj_function, objective_function) ||
-      identical(opt$obj_function, objective_function_connectivity)
-    if (!is_supported) {
+    if (!identical(opt$obj_function, objective_function)) {
       stop(
-        "`concurrence_factors` can only be used with `objective_function()` ",
-        "or `objective_function_connectivity()` as `obj_function`.",
+        "`concurrence_factors` can only be used with the default objective ",
+        "function.",
         call. = FALSE
       )
     }
-    optimise[[optimise_name]]$obj_function <- .connectivity_objective(
-      opt$concurrence_factors,
-      opt$optimise_params$conc_weight %||% formals(optim_params)$conc_weight
-    )
+    optimise[[optimise_name]]$obj_function <- objective_function_connectivity
   }
 
   return(optimise)

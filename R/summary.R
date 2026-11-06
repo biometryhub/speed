@@ -352,7 +352,8 @@ summary.design <- function(
   known <- list(
     objective_function = objective_function,
     objective_function_factorial = objective_function_factorial,
-    objective_function_piepho = objective_function_piepho
+    objective_function_piepho = objective_function_piepho,
+    objective_function_connectivity = objective_function_connectivity
   )
   for (nm in names(known)) {
     if (identical(fn, known[[nm]])) return(nm)

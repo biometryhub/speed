@@ -23,8 +23,8 @@
 #' @param concurrence_factors A one-sided formula of spatial factors whose
 #'   groups should give every treatment pair an even amount of direct
 #'   comparison (default: `NULL`). When given, the objective function becomes
-#'   [objective_function_connectivity()]. Not yet supported for hierarchical
-#'   designs. See details for more information.
+#'   [objective_function_connectivity()], so `obj_function` must not be
+#'   provided. Not yet supported for hierarchical designs.
 #' @param grid_factors A named list specifying grid factors to construct a
 #'   matrix for calculating adjacency score, `dim1` for row and `dim2` for
 #'   column. (default: `list(dim1 = "row", dim2 = "col")`). The axes apply to
@@ -119,13 +119,6 @@
 #' whole-plot level of a split-plot moves each sub-plot treatment with its
 #' whole-plot treatment, before the sub-plot level then optimises it. The
 #' carrying level must come first, or it would undo the child level's work.
-#'
-#' `concurrence_factors` targets efficiency rather than spread: it adds a term
-#' penalising the variance of how often each treatment pair shares a group of
-#' its terms, weighted by `1/k` for a group of `k` plots (see
-#' [objective_function_connectivity()]). It is typically the same as
-#' `spatial_factors`, its weight is set by `optim_params(conc_weight = ...)`, and
-#' it cannot be combined with a custom `obj_function`.
 #'
 #' On a level with `swap_all = TRUE` whole treatment groups move at once, so a
 #' linked column with more than one value per treatment travels with its
@@ -372,7 +365,9 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
     # Calculate initial score for this level
     current_score_obj <- opt$obj_function(current_design, opt$swap, spatial_cols, adj_weight = adj_weight,
-                                          bal_weight = bal_weight, grid_index = grid_idx, ...)
+                                          bal_weight = bal_weight,
+                                          concurrence_factors = opt$concurrence_factors,
+                                          grid_index = grid_idx, ...)
     current_score <- current_score_obj$score
 
     if (!is.numeric(current_score)) {
@@ -440,7 +435,9 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
       # Calculate new score
       new_score_obj <- opt$obj_function(new_design$design,opt$swap, spatial_cols, adj_weight = adj_weight,
-                                        bal_weight = bal_weight, current_score_obj = current_score_obj,
+                                        bal_weight = bal_weight,
+                                        concurrence_factors = opt$concurrence_factors,
+                                        current_score_obj = current_score_obj,
                                         swapped_items = new_design$swapped_items, grid_index = grid_idx, ...)
       new_score <- new_score_obj$score
 
@@ -518,7 +515,9 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     # report faithful score components.
     treatments[[level]] <- stringi::stri_sort(unique(as.vector(best_design[[opt$swap]])), numeric = TRUE)
     score_obj <- opt$obj_function(best_design, opt$swap, spatial_cols, adj_weight = adj_weight,
-                                  bal_weight = bal_weight, grid_index = grid_idx, ...)
+                                  bal_weight = bal_weight,
+                                  concurrence_factors = opt$concurrence_factors,
+                                  grid_index = grid_idx, ...)
     level_scores[level] <- score_obj$score
     per_level_meta[[level]] <- list(
       swap             = opt$swap,
@@ -638,7 +637,7 @@ print.design <- function(x, ...) {
 #' @return `NULL`, invisibly. Called for its side effect.
 #' @keywords internal
 .reject_optim_params_in_dots <- function(dots) {
-  forbidden <- intersect(names(dots), c("adj_weight", "bal_weight", "conc_weight"))
+  forbidden <- intersect(names(dots), c("adj_weight", "bal_weight"))
   if (length(forbidden) == 0) {
     return(invisible(NULL))
   }

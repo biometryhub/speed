@@ -15,7 +15,6 @@
 #' Terms holding one plot like `row:col` are dropped.
 #'
 #' @inheritParams objective_function
-#' @param conc_weight Weight for the concurrence term (default: 1).
 #' @param concurrence_factors A one-sided formula of spatial factors whose terms
 #'   define the concurrence groups.
 #'
@@ -37,7 +36,6 @@ objective_function_connectivity <- function(
   spatial_cols,
   adj_weight = 1,
   bal_weight = 1,
-  conc_weight = 1,
   concurrence_factors = NULL,
   current_score_obj = NULL,
   swapped_items = NULL,
@@ -76,7 +74,7 @@ objective_function_connectivity <- function(
   state <- base$state
 
   conc_component <- 0
-  if (conc_weight != 0 && length(groupings) > 0) {
+  if (length(groupings) > 0) {
     prev <- current_score_obj$state
     codes <- as.integer(items)
     is_partial <- !is.null(prev$codes) && !is.null(swapped_items)
@@ -96,7 +94,7 @@ objective_function_connectivity <- function(
       rescored,
       if (is_partial) prev$concurrence
     )
-    conc_component <- conc_weight * state$concurrence$score
+    conc_component <- state$concurrence$score
   }
 
   return(list(
@@ -365,28 +363,4 @@ rescored_mask <- function(rescored, n_items) {
   mask[, rescored] <- 0.5
   mask[cbind(seq_len(n_rescored), rescored)] <- 0
   return(mask)
-}
-
-#' Connectivity Objective for a Level
-#'
-#' @description
-#' Binds `concurrence_factors` and `conc_weight` into
-#' [objective_function_connectivity()], so it can stand in as a level's
-#' `obj_function`.
-#'
-#' @inheritParams objective_function_connectivity
-#'
-#' @return An objective function.
-#'
-#' @keywords internal
-.connectivity_objective <- function(concurrence_factors, conc_weight = 1) {
-  fn <- function(...) {
-    return(objective_function_connectivity(
-      ...,
-      conc_weight = conc_weight,
-      concurrence_factors = concurrence_factors
-    ))
-  }
-  attr(fn, "objective_name") <- "objective_function_connectivity"
-  return(fn)
 }

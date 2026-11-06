@@ -1,7 +1,4 @@
-conn_df <- function() {
-  df <- initialise_design_df(1:8, nrows = 6, ncols = 4, block_nrows = 2, block_ncols = 4)
-  return(df)
-}
+conn_df <- function() initialise_design_df(1:8, 6, 4, 2, 4)
 
 test_that("connectivity objective verifies concurrence_factors", {
   df <- conn_df()
@@ -11,113 +8,183 @@ test_that("connectivity objective verifies concurrence_factors", {
   )
   expect_error(
     objective_function_connectivity(
-      df, "treatment", c("row", "col"), concurrence_factors = ~missing
+      df,
+      "treatment",
+      c("row", "col"),
+      concurrence_factors = ~missing
     ),
     "'missing' not found"
   )
 })
 
-test_that("connectivity objective scores the pooled concurrence variance", {
+test_that("connectivity objective scores correctly", {
   df <- conn_df()
+  # uneven groups of 3, 8 and 13 plots, so each needs its own 1/size weight
+  df$group <- rep(1:3, c(3, 8, 13))
   res <- objective_function_connectivity(
-    df, "treatment", character(0),
-    adj_weight = 0, concurrence_factors = ~row
+    df,
+    "treatment",
+    character(0),
+    adj_weight = 0,
+    concurrence_factors = ~group
   )
 
-  # W from rows of 4 plots: each pair sharing a row earns 1/4
-  n_mat <- table(df$treatment, df$row)
-  w <- n_mat %*% t(n_mat) / 4
+  counts <- table(df$treatment, df$group)
+  # weighted pair counts
+  w <- counts %*% diag(1 / colSums(counts)) %*% t(counts)
   expect_equal(res$score, round(var(w[upper.tri(w)]), 10))
-  expect_equal(unname(res$components[["balance"]]), 0)
+  expect_equal(res$components[["balance"]], 0)
 })
 
-test_that("coarser terms are dropped from the concurrence groups", {
+test_that("only the finest terms become concurrence groups", {
   df <- conn_df()
-  groupings <- resolve_connectivity_terms(df, ~ block + row)
-  expect_length(groupings, 1)
+  # rows nested in blocks
+  expect_named(resolve_connectivity_terms(df, ~ block + row), "row")
+  expect_named(resolve_connectivity_terms(df, ~ row + col), c("row", "col"))
+  # single plots ignored
+  expect_length(resolve_connectivity_terms(df, ~ row:col), 0)
+  expect_named(resolve_connectivity_terms(df, ~ block + col), c("block", "col"))
+  expect_named(resolve_connectivity_terms(df, ~ block * col), c("block:col"))
 })
 
 test_that("adjacency and balance match the base objective", {
   df <- conn_df()
-  sc <- c("row", "col", "block")
+  spatial_cols <- c("row", "col", "block")
   res <- objective_function_connectivity(
-    df, "treatment", sc, conc_weight = 0, concurrence_factors = ~row
+    df,
+    "treatment",
+    spatial_cols,
+    concurrence_factors = ~row
   )
-  base <- objective_function(df, "treatment", sc)
-  expect_equal(res$score, base$score)
+  base <- objective_function(df, "treatment", spatial_cols)
   expect_equal(res$components[c("adjacency", "balance")], base$components)
+  expect_equal(res$score, round(sum(res$components), 10))
 })
 
-test_that("incremental updates match a full rescore", {
+test_that("plots outside any group are left out", {
   df <- conn_df()
-  df$treatment <- factor(df$treatment)
-  first <- objective_function_connectivity(
-    df, "treatment", c("row", "col"), concurrence_factors = ~ block + col
+  # e.g. buffer plots with no block
+  df$block[df$row == 6] <- NA
+  res <- objective_function_connectivity(
+    df,
+    "treatment",
+    character(0),
+    adj_weight = 0,
+    concurrence_factors = ~block
   )
 
-  # swap the treatments of two plots in the same block
-  swapped <- df
-  idx <- c(1, 6)
-  swapped$treatment[idx] <- df$treatment[rev(idx)]
-  items <- as.character(df$treatment[idx])
-
-  incremental <- objective_function_connectivity(
-    swapped, "treatment", c("row", "col"),
-    concurrence_factors = ~ block + col,
-    current_score_obj = first, swapped_items = items
-  )
-  full <- objective_function_connectivity(
-    swapped, "treatment", c("row", "col"), concurrence_factors = ~ block + col
-  )
-  expect_equal(incremental$score, full$score)
-  expect_equal(incremental$components, full$components)
+  # `table` drops NA
+  counts <- table(df$treatment, df$block)
+  w <- counts %*% diag(1 / colSums(counts)) %*% t(counts)
+  expect_equal(res$score, round(var(w[upper.tri(w)]), 10))
 })
 
-test_that("incremental updates stay exact over a chain of swaps", {
+test_that("incremental updates work", {
   set.seed(1)
   df <- conn_df()
   df$treatment <- factor(df$treatment)
   score <- function(design, ...) {
     return(objective_function_connectivity(
-      design, "treatment", c("row", "col"),
-      concurrence_factors = ~ block + row + col, ...
+      design,
+      "treatment",
+      c("row", "col"),
+      concurrence_factors = ~ block + row + col,
+      ...
     ))
   }
-  obj <- score(df)
+  incremental <- score(df)
 
   # multi-item swaps, about half accepted as in the SA loop
   for (i in seq_len(100)) {
-    nb <- generate_neighbour(df, "treatment", "block", swap_count = sample(1:3, 1))
-    new_obj <- score(nb$design, current_score_obj = obj, swapped_items = nb$swapped_items)
+    nb <- generate_neighbour(
+      df,
+      "treatment",
+      "block",
+      swap_count = sample(1:3, 1)
+    )
+    new_incremental <- score(
+      nb$design,
+      current_score_obj = incremental,
+      swapped_items = nb$swapped_items
+    )
     if (runif(1) < 0.5) {
       df <- nb$design
-      obj <- new_obj
+      incremental <- new_incremental
     }
   }
 
   full <- score(df)
-  expect_equal(obj$score, full$score)
-  expect_equal(obj$components, full$components)
+  expect_equal(incremental$score, full$score)
+  expect_equal(incremental$components, full$components)
 })
 
 test_that("speed switches to the connectivity objective with concurrence_factors", {
   df <- conn_df()
   res <- speed(
-    df, "treatment",
+    df,
+    "treatment",
     swap_within = "block",
     concurrence_factors = ~ row + col,
-    iterations = 200, early_stop_iterations = 100,
-    quiet = TRUE, seed = 1
+    iterations = 200,
+    early_stop_iterations = 100,
+    quiet = TRUE,
+    seed = 1
   )
   meta <- res$metadata$per_level[[1]]
-  expect_equal(.objective_name(meta$obj_function), "objective_function_connectivity")
+  expect_equal(
+    .objective_name(meta$obj_function),
+    "objective_function_connectivity"
+  )
   expect_true("concurrence" %in% names(meta$final_components))
   expect_equal(meta$concurrence_factors, ~ row + col)
 
-  plain <- speed(df, "treatment", iterations = 10, quiet = TRUE, seed = 1)
-  expect_identical(plain$metadata$per_level[[1]]$obj_function, objective_function)
+  rescored <- objective_function_connectivity(
+    res$design_df,
+    "treatment",
+    c("row", "col"),
+    concurrence_factors = ~ row + col
+  )
+  expect_equal(res$score, rescored$score)
 })
 
+test_that("random_initialisation scores shuffles with concurrence_factors", {
+  df <- conn_df()
+  initialise <- function(obj_function, concurrence_factors = NULL) {
+    optimise <- list(
+      level = list(
+        swap = "treatment",
+        swap_within = "block",
+        spatial_factors = ~ row + col,
+        concurrence_factors = concurrence_factors,
+        swap_all = FALSE,
+        obj_function = obj_function,
+        optimise_params = optim_params(
+          random_initialisation = 20,
+          # no adj and bal to isolate concurrence score
+          adj_weight = 0,
+          bal_weight = 0
+        )
+      )
+    )
+    return(random_initialise(df, optimise, seed = 1))
+  }
+
+  score <- function(design) {
+    return(objective_function_connectivity(
+      design,
+      "treatment",
+      c("row", "col"),
+      concurrence_factors = ~ row + col
+    )$components[["concurrence"]])
+  }
+
+  expect_lt(
+    score(initialise(objective_function_connectivity, ~ row + col)),
+    score(initialise(objective_function))
+  )
+})
+
+# TODO: remove when support
 test_that("concurrence_factors is rejected for hierarchical designs", {
   df_split <- data.frame(
     row = rep(1:12, each = 4),
@@ -134,7 +201,8 @@ test_that("concurrence_factors is rejected for hierarchical designs", {
       swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
       swap_within = list(wp = "block", sp = "wholeplot"),
       concurrence_factors = list(sp = ~row),
-      iterations = 1, quiet = TRUE
+      iterations = 1,
+      quiet = TRUE
     ),
     msg
   )
@@ -149,57 +217,27 @@ test_that("concurrence_factors is rejected for hierarchical designs", {
           concurrence_factors = ~row
         )
       ),
-      iterations = 1, quiet = TRUE
+      iterations = 1,
+      quiet = TRUE
     ),
     msg
   )
 })
 
-test_that("speed accepts the connectivity objective by name", {
+test_that("speed rejects concurrence_factors with a custom objective", {
   df <- conn_df()
-  res <- speed(
-    df, "treatment",
-    concurrence_factors = ~row,
-    obj_function = objective_function_connectivity,
-    iterations = 10, quiet = TRUE, seed = 1
-  )
-  meta <- res$metadata$per_level[[1]]
-  expect_equal(.objective_name(meta$obj_function), "objective_function_connectivity")
-})
-
-test_that("conc_weight travels through optim_params", {
-  df <- conn_df()
-  run <- function(...) {
-    return(speed(
-      df, "treatment",
-      concurrence_factors = ~row,
-      iterations = 1, quiet = TRUE, seed = 1, ...
-    ))
+  for (fn in list(objective_function_piepho, objective_function_connectivity)) {
+    expect_error(
+      speed(
+        df,
+        "treatment",
+        concurrence_factors = ~row,
+        obj_function = fn,
+        quiet = TRUE
+      ),
+      "can only be used with the default objective function"
+    )
   }
-  # score the same layout with each run's bound objective
-  conc <- function(res) {
-    fn <- res$metadata$per_level[[1]]$obj_function
-    return(fn(df, "treatment", c("row", "col"))$components[["concurrence"]])
-  }
-
-  base <- run()
-  heavy <- run(optimise_params = optim_params(conc_weight = 3))
-  expect_gt(conc(base), 0)
-  expect_equal(conc(heavy), 3 * conc(base))
-  expect_error(run(conc_weight = 3), "must be passed via `optim_params\\(\\)`")
-})
-
-test_that("speed rejects concurrence_factors with a custom objective or bad formula", {
-  df <- conn_df()
-  expect_error(
-    speed(df, "treatment", concurrence_factors = ~row,
-          obj_function = objective_function_piepho, quiet = TRUE),
-    "can only be used with"
-  )
-  expect_error(
-    speed(df, "treatment", concurrence_factors = ~nope, quiet = TRUE),
-    "nope"
-  )
   expect_error(
     speed(df, "treatment", concurrence_factors = "row", quiet = TRUE),
     "one sided formula"
