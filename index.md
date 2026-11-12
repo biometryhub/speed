@@ -74,8 +74,8 @@ See [news](https://biometryhub.github.io/speed/news/index.html).
 
 ### Basic
 
-A simple example optimising a 4×3 completely randomised design with 4
-treatments:
+A simple example optimising a 4×3 spatially balanced design (no
+blocking) with 4 treatments:
 
 ``` r
 

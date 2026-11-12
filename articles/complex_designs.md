@@ -245,7 +245,7 @@ intersections represent treatment combinations.
 
 - **Lower precision** for interaction effects
 - **Complex analysis** with multiple error terms
-- **Less efficient** than RCBD for most comparisons
+- **Less efficient** than a complete-block layout for most comparisons
 - **Requires larger field areas**
 
 ### Example: Strip-Plot Design for Tillage × Planting Date
@@ -508,7 +508,7 @@ str(ribd_result)
     ##   .. ..$ single treatment within replicate:List of 13
     ##   .. .. ..$ swap            : chr "treatment"
     ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x000002b0d2831738>
+    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x00000202dcfaf188>
     ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
     ##   .. .. ..$ adj_weight      : num 1
     ##   .. .. ..$ bal_weight      : num 1
@@ -516,9 +516,10 @@ str(ribd_result)
     ##   .. .. ..$ start_temp      : num 100
     ##   .. .. ..$ cooling_rate    : num 0.99
     ##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
-    ##     row_column = "row", col_column = "col", ...)
-    ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90
-    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x000002b0cae73a50>
+    ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,
+    ##     ...)
+    ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
+    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000202d6f188c8>
     ##   .. .. ..$ final_score     : num 1.8
     ##   .. .. ..$ final_components: Named num [1:2] 0 1.8
     ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
@@ -699,9 +700,10 @@ str(prep_result)
     ##   .. .. ..$ start_temp      : num 100
     ##   .. .. ..$ cooling_rate    : num 0.99
     ##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
-    ##     row_column = "row", col_column = "col", ...)
-    ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90
-    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x000002b0cae73a50>
+    ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,
+    ##     ...)
+    ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
+    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000202d6f188c8>
     ##   .. .. ..$ final_score     : num 2.91
     ##   .. .. ..$ final_components: Named num [1:2] 0 2.91
     ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"

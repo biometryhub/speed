@@ -43,6 +43,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/complex_designs.html">Complex Agricultural Experimental Designs with speed</a></li>
     <li><a class="dropdown-item" href="../articles/custom_objective_functions.html">Custom Objective Functions and Advanced Options for Optimisation in speed</a></li>
+    <li><a class="dropdown-item" href="../articles/design_names.html">Naming Designs in speed</a></li>
     <li><a class="dropdown-item" href="../articles/factorial.html">Factorial Design with speed</a></li>
     <li><a class="dropdown-item" href="../articles/genetic_relationship.html">Relationship-Aware Adjacency in speed</a></li>
     <li><a class="dropdown-item" href="../articles/met.html">Multi-Environment Trials with speed</a></li>
@@ -74,7 +75,7 @@
       <img src="../logo.svg" class="logo" alt=""><h1>Custom Objective Functions and Advanced Options for Optimisation in speed</h1>
 
       <p class="author">Sam Rogers</p>
-      <p class="date">2026-08-28</p>
+      <p class="date">2026-11-11</p>
 
       <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/vignettes/custom_objective_functions.qmd" class="external-link"><code>vignettes/custom_objective_functions.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -265,7 +266,7 @@
 Figure 1: Initial BIBD Layout
 </figcaption></figure>
 </div>
-<p><a href="#fig-bibd-layout" class="quarto-xref">Figure 1</a> shows the initial layout of the BIBD design. The treatments are systematically assigned to blocks, but we need to randomise this design, and ensure that the co-occurrence of treatments meets the BIBD requirements.</p>
+<p><a href="#fig-bibd-layout" class="quarto-xref">Figure 1</a> shows the initial layout of the BIBD design. The treatments are systematically assigned to blocks, but we need to rearrange them, and ensure that the co-occurrence of treatments meets the BIBD requirements.</p>
 </section><section class="level3"><h4 id="performing-the-optimisation">Performing the Optimisation<a class="anchor" aria-label="anchor" href="#performing-the-optimisation"></a>
 </h4>
 <p>Now we can run the optimisation using our custom objective function simply by passing the name to the <code>speed</code> function via the <code>obj_function</code> argument. We will also specify the <code>swap</code> argument to indicate which column contains the treatments, and the <code>spatial_factors</code> argument to include the block, row, and column information for spatial balance. This will allow the optimisation to consider both the adjacency of treatments and their spatial distribution across the blocks, while the custom objective function will ensure that the co-occurrence of treatments is balanced according to the BIBD requirements. Note also that we set <code>optim_params(random_initialisation = TRUE)</code> to ensure that the initialisation of the design is randomised.</p>

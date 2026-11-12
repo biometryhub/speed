@@ -43,6 +43,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/complex_designs.html">Complex Agricultural Experimental Designs with speed</a></li>
     <li><a class="dropdown-item" href="../articles/custom_objective_functions.html">Custom Objective Functions and Advanced Options for Optimisation in speed</a></li>
+    <li><a class="dropdown-item" href="../articles/design_names.html">Naming Designs in speed</a></li>
     <li><a class="dropdown-item" href="../articles/factorial.html">Factorial Design with speed</a></li>
     <li><a class="dropdown-item" href="../articles/genetic_relationship.html">Relationship-Aware Adjacency in speed</a></li>
     <li><a class="dropdown-item" href="../articles/met.html">Multi-Environment Trials with speed</a></li>
@@ -74,7 +75,7 @@
       <img src="../logo.svg" class="logo" alt=""><h1>Complex Agricultural Experimental Designs with speed</h1>
 
       <p class="author">Sam Rogers</p>
-      <p class="date">2026-08-28</p>
+      <p class="date">2026-11-11</p>
 
       <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/vignettes/complex_designs.qmd" class="external-link"><code>vignettes/complex_designs.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -318,7 +319,7 @@ Figure 2: Final layout of the split-split-plot design showing optimised treatme
 <li>
 <strong>Complex analysis</strong> with multiple error terms</li>
 <li>
-<strong>Less efficient</strong> than RCBD for most comparisons</li>
+<strong>Less efficient</strong> than a complete-block layout for most comparisons</li>
 <li><strong>Requires larger field areas</strong></li>
 </ul></section></section><section class="level2"><h3 id="example-strip-plot-design-for-tillage-planting-date">Example: Strip-Plot Design for Tillage × Planting Date<a class="anchor" aria-label="anchor" href="#example-strip-plot-design-for-tillage-planting-date"></a>
 </h3>
@@ -535,7 +536,7 @@ Figure 4: Initial layout of the resolvable incomplete block design showing syst
 <span><span class="co">##   .. ..$ single treatment within replicate:List of 13</span></span>
 <span><span class="co">##   .. .. ..$ swap            : chr "treatment"</span></span>
 <span><span class="co">##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col</span></span>
-<span><span class="co">##   .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: 0x000002b0d2831738&gt;</span></span>
+<span><span class="co">##   .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: 0x00000202dcfaf188&gt;</span></span>
 <span><span class="co">##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"</span></span>
 <span><span class="co">##   .. .. ..$ adj_weight      : num 1</span></span>
 <span><span class="co">##   .. .. ..$ bal_weight      : num 1</span></span>
@@ -543,9 +544,10 @@ Figure 4: Initial layout of the resolvable incomplete block design showing syst
 <span><span class="co">##   .. .. ..$ start_temp      : num 100</span></span>
 <span><span class="co">##   .. .. ..$ cooling_rate    : num 0.99</span></span>
 <span><span class="co">##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,</span></span>
-<span><span class="co">##     row_column = "row", col_column = "col", ...)</span></span>
-<span><span class="co">##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90</span></span>
-<span><span class="co">##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' &lt;environment: 0x000002b0cae73a50&gt;</span></span>
+<span><span class="co">##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,</span></span>
+<span><span class="co">##     ...)</span></span>
+<span><span class="co">##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107</span></span>
+<span><span class="co">##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' &lt;environment: 0x00000202d6f188c8&gt;</span></span>
 <span><span class="co">##   .. .. ..$ final_score     : num 1.8</span></span>
 <span><span class="co">##   .. .. ..$ final_components: Named num [1:2] 0 1.8</span></span>
 <span><span class="co">##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"</span></span>
@@ -708,9 +710,10 @@ Figure 6: Initial layout of the p-rep design showing replicated treatments.
 <span><span class="co">##   .. .. ..$ start_temp      : num 100</span></span>
 <span><span class="co">##   .. .. ..$ cooling_rate    : num 0.99</span></span>
 <span><span class="co">##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,</span></span>
-<span><span class="co">##     row_column = "row", col_column = "col", ...)</span></span>
-<span><span class="co">##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90</span></span>
-<span><span class="co">##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' &lt;environment: 0x000002b0cae73a50&gt;</span></span>
+<span><span class="co">##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,</span></span>
+<span><span class="co">##     ...)</span></span>
+<span><span class="co">##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107</span></span>
+<span><span class="co">##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' &lt;environment: 0x00000202d6f188c8&gt;</span></span>
 <span><span class="co">##   .. .. ..$ final_score     : num 2.91</span></span>
 <span><span class="co">##   .. .. ..$ final_components: Named num [1:2] 0 2.91</span></span>
 <span><span class="co">##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"</span></span>
@@ -1055,8 +1058,8 @@ Nested designs involve factors that are nested within levels of other factors, c
 
 ### Treatment Numbers
 
-- **< 20 treatments**: Consider RCBD or Latin Square
-- **20-100 treatments**: Alpha designs often optimal
+- **< 20 treatments**: Consider complete blocks or a Latin square
+- **20-100 treatments**: Resolvable incomplete blocks within each replicate are often efficient
 - **> 100 treatments**: Augmented or incomplete block designs
 - **Multiple factors**: Factorial arrangements in blocks
 
@@ -1077,7 +1080,7 @@ Nested designs involve factors that are nested within levels of other factors, c
 ### Statistical Efficiency
 
 - Compare **A-efficiency**, **D-efficiency**, and **E-efficiency**
-- Consider **relative efficiency** to RCBD
+- Consider **relative efficiency** to a complete-block layout of the same size
 - Balance **precision** vs **resource use**
 
 ### Practical Efficiency

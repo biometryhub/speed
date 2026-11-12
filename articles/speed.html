@@ -43,6 +43,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/complex_designs.html">Complex Agricultural Experimental Designs with speed</a></li>
     <li><a class="dropdown-item" href="../articles/custom_objective_functions.html">Custom Objective Functions and Advanced Options for Optimisation in speed</a></li>
+    <li><a class="dropdown-item" href="../articles/design_names.html">Naming Designs in speed</a></li>
     <li><a class="dropdown-item" href="../articles/factorial.html">Factorial Design with speed</a></li>
     <li><a class="dropdown-item" href="../articles/genetic_relationship.html">Relationship-Aware Adjacency in speed</a></li>
     <li><a class="dropdown-item" href="../articles/met.html">Multi-Environment Trials with speed</a></li>
@@ -74,7 +75,7 @@
       <img src="../logo.svg" class="logo" alt=""><h1>Common Agricultural Experimental Designs with speed</h1>
 
       <p class="author">Sam Rogers</p>
-      <p class="date">2026-08-28</p>
+      <p class="date">2026-11-11</p>
 
       <small class="dont-index">Source: <a href="https://github.com/biometryhub/speed/blob/main/vignettes/speed.qmd" class="external-link"><code>vignettes/speed.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -89,14 +90,14 @@
 </h2>
 <p>Agricultural experiments require careful spatial design to minimise the effects of field heterogeneity and neighbour interactions while maximising statistical power. The <code>speed</code> package provides tools for creating spatially efficient experimental designs through simulated annealing optimisation.</p>
 <p>This vignette demonstrates how to use <code>speed</code> for common agricultural experimental designs, showing how spatial optimisation can improve the efficiency and validity of field trials. We’ll work through four key design types, each building in complexity and showing different features of the package.</p>
-<p>For advanced and specialised experimental designs (e.g., split-split plot, strip-plot, incomplete block, p-rep, and more), see the companion vignette: <a href="complex_designs.html">Complex Agricultural Experimental Designs with speed</a>.</p>
+<p>For advanced and specialised experimental designs (e.g., split-split plot, strip-plot, incomplete block, p-rep, and more), see the companion vignette: <a href="complex_designs.html">Complex Agricultural Experimental Designs with speed</a>. For why the designs here are called <em>spatially balanced</em> rather than <em>randomised</em>, see <a href="design_names.html">Naming Designs in speed</a>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://biometryhub.github.io/speed/">speed</a></span><span class="op">)</span></span></code></pre></div>
-</section><section class="section level2"><h2 id="completely-randomised-design-crd">Completely Randomised Design (CRD)<a class="anchor" aria-label="anchor" href="#completely-randomised-design-crd"></a>
+</section><section class="section level2"><h2 id="spatially-balanced-design-sbd">Spatially Balanced Design (SBD)<a class="anchor" aria-label="anchor" href="#spatially-balanced-design-sbd"></a>
 </h2>
 <section class="level2"><h3 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h3>
-<p>The Completely Randomised Design is the simplest experimental design where treatments are assigned to experimental units entirely at random. While simple to implement, a CRD doesn’t account for spatial variation in field conditions, which can be mitigated by spatial optimisation techniques.</p>
+<p>The Spatially Balanced Design is the simplest design <code>speed</code> produces: there is no blocking, and treatments are arranged across the whole field so that like treatments avoid being neighbours and each treatment is spread evenly across rows and columns.</p>
 </section><section class="level2"><h3 id="when-to-use">When to Use<a class="anchor" aria-label="anchor" href="#when-to-use"></a>
 </h3>
 <ul>
@@ -106,14 +107,14 @@
 <li>Proof-of-concept studies</li>
 </ul></section><section class="level2"><h3 id="example-field-trial-with-8-varieties">Example: Field Trial with 8 Varieties<a class="anchor" aria-label="anchor" href="#example-field-trial-with-8-varieties"></a>
 </h3>
-<p>Consider a field trial testing 8 new wheat varieties with 4 replicates each. Even though treatments are assigned randomly, spatial optimisation can reduce neighbour effects and improve precision.</p>
-</section><section class="level2"><h3 id="setting-up-crd-with-speed">Setting Up CRD with speed<a class="anchor" aria-label="anchor" href="#setting-up-crd-with-speed"></a>
+<p>Consider a field trial testing 8 new wheat varieties with 4 replicates each. Even without blocking, spatial optimisation can reduce neighbour effects and improve precision.</p>
+</section><section class="level2"><h3 id="setting-up-an-sbd-with-speed">Setting Up an SBD with speed<a class="anchor" aria-label="anchor" href="#setting-up-an-sbd-with-speed"></a>
 </h3>
-<p>In agricultural contexts, even completely randomised designs benefit from spatial optimisation to minimise treatment clustering and neighbour effects. Firstly we will initialise a data frame representing the design and visualise it. This design has 4 replicates of 8 treatments or <code>items</code>, with 8 rows and 4 columns.</p>
+<p>Firstly we will initialise a data frame representing the design and visualise it. This design has 4 replicates of 8 treatments or <code>items</code>, with 8 rows and 4 columns.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Initialise data frame</span></span>
-<span><span class="va">crd_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/initialise_design_df.html">initialise_design_df</a></span><span class="op">(</span>items <span class="op">=</span> <span class="fl">8</span>, nrows <span class="op">=</span> <span class="fl">8</span>, ncols <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">crd_design</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">sbd_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/initialise_design_df.html">initialise_design_df</a></span><span class="op">(</span>items <span class="op">=</span> <span class="fl">8</span>, nrows <span class="op">=</span> <span class="fl">8</span>, ncols <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sbd_design</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   row col treatment</span></span>
 <span><span class="co">## 1   1   1        T1</span></span>
 <span><span class="co">## 2   2   1        T2</span></span>
@@ -122,22 +123,22 @@
 <span><span class="co">## 5   5   1        T5</span></span>
 <span><span class="co">## 6   6   1        T6</span></span></code></pre>
 <div class="quarto-figure quarto-figure-default">
-<figure><p><img src="figures/crd-plot1-1.png" class="quarto-figure quarto-figure-default"></p>
+<figure><p><img src="figures/sbd-plot1-1.png" class="quarto-figure quarto-figure-default"></p>
 </figure>
 </div>
-<p>This is a systematic layout; note how the initial layout arranges treatments in a repeating, non-random pattern. This will now be randomised before visualisation.</p>
+<p>This is a systematic layout; note how treatments are arranged in a repeating pattern. It is the starting point for the optimisation, which rearranges treatments from here by swapping them. To start instead from a random shuffle of this layout, set <code>optim_params(random_initialisation = n)</code>: <code><a href="../reference/speed.html">speed()</a></code> then shuffles it <code>n</code> times and begins from the best-scoring shuffle.</p>
 <section class="level3"><h4 id="performing-the-optimisation">Performing the Optimisation<a class="anchor" aria-label="anchor" href="#performing-the-optimisation"></a>
 </h4>
 <p>The main <code><a href="../reference/speed.html">speed()</a></code> function performs the optimisation. It has been set up with sensible defaults to allow application to a wide variety of situations. In this case, we only need to provide the design data frame for it to operate on, the column name of the data frame to use for the treatments, and a seed for reproducibility.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">crd_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span><span class="va">crd_design</span>, </span>
+<code class="sourceCode R"><span><span class="va">sbd_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span><span class="va">sbd_design</span>,</span>
 <span>                    swap <span class="op">=</span> <span class="st">"treatment"</span>,</span>
 <span>                    seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## row and col are used as row and column, respectively.</span></span></code></pre>
 <pre><code><span><span class="co">## Optimising level: single treatment within whole design</span></span>
 <span><span class="co">## Optimal score reached at iteration 730 for level single treatment within whole design</span></span></code></pre>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">crd_result</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">sbd_result</span></span></code></pre></div>
 <pre><code><span><span class="co">## Optimised Experimental Design</span></span>
 <span><span class="co">## ----------------------------</span></span>
 <span><span class="co">## Score: 2.285714</span></span>
@@ -149,7 +150,7 @@
 </h4>
 <p>The printed output from the returned design object gives a quick identity check: the final optimisation score (lower is better), how many iterations were run and whether it stopped early, the treatments, and the seed. For a fuller, statistically meaningful evaluation of the design - layout, replication, score decomposition, connectedness and more - use <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> (see <a href="#evaluating-a-design">Evaluating a Design</a>). The output object contains some additional components, which can be seen below:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">crd_result</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">sbd_result</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## List of 9</span></span>
 <span><span class="co">##  $ design_df     :Classes 'design' and 'data.frame': 32 obs. of  3 variables:</span></span>
 <span><span class="co">##   ..$ row      : int [1:32] 1 1 1 1 2 2 2 2 3 3 ...</span></span>
@@ -177,7 +178,7 @@
 <span><span class="co">##   .. ..$ single treatment within whole design:List of 13</span></span>
 <span><span class="co">##   .. .. ..$ swap            : chr "treatment"</span></span>
 <span><span class="co">##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col</span></span>
-<span><span class="co">##   .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: 0x000002b0d2e34660&gt;</span></span>
+<span><span class="co">##   .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: 0x00000202e30577b0&gt;</span></span>
 <span><span class="co">##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"</span></span>
 <span><span class="co">##   .. .. ..$ adj_weight      : num 1</span></span>
 <span><span class="co">##   .. .. ..$ bal_weight      : num 1</span></span>
@@ -185,31 +186,32 @@
 <span><span class="co">##   .. .. ..$ start_temp      : num 100</span></span>
 <span><span class="co">##   .. .. ..$ cooling_rate    : num 0.99</span></span>
 <span><span class="co">##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,</span></span>
-<span><span class="co">##     row_column = "row", col_column = "col", ...)</span></span>
-<span><span class="co">##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90</span></span>
-<span><span class="co">##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' &lt;environment: 0x000002b0cae73a50&gt;</span></span>
+<span><span class="co">##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,</span></span>
+<span><span class="co">##     ...)</span></span>
+<span><span class="co">##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107</span></span>
+<span><span class="co">##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' &lt;environment: 0x00000202d6f188c8&gt;</span></span>
 <span><span class="co">##   .. .. ..$ final_score     : num 2.29</span></span>
 <span><span class="co">##   .. .. ..$ final_components: Named num [1:2] 0 2.29</span></span>
 <span><span class="co">##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"</span></span>
 <span><span class="co">##   .. .. ..$ optimal_score   : num 2.29</span></span>
 <span><span class="co">##   .. .. ..$ stop_reason     : chr "optimal"</span></span>
-<span><span class="co">##   ..$ call      : language speed(data = crd_design, swap = "treatment", seed = 42)</span></span>
+<span><span class="co">##   ..$ call      : language speed(data = sbd_design, swap = "treatment", seed = 42)</span></span>
 <span><span class="co">##  - attr(*, "class")= chr [1:2] "design" "list"</span></span></code></pre>
 </section><section class="level3"><h4 id="visualise-the-output">Visualise the Output<a class="anchor" aria-label="anchor" href="#visualise-the-output"></a>
 </h4>
-<p>The final step is to visualise the optimised design. The plot below displays the spatial arrangement of treatments after optimisation, allowing you to easily check for clustering, spatial trends, or other patterns that may affect your experiment. A well-randomised and spatially efficient design will show treatments distributed evenly across the field, helping to minimise neighbour effects and maximise the reliability of your results.</p>
+<p>The final step is to visualise the optimised design. The plot below displays the spatial arrangement of treatments after optimisation, allowing you to easily check for clustering, spatial trends, or other patterns that may affect your experiment. A spatially balanced design will show treatments distributed evenly across the field, helping to minimise neighbour effects and maximise the reliability of your results.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">crd_result</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">sbd_result</span><span class="op">)</span></span></code></pre></div>
 <div class="quarto-figure quarto-figure-default">
-<figure><p><img src="figures/crd-plot2-1.png" class="quarto-figure quarto-figure-default"></p>
+<figure><p><img src="figures/sbd-plot2-1.png" class="quarto-figure quarto-figure-default"></p>
 </figure>
 </div>
-<p>A nicely randomised<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;Note that this design is not a true randomised design, as &lt;code&gt;speed&lt;/code&gt; performs restricted randomisation and this design has been optimised to reduce neighbour effects. However, it can still be considered a Completely Randomised Design as it does not account for any blocking or other sources of variation.&lt;/p&gt;"><sup>1</sup></a> and spatially optimal design!</p>
+<p>A spatially balanced design!<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;The allocation was chosen by optimisation rather than at random, so the rows and columns it was balanced over belong in the analysis model. See &lt;a href=&quot;design_names.html&quot;&gt;Naming Designs in speed&lt;/a&gt;.&lt;/p&gt;"><sup>1</sup></a></p>
 </section></section></section><section class="section level2"><h2 id="evaluating-a-design">Evaluating a Design<a class="anchor" aria-label="anchor" href="#evaluating-a-design"></a>
 </h2>
 <p><code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> tells you <em>what</em> a design is; <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> helps you <em>evaluate and defend</em> it. Calling <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> on any design object reports a set of structural and evaluation metrics:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">crd_result</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">sbd_result</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Design Summary</span></span>
 <span><span class="co">## ==============</span></span>
 <span><span class="co">##</span></span>
@@ -252,7 +254,7 @@
 <li>
 <strong>Connectedness</strong> – whether treatment effects are estimable. Fits <code>lm(~ &lt;spatial factors + block&gt; + treatment)</code> and checks for aliased treatment terms; the nuisance side of the model adjusts to whatever the design is stratified by (row/col, and a block factor when present).</li>
 <li>
-<strong>Concurrence</strong> – for <em>incomplete</em> block designs, how often pairs of treatments share a block (constant concurrences indicate a balanced incomplete-block design). It is skipped for complete designs such as RCBD and split-plots, where it carries no information.</li>
+<strong>Concurrence</strong> – for <em>incomplete</em> block designs, how often pairs of treatments share a block (constant concurrences indicate a balanced incomplete-block design). It is skipped for complete-block designs such as SBBDs and split-plots, where it carries no information.</li>
 <li>
 <strong>Replicate span</strong> – the smallest spatial separation between replicates of a treatment; small values flag replicates sitting close together.</li>
 </ul>
@@ -261,7 +263,7 @@
 <p>Any issues – a design that ran to its iteration cap, unequal replication, or a disconnected design – are surfaced as <strong>Flags</strong> at the top.</p>
 <p>Some metrics are opt-in or context-dependent. The A-efficiency factor (a row–column model metric) is computed only when you ask for it:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">crd_result</span>, efficiency <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">sbd_result</span>, efficiency <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Design Summary</span></span>
 <span><span class="co">## ==============</span></span>
 <span><span class="co">##</span></span>
@@ -294,7 +296,7 @@
 <span><span class="co">## Neighbour:    min 0, max 5 over 28 pairs (variance 1.9048), 4 never adjacent</span></span></code></pre>
 <p>The returned summary is also a list, so individual metrics can be pulled out programmatically:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">crd_result</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">sbd_result</span><span class="op">)</span></span>
 <span><span class="va">s</span><span class="op">$</span><span class="va">per_level</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">score</span></span></code></pre></div>
 <pre><code><span><span class="co">## $initial</span></span>
 <span><span class="co">## [1] 40</span></span>
@@ -308,11 +310,11 @@
 <span><span class="co">## $components</span></span>
 <span><span class="co">## adjacency   balance</span></span>
 <span><span class="co">##  0.000000  2.285714</span></span></code></pre>
-</section><section class="section level2"><h2 id="randomised-complete-block-design-rcbd">Randomised Complete Block Design (RCBD)<a class="anchor" aria-label="anchor" href="#randomised-complete-block-design-rcbd"></a>
+</section><section class="section level2"><h2 id="spatially-balanced-block-design-sbbd">Spatially Balanced Block Design (SBBD)<a class="anchor" aria-label="anchor" href="#spatially-balanced-block-design-sbbd"></a>
 </h2>
 <section class="level2"><h3 id="overview-1">Overview<a class="anchor" aria-label="anchor" href="#overview-1"></a>
 </h3>
-<p>RCBD is one of the most commonly used designs in agricultural research. It controls for one source of variation by grouping experimental units into homogeneous blocks, with each treatment appearing once per block.</p>
+<p>The Spatially Balanced Block Design groups experimental units into homogeneous blocks, with each treatment appearing once per block, to control for one source of variation. Within that structure, treatments are arranged so that like treatments avoid being neighbours and each treatment is spread evenly across rows and columns.</p>
 </section><section class="level2"><h3 id="when-to-use-1">When to Use<a class="anchor" aria-label="anchor" href="#when-to-use-1"></a>
 </h3>
 <ul>
@@ -323,12 +325,12 @@
 </ul></section><section class="level2"><h3 id="example-variety-trial-across-field-gradient">Example: Variety Trial Across Field Gradient<a class="anchor" aria-label="anchor" href="#example-variety-trial-across-field-gradient"></a>
 </h3>
 <p>Consider testing 6 barley varieties across a field with a moisture gradient. Using 4 blocks perpendicular to the gradient helps control for soil moisture variation.</p>
-</section><section class="level2"><h3 id="setting-up-rcbd-with-speed">Setting Up RCBD with speed<a class="anchor" aria-label="anchor" href="#setting-up-rcbd-with-speed"></a>
+</section><section class="level2"><h3 id="setting-up-an-sbbd-with-speed">Setting Up an SBBD with speed<a class="anchor" aria-label="anchor" href="#setting-up-an-sbbd-with-speed"></a>
 </h3>
 <p>Here we initialise a data frame for a design with 4 blocks and 6 treatments, arranged in 4 rows and 6 columns. Note that we can specify treatments in the <code>items</code> argument.</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">rcbd_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/initialise_design_df.html">initialise_design_df</a></span><span class="op">(</span>items <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"V"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span>, nrows <span class="op">=</span> <span class="fl">4</span>, ncols <span class="op">=</span> <span class="fl">6</span>, block_nrows <span class="op">=</span> <span class="fl">1</span>, block_ncols <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">rcbd_design</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">sbbd_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/initialise_design_df.html">initialise_design_df</a></span><span class="op">(</span>items <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"V"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span>, nrows <span class="op">=</span> <span class="fl">4</span>, ncols <span class="op">=</span> <span class="fl">6</span>, block_nrows <span class="op">=</span> <span class="fl">1</span>, block_ncols <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sbbd_design</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   row col treatment row_block col_block block</span></span>
 <span><span class="co">## 1   1   1        V1         1         1     1</span></span>
 <span><span class="co">## 2   2   1        V1         2         1     2</span></span>
@@ -337,14 +339,14 @@
 <span><span class="co">## 5   1   2        V2         1         1     1</span></span>
 <span><span class="co">## 6   2   2        V2         2         1     2</span></span></code></pre>
 <div class="quarto-figure quarto-figure-default">
-<figure><p><img src="figures/rcbd-plot1-1.png" class="quarto-figure quarto-figure-default"></p>
+<figure><p><img src="figures/sbbd-plot1-1.png" class="quarto-figure quarto-figure-default"></p>
 </figure>
 </div>
-<p>This is a systematic block layout; each block contains all treatments in a repeating pattern. This will now be randomised within blocks.</p>
+<p>This is a systematic block layout; each block contains all treatments in a repeating pattern. Treatments will now be swapped within blocks to optimise it.</p>
 <section class="level3"><h4 id="performing-the-optimisation-1">Performing the Optimisation<a class="anchor" aria-label="anchor" href="#performing-the-optimisation-1"></a>
 </h4>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">rcbd_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span><span class="va">rcbd_design</span>, </span>
+<code class="sourceCode R"><span><span class="va">sbbd_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/speed.html">speed</a></span><span class="op">(</span><span class="va">sbbd_design</span>,</span>
 <span>                     swap <span class="op">=</span> <span class="st">"treatment"</span>,</span>
 <span>                     swap_within <span class="op">=</span> <span class="st">"block"</span>,</span>
 <span>                     seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
@@ -352,7 +354,7 @@
 <pre><code><span><span class="co">## Optimising level: single treatment within block</span></span>
 <span><span class="co">## Optimal score reached at iteration 329 for level single treatment within block</span></span></code></pre>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">rcbd_result</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">sbbd_result</span></span></code></pre></div>
 <pre><code><span><span class="co">## Optimised Experimental Design</span></span>
 <span><span class="co">## ----------------------------</span></span>
 <span><span class="co">## Score: 1.6</span></span>
@@ -363,7 +365,7 @@
 </section><section class="level3"><h4 id="output-of-the-optimisation-1">Output of the Optimisation<a class="anchor" aria-label="anchor" href="#output-of-the-optimisation-1"></a>
 </h4>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">rcbd_result</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">sbbd_result</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## List of 9</span></span>
 <span><span class="co">##  $ design_df     :Classes 'design' and 'data.frame': 24 obs. of  6 variables:</span></span>
 <span><span class="co">##   ..$ row      : int [1:24] 1 1 1 1 1 1 2 2 2 2 ...</span></span>
@@ -394,7 +396,7 @@
 <span><span class="co">##   .. ..$ single treatment within block:List of 13</span></span>
 <span><span class="co">##   .. .. ..$ swap            : chr "treatment"</span></span>
 <span><span class="co">##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col</span></span>
-<span><span class="co">##   .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: 0x000002b0d8c40d98&gt;</span></span>
+<span><span class="co">##   .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: 0x00000202ddc0a270&gt;</span></span>
 <span><span class="co">##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"</span></span>
 <span><span class="co">##   .. .. ..$ adj_weight      : num 1</span></span>
 <span><span class="co">##   .. .. ..$ bal_weight      : num 1</span></span>
@@ -402,25 +404,26 @@
 <span><span class="co">##   .. .. ..$ start_temp      : num 100</span></span>
 <span><span class="co">##   .. .. ..$ cooling_rate    : num 0.99</span></span>
 <span><span class="co">##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,</span></span>
-<span><span class="co">##     row_column = "row", col_column = "col", ...)</span></span>
-<span><span class="co">##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90</span></span>
-<span><span class="co">##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' &lt;environment: 0x000002b0cae73a50&gt;</span></span>
+<span><span class="co">##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,</span></span>
+<span><span class="co">##     ...)</span></span>
+<span><span class="co">##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107</span></span>
+<span><span class="co">##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' &lt;environment: 0x00000202d6f188c8&gt;</span></span>
 <span><span class="co">##   .. .. ..$ final_score     : num 1.6</span></span>
 <span><span class="co">##   .. .. ..$ final_components: Named num [1:2] 0 1.6</span></span>
 <span><span class="co">##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"</span></span>
 <span><span class="co">##   .. .. ..$ optimal_score   : num 1.6</span></span>
 <span><span class="co">##   .. .. ..$ stop_reason     : chr "optimal"</span></span>
-<span><span class="co">##   ..$ call      : language speed(data = rcbd_design, swap = "treatment", swap_within = "block", seed = 42)</span></span>
+<span><span class="co">##   ..$ call      : language speed(data = sbbd_design, swap = "treatment", swap_within = "block", seed = 42)</span></span>
 <span><span class="co">##  - attr(*, "class")= chr [1:2] "design" "list"</span></span></code></pre>
 </section><section class="level3"><h4 id="visualise-the-output-1">Visualise the Output<a class="anchor" aria-label="anchor" href="#visualise-the-output-1"></a>
 </h4>
 <div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">rcbd_result</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">sbbd_result</span><span class="op">)</span></span></code></pre></div>
 <div class="quarto-figure quarto-figure-default">
-<figure><p><img src="figures/rcbd-plot2-1.png" class="quarto-figure quarto-figure-default"></p>
+<figure><p><img src="figures/sbbd-plot2-1.png" class="quarto-figure quarto-figure-default"></p>
 </figure>
 </div>
-<p>A well-randomised and spatially efficient RCBD layout.</p>
+<p>A spatially balanced block design: each block still contains every treatment once.</p>
 </section></section></section><section class="section level2"><h2 id="latin-square-design">Latin Square Design<a class="anchor" aria-label="anchor" href="#latin-square-design"></a>
 </h2>
 <section class="level2"><h3 id="overview-2">Overview<a class="anchor" aria-label="anchor" href="#overview-2"></a>
@@ -456,7 +459,7 @@
 <figure><p><img src="figures/latin-square-plot1-1.png" class="quarto-figure quarto-figure-default"></p>
 </figure>
 </div>
-<p>This is a systematic Latin square layout; each treatment appears once per row and column. The design will now be randomised.</p>
+<p>This is a systematic Latin square layout; each treatment appears once per row and column. The design will now be optimised.</p>
 <section class="level3"><h4 id="performing-the-optimisation-2">Performing the Optimisation<a class="anchor" aria-label="anchor" href="#performing-the-optimisation-2"></a>
 </h4>
 <p>Because of the spatial optimisation algorithm built into <code>speed</code>, with default optimization parameters and enough iterations, it should arrive at a Latin square design in cases where the number of rows, columns, treatments and replicates are all equal such as this.</p>
@@ -509,7 +512,7 @@
 <span><span class="co">##   .. ..$ single treatment within whole design:List of 13</span></span>
 <span><span class="co">##   .. .. ..$ swap            : chr "treatment"</span></span>
 <span><span class="co">##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col</span></span>
-<span><span class="co">##   .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: 0x000002b0ca4538c0&gt;</span></span>
+<span><span class="co">##   .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: 0x00000202e43a7658&gt;</span></span>
 <span><span class="co">##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"</span></span>
 <span><span class="co">##   .. .. ..$ adj_weight      : num 1</span></span>
 <span><span class="co">##   .. .. ..$ bal_weight      : num 1</span></span>
@@ -517,9 +520,10 @@
 <span><span class="co">##   .. .. ..$ start_temp      : num 100</span></span>
 <span><span class="co">##   .. .. ..$ cooling_rate    : num 0.99</span></span>
 <span><span class="co">##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,</span></span>
-<span><span class="co">##     row_column = "row", col_column = "col", ...)</span></span>
-<span><span class="co">##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90</span></span>
-<span><span class="co">##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' &lt;environment: 0x000002b0cae73a50&gt;</span></span>
+<span><span class="co">##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,</span></span>
+<span><span class="co">##     ...)</span></span>
+<span><span class="co">##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107</span></span>
+<span><span class="co">##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' &lt;environment: 0x00000202d6f188c8&gt;</span></span>
 <span><span class="co">##   .. .. ..$ final_score     : num 0</span></span>
 <span><span class="co">##   .. .. ..$ final_components: Named num [1:2] 0 0</span></span>
 <span><span class="co">##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"</span></span>
@@ -535,7 +539,7 @@
 <figure><p><img src="figures/latin-square-plot2-1.png" class="quarto-figure quarto-figure-default"></p>
 </figure>
 </div>
-<p>A well-randomised and spatially efficient Latin square layout.</p>
+<p>A spatially balanced Latin square layout.</p>
 </section></section></section><section class="section level2"><h2 id="split-plot-design">Split-Plot Design<a class="anchor" aria-label="anchor" href="#split-plot-design"></a>
 </h2>
 <section class="level2"><h3 id="overview-3">Overview<a class="anchor" aria-label="anchor" href="#overview-3"></a>
@@ -582,7 +586,7 @@
 <figure><p><img src="figures/split-plot-plot1-2.png" class="quarto-figure quarto-figure-default"></p>
 </figure>
 </div>
-<p>This is a systematic split plot layout; each treatment appears once per block for whole plot treatments, and once per whole plot for sub-plot treatments. The design will now be randomised.</p>
+<p>This is a systematic split plot layout; each treatment appears once per block for whole plot treatments, and once per whole plot for sub-plot treatments. The design will now be optimised.</p>
 <section class="level3"><h4 id="performing-the-optimisation-3">Performing the Optimisation<a class="anchor" aria-label="anchor" href="#performing-the-optimisation-3"></a>
 </h4>
 <p>For split-plot designs, we describe the hierarchy through the <code>optimise</code> argument: a named list where each entry holds the per-level overrides (<code>swap</code>, <code>swap_within</code>, and any other arguments such as <code>swap_all</code>, <code>iterations</code>, or <code>optimise_params</code>). Levels are optimised in the order they appear.</p>
@@ -660,7 +664,7 @@
 <span><span class="co">##   .. ..$ wp:List of 13</span></span>
 <span><span class="co">##   .. .. ..$ swap            : chr "wholeplot_treatment"</span></span>
 <span><span class="co">##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col</span></span>
-<span><span class="co">##   .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: 0x000002b0d0b8f0e0&gt;</span></span>
+<span><span class="co">##   .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: 0x00000202e2dc0158&gt;</span></span>
 <span><span class="co">##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"</span></span>
 <span><span class="co">##   .. .. ..$ adj_weight      : num 1</span></span>
 <span><span class="co">##   .. .. ..$ bal_weight      : num 1</span></span>
@@ -668,9 +672,10 @@
 <span><span class="co">##   .. .. ..$ start_temp      : num 100</span></span>
 <span><span class="co">##   .. .. ..$ cooling_rate    : num 0.99</span></span>
 <span><span class="co">##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,</span></span>
-<span><span class="co">##     row_column = "row", col_column = "col", ...)</span></span>
-<span><span class="co">##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90</span></span>
-<span><span class="co">##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' &lt;environment: 0x000002b0cae73a50&gt;</span></span>
+<span><span class="co">##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,</span></span>
+<span><span class="co">##     ...)</span></span>
+<span><span class="co">##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107</span></span>
+<span><span class="co">##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' &lt;environment: 0x00000202d6f188c8&gt;</span></span>
 <span><span class="co">##   .. .. ..$ final_score     : num 100</span></span>
 <span><span class="co">##   .. .. ..$ final_components: Named num [1:2] 36 64</span></span>
 <span><span class="co">##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"</span></span>
@@ -679,7 +684,7 @@
 <span><span class="co">##   .. ..$ sp:List of 13</span></span>
 <span><span class="co">##   .. .. ..$ swap            : chr "subplot_treatment"</span></span>
 <span><span class="co">##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col</span></span>
-<span><span class="co">##   .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: 0x000002b0d0b8f0e0&gt;</span></span>
+<span><span class="co">##   .. .. .. .. ..- attr(*, ".Environment")=&lt;environment: 0x00000202e2dc0158&gt;</span></span>
 <span><span class="co">##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"</span></span>
 <span><span class="co">##   .. .. ..$ adj_weight      : num 1</span></span>
 <span><span class="co">##   .. .. ..$ bal_weight      : num 1</span></span>
@@ -687,9 +692,10 @@
 <span><span class="co">##   .. .. ..$ start_temp      : num 100</span></span>
 <span><span class="co">##   .. .. ..$ cooling_rate    : num 0.99</span></span>
 <span><span class="co">##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,</span></span>
-<span><span class="co">##     row_column = "row", col_column = "col", ...)</span></span>
-<span><span class="co">##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90</span></span>
-<span><span class="co">##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' &lt;environment: 0x000002b0cae73a50&gt;</span></span>
+<span><span class="co">##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,</span></span>
+<span><span class="co">##     ...)</span></span>
+<span><span class="co">##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107</span></span>
+<span><span class="co">##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' &lt;environment: 0x00000202d6f188c8&gt;</span></span>
 <span><span class="co">##   .. .. ..$ final_score     : num 0</span></span>
 <span><span class="co">##   .. .. ..$ final_components: Named num [1:2] 0 0</span></span>
 <span><span class="co">##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"</span></span>
@@ -893,7 +899,7 @@
 <li>Maintain design validity and balance</li>
 <li>Visualise and evaluate design quality</li>
 </ul>
-<p>Whether using simple randomised designs or complex split-plot structures, spatial optimisation through <code>speed</code> can significantly enhance the efficiency and reliability of agricultural experiments.</p>
+<p>Whether using simple unblocked designs or complex split-plot structures, spatial optimisation through <code>speed</code> can significantly enhance the efficiency and reliability of agricultural experiments.</p>
 <section class="level2"><h3 id="further-reading">Further Reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>
 </h3>
 <ul>
@@ -912,6 +918,8 @@
 <ul>
 <li>
 <a href="complex_designs.html">Complex Agricultural Experimental Designs with speed</a>: Advanced and specialised designs, including split-split plot, strip-plot, incomplete block, p-rep, and more.</li>
+<li>
+<a href="design_names.html">Naming Designs in speed</a>: Why designs from <code>speed</code> are called <em>spatially balanced</em> rather than <em>randomised</em>, and what that means for analysis.</li>
 </ul></section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

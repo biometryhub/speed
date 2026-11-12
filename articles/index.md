@@ -6,6 +6,8 @@
   speed](https://biometryhub.github.io/speed/articles/complex_designs.md):
 - [Custom Objective Functions and Advanced Options for Optimisation in
   speed](https://biometryhub.github.io/speed/articles/custom_objective_functions.md):
+- [Naming Designs in
+  speed](https://biometryhub.github.io/speed/articles/design_names.md):
 - [Factorial Design with
   speed](https://biometryhub.github.io/speed/articles/factorial.md):
 - [Relationship-Aware Adjacency in

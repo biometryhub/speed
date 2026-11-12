@@ -130,7 +130,7 @@ What the evaluation metrics report:
 - **Concurrence:** how many blocks each pair of treatments shares
   (`lambda`); equal lambda across all pairs indicates a balanced
   incomplete-block design. Uninformative for complete blocks such as
-  RCBD/split-plot, where every pair always shares every block.
+  SBBD/split-plot, where every pair always shares every block.
 
 - **Replicate spread:** how many distinct blocks each treatment's
   replicates reach, and how many treatments land more than once in a

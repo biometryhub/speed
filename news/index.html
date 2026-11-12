@@ -21,6 +21,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/complex_designs.html">Complex Agricultural Experimental Designs with speed</a></li>
     <li><a class="dropdown-item" href="../articles/custom_objective_functions.html">Custom Objective Functions and Advanced Options for Optimisation in speed</a></li>
+    <li><a class="dropdown-item" href="../articles/design_names.html">Naming Designs in speed</a></li>
     <li><a class="dropdown-item" href="../articles/factorial.html">Factorial Design with speed</a></li>
     <li><a class="dropdown-item" href="../articles/genetic_relationship.html">Relationship-Aware Adjacency in speed</a></li>
     <li><a class="dropdown-item" href="../articles/met.html">Multi-Environment Trials with speed</a></li>
@@ -56,7 +57,8 @@
 </ul></div>
 <div class="section level3">
 <h3 id="minor-changes-0-0-11">Minor Changes<a class="anchor" aria-label="anchor" href="#minor-changes-0-0-11"></a></h3>
-<ul><li>The startup version check now only runs in interactive sessions. Set the <code>SPEED_NO_VERSION_CHECK</code> environment variable to disable it entirely.</li>
+<ul><li>Documentation now calls designs from <code>speed</code> <em>spatially balanced</em> (SBD, SBBD) rather than <em>randomised</em>, and a new vignette, “Naming Designs in speed”, explains why. (<a href="https://github.com/biometryhub/speed/issues/146" class="external-link">#146</a>)</li>
+<li>The startup version check now only runs in interactive sessions. Set the <code>SPEED_NO_VERSION_CHECK</code> environment variable to disable it entirely.</li>
 <li>
 <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> now reports why each level stopped - the optimum was reached, no further improvement was found, no swap was possible, or the iteration cap was hit. The reason is also recorded as <code>stop_reason</code> in each level’s metadata.</li>
 <li>

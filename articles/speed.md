@@ -18,21 +18,23 @@ For advanced and specialised experimental designs (e.g., split-split
 plot, strip-plot, incomplete block, p-rep, and more), see the companion
 vignette: [Complex Agricultural Experimental Designs with
 speed](https://biometryhub.github.io/speed/articles/complex_designs.md).
+For why the designs here are called *spatially balanced* rather than
+*randomised*, see [Naming Designs in
+speed](https://biometryhub.github.io/speed/articles/design_names.md).
 
 ``` r
 
 library(speed)
 ```
 
-## Completely Randomised Design (CRD)
+## Spatially Balanced Design (SBD)
 
 ### Overview
 
-The Completely Randomised Design is the simplest experimental design
-where treatments are assigned to experimental units entirely at random.
-While simple to implement, a CRD doesn’t account for spatial variation
-in field conditions, which can be mitigated by spatial optimisation
-techniques.
+The Spatially Balanced Design is the simplest design `speed` produces:
+there is no blocking, and treatments are arranged across the whole field
+so that like treatments avoid being neighbours and each treatment is
+spread evenly across rows and columns.
 
 ### When to Use
 
@@ -44,22 +46,20 @@ techniques.
 ### Example: Field Trial with 8 Varieties
 
 Consider a field trial testing 8 new wheat varieties with 4 replicates
-each. Even though treatments are assigned randomly, spatial optimisation
-can reduce neighbour effects and improve precision.
+each. Even without blocking, spatial optimisation can reduce neighbour
+effects and improve precision.
 
-### Setting Up CRD with speed
+### Setting Up an SBD with speed
 
-In agricultural contexts, even completely randomised designs benefit
-from spatial optimisation to minimise treatment clustering and neighbour
-effects. Firstly we will initialise a data frame representing the design
-and visualise it. This design has 4 replicates of 8 treatments or
-`items`, with 8 rows and 4 columns.
+Firstly we will initialise a data frame representing the design and
+visualise it. This design has 4 replicates of 8 treatments or `items`,
+with 8 rows and 4 columns.
 
 ``` r
 
 # Initialise data frame
-crd_design <- initialise_design_df(items = 8, nrows = 8, ncols = 4)
-head(crd_design)
+sbd_design <- initialise_design_df(items = 8, nrows = 8, ncols = 4)
+head(sbd_design)
 ```
 
     ##   row col treatment
@@ -70,11 +70,15 @@ head(crd_design)
     ## 5   5   1        T5
     ## 6   6   1        T6
 
-![](figures/crd-plot1-1.png)
+![](figures/sbd-plot1-1.png)
 
-This is a systematic layout; note how the initial layout arranges
-treatments in a repeating, non-random pattern. This will now be
-randomised before visualisation.
+This is a systematic layout; note how treatments are arranged in a
+repeating pattern. It is the starting point for the optimisation, which
+rearranges treatments from here by swapping them. To start instead from
+a random shuffle of this layout, set
+`optim_params(random_initialisation = n)`:
+[`speed()`](https://biometryhub.github.io/speed/reference/speed.md) then
+shuffles it `n` times and begins from the best-scoring shuffle.
 
 #### Performing the Optimisation
 
@@ -88,7 +92,7 @@ seed for reproducibility.
 
 ``` r
 
-crd_result <- speed(crd_design, 
+sbd_result <- speed(sbd_design,
                     swap = "treatment",
                     seed = 42)
 ```
@@ -100,7 +104,7 @@ crd_result <- speed(crd_design,
 
 ``` r
 
-crd_result
+sbd_result
 ```
 
     ## Optimised Experimental Design
@@ -124,7 +128,7 @@ some additional components, which can be seen below:
 
 ``` r
 
-str(crd_result)
+str(sbd_result)
 ```
 
     ## List of 9
@@ -154,7 +158,7 @@ str(crd_result)
     ##   .. ..$ single treatment within whole design:List of 13
     ##   .. .. ..$ swap            : chr "treatment"
     ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x000002b0d2e34660>
+    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x00000202e30577b0>
     ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
     ##   .. .. ..$ adj_weight      : num 1
     ##   .. .. ..$ bal_weight      : num 1
@@ -162,15 +166,16 @@ str(crd_result)
     ##   .. .. ..$ start_temp      : num 100
     ##   .. .. ..$ cooling_rate    : num 0.99
     ##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
-    ##     row_column = "row", col_column = "col", ...)
-    ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90
-    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x000002b0cae73a50>
+    ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,
+    ##     ...)
+    ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
+    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000202d6f188c8>
     ##   .. .. ..$ final_score     : num 2.29
     ##   .. .. ..$ final_components: Named num [1:2] 0 2.29
     ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
     ##   .. .. ..$ optimal_score   : num 2.29
     ##   .. .. ..$ stop_reason     : chr "optimal"
-    ##   ..$ call      : language speed(data = crd_design, swap = "treatment", seed = 42)
+    ##   ..$ call      : language speed(data = sbd_design, swap = "treatment", seed = 42)
     ##  - attr(*, "class")= chr [1:2] "design" "list"
 
 #### Visualise the Output
@@ -178,19 +183,18 @@ str(crd_result)
 The final step is to visualise the optimised design. The plot below
 displays the spatial arrangement of treatments after optimisation,
 allowing you to easily check for clustering, spatial trends, or other
-patterns that may affect your experiment. A well-randomised and
-spatially efficient design will show treatments distributed evenly
-across the field, helping to minimise neighbour effects and maximise the
-reliability of your results.
+patterns that may affect your experiment. A spatially balanced design
+will show treatments distributed evenly across the field, helping to
+minimise neighbour effects and maximise the reliability of your results.
 
 ``` r
 
-autoplot(crd_result)
+autoplot(sbd_result)
 ```
 
-![](figures/crd-plot2-1.png)
+![](figures/sbd-plot2-1.png)
 
-A nicely randomised[^1] and spatially optimal design!
+A spatially balanced design![^1]
 
 ## Evaluating a Design
 
@@ -202,7 +206,7 @@ reports a set of structural and evaluation metrics:
 
 ``` r
 
-summary(crd_result)
+summary(sbd_result)
 ```
 
     ## Design Summary
@@ -252,8 +256,8 @@ The output is organised into sections:
     present).
   - **Concurrence** – for *incomplete* block designs, how often pairs of
     treatments share a block (constant concurrences indicate a balanced
-    incomplete-block design). It is skipped for complete designs such as
-    RCBD and split-plots, where it carries no information.
+    incomplete-block design). It is skipped for complete-block designs
+    such as SBBDs and split-plots, where it carries no information.
   - **Replicate span** – the smallest spatial separation between
     replicates of a treatment; small values flag replicates sitting
     close together.
@@ -267,7 +271,7 @@ row–column model metric) is computed only when you ask for it:
 
 ``` r
 
-summary(crd_result, efficiency = TRUE)
+summary(sbd_result, efficiency = TRUE)
 ```
 
     ## Design Summary
@@ -306,7 +310,7 @@ out programmatically:
 
 ``` r
 
-s <- summary(crd_result)
+s <- summary(sbd_result)
 s$per_level[[1]]$score
 ```
 
@@ -323,13 +327,15 @@ s$per_level[[1]]$score
     ## adjacency   balance
     ##  0.000000  2.285714
 
-## Randomised Complete Block Design (RCBD)
+## Spatially Balanced Block Design (SBBD)
 
 ### Overview
 
-RCBD is one of the most commonly used designs in agricultural research.
-It controls for one source of variation by grouping experimental units
-into homogeneous blocks, with each treatment appearing once per block.
+The Spatially Balanced Block Design groups experimental units into
+homogeneous blocks, with each treatment appearing once per block, to
+control for one source of variation. Within that structure, treatments
+are arranged so that like treatments avoid being neighbours and each
+treatment is spread evenly across rows and columns.
 
 ### When to Use
 
@@ -344,7 +350,7 @@ Consider testing 6 barley varieties across a field with a moisture
 gradient. Using 4 blocks perpendicular to the gradient helps control for
 soil moisture variation.
 
-### Setting Up RCBD with speed
+### Setting Up an SBBD with speed
 
 Here we initialise a data frame for a design with 4 blocks and 6
 treatments, arranged in 4 rows and 6 columns. Note that we can specify
@@ -352,8 +358,8 @@ treatments in the `items` argument.
 
 ``` r
 
-rcbd_design <- initialise_design_df(items = paste0("V", 1:6), nrows = 4, ncols = 6, block_nrows = 1, block_ncols = 6)
-head(rcbd_design)
+sbbd_design <- initialise_design_df(items = paste0("V", 1:6), nrows = 4, ncols = 6, block_nrows = 1, block_ncols = 6)
+head(sbbd_design)
 ```
 
     ##   row col treatment row_block col_block block
@@ -364,16 +370,17 @@ head(rcbd_design)
     ## 5   1   2        V2         1         1     1
     ## 6   2   2        V2         2         1     2
 
-![](figures/rcbd-plot1-1.png)
+![](figures/sbbd-plot1-1.png)
 
 This is a systematic block layout; each block contains all treatments in
-a repeating pattern. This will now be randomised within blocks.
+a repeating pattern. Treatments will now be swapped within blocks to
+optimise it.
 
 #### Performing the Optimisation
 
 ``` r
 
-rcbd_result <- speed(rcbd_design, 
+sbbd_result <- speed(sbbd_design,
                      swap = "treatment",
                      swap_within = "block",
                      seed = 42)
@@ -386,7 +393,7 @@ rcbd_result <- speed(rcbd_design,
 
 ``` r
 
-rcbd_result
+sbbd_result
 ```
 
     ## Optimised Experimental Design
@@ -401,7 +408,7 @@ rcbd_result
 
 ``` r
 
-str(rcbd_result)
+str(sbbd_result)
 ```
 
     ## List of 9
@@ -434,7 +441,7 @@ str(rcbd_result)
     ##   .. ..$ single treatment within block:List of 13
     ##   .. .. ..$ swap            : chr "treatment"
     ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x000002b0d8c40d98>
+    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x00000202ddc0a270>
     ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
     ##   .. .. ..$ adj_weight      : num 1
     ##   .. .. ..$ bal_weight      : num 1
@@ -442,27 +449,29 @@ str(rcbd_result)
     ##   .. .. ..$ start_temp      : num 100
     ##   .. .. ..$ cooling_rate    : num 0.99
     ##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
-    ##     row_column = "row", col_column = "col", ...)
-    ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90
-    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x000002b0cae73a50>
+    ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,
+    ##     ...)
+    ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
+    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000202d6f188c8>
     ##   .. .. ..$ final_score     : num 1.6
     ##   .. .. ..$ final_components: Named num [1:2] 0 1.6
     ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
     ##   .. .. ..$ optimal_score   : num 1.6
     ##   .. .. ..$ stop_reason     : chr "optimal"
-    ##   ..$ call      : language speed(data = rcbd_design, swap = "treatment", swap_within = "block", seed = 42)
+    ##   ..$ call      : language speed(data = sbbd_design, swap = "treatment", swap_within = "block", seed = 42)
     ##  - attr(*, "class")= chr [1:2] "design" "list"
 
 #### Visualise the Output
 
 ``` r
 
-autoplot(rcbd_result)
+autoplot(sbbd_result)
 ```
 
-![](figures/rcbd-plot2-1.png)
+![](figures/sbbd-plot2-1.png)
 
-A well-randomised and spatially efficient RCBD layout.
+A spatially balanced block design: each block still contains every
+treatment once.
 
 ## Latin Square Design
 
@@ -506,7 +515,7 @@ head(latin_square_design)
 ![](figures/latin-square-plot1-1.png)
 
 This is a systematic Latin square layout; each treatment appears once
-per row and column. The design will now be randomised.
+per row and column. The design will now be optimised.
 
 #### Performing the Optimisation
 
@@ -578,7 +587,7 @@ str(latin_square_result)
     ##   .. ..$ single treatment within whole design:List of 13
     ##   .. .. ..$ swap            : chr "treatment"
     ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x000002b0ca4538c0>
+    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x00000202e43a7658>
     ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
     ##   .. .. ..$ adj_weight      : num 1
     ##   .. .. ..$ bal_weight      : num 1
@@ -586,9 +595,10 @@ str(latin_square_result)
     ##   .. .. ..$ start_temp      : num 100
     ##   .. .. ..$ cooling_rate    : num 0.99
     ##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
-    ##     row_column = "row", col_column = "col", ...)
-    ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90
-    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x000002b0cae73a50>
+    ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,
+    ##     ...)
+    ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
+    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000202d6f188c8>
     ##   .. .. ..$ final_score     : num 0
     ##   .. .. ..$ final_components: Named num [1:2] 0 0
     ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
@@ -606,7 +616,7 @@ autoplot(latin_square_result)
 
 ![](figures/latin-square-plot2-1.png)
 
-A well-randomised and spatially efficient Latin square layout.
+A spatially balanced Latin square layout.
 
 ## Split-Plot Design
 
@@ -667,7 +677,7 @@ head(split_plot_design)
 
 This is a systematic split plot layout; each treatment appears once per
 block for whole plot treatments, and once per whole plot for sub-plot
-treatments. The design will now be randomised.
+treatments. The design will now be optimised.
 
 #### Performing the Optimisation
 
@@ -767,7 +777,7 @@ str(split_plot_result)
     ##   .. ..$ wp:List of 13
     ##   .. .. ..$ swap            : chr "wholeplot_treatment"
     ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x000002b0d0b8f0e0>
+    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x00000202e2dc0158>
     ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
     ##   .. .. ..$ adj_weight      : num 1
     ##   .. .. ..$ bal_weight      : num 1
@@ -775,9 +785,10 @@ str(split_plot_result)
     ##   .. .. ..$ start_temp      : num 100
     ##   .. .. ..$ cooling_rate    : num 0.99
     ##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
-    ##     row_column = "row", col_column = "col", ...)
-    ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90
-    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x000002b0cae73a50>
+    ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,
+    ##     ...)
+    ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
+    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000202d6f188c8>
     ##   .. .. ..$ final_score     : num 100
     ##   .. .. ..$ final_components: Named num [1:2] 36 64
     ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
@@ -786,7 +797,7 @@ str(split_plot_result)
     ##   .. ..$ sp:List of 13
     ##   .. .. ..$ swap            : chr "subplot_treatment"
     ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x000002b0d0b8f0e0>
+    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x00000202e2dc0158>
     ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
     ##   .. .. ..$ adj_weight      : num 1
     ##   .. .. ..$ bal_weight      : num 1
@@ -794,9 +805,10 @@ str(split_plot_result)
     ##   .. .. ..$ start_temp      : num 100
     ##   .. .. ..$ cooling_rate    : num 0.99
     ##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, adj_weight = 1, bal_weight = 1,
-    ##     row_column = "row", col_column = "col", ...)
-    ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 41 23 90 1 23 1 41 90
-    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x000002b0cae73a50>
+    ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,
+    ##     ...)
+    ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
+    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000202d6f188c8>
     ##   .. .. ..$ final_score     : num 0
     ##   .. .. ..$ final_components: Named num [1:2] 0 0
     ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
@@ -1098,9 +1110,9 @@ researchers can:
 - Maintain design validity and balance
 - Visualise and evaluate design quality
 
-Whether using simple randomised designs or complex split-plot
-structures, spatial optimisation through `speed` can significantly
-enhance the efficiency and reliability of agricultural experiments.
+Whether using simple unblocked designs or complex split-plot structures,
+spatial optimisation through `speed` can significantly enhance the
+efficiency and reliability of agricultural experiments.
 
 ### Further Reading
 
@@ -1121,9 +1133,12 @@ vignettes.*
   speed](https://biometryhub.github.io/speed/articles/complex_designs.md):
   Advanced and specialised designs, including split-split plot,
   strip-plot, incomplete block, p-rep, and more.
+- [Naming Designs in
+  speed](https://biometryhub.github.io/speed/articles/design_names.md):
+  Why designs from `speed` are called *spatially balanced* rather than
+  *randomised*, and what that means for analysis.
 
-[^1]: Note that this design is not a true randomised design, as `speed`
-    performs restricted randomisation and this design has been optimised
-    to reduce neighbour effects. However, it can still be considered a
-    Completely Randomised Design as it does not account for any blocking
-    or other sources of variation.
+[^1]: The allocation was chosen by optimisation rather than at random,
+    so the rows and columns it was balanced over belong in the analysis
+    model. See [Naming Designs in
+    speed](https://biometryhub.github.io/speed/articles/design_names.md).

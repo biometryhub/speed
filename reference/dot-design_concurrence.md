@@ -19,7 +19,7 @@ treatments share a block), the diagonal is replication.
 ## Details
 
 Concurrences only carry information for *incomplete* blocks (block size
-\< number of treatments). For complete blocks (RCBD, split-plot, ...)
+\< number of treatments). For complete blocks (SBBD, split-plot, ...)
 every pair co-occurs in every block, so every concurrence equals the
 replication - it merely restates the design and is skipped unless
 `force = TRUE`.

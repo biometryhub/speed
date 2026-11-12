@@ -264,8 +264,8 @@ Figure 1: Initial BIBD Layout
 
 [Figure 1](#fig-bibd-layout) shows the initial layout of the BIBD
 design. The treatments are systematically assigned to blocks, but we
-need to randomise this design, and ensure that the co-occurrence of
-treatments meets the BIBD requirements.
+need to rearrange them, and ensure that the co-occurrence of treatments
+meets the BIBD requirements.
 
 #### Performing the Optimisation
 

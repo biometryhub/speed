@@ -74,8 +74,8 @@ See [news](https://biometryhub.github.io/speed/news/index.html).
 
 ### Basic
 
-A simple example optimising a 4×3 completely randomised design with 4
-treatments:
+A simple example optimising a 4×3 spatially balanced design (no
+blocking) with 4 treatments:
 
 ``` r
 
@@ -315,6 +315,8 @@ Utility functions to initialize objects.
   speed](https://biometryhub.github.io/speed/articles/complex_designs.md):
 - [Custom Objective Functions and Advanced Options for Optimisation in
   speed](https://biometryhub.github.io/speed/articles/custom_objective_functions.md):
+- [Naming Designs in
+  speed](https://biometryhub.github.io/speed/articles/design_names.md):
 - [Factorial Design with
   speed](https://biometryhub.github.io/speed/articles/factorial.md):
 - [Relationship-Aware Adjacency in
