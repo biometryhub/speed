@@ -845,6 +845,7 @@ random_initialise <- function(design, optimise, seed = NULL, ...) {
           spatial_cols,
           adj_weight = adj_weight,
           bal_weight = bal_weight,
+          concurrence_factors = opt$concurrence_factors,
           ...
         )$score
     }

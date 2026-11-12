@@ -90,11 +90,7 @@
     verify_column_exists(swap_within, data, "constraint")
   }
 
-  # one sided formulas have length 2 (`~` and rhs); two sided have length 3
-  if (!inherits(spatial_factors, "formula") || length(spatial_factors) != 2) {
-    stop("spatial_factors must be a one sided formula", call. = FALSE)
-  }
-
+  verify_one_sided_formula(spatial_factors)
   for (col in all.vars(spatial_factors)) {
     verify_column_exists(col, data, "spatial factor")
   }
@@ -675,6 +671,15 @@ verify_column_exists <- function(col, data, suffix = NULL) {
     )
     stop(msg, call. = FALSE)
   }
+}
+
+verify_one_sided_formula <- function(x, var_name = deparse(substitute(x))) {
+  # one sided formulas have length 2 (`~` and rhs); two sided have length 3
+  if (!inherits(x, "formula") || length(x) != 2) {
+    stop(var_name, " must be a one sided formula", call. = FALSE)
+  }
+
+  return(invisible(NULL))
 }
 
 verify_non_negative_whole <- function(..., var_names = NULL) {

@@ -188,12 +188,14 @@ create_speed_input <- function(
   optimise_params,
   linked_cols = NULL,
   optimise = NULL,
-  row_col_inferred = TRUE
+  row_col_inferred = TRUE,
+  concurrence_factors = NULL
 ) {
   speed_args <- c(
     "swap",
     "swap_within",
     "spatial_factors",
+    "concurrence_factors",
     "grid_factors",
     "iterations",
     "early_stop_iterations",
@@ -253,6 +255,33 @@ create_speed_input <- function(
     }
   }
 
+  # `concurrence_factors` swaps the default objective for the connectivity one
+  has_concurrence <- vapply(
+    optimise,
+    function(opt) return(!is.null(opt$concurrence_factors)),
+    logical(1)
+  )
+  if (length(optimise) > 1 && any(has_concurrence)) {
+    stop(
+      "`concurrence_factors` is not supported for hierarchical designs yet.",
+      call. = FALSE
+    )
+  }
+  for (optimise_name in names(optimise)) {
+    opt <- optimise[[optimise_name]]
+    if (is.null(opt$concurrence_factors)) {
+      next
+    }
+    if (!identical(opt$obj_function, objective_function)) {
+      stop(
+        "`concurrence_factors` can only be used with the default objective ",
+        "function.",
+        call. = FALSE
+      )
+    }
+    optimise[[optimise_name]]$obj_function <- objective_function_connectivity
+  }
+
   return(optimise)
 }
 
@@ -272,6 +301,7 @@ create_speed_input <- function(
   return(unique(c(
     opt$swap_within,
     all.vars(opt$spatial_factors),
+    all.vars(opt$concurrence_factors),
     unlist(opt$grid_factors)
   )))
 }

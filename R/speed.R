@@ -20,6 +20,11 @@
 #'   See details for more information.
 #' @param spatial_factors A one-sided formula specifying spatial factors to
 #'   consider for balance (default: `~row + col`).
+#' @param concurrence_factors A one-sided formula of spatial factors whose
+#'   groups should give every treatment pair an even amount of direct
+#'   comparison (default: `NULL`). When given, the objective function becomes
+#'   [objective_function_connectivity()], so `obj_function` must not be
+#'   provided. Not yet supported for hierarchical designs.
 #' @param grid_factors A named list specifying grid factors to construct a
 #'   matrix for calculating adjacency score, `dim1` for row and `dim2` for
 #'   column. (default: `list(dim1 = "row", dim2 = "col")`). The axes apply to
@@ -213,6 +218,7 @@ speed <- function(data,
                   swap,
                   swap_within = "1",
                   spatial_factors = ~ row + col,
+                  concurrence_factors = NULL,
                   grid_factors = list(dim1 = "row", dim2 = "col"),
                   iterations = 10000,
                   early_stop_iterations = 2000,
@@ -242,7 +248,7 @@ speed <- function(data,
   # Normalise the three input shapes into one per-level list
   optimise <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
                                  early_stop_iterations, obj_function, swap_all, optimise_params,
-                                 linked_cols, optimise, inferred$inferred)
+                                 linked_cols, optimise, inferred$inferred, concurrence_factors)
 
   # checks required after `optimise` resolved
   .verify_level_columns(data, optimise)
@@ -359,7 +365,9 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
     # Calculate initial score for this level
     current_score_obj <- opt$obj_function(current_design, opt$swap, spatial_cols, adj_weight = adj_weight,
-                                          bal_weight = bal_weight, grid_index = grid_idx, ...)
+                                          bal_weight = bal_weight,
+                                          concurrence_factors = opt$concurrence_factors,
+                                          grid_index = grid_idx, ...)
     current_score <- current_score_obj$score
 
     if (!is.numeric(current_score)) {
@@ -427,7 +435,9 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
       # Calculate new score
       new_score_obj <- opt$obj_function(new_design$design,opt$swap, spatial_cols, adj_weight = adj_weight,
-                                        bal_weight = bal_weight, current_score_obj = current_score_obj,
+                                        bal_weight = bal_weight,
+                                        concurrence_factors = opt$concurrence_factors,
+                                        current_score_obj = current_score_obj,
                                         swapped_items = new_design$swapped_items, grid_index = grid_idx, ...)
       new_score <- new_score_obj$score
 
@@ -505,11 +515,14 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     # report faithful score components.
     treatments[[level]] <- stringi::stri_sort(unique(as.vector(best_design[[opt$swap]])), numeric = TRUE)
     score_obj <- opt$obj_function(best_design, opt$swap, spatial_cols, adj_weight = adj_weight,
-                                  bal_weight = bal_weight, grid_index = grid_idx, ...)
+                                  bal_weight = bal_weight,
+                                  concurrence_factors = opt$concurrence_factors,
+                                  grid_index = grid_idx, ...)
     level_scores[level] <- score_obj$score
     per_level_meta[[level]] <- list(
       swap             = opt$swap,
       spatial_factors  = opt$spatial_factors,
+      concurrence_factors = opt$concurrence_factors,
       spatial_cols     = spatial_cols,
       adj_weight       = adj_weight,
       bal_weight       = bal_weight,

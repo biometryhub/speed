@@ -9,6 +9,7 @@ speed(
   swap,
   swap_within = "1",
   spatial_factors = ~row + col,
+  concurrence_factors = NULL,
   grid_factors = list(dim1 = "row", dim2 = "col"),
   iterations = 10000,
   early_stop_iterations = 2000,
@@ -41,6 +42,12 @@ See details for more information.}
 
 \item{spatial_factors}{A one-sided formula specifying spatial factors to
 consider for balance (default: \code{~row + col}).}
+
+\item{concurrence_factors}{A one-sided formula of spatial factors whose
+groups should give every treatment pair an even amount of direct
+comparison (default: \code{NULL}). When given, the objective function becomes
+\code{\link[=objective_function_connectivity]{objective_function_connectivity()}}, so \code{obj_function} must not be
+provided. Not yet supported for hierarchical designs.}
 
 \item{grid_factors}{A named list specifying grid factors to construct a
 matrix for calculating adjacency score, \code{dim1} for row and \code{dim2} for

@@ -346,10 +346,14 @@ summary.design <- function(
   if (!is.function(fn)) {
     return("unknown")
   }
+  if (!is.null(attr(fn, "objective_name"))) {
+    return(attr(fn, "objective_name"))
+  }
   known <- list(
     objective_function = objective_function,
     objective_function_factorial = objective_function_factorial,
-    objective_function_piepho = objective_function_piepho
+    objective_function_piepho = objective_function_piepho,
+    objective_function_connectivity = objective_function_connectivity
   )
   for (nm in names(known)) {
     if (identical(fn, known[[nm]])) return(nm)
