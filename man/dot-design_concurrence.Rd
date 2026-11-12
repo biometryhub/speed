@@ -16,7 +16,7 @@ share a block), the diagonal is replication.
 }
 \details{
 Concurrences only carry information for \emph{incomplete} blocks (block size <
-number of treatments). For complete blocks (RCBD, split-plot, ...) every pair
+number of treatments). For complete blocks (SBBD, split-plot, ...) every pair
 co-occurs in every block, so every concurrence equals the replication - it
 merely restates the design and is skipped unless \code{force = TRUE}.
 }
