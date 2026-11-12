@@ -40,8 +40,10 @@ jobs:
 
       - uses: codecov/codecov-action@v7
         with:
-          # Fail if error if not on PR, or if on PR and token is given
-          fail_ci_if_error: ${{ github.event_name != 'pull_request' || secrets.CODECOV_TOKEN }}
+          # Fail on upload error unless this is a PR without a token (e.g. a
+          # fork). Compared with '' so the expression is a boolean: the action
+          # only fails on the literal 'true', not on the token string.
+          fail_ci_if_error: ${{ github.event_name != 'pull_request' || secrets.CODECOV_TOKEN != '' }}
           files: ./cobertura.xml
           plugins: noop
           disable_search: true
