@@ -4,4 +4,4 @@ c87e4e3503800e27958d5fb782fc8e6c  complex_designs.qmd.orig
 fb237c3e750f35d6e9bed976e4eb2098  factorial.qmd.orig
 ac5a5f39e410995f8de6c40f1990a17c  genetic_relationship.qmd.orig
 8e8f350c69abb5f076106bf25083f223  met.qmd.orig
-abe2646d9bfc24913524947da16b3ead  speed.qmd.orig
+4c3741d2e87a87f5e57fbdaff6d8b5d1  speed.qmd.orig
