@@ -93,7 +93,7 @@ replicates there are. Adjusts for the design's actual input spatial factors
 named \code{row}/\code{col}.
 \item \strong{Concurrence:} how many blocks each pair of treatments shares (\code{lambda});
 equal lambda across all pairs indicates a balanced incomplete-block
-design. Uninformative for complete blocks such as RCBD/split-plot, where
+design. Uninformative for complete blocks such as SBBD/split-plot, where
 every pair always shares every block.
 \item \strong{Replicate spread:} how many distinct blocks each treatment's replicates
 reach, and how many treatments land more than once in a single block. The

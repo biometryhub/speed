@@ -39,7 +39,7 @@
 #'   named `row`/`col`.
 #' - **Concurrence:** how many blocks each pair of treatments shares (`lambda`);
 #'   equal lambda across all pairs indicates a balanced incomplete-block
-#'   design. Uninformative for complete blocks such as RCBD/split-plot, where
+#'   design. Uninformative for complete blocks such as SBBD/split-plot, where
 #'   every pair always shares every block.
 #' - **Replicate spread:** how many distinct blocks each treatment's replicates
 #'   reach, and how many treatments land more than once in a single block. The
@@ -895,7 +895,7 @@ print.summary.design <- function(x, ...) {
 #' share a block), the diagonal is replication.
 #'
 #' Concurrences only carry information for *incomplete* blocks (block size <
-#' number of treatments). For complete blocks (RCBD, split-plot, ...) every pair
+#' number of treatments). For complete blocks (SBBD, split-plot, ...) every pair
 #' co-occurs in every block, so every concurrence equals the replication - it
 #' merely restates the design and is skipped unless `force = TRUE`.
 #'
