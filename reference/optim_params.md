@@ -13,8 +13,8 @@ optim_params(
   start_temp = 100,
   cooling_rate = 0.99,
   random_initialisation = 0,
-  adj_weight = 1,
-  bal_weight = 1,
+  adj_weight = NULL,
+  bal_weight = NULL,
   stop_at_optimal = TRUE
 )
 ```
@@ -63,13 +63,11 @@ optim_params(
   Number of times to randomly shuffle items within `swap_within`; the
   design with the best score is used as an initial design (default: 0).
 
-- adj_weight:
+- adj_weight, bal_weight:
 
-  Weight for adjacency score (default: 1).
-
-- bal_weight:
-
-  Weight for balance score (default: 1).
+  Deprecated. Weights for the adjacency and balance scores. Pass them to
+  [`speed()`](https://biometryhub.github.io/speed/reference/speed.md)
+  directly or through a level's `obj_args` in `optimise` instead.
 
 - stop_at_optimal:
 

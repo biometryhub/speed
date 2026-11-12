@@ -24,7 +24,9 @@ random_initialise(design, optimise, seed = NULL, ...)
 
 - ...:
 
-  Other arguments passed through to objective functions.
+  Other arguments passed to objective functions. For hierarchical
+  designs, set an `obj_args` field in `optimise`. See details for more
+  information.
 
 ## Value
 

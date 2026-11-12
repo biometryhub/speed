@@ -177,7 +177,9 @@ reproducibility of results (default: <code>NULL</code>).</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Other arguments passed through to objective functions.</p></dd>
+<dd><p>Other arguments passed to objective functions. For hierarchical
+designs, set an <code>obj_args</code> field in <code>optimise</code>. See details for more
+information.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -237,6 +239,12 @@ carrying level must come first, or it would undo the child level's work.</p>
 <p>On a level with <code>swap_all = TRUE</code> whole treatment groups move at once, so a
 linked column with more than one value per treatment travels with its
 treatment group rather than being paired plot for plot.</p>
+<p>Arguments for the objective function, such as <code>adj_weight</code>, <code>bal_weight</code> or
+<code>relationship</code>, can be passed with <code>...</code>, or set per level with an <code>obj_args</code>
+field of a level in <code>optimise</code>, e.g.,
+<code>optimise = list(wp = list(..., obj_args = list(adj_weight = 0)))</code>.
+A level's <code>obj_args</code> override <code>...</code> argument by argument. Setting
+<code>adj_weight</code> and <code>bal_weight</code> through <code><a href="optim_params.html">optim_params()</a></code> is deprecated.</p>
     </div>
 
     <div class="section level2">
@@ -335,7 +343,8 @@ treatment group rather than being paired plot for plot.</p>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">df_initial</span>,</span></span>
 <span class="r-in"><span>  swap <span class="op">=</span> <span class="st">"lines"</span>,</span></span>
 <span class="r-in"><span>  optimise <span class="op">=</span> <span class="va">optimise</span>,</span></span>
-<span class="r-in"><span>  optimise_params <span class="op">=</span> <span class="fu"><a href="optim_params.html">optim_params</a></span><span class="op">(</span>random_initialisation <span class="op">=</span> <span class="cn">TRUE</span>, adj_weight <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  optimise_params <span class="op">=</span> <span class="fu"><a href="optim_params.html">optim_params</a></span><span class="op">(</span>random_initialisation <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  adj_weight <span class="op">=</span> <span class="fl">0</span>,</span></span>
 <span class="r-in"><span>  seed <span class="op">=</span> <span class="fl">112</span>,</span></span>
 <span class="r-in"><span>  quiet <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>

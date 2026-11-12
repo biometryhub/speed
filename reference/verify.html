@@ -121,6 +121,8 @@ grid silently pooled. Checked before any optimisation happens.</p>
 <span>  <span class="va">seed</span></span>
 <span><span class="op">)</span></span>
 <span></span>
+<span><span class="fu">.verify_obj_args</span><span class="op">(</span><span class="va">obj_args</span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu">.verify_optim_params</span><span class="op">(</span></span>
 <span>  <span class="va">swap_count</span>,</span>
 <span>  <span class="va">swap_all_blocks</span>,</span>
@@ -217,6 +219,10 @@ reproducibility of results (default: <code>NULL</code>).</p></dd>
 <dd><p>The <code>optimise</code> argument as passed to <code><a href="speed.html">speed()</a></code>.</p></dd>
 
 
+<dt id="arg-obj-args">obj_args<a class="anchor" aria-label="anchor" href="#arg-obj-args"></a></dt>
+<dd><p>One level's <code>obj_args</code>.</p></dd>
+
+
 <dt id="arg-swap-count">swap_count<a class="anchor" aria-label="anchor" href="#arg-swap-count"></a></dt>
 <dd><p>Number of treatment swaps per iteration (default: 1).</p></dd>
 
@@ -251,12 +257,9 @@ convergence but greater risk of premature convergence to a suboptimal design.</p
 the best score is used as an initial design (default: 0).</p></dd>
 
 
-<dt id="arg-adj-weight">adj_weight<a class="anchor" aria-label="anchor" href="#arg-adj-weight"></a></dt>
-<dd><p>Weight for adjacency score (default: 1).</p></dd>
-
-
-<dt id="arg-bal-weight">bal_weight<a class="anchor" aria-label="anchor" href="#arg-bal-weight"></a></dt>
-<dd><p>Weight for balance score (default: 1).</p></dd>
+<dt id="arg-adj-weight-bal-weight">adj_weight, bal_weight<a class="anchor" aria-label="anchor" href="#arg-adj-weight-bal-weight"></a></dt>
+<dd><p>Deprecated. Weights for the adjacency and balance scores. Pass
+them to <code><a href="speed.html">speed()</a></code> directly or through a level's <code>obj_args</code> in <code>optimise</code> instead.</p></dd>
 
 
 <dt id="arg-stop-at-optimal">stop_at_optimal<a class="anchor" aria-label="anchor" href="#arg-stop-at-optimal"></a></dt>

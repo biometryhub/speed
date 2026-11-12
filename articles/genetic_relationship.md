@@ -329,7 +329,7 @@ related_result2 <- speed(
   swap = "treatment",
   swap_within = "block",
   relationship = rel2,
-  optimise_params = optim_params(bal_weight = 2),
+  bal_weight = 2,
   seed = 112,
   quiet = TRUE
 )

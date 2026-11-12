@@ -158,7 +158,7 @@ str(sbd_result)
     ##   .. ..$ single treatment within whole design:List of 13
     ##   .. .. ..$ swap            : chr "treatment"
     ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x00000202e30577b0>
+    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55c9ae2f7098>
     ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
     ##   .. .. ..$ adj_weight      : num 1
     ##   .. .. ..$ bal_weight      : num 1
@@ -169,7 +169,7 @@ str(sbd_result)
     ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,
     ##     ...)
     ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000202d6f188c8>
+    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x55c9a92277a0>
     ##   .. .. ..$ final_score     : num 2.29
     ##   .. .. ..$ final_components: Named num [1:2] 0 2.29
     ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
@@ -441,7 +441,7 @@ str(sbbd_result)
     ##   .. ..$ single treatment within block:List of 13
     ##   .. .. ..$ swap            : chr "treatment"
     ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x00000202ddc0a270>
+    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55c9af34a6d0>
     ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
     ##   .. .. ..$ adj_weight      : num 1
     ##   .. .. ..$ bal_weight      : num 1
@@ -452,7 +452,7 @@ str(sbbd_result)
     ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,
     ##     ...)
     ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000202d6f188c8>
+    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x55c9a92277a0>
     ##   .. .. ..$ final_score     : num 1.6
     ##   .. .. ..$ final_components: Named num [1:2] 0 1.6
     ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
@@ -587,7 +587,7 @@ str(latin_square_result)
     ##   .. ..$ single treatment within whole design:List of 13
     ##   .. .. ..$ swap            : chr "treatment"
     ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x00000202e43a7658>
+    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55c9acc7d7b8>
     ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
     ##   .. .. ..$ adj_weight      : num 1
     ##   .. .. ..$ bal_weight      : num 1
@@ -598,7 +598,7 @@ str(latin_square_result)
     ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,
     ##     ...)
     ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000202d6f188c8>
+    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x55c9a92277a0>
     ##   .. .. ..$ final_score     : num 0
     ##   .. .. ..$ final_components: Named num [1:2] 0 0
     ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
@@ -777,7 +777,7 @@ str(split_plot_result)
     ##   .. ..$ wp:List of 13
     ##   .. .. ..$ swap            : chr "wholeplot_treatment"
     ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x00000202e2dc0158>
+    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55c9aef6fe80>
     ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
     ##   .. .. ..$ adj_weight      : num 1
     ##   .. .. ..$ bal_weight      : num 1
@@ -788,7 +788,7 @@ str(split_plot_result)
     ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,
     ##     ...)
     ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000202d6f188c8>
+    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x55c9a92277a0>
     ##   .. .. ..$ final_score     : num 100
     ##   .. .. ..$ final_components: Named num [1:2] 36 64
     ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
@@ -797,7 +797,7 @@ str(split_plot_result)
     ##   .. ..$ sp:List of 13
     ##   .. .. ..$ swap            : chr "subplot_treatment"
     ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x00000202e2dc0158>
+    ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55c9aef6fe80>
     ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
     ##   .. .. ..$ adj_weight      : num 1
     ##   .. .. ..$ bal_weight      : num 1
@@ -808,7 +808,7 @@ str(split_plot_result)
     ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL,
     ##     ...)
     ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000202d6f188c8>
+    ##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x55c9a92277a0>
     ##   .. .. ..$ final_score     : num 0
     ##   .. .. ..$ final_components: Named num [1:2] 0 0
     ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"

@@ -17,7 +17,9 @@ create_speed_input(
   optimise_params,
   linked_cols = NULL,
   optimise = NULL,
-  row_col_inferred = TRUE
+  row_col_inferred = TRUE,
+  dots = list(),
+  data = NULL
 )
 ```
 
@@ -108,6 +110,22 @@ create_speed_input(
 
   A list of named arguments describing optimising parameters; see more
   in example.
+
+- row_col_inferred:
+
+  Whether rows and columns were found; when not, `adj_weight` is forced
+  to 0.
+
+- dots:
+
+  Objective function arguments from `...` of
+  [`speed()`](https://biometryhub.github.io/speed/reference/speed.md),
+  overridden by an `optimise` level's `obj_args`.
+
+- data:
+
+  The design data frame, used to check a `relationship` covers each
+  level's treatments.
 
 ## Value
 

@@ -1,5 +1,20 @@
 # Changelog
 
+## speed 0.0.12
+
+### Major Changes
+
+- Added an `obj_args` field to `optimise` levels in
+  [`speed()`](https://biometryhub.github.io/speed/reference/speed.md)
+  for per-level objective function arguments. `adj_weight` and
+  `bal_weight` now go to
+  [`speed()`](https://biometryhub.github.io/speed/reference/speed.md) or
+  `obj_args`; setting them in
+  [`optim_params()`](https://biometryhub.github.io/speed/reference/optim_params.md)
+  is deprecated, and
+  [`optim_params()`](https://biometryhub.github.io/speed/reference/optim_params.md)
+  returns `NULL` as default.
+
 ## speed 0.0.11
 
 ### Major Changes

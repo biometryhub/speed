@@ -130,7 +130,9 @@ speed(
 
 - ...:
 
-  Other arguments passed through to objective functions.
+  Other arguments passed to objective functions. For hierarchical
+  designs, set an `obj_args` field in `optimise`. See details for more
+  information.
 
 ## Value
 
@@ -207,6 +209,15 @@ level's work.
 On a level with `swap_all = TRUE` whole treatment groups move at once,
 so a linked column with more than one value per treatment travels with
 its treatment group rather than being paired plot for plot.
+
+Arguments for the objective function, such as `adj_weight`, `bal_weight`
+or `relationship`, can be passed with `...`, or set per level with an
+`obj_args` field of a level in `optimise`, e.g.,
+`optimise = list(wp = list(..., obj_args = list(adj_weight = 0)))`. A
+level's `obj_args` override `...` argument by argument. Setting
+`adj_weight` and `bal_weight` through
+[`optim_params()`](https://biometryhub.github.io/speed/reference/optim_params.md)
+is deprecated.
 
 ## Examples
 
@@ -305,7 +316,8 @@ result <- speed(
   data = df_initial,
   swap = "lines",
   optimise = optimise,
-  optimise_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
+  optimise_params = optim_params(random_initialisation = TRUE),
+  adj_weight = 0,
   seed = 112,
   quiet = TRUE
 )

@@ -66,7 +66,9 @@
 <span>  <span class="va">optimise_params</span>,</span>
 <span>  linked_cols <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  optimise <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  row_col_inferred <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  row_col_inferred <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  dots <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -151,6 +153,19 @@ list with names matching <code>swap</code>. See details for more information.</p
 <dt id="arg-optimise">optimise<a class="anchor" aria-label="anchor" href="#arg-optimise"></a></dt>
 <dd><p>A list of named arguments describing optimising parameters;
 see more in example.</p></dd>
+
+
+<dt id="arg-row-col-inferred">row_col_inferred<a class="anchor" aria-label="anchor" href="#arg-row-col-inferred"></a></dt>
+<dd><p>Whether rows and columns were found; when not, <code>adj_weight</code> is forced to 0.</p></dd>
+
+
+<dt id="arg-dots">dots<a class="anchor" aria-label="anchor" href="#arg-dots"></a></dt>
+<dd><p>Objective function arguments from <code>...</code> of <code><a href="speed.html">speed()</a></code>, overridden by an <code>optimise</code> level's
+<code>obj_args</code>.</p></dd>
+
+
+<dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
+<dd><p>The design data frame, used to check a <code>relationship</code> covers each level's treatments.</p></dd>
 
 </dl></div>
     <div class="section level2">

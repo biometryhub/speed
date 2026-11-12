@@ -59,6 +59,8 @@ every grid silently pooled. Checked before any optimisation happens.
   seed
 )
 
+.verify_obj_args(obj_args)
+
 .verify_optim_params(
   swap_count,
   swap_all_blocks,
@@ -159,6 +161,10 @@ every grid silently pooled. Checked before any optimisation happens.
   The `optimise` argument as passed to
   [`speed()`](https://biometryhub.github.io/speed/reference/speed.md).
 
+- obj_args:
+
+  One level's `obj_args`.
+
 - swap_count:
 
   Number of treatment swaps per iteration (default: 1).
@@ -201,13 +207,11 @@ every grid silently pooled. Checked before any optimisation happens.
   Number of times to randomly shuffle items within `swap_within`; the
   design with the best score is used as an initial design (default: 0).
 
-- adj_weight:
+- adj_weight, bal_weight:
 
-  Weight for adjacency score (default: 1).
-
-- bal_weight:
-
-  Weight for balance score (default: 1).
+  Deprecated. Weights for the adjacency and balance scores. Pass them to
+  [`speed()`](https://biometryhub.github.io/speed/reference/speed.md)
+  directly or through a level's `obj_args` in `optimise` instead.
 
 - stop_at_optimal:
 
