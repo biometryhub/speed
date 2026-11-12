@@ -1,5 +1,6 @@
-b915950bb081035c28f661fdf49d4085  complex_designs.qmd.orig
-7459a08539f93eabda84dc2c70050da7  custom_objective_functions.qmd.orig
+c87e4e3503800e27958d5fb782fc8e6c  complex_designs.qmd.orig
+9dc3703845401eaa8fc822fb98e71fc0  custom_objective_functions.qmd.orig
+613bfadb36d86016695582aeec690955  design_names.qmd.orig
 fb237c3e750f35d6e9bed976e4eb2098  factorial.qmd.orig
 ac5a5f39e410995f8de6c40f1990a17c  genetic_relationship.qmd.orig
 8e8f350c69abb5f076106bf25083f223  met.qmd.orig
