@@ -172,6 +172,10 @@ to_types <- function(df, types) {
 #' Create Input for Internal speed Function
 #'
 #' @inheritParams speed
+#' @param row_col_inferred Whether rows and columns were found; when not, `adj_weight` is forced to 0.
+#' @param dots Objective function arguments from `...` of [speed()], overridden by an `optimise` level's
+#'   `obj_args`.
+#' @param data The design data frame, used to check a `relationship` covers each level's treatments.
 #'
 #' @return The per-level `optimise` list.
 #'
@@ -188,7 +192,9 @@ create_speed_input <- function(
   optimise_params,
   linked_cols = NULL,
   optimise = NULL,
-  row_col_inferred = TRUE
+  row_col_inferred = TRUE,
+  dots = list(),
+  data = NULL
 ) {
   speed_args <- c(
     "swap",
@@ -247,10 +253,37 @@ create_speed_input <- function(
     }
   }
 
-  if (!row_col_inferred) {
-    for (optimise_name in names(optimise)) {
-      optimise[[optimise_name]]$optimise_params$adj_weight <- 0
+  # resolving order: level `obj_args` > `dots` > deprecated `optim_params()` weights
+  weight_names <- c("adj_weight", "bal_weight")
+  deprecated <- character()
+  for (optimise_name in names(optimise)) {
+    opt <- optimise[[optimise_name]]
+    .verify_obj_args(opt$obj_args)
+
+    weights <- Filter(Negate(is.null), opt$optimise_params[weight_names])
+    deprecated <- union(deprecated, names(weights))
+
+    args <- c(opt$obj_args, dots, weights)
+    args <- args[!duplicated(names(args))]
+    args$adj_weight <- if (row_col_inferred) args$adj_weight %||% 1 else 0
+    args$bal_weight <- args$bal_weight %||% 1
+    # prep once, against this level's own treatments
+    if (!is.null(args$relationship)) {
+      args$relationship <- prep_relationship(args$relationship, data[[opt$swap]])
     }
+
+    optimise[[optimise_name]]$obj_args <- args
+    optimise[[optimise_name]]$optimise_params[weight_names] <- NULL
+  }
+
+  if (length(deprecated) > 0) {
+    warning(
+      "Setting ",
+      paste0("`", deprecated, "`", collapse = " and "),
+      " through `optim_params()` is deprecated. Pass them to `speed()` directly or through a level's ",
+      "`obj_args` in `optimise` instead, which overrides `optim_params()`.",
+      call. = FALSE
+    )
   }
 
   return(optimise)

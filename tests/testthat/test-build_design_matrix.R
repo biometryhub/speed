@@ -409,7 +409,7 @@ test_that("a design whose coordinates cannot form a grid still runs when no grid
       iterations = 100,
       seed = 1,
       quiet = TRUE,
-      optimise_params = optim_params(adj_weight = 0)
+      adj_weight = 0
     )
   )
   expect_equal(r$score, 4)

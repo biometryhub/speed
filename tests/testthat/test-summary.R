@@ -987,7 +987,7 @@ test_that("multi-site (MET) designs summarise instead of erroring", {
     swap = "treatment",
     swap_within = "site",
     spatial_factors = ~ row + col + site,
-    optimise_params = optim_params(adj_weight = 0),
+    adj_weight = 0,
     iterations = 50,
     seed = 1,
     quiet = TRUE
@@ -1180,7 +1180,7 @@ test_that("non-numeric row/col labels are reported, not coerced silently", {
     d,
     swap = "treatment",
     spatial_factors = ~ row + col,
-    optimise_params = optim_params(adj_weight = 0),
+    adj_weight = 0,
     iterations = 50,
     seed = 1,
     quiet = TRUE
