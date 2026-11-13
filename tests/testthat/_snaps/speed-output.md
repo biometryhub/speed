@@ -23,7 +23,7 @@
       row and col are used as row and column, respectively.
     Output
       Optimising level: wp 
-      Level: wp Iteration: 1000 Score: 22 Best: 22 Since Improvement: 480 
+      Level: wp Iteration: 1000 Score: 22 Best: 22 Since Improvement: 680 
       Optimising level: sp 
-      Level: sp Iteration: 1000 Score: 1.333333 Best: 1.333333 Since Improvement: 14 
+      Level: sp Iteration: 1000 Score: 1.333333 Best: 1.333333 Since Improvement: 266 
 

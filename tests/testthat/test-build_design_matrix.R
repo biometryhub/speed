@@ -412,7 +412,7 @@ test_that("a design whose coordinates cannot form a grid still runs when no grid
       adj_weight = 0
     )
   )
-  expect_equal(r$score, 4)
+  expect_equal(r$score, 3)
 })
 
 test_that("grid_index() names a missing coordinate column", {

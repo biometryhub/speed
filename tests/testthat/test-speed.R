@@ -71,6 +71,148 @@ test_that("speed returns correct output structure", {
   vdiffr::expect_doppelganger("speed_small", autoplot(result))
 })
 
+test_that("annealing traverses invalid designs before reaching a valid design", {
+  initial_treatment <- LETTERS[1:4]
+  objective <- function(layout_df, swap, spatial_cols, ...) {
+    moved <- as.character(layout_df$treatment) != initial_treatment
+    return(list(score = if (all(moved)) 0 else Inf))
+  }
+  design <- data.frame(
+    row = rep(1:2, each = 2),
+    col = rep(1:2, times = 2),
+    treatment = initial_treatment
+  )
+
+  result <- speed(
+    design,
+    swap = "treatment",
+    obj_function = objective,
+    iterations = 30,
+    early_stop_iterations = 100,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
+    seed = 1,
+    quiet = TRUE
+  )
+
+  # No single swap can move all four treatments; an invalid step is necessary.
+  expect_equal(result$scores[1:2], c(Inf, Inf))
+  expect_equal(result$score, 0)
+  expect_true(all(as.character(result$design_df$treatment) != initial_treatment))
+})
+
+test_that("annealing rejects an invalid proposal from a finite design", {
+  initial_treatment <- LETTERS[1:4]
+  objective <- function(layout_df, swap, spatial_cols, ...) {
+    score <- if (identical(as.character(layout_df$treatment), initial_treatment)) 0 else Inf
+    return(list(score = score))
+  }
+  design <- data.frame(
+    row = rep(1:2, each = 2),
+    col = rep(1:2, times = 2),
+    treatment = initial_treatment
+  )
+
+  result <- speed(
+    design,
+    swap = "treatment",
+    obj_function = objective,
+    iterations = 1,
+    early_stop_iterations = 10,
+    optimise_params = optim_params(stop_at_optimal = FALSE),
+    seed = 1,
+    quiet = TRUE
+  )
+
+  expect_equal(result$scores, 0)
+  expect_equal(result$score, 0)
+  expect_identical(as.character(result$design_df$treatment), initial_treatment)
+})
+
+test_that("all-invalid annealing runs finish without NaN acceptance", {
+  objective <- function(layout_df, swap, spatial_cols, ...) {
+    return(list(score = Inf))
+  }
+  design <- data.frame(
+    row = rep(1:2, each = 2),
+    col = rep(1:2, times = 2),
+    treatment = LETTERS[1:4]
+  )
+
+  result <- speed(
+    design,
+    swap = "treatment",
+    obj_function = objective,
+    iterations = 5,
+    early_stop_iterations = 10,
+    optimise_params = optim_params(random_initialisation = 2, stop_at_optimal = FALSE),
+    seed = 1,
+    quiet = TRUE
+  )
+
+  expect_equal(result$iterations_run, 5)
+  expect_equal(result$score, Inf)
+  expect_true(all(is.infinite(result$scores)))
+})
+
+test_that("annealing accepts equal scores at zero temperature", {
+  design <- data.frame(
+    row = rep(1:2, each = 2),
+    col = rep(1:2, times = 2),
+    treatment = LETTERS[1:4]
+  )
+
+  for (value in c(0, 1, Inf)) {
+    objective <- function(layout_df, swap, spatial_cols, ...) {
+      return(list(score = value))
+    }
+    result <- speed(
+      design,
+      swap = "treatment",
+      obj_function = objective,
+      iterations = 1,
+      optimise_params = optim_params(start_temp = 0, stop_at_optimal = FALSE),
+      seed = 1,
+      quiet = TRUE
+    )
+
+    expect_equal(result$score, value)
+    expect_setequal(as.character(result$design_df$treatment), design$treatment)
+    expect_false(identical(as.character(result$design_df$treatment), design$treatment))
+  }
+})
+
+test_that("annealing accepts ties without drawing an acceptance probability", {
+  design <- data.frame(
+    row = rep(1:2, each = 2),
+    col = rep(1:2, times = 2),
+    treatment = LETTERS[1:4]
+  )
+  proposal <- design
+  proposal$treatment[c(1, 2)] <- proposal$treatment[c(2, 1)]
+  objective <- function(layout_df, swap, spatial_cols, ...) {
+    return(list(score = 1))
+  }
+  local_mocked_bindings(
+    generate_neighbour = function(...) {
+      return(list(design = proposal, swapped_items = c("A", "B")))
+    },
+    runif = function(...) {
+      stop("A tied score should not require an acceptance draw.")
+    }
+  )
+
+  result <- speed(
+    design,
+    swap = "treatment",
+    obj_function = objective,
+    iterations = 1,
+    seed = 1,
+    quiet = TRUE
+  )
+
+  expect_identical(as.character(result$design_df$treatment), proposal$treatment)
+})
+
 test_that("speed throws error for missing columns", {
   test_data <- data.frame(
     row = rep(1:5, times = 4),
@@ -212,6 +354,55 @@ test_that("speed keeps running when stop_at_optimal is FALSE", {
   # the bound is still reported, it just no longer stops the run
   expect_equal(result$metadata$per_level[[1]]$optimal_score, 1)
   expect_equal(result$iterations_run, 500)
+})
+
+test_that("speed uses supplied lower bounds and respects stop_at_optimal", {
+  test_data <- expand.grid(row = 1:2, col = 1:2)
+  test_data$treatment <- LETTERS[1:4]
+
+  for (value in c(-1, 0)) {
+    objective <- function(layout_df, swap, spatial_cols, ...) {
+      return(list(score = value))
+    }
+    for (bound in list(NULL, value - 1, value)) {
+      for (stop_at_optimal in c(TRUE, FALSE)) {
+        result <- speed(
+          test_data,
+          swap = "treatment",
+          obj_function = objective,
+          optimise_params = optim_params(lower_bound = bound, stop_at_optimal = stop_at_optimal),
+          iterations = 5,
+          early_stop_iterations = 10,
+          seed = 1,
+          quiet = TRUE
+        )
+
+        reached_bound <- stop_at_optimal && !is.null(bound) && bound == value
+        expect_equal(result$iterations_run, if (reached_bound) 1 else 5)
+        expect_equal(result$metadata$per_level[[1]]$optimal_score, bound %||% NA_real_)
+        expect_identical(result$metadata$per_level[[1]]$stop_reason,
+                         if (reached_bound) "optimal" else "iterations")
+      }
+    }
+  }
+})
+
+test_that("a supplied lower bound overrides the derived bound", {
+  test_data <- expand.grid(row = 1:5, col = 1:4)
+  test_data$treatment <- LETTERS[1:4]
+
+  result <- speed(
+    test_data,
+    swap = "treatment",
+    optimise_params = optim_params(lower_bound = 0),
+    iterations = 5,
+    seed = 1,
+    quiet = TRUE
+  )
+
+  expect_equal(result$metadata$per_level[[1]]$optimal_score, 0)
+  expect_equal(result$iterations_run, 5)
+  expect_false(result$stopped_early)
 })
 
 test_that("speed keeps running when the optimal score is out of reach", {

@@ -58,7 +58,8 @@
   random_initialisation,
   adj_weight,
   bal_weight,
-  stop_at_optimal
+  stop_at_optimal,
+  lower_bound
 )
 
 .verify_grid_factors(grid_factors)
@@ -105,9 +106,8 @@ with names matching \code{swap}.}
 
 \item{early_stop_iterations}{Number of iterations without improvement before
 early stopping (default: 2000). For hierarchical designs, can be a named
-list with names matching \code{swap}. Optimisation also stops as soon as a level
-reaches the lowest score its layout allows, which is only applicable for the
-default \code{\link[=objective_function]{objective_function()}}; see \link[=summary.design]{summary()}.}
+list with names matching \code{swap}. Optimisation can also stop at a known lower
+bound on the score; see \code{stop_at_optimal} and \code{lower_bound} in \code{\link[=optim_params]{optim_params()}}.}
 
 \item{obj_function}{Objective function used to calculate score (lower is
 better) (default: \code{\link[=objective_function]{objective_function()}}). For hierarchical designs, can
@@ -147,10 +147,13 @@ the best score is used as an initial design (default: 0).}
 \item{adj_weight, bal_weight}{Deprecated. Weights for the adjacency and balance scores. Pass
 them to \code{\link[=speed]{speed()}} directly or through a level's \code{obj_args} in \code{optimise} instead.}
 
-\item{stop_at_optimal}{Logical; if \code{TRUE}, stops the level as soon as the best score reaches the lowest score
-its layout allows (default: \code{TRUE}). The bound is only derivable for the default \code{\link[=objective_function]{objective_function()}}
-with non-negative weights and no \code{relationship} matrix; otherwise the level runs to its usual stopping
-rules regardless of this setting.}
+\item{stop_at_optimal}{Logical; if \code{TRUE}, stops the level when the best score reaches its
+lower bound (default: \code{TRUE}).}
+
+\item{lower_bound}{Optional finite numeric lower bound on the score, overriding the automatically
+derived bound. \code{NULL} (default) derives a bound for the default \code{\link[=objective_function]{objective_function()}} with
+non-negative weights and no \code{relationship} matrix. If no bound is known, only the usual
+iteration and no-improvement stopping rules apply.}
 }
 \description{
 Validates the arguments as the user passed them, dispatching to the checker

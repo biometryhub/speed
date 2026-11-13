@@ -21,9 +21,9 @@ test_that("speed handles split plot designs", {
   )
 
   expect_s3_class(result, "design")
-  expect_equal(result$score, 100)
-  expect_equal(result$iterations_run, 1726)
-  expect_equal(result$stopped_early, c(wp = TRUE, sp = TRUE))
+  expect_equal(result$score, 101)
+  expect_equal(result$iterations_run, 11001)
+  expect_equal(result$stopped_early, c(wp = TRUE, sp = FALSE))
 
   vdiffr::expect_doppelganger(
     "speed_splitplot_wp",
@@ -97,7 +97,7 @@ test_that("speed handles split-split plot designs", {
   expect_equal(length(result$scores), 3)
   expect_equal(sapply(result$scores, length), c(wp = 229, sp = 201, ssp = 1000))
 
-  expect_equal(result$score, 393)
+  expect_equal(result$score, 403)
   expect_equal(result$iterations_run, 1430)
   expect_equal(result$stopped_early, c(wp = TRUE, sp = TRUE, ssp = FALSE))
   expect_equal(result$seed, 42)
@@ -174,10 +174,10 @@ test_that("speed handles strip plot designs", {
   expect_equal(nrow(result$design_df), 72) # 16 rows × 9 cols
   expect_equal(ncol(result$design_df), 6) # All columns preserved
   expect_equal(length(result$scores), 2)
-  expect_equal(sapply(result$scores, length), c(ht = 232, vt = 369))
+  expect_equal(sapply(result$scores, length), c(ht = 279, vt = 258))
 
   expect_equal(result$score, 138)
-  expect_equal(result$iterations_run, 601)
+  expect_equal(result$iterations_run, 537)
   expect_equal(result$stopped_early, c(ht = TRUE, vt = TRUE))
   expect_equal(result$seed, 42)
 

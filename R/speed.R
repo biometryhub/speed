@@ -38,9 +38,8 @@
 #'   with names matching `swap`.
 #' @param early_stop_iterations Number of iterations without improvement before
 #'   early stopping (default: 2000). For hierarchical designs, can be a named
-#'   list with names matching `swap`. Optimisation also stops as soon as a level
-#'   reaches the lowest score its layout allows, which is only applicable for the
-#'   default [objective_function()]; see [summary()][summary.design()].
+#'   list with names matching `swap`. Optimisation can also stop at a known lower
+#'   bound on the score; see `stop_at_optimal` and `lower_bound` in [optim_params()].
 #' @param obj_function Objective function used to calculate score (lower is
 #'   better) (default: [objective_function()]). For hierarchical designs, can
 #'   be a named list with names matching `swap`.
@@ -373,11 +372,12 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       stop("`score` from `objective_function` must be numeric.")
     }
 
-    # Lower bound on the score for this level; `NA` when none can be derived
-    optimal_score <- do.call(.optimal_score, c(
-      list(current_design, opt$swap, spatial_cols, opt$obj_function),
-      opt$obj_args
-    ))
+    # Lower bound on the score for this level; `NA` when none is known
+    optimal_score <- optimise_params$lower_bound %||%
+      do.call(.optimal_score, c(
+        list(current_design, opt$swap, spatial_cols, opt$obj_function),
+        opt$obj_args
+      ))
     all_optimal_scores[[level]] <- optimal_score
 
     best_score_obj <- current_score_obj
@@ -440,7 +440,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
       new_score <- new_score_obj$score
 
       # Decide whether to accept the new design
-      if (new_score < current_score || runif(1) < exp((current_score - new_score) / temp)) {
+      delta <- if (new_score == current_score) 0 else new_score - current_score
+      if (delta <= 0 || runif(1) < exp(-delta / temp)) {
         current_design <- new_design$design
         current_score <- new_score
         current_score_obj <- new_score_obj
@@ -469,14 +470,11 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
             "\n")
       }
 
-      # Zero is the most optimal score any design can reach.
-      reached_zero <- new_score < .Machine$double.eps
-      if (reached_zero || iter - last_improvement_iter >= opt$early_stop_iterations) {
+      if (iter - last_improvement_iter >= opt$early_stop_iterations) {
         if (!quiet) {
-          cat(if (reached_zero) "Optimal score reached at iteration" else "Early stopping at iteration",
-              iter, "for level", level, "\n")
+          cat("Early stopping at iteration", iter, "for level", level, "\n")
         }
-        stop_reason <- if (reached_zero) "optimal" else "no_improvement"
+        stop_reason <- "no_improvement"
         # Record final score and temperature before breaking
         if (iter < opt$iterations) {
           scores[iter + 1] <- current_score

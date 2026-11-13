@@ -71,7 +71,7 @@ test_that("speed handles non-uniform treatment distributions", {
   expect_equal(result$stopped_early, TRUE)
 
   expect_equal(result$score, 14)
-  expect_equal(result$iterations_run, 13264)
+  expect_equal(result$iterations_run, 14965)
 
   vdiffr::expect_doppelganger("speed_non_uniform", autoplot(result))
 })
@@ -94,6 +94,7 @@ test_that("speed works with a custom objective function", {
     swap = "treatment",
     spatial_factors = ~ row + col,
     obj_function = custom_obj_function(),
+    optimise_params = optim_params(lower_bound = 0),
     iterations = 1000,
     seed = 42,
     quiet = TRUE
@@ -101,7 +102,7 @@ test_that("speed works with a custom objective function", {
   expect_s3_class(result, "design")
 
   expect_equal(result$score, 0)
-  expect_equal(result$iterations_run, 742)
+  expect_equal(result$iterations_run, 475)
   expect_equal(result$stopped_early, TRUE)
 
   vdiffr::expect_doppelganger("speed_custom_obj_func", autoplot(result))
