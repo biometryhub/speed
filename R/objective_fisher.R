@@ -360,9 +360,13 @@ factorial_contrast_matrix <- function(
 
   contrasts <- .prepare_contrast_matrix(contrast_matrix, trt_levels, tolerance)
   projection <- info_inverse %*% info
-  residual <- contrasts - contrasts %*% projection
-  estimable <- nrow(contrasts) == 0L ||
-    max(abs(residual)) <= tolerance * (1 + max(abs(contrasts)))
+  estimable <- TRUE
+  if (nrow(contrasts) > 0L) {
+    # Contrast weights affect the score, but not estimability.
+    scaled_contrasts <- sweep(contrasts, 1L, apply(abs(contrasts), 1L, max), "/")
+    residual <- scaled_contrasts - scaled_contrasts %*% projection
+    estimable <- max(abs(residual)) <= tolerance
+  }
 
   contrast_covariance <- matrix(numeric(0), nrow = 0L, ncol = 0L)
   A_value <- Inf
@@ -426,13 +430,22 @@ factorial_contrast_matrix <- function(
   return(stats::model.matrix(nuisance_formula, layout_df))
 }
 
+#' Invert nuisance information independently of covariate and covariance scale
+#' @noRd
+.fisher_nuisance_inverse <- function(info, tolerance) {
+  scales <- sqrt(diag(info))
+  scales[scales == 0] <- 1
+  scale_matrix <- outer(scales, scales)
+  return(pseudo_inverse(info / scale_matrix, tolerance) / scale_matrix)
+}
+
 #' Build a projection under identity covariance
 #' @noRd
 .build_L_from_df <- function(
   layout_df, block_column, n, nuisance_formula = NULL, tolerance = 1e-10
 ) {
   X2 <- .build_nuisance_matrix(layout_df, block_column, nuisance_formula)
-  crossprod_inverse <- pseudo_inverse(crossprod(X2), tolerance)
+  crossprod_inverse <- .fisher_nuisance_inverse(crossprod(X2), tolerance)
   return(diag(n) - X2 %*% crossprod_inverse %*% t(X2))
 }
 
@@ -674,7 +687,7 @@ compute_L_projection <- function(
 
   Sigma_inv <- solve(Sigma)
   SiX2 <- Sigma_inv %*% X2
-  nuisance_inverse <- pseudo_inverse(crossprod(X2, SiX2), tolerance)
+  nuisance_inverse <- .fisher_nuisance_inverse(crossprod(X2, SiX2), tolerance)
   L <- Sigma_inv - SiX2 %*% nuisance_inverse %*% t(SiX2)
   return((L + t(L)) / 2)
 }
