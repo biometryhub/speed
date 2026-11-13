@@ -1,7 +1,7 @@
 ---
 title: "Relationship-Aware Adjacency in speed"
 author: "Wasin Pipattungsakul"
-date: "2026-08-28"
+date: "2026-11-05"
 output:
   html_document:
     toc: true
@@ -337,7 +337,7 @@ related_result2 <- speed(
   swap = "treatment",
   swap_within = "block",
   relationship = rel2,
-  optimise_params = optim_params(bal_weight = 2),
+  bal_weight = 2,
   seed = 112,
   quiet = TRUE
 )

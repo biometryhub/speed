@@ -20,8 +20,8 @@
 #'   convergence but greater risk of premature convergence to a suboptimal design.
 #' @param random_initialisation Number of times to randomly shuffle items within `swap_within`; the design with
 #'   the best score is used as an initial design (default: 0).
-#' @param adj_weight Weight for adjacency score (default: 1).
-#' @param bal_weight Weight for balance score (default: 1).
+#' @param adj_weight,bal_weight Deprecated. Weights for the adjacency and balance scores. Pass
+#'   them to [speed()] directly or through a level's `obj_args` in `optimise` instead.
 #' @param stop_at_optimal Logical; if `TRUE`, stops the level when the best score reaches its
 #'   lower bound (default: `TRUE`).
 #' @param lower_bound Optional finite numeric lower bound on the score, overriding the automatically
@@ -41,8 +41,8 @@ optim_params <- function(
   start_temp = 100,
   cooling_rate = 0.99,
   random_initialisation = 0,
-  adj_weight = 1,
-  bal_weight = 1,
+  adj_weight = NULL,
+  bal_weight = NULL,
   stop_at_optimal = TRUE,
   lower_bound = NULL
 ) {

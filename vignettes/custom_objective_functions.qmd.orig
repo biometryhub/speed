@@ -201,7 +201,7 @@ class(bibd_df) <- c("design", class(bibd_df))
 autoplot(bibd_df)
 ```
 
-@fig-bibd-layout shows the initial layout of the BIBD design. The treatments are systematically assigned to blocks, but we need to randomise this design, and ensure that the co-occurrence of treatments meets the BIBD requirements.
+@fig-bibd-layout shows the initial layout of the BIBD design. The treatments are systematically assigned to blocks, but we need to rearrange them, and ensure that the co-occurrence of treatments meets the BIBD requirements.
 
 ### Performing the Optimisation
 

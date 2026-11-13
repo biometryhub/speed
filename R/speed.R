@@ -56,7 +56,9 @@
 #' @param quiet Logical; if TRUE, suppresses progress messages (default: FALSE)
 #' @param seed A numeric value for random seed. If provided, it ensures
 #'   reproducibility of results (default: `NULL`).
-#' @param ... Other arguments passed through to objective functions.
+#' @param ... Other arguments passed to objective functions. For hierarchical
+#'   designs, set an `obj_args` field in `optimise`. See details for more
+#'   information.
 #'
 #' @returns A list containing:
 #' - **design_df** - Data frame of optimised design
@@ -117,6 +119,13 @@
 #' On a level with `swap_all = TRUE` whole treatment groups move at once, so a
 #' linked column with more than one value per treatment travels with its
 #' treatment group rather than being paired plot for plot.
+#'
+#' Arguments for the objective function, such as `adj_weight`, `bal_weight` or
+#' `relationship`, can be passed with `...`, or set per level with an `obj_args`
+#' field of a level in `optimise`, e.g.,
+#' `optimise = list(wp = list(..., obj_args = list(adj_weight = 0)))`.
+#' A level's `obj_args` override `...` argument by argument. Setting
+#' `adj_weight` and `bal_weight` through [optim_params()] is deprecated.
 #'
 #' @importFrom stringi stri_sort
 #' @importFrom stats runif
@@ -194,7 +203,8 @@
 #'   data = df_initial,
 #'   swap = "lines",
 #'   optimise = optimise,
-#'   optimise_params = optim_params(random_initialisation = TRUE, adj_weight = 0),
+#'   optimise_params = optim_params(random_initialisation = TRUE),
+#'   adj_weight = 0,
 #'   seed = 112,
 #'   quiet = TRUE
 #' )
@@ -239,9 +249,10 @@ speed <- function(data,
   named_levels <- !is.null(optimise) || is.list(swap)
 
   # Normalise the three input shapes into one per-level list
+  dots <- c(list(...), list(row_column = row_column, col_column = col_column))
   optimise <- create_speed_input(swap, swap_within, spatial_factors, grid_factors, iterations,
                                  early_stop_iterations, obj_function, swap_all, optimise_params,
-                                 linked_cols, optimise, inferred$inferred)
+                                 linked_cols, optimise, inferred$inferred, dots = dots, data = data)
 
   # checks required after `optimise` resolved
   .verify_level_columns(data, optimise)
@@ -281,16 +292,10 @@ speed <- function(data,
   # replication when the sets are the same size.
   .verify_swap_all_replication(data, optimise, dummy_group)
 
-  dots <- list(...)
-  .reject_optim_params_in_dots(dots)
-  dots <- .prep_dots(dots, optimise, data)
 
-  design <- do.call(speed_hierarchical, c(
-    list(data = data, optimise = optimise, quiet = quiet, seed = seed,
-         row_column = row_column, col_column = col_column,
-         grid_by = grid_by),
-    dots
-  ))
+  design <- speed_hierarchical(data = data, optimise = optimise, quiet = quiet, seed = seed,
+                               row_column = row_column, col_column = col_column,
+                               grid_by = grid_by)
   # Set here, not passed through do.call(): do.call would evaluate a language
   # object argument, re-invoking speed() recursively.
   design$metadata$call <- call
@@ -313,7 +318,12 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
   dots <- list(...)
   hierarchy_levels <- names(optimise)
-  layout_df <- random_initialise(data, optimise, seed, by = dots$grid_by, ...)
+  layout_df <- random_initialise(data, optimise, seed, by = dots$grid_by)
+
+  # objective_function filled with resolved args
+  level_objective <- function(opt, design, spatial_cols, ...) {
+    return(do.call(opt$obj_function, c(list(design, opt$swap, spatial_cols, ...), opt$obj_args)))
+  }
 
   # Initialise design
   current_design <- layout_df
@@ -348,8 +358,6 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     start_temp <- optimise_params$start_temp
     swap_count <- optimise_params$swap_count
     swap_all_blocks <- optimise_params$swap_all_blocks
-    adj_weight <- optimise_params$adj_weight
-    bal_weight <- optimise_params$bal_weight
     stop_at_optimal <- optimise_params$stop_at_optimal
     spatial_cols <- all.vars(opt$spatial_factors)
 
@@ -357,8 +365,7 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
     current_design <- best_design
 
     # Calculate initial score for this level
-    current_score_obj <- opt$obj_function(current_design, opt$swap, spatial_cols, adj_weight = adj_weight,
-                                          bal_weight = bal_weight, grid_index = grid_idx, ...)
+    current_score_obj <- level_objective(opt, current_design, spatial_cols, grid_index = grid_idx)
     current_score <- current_score_obj$score
 
     if (!is.numeric(current_score)) {
@@ -367,8 +374,10 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
     # Lower bound on the score for this level; `NA` when none is known
     optimal_score <- optimise_params$lower_bound %||%
-      .optimal_score(current_design, opt$swap, spatial_cols, opt$obj_function,
-                     adj_weight = adj_weight, bal_weight = bal_weight, ...)
+      do.call(.optimal_score, c(
+        list(current_design, opt$swap, spatial_cols, opt$obj_function),
+        opt$obj_args
+      ))
     all_optimal_scores[[level]] <- optimal_score
 
     best_score_obj <- current_score_obj
@@ -426,9 +435,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
                                        groups$swappable)
 
       # Calculate new score
-      new_score_obj <- opt$obj_function(new_design$design,opt$swap, spatial_cols, adj_weight = adj_weight,
-                                        bal_weight = bal_weight, current_score_obj = current_score_obj,
-                                        swapped_items = new_design$swapped_items, grid_index = grid_idx, ...)
+      new_score_obj <- level_objective(opt, new_design$design, spatial_cols, current_score_obj = current_score_obj,
+                                   swapped_items = new_design$swapped_items, grid_index = grid_idx)
       new_score <- new_score_obj$score
 
       # Decide whether to accept the new design
@@ -495,15 +503,14 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
   for (level in hierarchy_levels) {
     opt <- optimise[[level]]
     optimise_params <- do.call(optim_params, opt$optimise_params)
-    adj_weight <- optimise_params$adj_weight
-    bal_weight <- optimise_params$bal_weight
+    adj_weight <- opt$obj_args$adj_weight
+    bal_weight <- opt$obj_args$bal_weight
     spatial_cols <- all.vars(opt$spatial_factors)
 
     # Capture the full objective return, not just the score, so summary() can
     # report faithful score components.
     treatments[[level]] <- stringi::stri_sort(unique(as.vector(best_design[[opt$swap]])), numeric = TRUE)
-    score_obj <- opt$obj_function(best_design, opt$swap, spatial_cols, adj_weight = adj_weight,
-                                  bal_weight = bal_weight, grid_index = grid_idx, ...)
+    score_obj <- level_objective(opt, best_design, spatial_cols, grid_index = grid_idx)
     level_scores[level] <- score_obj$score
     per_level_meta[[level]] <- list(
       swap             = opt$swap,
@@ -611,46 +618,4 @@ print.design <- function(x, ...) {
   cat("Seed:", x$seed, "\n\n")
 
   return(invisible(x))
-}
-
-#' Reject `...` arguments that must travel through [optim_params()].
-#'
-#' Stops with a message pointing the user at `optimise_params = optim_params(...)`
-#' when any of the listed names is found in `dots`.
-#'
-#' @param dots A named list captured from `...`.
-#' @return `NULL`, invisibly. Called for its side effect.
-#' @keywords internal
-.reject_optim_params_in_dots <- function(dots) {
-  forbidden <- intersect(names(dots), c("adj_weight", "bal_weight"))
-  if (length(forbidden) == 0) {
-    return(invisible(NULL))
-  }
-  stop(
-    "Argument(s) ",
-    paste(sprintf("`%s`", forbidden), collapse = ", "),
-    " must be passed via `optim_params()`, not directly to `speed()`. ",
-    "For example: `optimise_params = optim_params(",
-    paste0(forbidden[1], " = ..."),
-    ")`.",
-    call. = FALSE
-  )
-}
-
-#' Prep `dots$relationship` once with the union of treatments seen at
-#' every swap level.
-#'
-#' @param dots A named list captured from `...`.
-#' @param optimise Per-level `optimise` list as built by [create_speed_input()].
-#' @param data The (factor-converted) design data frame.
-#' @return `dots`, with `relationship` replaced by the prepped form when present.
-#' @keywords internal
-.prep_dots <- function(dots, optimise, data) {
-  if (is.null(dots$relationship)) {
-    return(dots)
-  }
-  swap_cols <- unique(vapply(optimise, function(o) o$swap, character(1)))
-  treatments <- unlist(lapply(swap_cols, function(s) as.character(data[[s]])))
-  dots$relationship <- prep_relationship(dots$relationship, treatments)
-  dots
 }

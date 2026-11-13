@@ -199,7 +199,7 @@ Strip-plot designs are extensions of split-plot designs used when both treatment
 
 - **Lower precision** for interaction effects
 - **Complex analysis** with multiple error terms
-- **Less efficient** than RCBD for most comparisons
+- **Less efficient** than a complete-block layout for most comparisons
 - **Requires larger field areas**
 
 ## Example: Strip-Plot Design for Tillage × Planting Date
@@ -797,8 +797,8 @@ Nested designs involve factors that are nested within levels of other factors, c
 
 ### Treatment Numbers
 
-- **< 20 treatments**: Consider RCBD or Latin Square
-- **20-100 treatments**: Alpha designs often optimal  
+- **< 20 treatments**: Consider complete blocks or a Latin square
+- **20-100 treatments**: Resolvable incomplete blocks within each replicate are often efficient
 - **> 100 treatments**: Augmented or incomplete block designs
 - **Multiple factors**: Factorial arrangements in blocks
 
@@ -819,7 +819,7 @@ Nested designs involve factors that are nested within levels of other factors, c
 ### Statistical Efficiency
 
 - Compare **A-efficiency**, **D-efficiency**, and **E-efficiency**
-- Consider **relative efficiency** to RCBD
+- Consider **relative efficiency** to a complete-block layout of the same size
 - Balance **precision** vs **resource use**
 
 ### Practical Efficiency

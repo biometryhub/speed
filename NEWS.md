@@ -1,3 +1,11 @@
+# speed 0.0.12
+
+## Major Changes
+
+- Added an `obj_args` field to `optimise` levels in `speed()` for per-level objective function arguments.
+  `adj_weight` and `bal_weight` now go to `speed()` or `obj_args`; setting them in `optim_params()` is
+  deprecated, and `optim_params()` returns `NULL` as default.
+
 # speed 0.0.11
 
 ## Major Changes
@@ -11,6 +19,8 @@
 
 ## Minor Changes
 
+- Documentation now calls designs from `speed` *spatially balanced* (SBD, SBBD) rather than *randomised*,
+  and a new vignette, "Naming Designs in speed", explains why. (#146)
 - The startup version check now only runs in interactive sessions. Set the `SPEED_NO_VERSION_CHECK`
   environment variable to disable it entirely.
 - `summary()` now reports why each level stopped - the optimum was reached, no further improvement was

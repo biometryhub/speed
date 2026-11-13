@@ -4,6 +4,7 @@
 \alias{.verify_inputs}
 \alias{.verify_speed_inputs}
 \alias{.verify_hierarchical_inputs}
+\alias{.verify_obj_args}
 \alias{.verify_optim_params}
 \alias{.verify_grid_factors}
 \alias{.verify_grid_by}
@@ -45,6 +46,8 @@
   quiet,
   seed
 )
+
+.verify_obj_args(obj_args)
 
 .verify_optim_params(
   swap_count,
@@ -117,6 +120,8 @@ reproducibility of results (default: \code{NULL}).}
 
 \item{optimise}{The \code{optimise} argument as passed to \code{\link[=speed]{speed()}}.}
 
+\item{obj_args}{One level's \code{obj_args}.}
+
 \item{swap_count}{Number of treatment swaps per iteration (default: 1).}
 
 \item{swap_all_blocks}{Logical; if \code{TRUE}, performs swaps in all blocks at each iteration (default: \code{FALSE}).}
@@ -139,9 +144,8 @@ convergence but greater risk of premature convergence to a suboptimal design.}
 \item{random_initialisation}{Number of times to randomly shuffle items within \code{swap_within}; the design with
 the best score is used as an initial design (default: 0).}
 
-\item{adj_weight}{Weight for adjacency score (default: 1).}
-
-\item{bal_weight}{Weight for balance score (default: 1).}
+\item{adj_weight, bal_weight}{Deprecated. Weights for the adjacency and balance scores. Pass
+them to \code{\link[=speed]{speed()}} directly or through a level's \code{obj_args} in \code{optimise} instead.}
 
 \item{stop_at_optimal}{Logical; if \code{TRUE}, stops the level when the best score reaches its
 lower bound (default: \code{TRUE}).}

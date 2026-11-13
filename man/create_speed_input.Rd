@@ -16,7 +16,9 @@ create_speed_input(
   optimise_params,
   linked_cols = NULL,
   optimise = NULL,
-  row_col_inferred = TRUE
+  row_col_inferred = TRUE,
+  dots = list(),
+  data = NULL
 )
 }
 \arguments{
@@ -76,6 +78,13 @@ list with names matching \code{swap}. See details for more information.}
 
 \item{optimise}{A list of named arguments describing optimising parameters;
 see more in example.}
+
+\item{row_col_inferred}{Whether rows and columns were found; when not, \code{adj_weight} is forced to 0.}
+
+\item{dots}{Objective function arguments from \code{...} of \code{\link[=speed]{speed()}}, overridden by an \code{optimise} level's
+\code{obj_args}.}
+
+\item{data}{The design data frame, used to check a \code{relationship} covers each level's treatments.}
 }
 \value{
 The per-level \code{optimise} list.

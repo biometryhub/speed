@@ -473,7 +473,7 @@ test_that("speed does not stop on the optimal score (NA) for negative weights", 
         spatial_factors = ~ row + col,
         ring_dists = c(1, 2),
         ring_weights = c(1, -1),
-        optimise_params = optim_params(bal_weight = 20),
+        bal_weight = 20,
         iterations = 4000,
         seed = 7,
         quiet = FALSE
@@ -926,7 +926,74 @@ test_that("speed honours ring_dists and ring_weights via ...", {
   expect_false(isTRUE(all.equal(base$score, with_rings$score)))
 })
 
-test_that("speed errors when adj_weight/bal_weight go through ...", {
+test_that("adj_weight/bal_weight through ... match the deprecated optim_params route", {
+  test_data <- data.frame(
+    row = rep(1:3, times = 3),
+    col = rep(1:3, each = 3),
+    treatment = rep(LETTERS[1:3], 3)
+  )
+  run <- function(...) {
+    return(speed(test_data, swap = "treatment", iterations = 15, seed = 1, quiet = TRUE, ...))
+  }
+
+  via_dots <- run(adj_weight = 0.5, bal_weight = 2)
+  expect_warning(
+    via_params <- run(optimise_params = optim_params(adj_weight = 0.5, bal_weight = 2)),
+    "`adj_weight` and `bal_weight` through `optim_params\\(\\)` is deprecated"
+  )
+
+  expect_equal(via_dots$design_df, via_params$design_df)
+  expect_equal(via_dots$scores, via_params$scores)
+  expect_equal(via_dots$metadata$per_level[[1]]$adj_weight, 0.5)
+  expect_equal(via_dots$metadata$per_level[[1]]$bal_weight, 2)
+})
+
+test_that("obj_args pass different arguments to each level's objective", {
+  df <- data.frame(
+    row = rep(1:6, each = 4),
+    col = rep(1:4, times = 6),
+    wp = rep(1:12, each = 2),
+    wp_trt = rep(c("A", "B", "C"), each = 2, times = 4),
+    sp_trt = rep(c("x", "y"), 12)
+  )
+
+  result <- speed(
+    df,
+    optimise = list(
+      wp = list(swap = "wp_trt", obj_args = list(bal_weight = 2)),
+      sp = list(swap = "sp_trt", swap_within = "wp", obj_args = list(adj_weight = 0))
+    ),
+    iterations = 5,
+    seed = 1,
+    quiet = TRUE,
+    bal_weight = 3
+  )
+
+  per_level <- result$metadata$per_level
+  expect_equal(per_level$wp[c("adj_weight", "bal_weight")], list(adj_weight = 1, bal_weight = 2))
+  expect_equal(per_level$sp[c("adj_weight", "bal_weight")], list(adj_weight = 0, bal_weight = 3))
+})
+
+test_that("speed throws error for relationship mismatching a level's treatments", {
+  test_data <- data.frame(
+    row = rep(1:3, times = 3),
+    col = rep(1:3, each = 3),
+    treatment = rep(LETTERS[1:3], 3)
+  )
+  rel <- diag(2)
+  dimnames(rel) <- list(c("A", "B"), c("A", "B"))
+
+  expect_error(
+    speed(
+      test_data,
+      optimise = list(trt = list(swap = "treatment", obj_args = list(relationship = rel))),
+      quiet = TRUE
+    ),
+    "missing entries for treatments: C"
+  )
+})
+
+test_that("speed throws error for unnamed obj_args", {
   test_data <- data.frame(
     row = rep(1:3, times = 3),
     col = rep(1:3, each = 3),
@@ -934,26 +1001,8 @@ test_that("speed errors when adj_weight/bal_weight go through ...", {
   )
 
   expect_error(
-    speed(
-      data = test_data,
-      swap = "treatment",
-      iterations = 5,
-      seed = 1,
-      quiet = TRUE,
-      bal_weight = 2
-    ),
-    "must be passed via `optim_params\\(\\)`"
-  )
-  expect_error(
-    speed(
-      data = test_data,
-      swap = "treatment",
-      iterations = 5,
-      seed = 1,
-      quiet = TRUE,
-      adj_weight = 0.5
-    ),
-    "must be passed via `optim_params\\(\\)`"
+    speed(test_data, optimise = list(trt = list(swap = "treatment", obj_args = list(0))), quiet = TRUE),
+    "`obj_args` must be a named list"
   )
 })
 

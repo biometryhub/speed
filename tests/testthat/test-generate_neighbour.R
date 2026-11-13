@@ -55,6 +55,30 @@ test_that("a single swap still proceeds when the group has two treatments", {
   expect_equal(table(res$design$treatment), table(mixed_groups$treatment))
 })
 
+test_that("a single swap skips a group holding only one plot", {
+  # Block 1 is a lone plot, which cannot be paired: drawing two plots from it
+  # would error in sample.int(). Block 2 must still swap.
+  singleton_group <- data.frame(
+    block = factor(c(1, 2, 2, 2)),
+    treatment = factor(c("A", "A", "B", "B"))
+  )
+
+  res <- generate_single_swap_neighbour(
+    singleton_group,
+    "treatment",
+    "block",
+    1,
+    TRUE
+  )
+
+  expect_identical(res$design$treatment[1], singleton_group$treatment[1])
+  expect_equal(sort(res$swapped_items), c("A", "B"))
+  expect_equal(
+    table(res$design$treatment),
+    table(singleton_group$treatment)
+  )
+})
+
 test_that("swap_all_blocks swaps in every group, not just one", {
   all_blocks <- generate_multi_swap_neighbour(
     mixed_groups,

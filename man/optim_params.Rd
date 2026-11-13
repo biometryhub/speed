@@ -11,8 +11,8 @@ optim_params(
   start_temp = 100,
   cooling_rate = 0.99,
   random_initialisation = 0,
-  adj_weight = 1,
-  bal_weight = 1,
+  adj_weight = NULL,
+  bal_weight = NULL,
   stop_at_optimal = TRUE,
   lower_bound = NULL
 )
@@ -40,9 +40,8 @@ convergence but greater risk of premature convergence to a suboptimal design.}
 \item{random_initialisation}{Number of times to randomly shuffle items within \code{swap_within}; the design with
 the best score is used as an initial design (default: 0).}
 
-\item{adj_weight}{Weight for adjacency score (default: 1).}
-
-\item{bal_weight}{Weight for balance score (default: 1).}
+\item{adj_weight, bal_weight}{Deprecated. Weights for the adjacency and balance scores. Pass
+them to \code{\link[=speed]{speed()}} directly or through a level's \code{obj_args} in \code{optimise} instead.}
 
 \item{stop_at_optimal}{Logical; if \code{TRUE}, stops the level when the best score reaches its
 lower bound (default: \code{TRUE}).}

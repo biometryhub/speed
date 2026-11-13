@@ -220,10 +220,8 @@ test_that("speed handles MET", {
     data = df_initial,
     swap = "treatment",
     optimise = optimise,
-    optimise_params = optim_params(
-      random_initialisation = TRUE,
-      adj_weight = 0
-    ),
+    optimise_params = optim_params(random_initialisation = TRUE),
+    adj_weight = 0,
     seed = 112,
     quiet = TRUE
   )
@@ -281,10 +279,8 @@ test_that("speed handles MET with unequal site dimensions", {
     swap = "treatment",
     early_stop_iterations = 5000,
     optimise = optimise,
-    optimise_params = optim_params(
-      random_initialisation = 50,
-      adj_weight = 0
-    ),
+    optimise_params = optim_params(random_initialisation = 50),
+    adj_weight = 0,
     seed = 112,
     quiet = TRUE
   )
