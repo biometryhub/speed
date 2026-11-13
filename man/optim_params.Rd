@@ -13,7 +13,8 @@ optim_params(
   random_initialisation = 0,
   adj_weight = 1,
   bal_weight = 1,
-  stop_at_optimal = TRUE
+  stop_at_optimal = TRUE,
+  lower_bound = NULL
 )
 }
 \arguments{
@@ -43,10 +44,13 @@ the best score is used as an initial design (default: 0).}
 
 \item{bal_weight}{Weight for balance score (default: 1).}
 
-\item{stop_at_optimal}{Logical; if \code{TRUE}, stops the level as soon as the best score reaches the lowest score
-its layout allows (default: \code{TRUE}). The bound is only derivable for the default \code{\link[=objective_function]{objective_function()}}
-with non-negative weights and no \code{relationship} matrix; otherwise the level runs to its usual stopping
-rules regardless of this setting.}
+\item{stop_at_optimal}{Logical; if \code{TRUE}, stops the level when the best score reaches its
+lower bound (default: \code{TRUE}).}
+
+\item{lower_bound}{Optional finite numeric lower bound on the score, overriding the automatically
+derived bound. \code{NULL} (default) derives a bound for the default \code{\link[=objective_function]{objective_function()}} with
+non-negative weights and no \code{relationship} matrix. If no bound is known, only the usual
+iteration and no-improvement stopping rules apply.}
 }
 \value{
 A named list of optimization parameters.

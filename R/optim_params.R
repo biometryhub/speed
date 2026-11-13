@@ -22,10 +22,12 @@
 #'   the best score is used as an initial design (default: 0).
 #' @param adj_weight Weight for adjacency score (default: 1).
 #' @param bal_weight Weight for balance score (default: 1).
-#' @param stop_at_optimal Logical; if `TRUE`, stops the level as soon as the best score reaches the lowest score
-#'   its layout allows (default: `TRUE`). The bound is only derivable for the default [objective_function()]
-#'   with non-negative weights and no `relationship` matrix; otherwise the level runs to its usual stopping
-#'   rules regardless of this setting.
+#' @param stop_at_optimal Logical; if `TRUE`, stops the level when the best score reaches its
+#'   lower bound (default: `TRUE`).
+#' @param lower_bound Optional finite numeric lower bound on the score, overriding the automatically
+#'   derived bound. `NULL` (default) derives a bound for the default [objective_function()] with
+#'   non-negative weights and no `relationship` matrix. If no bound is known, only the usual
+#'   iteration and no-improvement stopping rules apply.
 #'
 #' @returns A named list of optimization parameters.
 #'
@@ -41,7 +43,8 @@ optim_params <- function(
   random_initialisation = 0,
   adj_weight = 1,
   bal_weight = 1,
-  stop_at_optimal = TRUE
+  stop_at_optimal = TRUE,
+  lower_bound = NULL
 ) {
   params <- list(
     swap_count = swap_count,
@@ -52,7 +55,8 @@ optim_params <- function(
     random_initialisation = random_initialisation,
     adj_weight = adj_weight,
     bal_weight = bal_weight,
-    stop_at_optimal = stop_at_optimal
+    stop_at_optimal = stop_at_optimal,
+    lower_bound = lower_bound
   )
 
   # check legacy options

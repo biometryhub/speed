@@ -427,7 +427,7 @@ test_that("speed() records why each level stopped", {
   )
 })
 
-test_that("speed() calls a score of zero optimal without a derived lower bound", {
+test_that("speed() calls a score of zero optimal with a supplied lower bound", {
   df <- data.frame(
     row = rep(1:4, times = 5),
     col = rep(1:5, each = 4),
@@ -435,8 +435,7 @@ test_that("speed() calls a score of zero optimal without a derived lower bound",
     stringsAsFactors = FALSE
   )
 
-  # A custom objective, so no lower bound can be derived and `optimal_score` is
-  # `NA`. Reaching zero is still optimal rather than merely out of improvements.
+  # A custom objective, so its known lower bound must be supplied.
   obj_runs <- function(layout_df, swap, spatial_cols, ...) {
     trt <- as.character(layout_df[[swap]])
     return(list(score = as.numeric(sum(trt[-1] == trt[-length(trt)]))))
@@ -446,13 +445,14 @@ test_that("speed() calls a score of zero optimal without a derived lower bound",
     df,
     swap = "treatment",
     obj_function = obj_runs,
+    optimise_params = optim_params(lower_bound = 0),
     iterations = 5000,
     seed = 3,
     quiet = TRUE
   )
 
   expect_equal(result$score, 0)
-  expect_true(is.na(result$metadata$per_level[[1]]$optimal_score))
+  expect_equal(result$metadata$per_level[[1]]$optimal_score, 0)
   expect_equal(result$metadata$per_level[[1]]$stop_reason, "optimal")
 })
 

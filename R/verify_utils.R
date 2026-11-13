@@ -373,13 +373,21 @@
   random_initialisation,
   adj_weight,
   bal_weight,
-  stop_at_optimal
+  stop_at_optimal,
+  lower_bound
 ) {
   verify_positive_whole_number(swap_count)
   verify_non_negative_whole(start_temp)
   verify_boolean(adaptive_swaps, swap_all_blocks, stop_at_optimal)
   verify_between(cooling_rate, lower = 0, upper = 1, upper_exclude = TRUE)
   verify_numeric(adj_weight, bal_weight)
+
+  if (!is.null(lower_bound)) {
+    verify_numeric(lower_bound)
+    if (is.complex(lower_bound) || !is.finite(lower_bound)) {
+      stop("`lower_bound` must be a finite real number.", call. = FALSE)
+    }
+  }
 
   if (!(random_initialisation %in% c(TRUE, FALSE))) {
     verify_non_negative_whole(random_initialisation)

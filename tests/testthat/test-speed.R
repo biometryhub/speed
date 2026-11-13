@@ -356,6 +356,55 @@ test_that("speed keeps running when stop_at_optimal is FALSE", {
   expect_equal(result$iterations_run, 500)
 })
 
+test_that("speed uses supplied lower bounds and respects stop_at_optimal", {
+  test_data <- expand.grid(row = 1:2, col = 1:2)
+  test_data$treatment <- LETTERS[1:4]
+
+  for (value in c(-1, 0)) {
+    objective <- function(layout_df, swap, spatial_cols, ...) {
+      return(list(score = value))
+    }
+    for (bound in list(NULL, value - 1, value)) {
+      for (stop_at_optimal in c(TRUE, FALSE)) {
+        result <- speed(
+          test_data,
+          swap = "treatment",
+          obj_function = objective,
+          optimise_params = optim_params(lower_bound = bound, stop_at_optimal = stop_at_optimal),
+          iterations = 5,
+          early_stop_iterations = 10,
+          seed = 1,
+          quiet = TRUE
+        )
+
+        reached_bound <- stop_at_optimal && !is.null(bound) && bound == value
+        expect_equal(result$iterations_run, if (reached_bound) 1 else 5)
+        expect_equal(result$metadata$per_level[[1]]$optimal_score, bound %||% NA_real_)
+        expect_identical(result$metadata$per_level[[1]]$stop_reason,
+                         if (reached_bound) "optimal" else "iterations")
+      }
+    }
+  }
+})
+
+test_that("a supplied lower bound overrides the derived bound", {
+  test_data <- expand.grid(row = 1:5, col = 1:4)
+  test_data$treatment <- LETTERS[1:4]
+
+  result <- speed(
+    test_data,
+    swap = "treatment",
+    optimise_params = optim_params(lower_bound = 0),
+    iterations = 5,
+    seed = 1,
+    quiet = TRUE
+  )
+
+  expect_equal(result$metadata$per_level[[1]]$optimal_score, 0)
+  expect_equal(result$iterations_run, 5)
+  expect_false(result$stopped_early)
+})
+
 test_that("speed keeps running when the optimal score is out of reach", {
   # having high rep for 1 treatment makes optimal score out of reach
   test_data <- expand.grid(row = 1:3, col = 1:4)
