@@ -313,35 +313,19 @@ speed <- function(data,
   design$metadata$call <- call
   design$design_df[[dummy_group]] <- NULL
   design$design_df <- to_types(design$design_df, factored$input_types)
-  design$design_df <- .add_combined_treatment(design$design_df, optimise)
+
+  # Join differing swap columns into `treatment` so autoplot() works by default
+  swap_cols <- unique(vapply(optimise, function(opt) opt$swap, character(1)))
+  if (length(swap_cols) > 1 && !"treatment" %in% names(design$design_df)) {
+    design$design_df$treatment <- do.call(
+      paste,
+      c(lapply(design$design_df[swap_cols], as.character), sep = "-")
+    )
+  }
 
   # to print deprecate warning at the end
   optim_params()
   return(design)
-}
-
-#' Add a combined treatment column to a multi-swap design
-#'
-#' Joins the swap columns of every level, in level order, into a `treatment`
-#' column (e.g. `"A-a"`) so [autoplot()] works without a `treatments` argument.
-#' Left alone when the design swaps a single column or already has a
-#' `treatment` column.
-#'
-#' @param df The optimised design data frame.
-#' @param optimise The resolved per-level `optimise` list.
-#' @param sep Separator between level treatments.
-#' @return `df`, with a character `treatment` column appended where applicable.
-#' @noRd
-.add_combined_treatment <- function(df, optimise, sep = "-") {
-  swap_cols <- unique(vapply(optimise, function(opt) opt$swap, character(1)))
-  if (length(swap_cols) < 2 || "treatment" %in% names(df)) {
-    return(df)
-  }
-  df[["treatment"]] <- do.call(
-    paste,
-    c(lapply(swap_cols, function(col) as.character(df[[col]])), sep = sep)
-  )
-  return(df)
 }
 
 #' Speed function for hierarchical designs
