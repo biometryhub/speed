@@ -93,7 +93,7 @@ test_that("speed handles split-split plot designs", {
   expect_named(result$treatments, c("wp", "sp", "ssp"))
 
   expect_equal(nrow(result$design_df), 144) # 16 rows × 9 cols
-  expect_equal(ncol(result$design_df), 8) # All columns preserved
+  expect_equal(ncol(result$design_df), 9) # All columns plus `treatment`
   expect_equal(length(result$scores), 3)
   expect_equal(sapply(result$scores, length), c(wp = 229, sp = 201, ssp = 1000))
 
@@ -172,7 +172,7 @@ test_that("speed handles strip plot designs", {
   expect_named(result$treatments, c("ht", "vt"))
 
   expect_equal(nrow(result$design_df), 72) # 16 rows × 9 cols
-  expect_equal(ncol(result$design_df), 6) # All columns preserved
+  expect_equal(ncol(result$design_df), 7) # All columns plus `treatment`
   expect_equal(length(result$scores), 2)
   expect_equal(sapply(result$scores, length), c(ht = 232, vt = 369))
 
@@ -309,4 +309,92 @@ test_that("speed handles MET with unequal site dimensions", {
   )
   expect_equal(max(table(design_df$site_row, design_df$treatment)), 1)
   expect_equal(max(table(design_df$site_col, design_df$treatment)), 1)
+})
+
+test_that("multi-swap designs gain a combined treatment column", {
+  df_split <- data.frame(
+    row = rep(1:12, each = 4),
+    col = rep(1:4, times = 12),
+    block = rep(1:4, each = 12),
+    wholeplot = rep(1:12, each = 4),
+    wholeplot_treatment = factor(rep(rep(LETTERS[1:3], each = 4), times = 4)),
+    subplot_treatment = rep(letters[1:4], 12)
+  )
+
+  result <- speed(
+    df_split,
+    swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+    swap_within = list(wp = "block", sp = "wholeplot"),
+    iterations = 50,
+    swap_all = TRUE,
+    seed = 1,
+    quiet = TRUE
+  )
+  design_df <- result$design_df
+
+  expect_equal(names(design_df), c(names(df_split), "treatment"))
+  expect_type(design_df$treatment, "character")
+  expect_equal(
+    design_df$treatment,
+    paste(design_df$wholeplot_treatment, design_df$subplot_treatment, sep = "-")
+  )
+  # swap columns keep their input types
+  expect_s3_class(design_df$wholeplot_treatment, "factor")
+
+  plt <- autoplot(result)
+  expect_s3_class(plt, "ggplot")
+  expect_equal(rlang::as_label(plt$layers[[1]]$mapping$fill), "treatment")
+  expect_setequal(
+    levels(plt$layers[[1]]$data$treatment),
+    unique(design_df$treatment)
+  )
+})
+
+test_that("an existing treatment column is not overwritten", {
+  df_split <- data.frame(
+    row = rep(1:12, each = 4),
+    col = rep(1:4, times = 12),
+    block = rep(1:4, each = 12),
+    wholeplot = rep(1:12, each = 4),
+    wholeplot_treatment = rep(rep(LETTERS[1:3], each = 4), times = 4),
+    subplot_treatment = rep(letters[1:4], 12),
+    treatment = "user"
+  )
+
+  result <- speed(
+    df_split,
+    swap = list(wp = "wholeplot_treatment", sp = "subplot_treatment"),
+    swap_within = list(wp = "block", sp = "wholeplot"),
+    iterations = 50,
+    swap_all = TRUE,
+    seed = 1,
+    quiet = TRUE
+  )
+
+  expect_equal(names(result$design_df), names(df_split))
+  expect_true(all(result$design_df$treatment == "user"))
+})
+
+test_that("designs swapping one column gain no treatment column", {
+  df <- data.frame(
+    row = rep(1:4, times = 5),
+    col = rep(1:5, each = 4),
+    variety = rep(LETTERS[1:4], 5)
+  )
+
+  simple <- speed(df, swap = "variety", iterations = 50, seed = 1, quiet = TRUE)
+  expect_equal(names(simple$design_df), names(df))
+
+  # Same swap column at every level, as in a MET
+  multi <- speed(
+    df,
+    swap = "variety",
+    optimise = list(
+      one = list(iterations = 50),
+      two = list(iterations = 50)
+    ),
+    seed = 1,
+    quiet = TRUE
+  )
+  expect_equal(names(multi$design_df), names(df))
 })

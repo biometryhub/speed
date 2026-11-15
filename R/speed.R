@@ -62,7 +62,8 @@
 #'   information.
 #'
 #' @returns A list containing:
-#' - **design_df** - Data frame of optimised design
+#' - **design_df** - Data frame of optimised design. When levels swap different
+#'   columns, a `treatment` column combining them is added; see details.
 #' - **score** - Final optimisation score
 #' - **scores** - Vector of scores across iterations (for simple designs) or
 #'   named list of score vectors (for hierarchical designs)
@@ -97,6 +98,14 @@
 #' levels of the design structure. For simple (non-hierarchical) designs, these
 #' arguments can be provided as single values. For more examples and detailed
 #' usage, see the package vignettes.
+#'
+#' When the levels of a hierarchical design swap different columns (a
+#' split-plot or strip-plot, but not a multi-environment trial that swaps one
+#' column at every level), the returned `design_df` gains a `treatment` column
+#' joining each level's treatment in level order with `"-"`, e.g. `"A-a"` for
+#' whole-plot treatment `A` and sub-plot treatment `a`. This lets [autoplot()]
+#' show the full treatment combination by default. No column is added if
+#' `data` already has a `treatment` column.
 #'
 #' `linked_cols` names columns that describe the treatment rather than the plot,
 #' so that a value paired with a treatment stays paired with it wherever the
@@ -166,6 +175,8 @@
 #'                 swap_all = TRUE,
 #'                 seed = 42)
 #'
+#' # Plot the combined whole-plot and sub-plot treatments
+#' autoplot(result)
 #' # Plot wholeplot allocations within blocks
 #' autoplot(result, treatments = "wholeplot_treatment")
 #' # Plot subplot allocations within wholeplots
@@ -302,10 +313,35 @@ speed <- function(data,
   design$metadata$call <- call
   design$design_df[[dummy_group]] <- NULL
   design$design_df <- to_types(design$design_df, factored$input_types)
+  design$design_df <- .add_combined_treatment(design$design_df, optimise)
 
   # to print deprecate warning at the end
   optim_params()
   return(design)
+}
+
+#' Add a combined treatment column to a multi-swap design
+#'
+#' Joins the swap columns of every level, in level order, into a `treatment`
+#' column (e.g. `"A-a"`) so [autoplot()] works without a `treatments` argument.
+#' Left alone when the design swaps a single column or already has a
+#' `treatment` column.
+#'
+#' @param df The optimised design data frame.
+#' @param optimise The resolved per-level `optimise` list.
+#' @param sep Separator between level treatments.
+#' @return `df`, with a character `treatment` column appended where applicable.
+#' @noRd
+.add_combined_treatment <- function(df, optimise, sep = "-") {
+  swap_cols <- unique(vapply(optimise, function(opt) opt$swap, character(1)))
+  if (length(swap_cols) < 2 || "treatment" %in% names(df)) {
+    return(df)
+  }
+  df[["treatment"]] <- do.call(
+    paste,
+    c(lapply(swap_cols, function(col) as.character(df[[col]])), sep = sep)
+  )
+  return(df)
 }
 
 #' Speed function for hierarchical designs

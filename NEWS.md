@@ -6,6 +6,11 @@
   `adj_weight` and `bal_weight` now go to `speed()` or `obj_args`; setting them in `optim_params()` is
   deprecated, and `optim_params()` returns `NULL` as default.
 
+## Minor Changes
+
+- Hierarchical designs whose levels swap different columns, such as split-plots, now return a `treatment`
+  column joining each level's treatment (e.g. `"A-a"`), so `autoplot()` works without a `treatments` argument.
+
 # speed 0.0.11
 
 ## Major Changes
