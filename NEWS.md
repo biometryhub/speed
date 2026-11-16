@@ -10,6 +10,7 @@
 
 - Hierarchical designs whose levels swap different columns, such as split-plots, now return a `treatment`
   column joining each level's treatment (e.g. `"A-a"`), so `autoplot()` works without a `treatments` argument.
+  (#31)
 
 # speed 0.0.11
 
