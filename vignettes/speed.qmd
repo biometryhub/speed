@@ -1,7 +1,7 @@
 ---
 title: "Common Agricultural Experimental Designs with speed"
 author: "Sam Rogers"
-date: "2026-11-12"
+date: "2026-11-17"
 output:
   html_document:
     toc: true
@@ -139,10 +139,10 @@ str(sbd_result)
 ##   ..$ col_column: chr "col"
 ##   ..$ grid_by   : NULL
 ##   ..$ per_level :List of 1
-##   .. ..$ single treatment within whole design:List of 13
+##   .. ..$ single treatment within whole design:List of 14
 ##   .. .. ..$ swap            : chr "treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55c9ae2f7098> 
+##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x0000018b935bd930> 
 ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
 ##   .. .. ..$ adj_weight      : num 1
 ##   .. .. ..$ bal_weight      : num 1
@@ -153,12 +153,13 @@ str(sbd_result)
 ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL, 
 ##     ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x55c9a92277a0> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x0000018b8be7dd60> 
 ##   .. .. ..$ final_score     : num 2.29
 ##   .. .. ..$ final_components: Named num [1:2] 0 2.29
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
 ##   .. .. ..$ optimal_score   : num 2.29
 ##   .. .. ..$ stop_reason     : chr "optimal"
+##   .. .. ..$ swap_within     : chr "1"
 ##   ..$ call      : language speed(data = sbd_design, swap = "treatment", seed = 42)
 ##  - attr(*, "class")= chr [1:2] "design" "list"
 ```
@@ -405,10 +406,10 @@ str(sbbd_result)
 ##   ..$ col_column: chr "col"
 ##   ..$ grid_by   : NULL
 ##   ..$ per_level :List of 1
-##   .. ..$ single treatment within block:List of 13
+##   .. ..$ single treatment within block:List of 14
 ##   .. .. ..$ swap            : chr "treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55c9af34a6d0> 
+##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x0000018b9946fba0> 
 ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
 ##   .. .. ..$ adj_weight      : num 1
 ##   .. .. ..$ bal_weight      : num 1
@@ -419,12 +420,13 @@ str(sbbd_result)
 ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL, 
 ##     ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x55c9a92277a0> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x0000018b8be7dd60> 
 ##   .. .. ..$ final_score     : num 1.6
 ##   .. .. ..$ final_components: Named num [1:2] 0 1.6
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
 ##   .. .. ..$ optimal_score   : num 1.6
 ##   .. .. ..$ stop_reason     : chr "optimal"
+##   .. .. ..$ swap_within     : chr "block"
 ##   ..$ call      : language speed(data = sbbd_design, swap = "treatment", swap_within = "block", seed = 42)
 ##  - attr(*, "class")= chr [1:2] "design" "list"
 ```
@@ -554,10 +556,10 @@ str(latin_square_result)
 ##   ..$ col_column: chr "col"
 ##   ..$ grid_by   : NULL
 ##   ..$ per_level :List of 1
-##   .. ..$ single treatment within whole design:List of 13
+##   .. ..$ single treatment within whole design:List of 14
 ##   .. .. ..$ swap            : chr "treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55c9acc7d7b8> 
+##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x0000018b917a0698> 
 ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
 ##   .. .. ..$ adj_weight      : num 1
 ##   .. .. ..$ bal_weight      : num 1
@@ -568,12 +570,13 @@ str(latin_square_result)
 ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL, 
 ##     ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x55c9a92277a0> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x0000018b8be7dd60> 
 ##   .. .. ..$ final_score     : num 0
 ##   .. .. ..$ final_components: Named num [1:2] 0 0
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
 ##   .. .. ..$ optimal_score   : num 0
 ##   .. .. ..$ stop_reason     : chr "optimal"
+##   .. .. ..$ swap_within     : chr "1"
 ##   ..$ call      : language speed(data = latin_square_design, swap = "treatment", seed = 42)
 ##  - attr(*, "class")= chr [1:2] "design" "list"
 ```
@@ -699,7 +702,7 @@ str(split_plot_result)
 
 ```
 ## List of 9
-##  $ design_df     :Classes 'design' and 'data.frame':	48 obs. of  7 variables:
+##  $ design_df     :Classes 'design' and 'data.frame':	48 obs. of  8 variables:
 ##   ..$ row                : int [1:48] 1 1 1 1 2 2 2 2 3 3 ...
 ##   ..$ col                : int [1:48] 1 2 3 4 1 2 3 4 1 2 ...
 ##   ..$ block              : num [1:48] 1 1 1 1 1 1 1 1 1 1 ...
@@ -707,6 +710,7 @@ str(split_plot_result)
 ##   ..$ wholeplot_treatment: chr [1:48] "C" "C" "C" "C" ...
 ##   ..$ subplot            : num [1:48] 1 2 3 4 5 6 7 8 9 10 ...
 ##   ..$ subplot_treatment  : chr [1:48] "a" "b" "c" "d" ...
+##   ..$ treatment          : chr [1:48] "C-a" "C-b" "C-c" "C-d" ...
 ##   ..- attr(*, "out.attrs")=List of 2
 ##   .. ..$ dim     : Named int [1:2] 12 4
 ##   .. .. ..- attr(*, "names")= chr [1:2] "row" "col"
@@ -733,10 +737,10 @@ str(split_plot_result)
 ##   ..$ col_column: chr "col"
 ##   ..$ grid_by   : NULL
 ##   ..$ per_level :List of 2
-##   .. ..$ wp:List of 13
+##   .. ..$ wp:List of 14
 ##   .. .. ..$ swap            : chr "wholeplot_treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55c9aef6fe80> 
+##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x0000018b99756038> 
 ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
 ##   .. .. ..$ adj_weight      : num 1
 ##   .. .. ..$ bal_weight      : num 1
@@ -747,16 +751,17 @@ str(split_plot_result)
 ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL, 
 ##     ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x55c9a92277a0> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x0000018b8be7dd60> 
 ##   .. .. ..$ final_score     : num 100
 ##   .. .. ..$ final_components: Named num [1:2] 36 64
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
 ##   .. .. ..$ optimal_score   : num 4
 ##   .. .. ..$ stop_reason     : chr "no_improvement"
-##   .. ..$ sp:List of 13
+##   .. .. ..$ swap_within     : chr "block"
+##   .. ..$ sp:List of 14
 ##   .. .. ..$ swap            : chr "subplot_treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x55c9aef6fe80> 
+##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x0000018b99756038> 
 ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
 ##   .. .. ..$ adj_weight      : num 1
 ##   .. .. ..$ bal_weight      : num 1
@@ -767,12 +772,13 @@ str(split_plot_result)
 ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL, 
 ##     ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x55c9a92277a0> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x0000018b8be7dd60> 
 ##   .. .. ..$ final_score     : num 0
 ##   .. .. ..$ final_components: Named num [1:2] 0 0
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
 ##   .. .. ..$ optimal_score   : num 0
 ##   .. .. ..$ stop_reason     : chr "optimal"
+##   .. .. ..$ swap_within     : chr "wholeplot"
 ##   ..$ call      : language speed(data = split_plot_design, optimise = optimise, seed = 42)
 ##  - attr(*, "class")= chr [1:2] "design" "list"
 ```

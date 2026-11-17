@@ -1,7 +1,7 @@
 ---
 title: "Complex Agricultural Experimental Designs with speed"
 author: "Sam Rogers"
-date: "2026-11-11"
+date: "2026-11-17"
 output:
   html_document:
     toc: true
@@ -486,10 +486,10 @@ str(ribd_result)
 ##   ..$ col_column: chr "col"
 ##   ..$ grid_by   : NULL
 ##   ..$ per_level :List of 1
-##   .. ..$ single treatment within replicate:List of 13
+##   .. ..$ single treatment within replicate:List of 14
 ##   .. .. ..$ swap            : chr "treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
-##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x00000202dcfaf188> 
+##   .. .. .. .. ..- attr(*, ".Environment")=<environment: 0x0000018b873a3af0> 
 ##   .. .. ..$ spatial_cols    : chr [1:2] "row" "col"
 ##   .. .. ..$ adj_weight      : num 1
 ##   .. .. ..$ bal_weight      : num 1
@@ -500,12 +500,13 @@ str(ribd_result)
 ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL, 
 ##     ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000202d6f188c8> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x0000018b8be7dd60> 
 ##   .. .. ..$ final_score     : num 1.8
 ##   .. .. ..$ final_components: Named num [1:2] 0 1.8
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
 ##   .. .. ..$ optimal_score   : num 1.8
 ##   .. .. ..$ stop_reason     : chr "optimal"
+##   .. .. ..$ swap_within     : chr "replicate"
 ##   ..$ call      : language speed(data = ribd_df, swap = "treatment", swap_within = "replicate", seed = 42)
 ##  - attr(*, "class")= chr [1:2] "design" "list"
 ```
@@ -659,7 +660,7 @@ str(prep_result)
 ##   ..$ col_column: chr "col"
 ##   ..$ grid_by   : NULL
 ##   ..$ per_level :List of 1
-##   .. ..$ single entry within whole design:List of 13
+##   .. ..$ single entry within whole design:List of 14
 ##   .. .. ..$ swap            : chr "entry"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~block + row + col
 ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv> 
@@ -673,12 +674,13 @@ str(prep_result)
 ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL, 
 ##     ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x00000202d6f188c8> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x0000018b8be7dd60> 
 ##   .. .. ..$ final_score     : num 2.91
 ##   .. .. ..$ final_components: Named num [1:2] 0 2.91
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
 ##   .. .. ..$ optimal_score   : num 2.91
 ##   .. .. ..$ stop_reason     : chr "optimal"
+##   .. .. ..$ swap_within     : chr "1"
 ##   ..$ call      : language speed(data = prep_design, swap = "entry", spatial_factors = ~block + row +      col, seed = 42)
 ##  - attr(*, "class")= chr [1:2] "design" "list"
 ```

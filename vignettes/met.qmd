@@ -1,7 +1,7 @@
 ---
 title: "Multi-Environment Trials with speed"
 author: "Wasin Pipattungsakul"
-date: "2026-11-05"
+date: "2026-11-17"
 output:
   html_document:
     toc: true
@@ -218,7 +218,7 @@ str(met_result)
 ##   ..$ col_column: chr "col"
 ##   ..$ grid_by   : chr "site"
 ##   ..$ per_level :List of 2
-##   .. ..$ connectivity:List of 13
+##   .. ..$ connectivity:List of 14
 ##   .. .. ..$ swap            : chr "treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~site
 ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv> 
@@ -232,13 +232,14 @@ str(met_result)
 ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL, 
 ##     ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x557102d0dc50> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x0000018b8be7dd60> 
 ##   .. .. ..$ final_score     : num 0.734
 ##   .. .. ..$ final_components: Named num [1:2] 0 0.734
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
 ##   .. .. ..$ optimal_score   : num 0.734
 ##   .. .. ..$ stop_reason     : chr "optimal"
-##   .. ..$ balance     :List of 13
+##   .. .. ..$ swap_within     : chr "1"
+##   .. ..$ balance     :List of 14
 ##   .. .. ..$ swap            : chr "treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~site_col + site_block
 ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv> 
@@ -252,12 +253,13 @@ str(met_result)
 ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL, 
 ##     ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x557102d0dc50> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x0000018b8be7dd60> 
 ##   .. .. ..$ final_score     : num 7.5
 ##   .. .. ..$ final_components: Named num [1:2] 0 7.5
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
 ##   .. .. ..$ optimal_score   : num 7.5
 ##   .. .. ..$ stop_reason     : chr "optimal"
+##   .. .. ..$ swap_within     : chr "site"
 ##   ..$ call      : language speed(data = met_design, swap = "treatment", grid_factors = list(dim1 = "row",      dim2 = "col", by = "site"), e| __truncated__ ...
 ##  - attr(*, "class")= chr [1:2] "design" "list"
 ```
@@ -468,7 +470,7 @@ str(met_result)
 ##   ..$ col_column: chr "col"
 ##   ..$ grid_by   : chr "site"
 ##   ..$ per_level :List of 2
-##   .. ..$ connectivity:List of 13
+##   .. ..$ connectivity:List of 14
 ##   .. .. ..$ swap            : chr "treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~site
 ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv> 
@@ -482,13 +484,14 @@ str(met_result)
 ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL, 
 ##     ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x557102d0dc50> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x0000018b8be7dd60> 
 ##   .. .. ..$ final_score     : num 0.632
 ##   .. .. ..$ final_components: Named num [1:2] 0 0.632
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
 ##   .. .. ..$ optimal_score   : num 0.632
 ##   .. .. ..$ stop_reason     : chr "optimal"
-##   .. ..$ balance     :List of 13
+##   .. .. ..$ swap_within     : chr "allocation"
+##   .. ..$ balance     :List of 14
 ##   .. .. ..$ swap            : chr "treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~site_col + site_block
 ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv> 
@@ -502,12 +505,13 @@ str(met_result)
 ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL, 
 ##     ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x557102d0dc50> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x0000018b8be7dd60> 
 ##   .. .. ..$ final_score     : num 6.84
 ##   .. .. ..$ final_components: Named num [1:2] 0 6.84
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
 ##   .. .. ..$ optimal_score   : num 6.84
 ##   .. .. ..$ stop_reason     : chr "optimal"
+##   .. .. ..$ swap_within     : chr "site"
 ##   ..$ call      : language speed(data = met_design, swap = "treatment", grid_factors = list(dim1 = "row",      dim2 = "col", by = "site"), i| __truncated__ ...
 ##  - attr(*, "class")= chr [1:2] "design" "list"
 ```
@@ -779,7 +783,7 @@ str(met_result)
 ##   ..$ col_column: chr "col"
 ##   ..$ grid_by   : chr "site"
 ##   ..$ per_level :List of 2
-##   .. ..$ connectivity:List of 13
+##   .. ..$ connectivity:List of 14
 ##   .. .. ..$ swap            : chr "treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~site
 ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv> 
@@ -793,13 +797,14 @@ str(met_result)
 ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL, 
 ##     ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x557102d0dc50> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x0000018b8be7dd60> 
 ##   .. .. ..$ final_score     : num 1.89
 ##   .. .. ..$ final_components: Named num [1:2] 0 1.89
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
 ##   .. .. ..$ optimal_score   : num 0.557
 ##   .. .. ..$ stop_reason     : chr "no_improvement"
-##   .. ..$ balance     :List of 13
+##   .. .. ..$ swap_within     : chr "allocation"
+##   .. ..$ balance     :List of 14
 ##   .. .. ..$ swap            : chr "treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~site_col + site_block
 ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv> 
@@ -813,12 +818,13 @@ str(met_result)
 ##     row_column = "row", col_column = "col", current_score_obj = NULL, swapped_items = NULL, 
 ##     ...)  
 ##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 43 23 107 1 23 1 43 107
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x557102d0dc50> 
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x0000018b8be7dd60> 
 ##   .. .. ..$ final_score     : num 6.98
 ##   .. .. ..$ final_components: Named num [1:2] 0 6.98
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "adjacency" "balance"
 ##   .. .. ..$ optimal_score   : num 6.98
 ##   .. .. ..$ stop_reason     : chr "optimal"
+##   .. .. ..$ swap_within     : chr "site"
 ##   ..$ call      : language speed(data = met_design, swap = "treatment", grid_factors = list(dim1 = "row",      dim2 = "col", by = "site"), i| __truncated__ ...
 ##  - attr(*, "class")= chr [1:2] "design" "list"
 ```
