@@ -113,7 +113,7 @@ drawn at random if the RNG has not been used yet.
 \item \strong{metadata} - A list describing how the design was produced: the captured
 \code{call}, the ordered \code{levels}, the resolved \code{row_column} / \code{col_column}
 names, and a \code{per_level} list recording each level's swap variable,
-spatial factors, adjacency/balance weights, requested iterations, starting
+\code{swap_within} as supplied, spatial factors, adjacency/balance weights, requested iterations, starting
 temperature, cooling rate, objective function, achieved score and the
 \code{stop_reason} that ended the level. Used by
 \link[=summary.design]{summary()} to recompute per-level evaluation metrics.

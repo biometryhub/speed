@@ -486,7 +486,7 @@ With 40 duplicated varieties in this block, we know we also have 40 in the other
 autoplot(prep_result, treatments = "entry")
 ```
 
-An optimised p-rep design with strategic replication and spatial distribution. Note that because the treatments column is not called "treatment", we need to specify the `treatments` argument in the `autoplot()` function.
+An optimised p-rep design with strategic replication and spatial distribution. The `treatments` argument is optional here, as `autoplot()` defaults to the `swap` column.
 
 # Row-Column Designs with Blocking
 

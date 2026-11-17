@@ -12,6 +12,12 @@
   column joining each level's treatment (e.g. `"A-a"`), so `autoplot()` works without a `treatments` argument.
   (#31)
 
+## Bug Fixes
+
+- `autoplot()` now defaults to the row, column and `swap` columns recorded by `speed()`, and draws the first
+  level's `swap_within` as blocks, rather than requiring columns named `row`, `col`, `treatment` and `block`.
+  Each level's `swap_within` is now recorded in `metadata`. (#127)
+
 # speed 0.0.11
 
 ## Major Changes

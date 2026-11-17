@@ -79,7 +79,7 @@
 #' - **metadata** - A list describing how the design was produced: the captured
 #'   `call`, the ordered `levels`, the resolved `row_column` / `col_column`
 #'   names, and a `per_level` list recording each level's swap variable,
-#'   spatial factors, adjacency/balance weights, requested iterations, starting
+#'   `swap_within` as supplied, spatial factors, adjacency/balance weights, requested iterations, starting
 #'   temperature, cooling rate, objective function, achieved score and the
 #'   `stop_reason` that ended the level. Used by
 #'   [summary()][summary.design()] to recompute per-level evaluation metrics.
@@ -291,6 +291,9 @@ speed <- function(data,
   dummy_group <- paste0("dummy_", as.integer(Sys.time()))
   data[[dummy_group]] <- factor(rep(1, nrow(data)))
 
+  # Recorded in metadata before the dummy group replaces "1" / "none"
+  swap_within <- lapply(optimise, function(opt) opt$swap_within)
+
   # Handle swap_within for each level
   for (level in names(optimise)) {
     opt <- optimise[[level]]
@@ -311,6 +314,9 @@ speed <- function(data,
   # Set here, not passed through do.call(): do.call would evaluate a language
   # object argument, re-invoking speed() recursively.
   design$metadata$call <- call
+  for (level in names(swap_within)) {
+    design$metadata$per_level[[level]]$swap_within <- swap_within[[level]]
+  }
   design$design_df[[dummy_group]] <- NULL
   design$design_df <- to_types(design$design_df, factored$input_types)
 

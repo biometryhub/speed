@@ -34,13 +34,18 @@ autoplot(object, ...)
 
 \item{palette}{A string specifying the colour scheme to use for plotting or a vector of custom colours to use as the palette. Default is equivalent to "Spectral". Colour blind friendly palettes can also be provided via options \code{"colour blind"} (or \code{"color blind"}, both equivalent to \code{"viridis"}), \code{"magma"}, \code{"inferno"}, \code{"plasma"}, \code{"cividis"}, \code{"rocket"}, \code{"mako"} or \code{"turbo"}. Other palettes from \code{\link[scales:brewer_pal]{scales::brewer_pal()}} are also possible.}
 
-\item{row}{A variable to plot a column from \code{object} as rows.}
+\item{row}{A variable to plot a column from \code{object} as rows. Defaults to the
+row column used by \code{\link[=speed]{speed()}}, or \code{row}.}
 
-\item{column}{A variable to plot a column from \code{object} as columns.}
+\item{column}{A variable to plot a column from \code{object} as columns. Defaults
+to the column used by \code{\link[=speed]{speed()}}, or \code{col}.}
 
-\item{block}{A variable to plot a column from \code{object} as blocks.}
+\item{block}{A variable to plot a column from \code{object} as blocks. Defaults to
+the first level's \code{swap_within}, or \code{block} if there is none.}
 
-\item{treatments}{A variable to plot a column from \code{object} as treatments.}
+\item{treatments}{A variable to plot a column from \code{object} as treatments.
+Defaults to the \code{swap} column, or the combined \code{treatment} column when
+levels swap different columns.}
 
 \item{legend}{Logical (default \code{FALSE}). If \code{TRUE}, displays the legend for treatment colors.}
 }
