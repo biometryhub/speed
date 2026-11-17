@@ -24,10 +24,8 @@
 #'   them to [speed()] directly or through a level's `obj_args` in `optimise` instead.
 #' @param stop_at_optimal Logical; if `TRUE`, stops the level when the best score reaches its
 #'   lower bound (default: `TRUE`).
-#' @param lower_bound Optional finite numeric lower bound on the score, overriding the automatically
-#'   derived bound. `NULL` (default) derives a bound for the default [objective_function()] with
-#'   non-negative weights and no `relationship` matrix. If no bound is known, only the usual
-#'   iteration and no-improvement stopping rules apply.
+#' @param lower_bound Lower bound of the score from the objective, used by `stop_at_optimal` (default: `NULL`,
+#'   derived for the default [objective_function()] with non-negative weights and no `relationship` matrix).
 #'
 #' @returns A named list of optimization parameters.
 #'

@@ -46,10 +46,8 @@ them to \code{\link[=speed]{speed()}} directly or through a level's \code{obj_ar
 \item{stop_at_optimal}{Logical; if \code{TRUE}, stops the level when the best score reaches its
 lower bound (default: \code{TRUE}).}
 
-\item{lower_bound}{Optional finite numeric lower bound on the score, overriding the automatically
-derived bound. \code{NULL} (default) derives a bound for the default \code{\link[=objective_function]{objective_function()}} with
-non-negative weights and no \code{relationship} matrix. If no bound is known, only the usual
-iteration and no-improvement stopping rules apply.}
+\item{lower_bound}{Lower bound of the score from the objective, used by \code{stop_at_optimal} (default: \code{NULL},
+derived for the default \code{\link[=objective_function]{objective_function()}} with non-negative weights and no \code{relationship} matrix).}
 }
 \value{
 A named list of optimization parameters.
