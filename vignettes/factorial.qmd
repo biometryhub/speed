@@ -1,7 +1,7 @@
 ---
 title: "Factorial Design with speed"
 author: "Wasin Pipattungsakul"
-date: "2026-08-28"
+date: "2026-11-17"
 output:
   html_document:
     toc: true
@@ -104,26 +104,24 @@ factorial_result <- speed(
 
 ```
 ## Optimising level: single treatment within block 
-## Level: single treatment within block Iteration: 1000 Score: 158.118 Best: 105.3975 Since Improvement: 174 
-## Level: single treatment within block Iteration: 2000 Score: 123.3043 Best: 105.3975 Since Improvement: 1174 
-## Level: single treatment within block Iteration: 3000 Score: 121.795 Best: 100.6957 Since Improvement: 261 
-## Level: single treatment within block Iteration: 4000 Score: 104.8199 Best: 93.92547 Since Improvement: 202 
-## Level: single treatment within block Iteration: 5000 Score: 65.14907 Best: 58.38509 Since Improvement: 140 
-## Level: single treatment within block Iteration: 6000 Score: 51.15528 Best: 51.15528 Since Improvement: 89 
-## Level: single treatment within block Iteration: 7000 Score: 42.10559 Best: 42.10559 Since Improvement: 381 
-## Level: single treatment within block Iteration: 8000 Score: 40.81988 Best: 40.81988 Since Improvement: 501 
-## Level: single treatment within block Iteration: 9000 Score: 39.81988 Best: 39.81988 Since Improvement: 742 
-## Level: single treatment within block Iteration: 10000 Score: 36.81988 Best: 36.81988 Since Improvement: 537 
-## Level: single treatment within block Iteration: 11000 Score: 36.81988 Best: 36.81988 Since Improvement: 1537 
-## Level: single treatment within block Iteration: 12000 Score: 36.81988 Best: 36.81988 Since Improvement: 2537 
-## Level: single treatment within block Iteration: 13000 Score: 36.81988 Best: 36.81988 Since Improvement: 3537 
-## Level: single treatment within block Iteration: 14000 Score: 36.81988 Best: 36.81988 Since Improvement: 4537 
-## Level: single treatment within block Iteration: 15000 Score: 36.81988 Best: 36.81988 Since Improvement: 5537 
-## Level: single treatment within block Iteration: 16000 Score: 36.81988 Best: 36.81988 Since Improvement: 6537 
-## Level: single treatment within block Iteration: 17000 Score: 36.81988 Best: 36.81988 Since Improvement: 7537 
-## Level: single treatment within block Iteration: 18000 Score: 36.81988 Best: 36.81988 Since Improvement: 8537 
-## Level: single treatment within block Iteration: 19000 Score: 36.81988 Best: 36.81988 Since Improvement: 9537 
-## Early stopping at iteration 19463 for level single treatment within block
+## Level: single treatment within block Iteration: 1000 Score: 123.7453 Best: 101.3292 Since Improvement: 90 
+## Level: single treatment within block Iteration: 2000 Score: 123.8634 Best: 101.3292 Since Improvement: 1090 
+## Level: single treatment within block Iteration: 3000 Score: 121.3913 Best: 101.3292 Since Improvement: 2090 
+## Level: single treatment within block Iteration: 4000 Score: 82.40994 Best: 82.26708 Since Improvement: 9 
+## Level: single treatment within block Iteration: 5000 Score: 66.78882 Best: 66.34783 Since Improvement: 58 
+## Level: single treatment within block Iteration: 6000 Score: 50.27329 Best: 50.27329 Since Improvement: 123 
+## Level: single treatment within block Iteration: 7000 Score: 47.98758 Best: 47.41615 Since Improvement: 354 
+## Level: single treatment within block Iteration: 8000 Score: 41.81988 Best: 41.81988 Since Improvement: 222 
+## Level: single treatment within block Iteration: 9000 Score: 41.81988 Best: 41.81988 Since Improvement: 1222 
+## Level: single treatment within block Iteration: 10000 Score: 41.81988 Best: 41.81988 Since Improvement: 2222 
+## Level: single treatment within block Iteration: 11000 Score: 41.81988 Best: 41.81988 Since Improvement: 3222 
+## Level: single treatment within block Iteration: 12000 Score: 41.81988 Best: 41.81988 Since Improvement: 4222 
+## Level: single treatment within block Iteration: 13000 Score: 41.81988 Best: 41.81988 Since Improvement: 5222 
+## Level: single treatment within block Iteration: 14000 Score: 41.81988 Best: 41.81988 Since Improvement: 6222 
+## Level: single treatment within block Iteration: 15000 Score: 41.81988 Best: 41.81988 Since Improvement: 7222 
+## Level: single treatment within block Iteration: 16000 Score: 41.81988 Best: 41.81988 Since Improvement: 8222 
+## Level: single treatment within block Iteration: 17000 Score: 41.81988 Best: 41.81988 Since Improvement: 9222 
+## Early stopping at iteration 17778 for level single treatment within block
 ```
 
 ``` r
@@ -133,8 +131,8 @@ factorial_result
 ```
 ## Optimised Experimental Design
 ## ----------------------------
-## Score: 36.81988 
-## Iterations Run: 19464 
+## Score: 41.81988 
+## Iterations Run: 17779 
 ## Stopped Early: TRUE 
 ## Treatments: A1-B1, A1-B2, A1-B3, A2-B1, A2-B2, A2-B3, A3-B1, A3-B2, A3-B3, A4-B1, A4-B2, A4-B3, A5-B1, A5-B2, A5-B3, A6-B1, A6-B2, A6-B3, A7-B1, A7-B2, A7-B3, A8-B1, A8-B2, A8-B3 
 ## Seed: 112
@@ -161,7 +159,7 @@ str(factorial_result)
 ##  $ design_df     :Classes 'design' and 'data.frame':	72 obs. of  8 variables:
 ##   ..$ row        : int [1:72] 1 1 1 2 2 2 3 3 3 4 ...
 ##   ..$ col        : int [1:72] 1 2 3 1 2 3 1 2 3 1 ...
-##   ..$ treatment  : chr [1:72] "A7-B1" "A8-B2" "A6-B3" "A6-B2" ...
+##   ..$ treatment  : chr [1:72] "A1-B3" "A4-B2" "A8-B1" "A5-B2" ...
 ##   ..$ row_block  : num [1:72] 1 1 1 1 1 1 1 1 1 1 ...
 ##   ..$ col_block  : num [1:72] 1 1 1 1 1 1 1 1 1 1 ...
 ##   ..$ block      : num [1:72] 1 1 1 1 1 1 1 1 1 1 ...
@@ -173,10 +171,10 @@ str(factorial_result)
 ##   .. ..$ dimnames:List of 2
 ##   .. .. ..$ row: chr [1:24] "row= 1" "row= 2" "row= 3" "row= 4" ...
 ##   .. .. ..$ col: chr [1:3] "col=1" "col=2" "col=3"
-##  $ score         : num 36.8
-##  $ scores        : num [1:19464] 131 141 139 141 153 ...
-##  $ temperatures  : num [1:19464] 100 99.9 99.8 99.7 99.6 ...
-##  $ iterations_run: num 19464
+##  $ score         : num 41.8
+##  $ scores        : num [1:17779] 134 146 134 145 142 ...
+##  $ temperatures  : num [1:17779] 100 99.9 99.8 99.7 99.6 ...
+##  $ iterations_run: num 17779
 ##  $ stopped_early : logi TRUE
 ##  $ treatments    : chr [1:24] "A1-B1" "A1-B2" "A1-B3" "A2-B1" ...
 ##  $ seed          : num 112
@@ -186,7 +184,7 @@ str(factorial_result)
 ##   ..$ col_column: chr "col"
 ##   ..$ grid_by   : NULL
 ##   ..$ per_level :List of 1
-##   .. ..$ single treatment within block:List of 13
+##   .. ..$ single treatment within block:List of 14
 ##   .. .. ..$ swap            : chr "treatment"
 ##   .. .. ..$ spatial_factors :Class 'formula'  language ~row + col
 ##   .. .. .. .. ..- attr(*, ".Environment")=<environment: R_GlobalEnv> 
@@ -198,13 +196,14 @@ str(factorial_result)
 ##   .. .. ..$ cooling_rate    : num 0.999
 ##   .. .. ..$ obj_function    :function (layout_df, swap, spatial_cols, interaction_weight = 1, main_weight = 1, 
 ##     factorial_separator = "-", ...)  
-##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 109 33 159 1 33 1 109 159
-##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x000002b0cae73a50> 
-##   .. .. ..$ final_score     : num 36.8
-##   .. .. ..$ final_components: Named num [1:2] 9.43 27.39
+##   .. .. .. ..- attr(*, "srcref")= 'srcref' int [1:8] 126 33 176 1 33 1 126 176
+##   .. .. .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x0000018b8be7dd60> 
+##   .. .. ..$ final_score     : num 41.8
+##   .. .. ..$ final_components: Named num [1:2] 14.4 27.4
 ##   .. .. .. ..- attr(*, "names")= chr [1:2] "main" "interaction"
 ##   .. .. ..$ optimal_score   : num NA
 ##   .. .. ..$ stop_reason     : chr "no_improvement"
+##   .. .. ..$ swap_within     : chr "block"
 ##   ..$ call      : language speed(data = factorial_design, swap = "treatment", swap_within = "block",      spatial_factors = ~row + col, iter| __truncated__ ...
 ##  - attr(*, "class")= chr [1:2] "design" "list"
 ```

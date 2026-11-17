@@ -373,7 +373,6 @@ test_that("speed runs a with variation of row and column columns", {
     quiet = TRUE
   )
 
-  result$design_df$row <- result$design_df$Row
   vdiffr::expect_doppelganger("speed_Row", autoplot(result))
 })
 

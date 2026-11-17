@@ -1,4 +1,4 @@
-c87e4e3503800e27958d5fb782fc8e6c  complex_designs.qmd.orig
+40e6f10ef5234253d9a5251401e75772  complex_designs.qmd.orig
 9dc3703845401eaa8fc822fb98e71fc0  custom_objective_functions.qmd.orig
 613bfadb36d86016695582aeec690955  design_names.qmd.orig
 fb237c3e750f35d6e9bed976e4eb2098  factorial.qmd.orig

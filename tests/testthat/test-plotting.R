@@ -891,3 +891,126 @@ test_that("autoplot errors when the requested block column is absent", {
   )
   expect_no_error(autoplot(result))
 })
+
+test_that("autoplot defaults to the columns recorded in metadata", {
+  df <- initialise_design_df(items = 4, nrows = 4, ncols = 4)
+  names(df)[names(df) == "treatment"] <- "variety"
+  names(df)[names(df) == "row"] <- "r"
+  names(df)[names(df) == "col"] <- "c"
+
+  result <- speed(
+    df,
+    swap = "variety",
+    spatial_factors = ~ r + c,
+    grid_factors = list(dim1 = "r", dim2 = "c"),
+    iterations = 100,
+    seed = 1,
+    quiet = TRUE
+  )
+
+  plt <- autoplot(result)
+  mapping <- plt$layers[[1]]$mapping
+  expect_equal(rlang::as_label(mapping$fill), "variety")
+  expect_equal(rlang::as_label(mapping$y), "r")
+  expect_equal(rlang::as_label(mapping$x), "c")
+
+  # explicit arguments still win
+  plt_r <- autoplot(result, treatments = "r")
+  expect_equal(rlang::as_label(plt_r$layers[[1]]$mapping$fill), "r")
+})
+
+test_that("autoplot draws swap_within as blocks by default", {
+  df <- data.frame(
+    row = rep(1:4, times = 6),
+    col = rep(1:6, each = 4),
+    rep = rep(1:3, each = 8),
+    treatment = rep(LETTERS[1:8], 3)
+  )
+
+  result <- speed(
+    df,
+    swap = "treatment",
+    swap_within = "rep",
+    iterations = 100,
+    seed = 1,
+    quiet = TRUE
+  )
+
+  # tiles, labels and the two outlines of each block
+  plt <- autoplot(result)
+  expect_length(plt$layers, 4)
+  expect_equal(nrow(plt$layers[[3]]$data), 3)
+})
+
+test_that("speed records swap_within as supplied in metadata", {
+  df <- data.frame(
+    row = rep(1:4, times = 6),
+    col = rep(1:6, each = 4),
+    block = rep(1:3, each = 8),
+    treatment = rep(LETTERS[1:8], 3)
+  )
+
+  unblocked <- speed(df, swap = "treatment", iterations = 20, seed = 1, quiet = TRUE)
+  expect_equal(unblocked$metadata$per_level[[1]]$swap_within, "1")
+
+  blocked <- speed(
+    df,
+    swap = "treatment",
+    swap_within = "block",
+    iterations = 20,
+    seed = 1,
+    quiet = TRUE
+  )
+  expect_equal(blocked$metadata$per_level[[1]]$swap_within, "block")
+})
+
+test_that("autoplot block outlines can be turned off and need an exact column", {
+  df <- data.frame(
+    row = rep(1:4, times = 6),
+    col = rep(1:6, each = 4),
+    block = rep(1:3, each = 8),
+    treatment = rep(LETTERS[1:8], 3)
+  )
+  result <- speed(
+    df,
+    swap = "treatment",
+    swap_within = "block",
+    iterations = 20,
+    seed = 1,
+    quiet = TRUE
+  )
+
+  expect_length(autoplot(result)$layers, 4)
+  expect_length(autoplot(result, block = FALSE)$layers, 2)
+
+  # `site_block` no longer matches `block`
+  names(result$design_df)[names(result$design_df) == "block"] <- "site_block"
+  expect_length(autoplot(result)$layers, 2)
+})
+
+test_that("autoplot facets designs with separate grids", {
+  site <- data.frame(
+    row = rep(1:4, times = 4),
+    col = rep(1:4, each = 4),
+    block = rep(1:2, each = 8),
+    treatment = rep(paste0("T", 1:4), 4)
+  )
+  met <- rbind(cbind(site, site = "a"), cbind(site, site = "b"))
+
+  result <- speed(
+    met,
+    swap = "treatment",
+    swap_within = "site",
+    grid_factors = list(dim1 = "row", dim2 = "col", by = "site"),
+    iterations = 50,
+    seed = 1,
+    quiet = TRUE
+  )
+
+  plt <- autoplot(result)
+  expect_s3_class(plt$facet, "FacetWrap")
+  # sites are panels, so `block` is outlined within each one
+  blocks <- plt$layers[[3]]$data
+  expect_equal(nrow(blocks), 4)
+  expect_setequal(blocks$site, c("a", "b"))
+})

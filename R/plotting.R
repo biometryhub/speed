@@ -5,12 +5,21 @@
 #' @param rotation Rotate the x axis labels and the treatment group labels within the plot. Allows for easier reading of long axis or treatment labels. Number between 0 and 360 (inclusive) - default 0
 #' @param margin Logical (default `FALSE`). A value of `FALSE` will expand the plot to the edges of the plotting area i.e. remove white space between plot and axes.
 #' @param palette A string specifying the colour scheme to use for plotting or a vector of custom colours to use as the palette. Default is equivalent to "Spectral". Colour blind friendly palettes can also be provided via options `"colour blind"` (or `"color blind"`, both equivalent to `"viridis"`), `"magma"`, `"inferno"`, `"plasma"`, `"cividis"`, `"rocket"`, `"mako"` or `"turbo"`. Other palettes from [scales::brewer_pal()] are also possible.
-#' @param block A variable to plot a column from `object` as blocks.
-#' @param row A variable to plot a column from `object` as rows.
-#' @param column A variable to plot a column from `object` as columns.
+#' @param block A variable to plot a column from `object` as blocks, or `FALSE`
+#'   for no block outlines. Defaults to the first level's `swap_within`, or
+#'   `block` if there is none.
+#' @param row A variable to plot a column from `object` as rows. Defaults to the
+#'   row column used by [speed()], or `row`.
+#' @param column A variable to plot a column from `object` as columns. Defaults
+#'   to the column used by [speed()], or `col`.
 #' @param treatments A variable to plot a column from `object` as treatments.
+#'   Defaults to the `swap` column, or the combined `treatment` column when
+#'   levels swap different columns.
 #' @param legend Logical (default `FALSE`). If `TRUE`, displays the legend for treatment colors.
 #' @inheritParams rlang::args_dots_used
+#'
+#' @details Designs optimised with `grid_factors$by` (e.g. a multi-environment
+#'   trial) are faceted by that column, one panel per grid.
 #'
 #' @name autoplot
 #'
@@ -79,7 +88,9 @@ autoplot.design <- function(
   stopifnot(inherits(object, "design"))
   rlang::check_dots_used()
 
+  meta <- NULL
   if (inherits(object, "list")) {
+    meta <- object$metadata
     object <- object$design_df
   }
 
@@ -87,19 +98,33 @@ autoplot.design <- function(
   column_expr <- rlang::enquo(column)
   block_expr <- rlang::enquo(block)
   trt_expr <- rlang::enquo(treatments)
+  block_supplied <- !rlang::quo_is_null(block_expr)
+  block_off <- isFALSE(rlang::quo_get_expr(block_expr))
+  grid_by <- meta$grid_by
+  if (!isTRUE(grid_by %in% names(object))) {
+    grid_by <- NULL
+  }
 
-  # If row and column are not provided, set default values
+  # Unsupplied columns default to those recorded in metadata, falling back to
+  # the conventional names
   if (rlang::quo_is_null(row_expr)) {
-    row_expr <- rlang::sym("row") # Default to the row column
+    row_expr <- rlang::sym(meta$row_column %||% "row")
   }
   if (rlang::quo_is_null(column_expr)) {
-    column_expr <- rlang::sym("col") # Default to the col column
+    column_expr <- rlang::sym(meta$col_column %||% "col")
   }
-  if (rlang::quo_is_null(block_expr)) {
-    block_expr <- rlang::sym("block") # Default to the block column
+  if (!block_supplied) {
+    # The outermost level's boundary; sites are separated by facets instead
+    within <- meta$per_level[[1]]$swap_within
+    if (is.null(within) || within %in% c("1", "none", grid_by)) {
+      within <- "block"
+    }
+    block_expr <- rlang::sym(within)
   }
   if (rlang::quo_is_null(trt_expr)) {
-    trt_expr <- rlang::sym("treatment") # Default to the treatments column
+    # Several swap columns are combined into `treatment` by speed()
+    swap_cols <- unique(vapply(meta$per_level, function(p) p$swap, character(1)))
+    trt_expr <- rlang::sym(if (length(swap_cols) == 1) swap_cols else "treatment")
   }
 
   row_expr <- rlang::quo_name(row_expr)
@@ -124,9 +149,8 @@ autoplot.design <- function(
     suffix = "Please specify the appropriate column using the 'treatments' argument."
   )
 
-  # Only verify block column if it's being used (i.e., if blocks exist in data)
-  # if(any(grepl("block", tolower(names(object))))) {
-  if (!is.null(block) && !any(grepl(block_expr, names(object)))) {
+  # A default block column is optional, so only check one that was asked for
+  if (block_supplied && !block_off) {
     verify_column_exists(
       block_expr,
       object,
@@ -177,7 +201,7 @@ autoplot.design <- function(
   object <- merge(object, colours)
 
   # Create plot based on whether blocks exist
-  if (any(grepl(block_expr, names(object)))) {
+  if (!block_off && block_expr %in% names(object)) {
     plt <- create_blocked_plot(
       object,
       row_expr,
@@ -186,6 +210,7 @@ autoplot.design <- function(
       trt_expr,
       rotation,
       size,
+      grid_by = grid_by,
       ...
     )
   } else {
@@ -213,6 +238,11 @@ autoplot.design <- function(
   }
 
   plt <- apply_axis_styling(plt, margin, object, row_expr, column_expr)
+
+  # Separate grids share coordinates, so give each its own panel
+  if (!is.null(grid_by)) {
+    plt <- plt + ggplot2::facet_wrap(ggplot2::vars(.data[[grid_by]]))
+  }
 
   return(plt)
 }
@@ -369,10 +399,17 @@ create_blocked_plot <- function(
   trt_expr,
   rotation,
   size,
+  grid_by = NULL,
   ...
 ) {
   # Block boundary calculation
-  blkdf <- calculate_block_boundaries(object, block_expr)
+  blkdf <- calculate_block_boundaries(
+    object,
+    block_expr,
+    row_expr,
+    column_expr,
+    by = grid_by
+  )
 
   # Separate buffer plots from treatment plots
   buffer_plots <- object[object[[trt_expr]] == "buffer", ]
@@ -469,22 +506,26 @@ apply_axis_styling <- function(plot, margin, object, row_expr, column_expr) {
   return(plot)
 }
 
-calculate_block_boundaries <- function(object, block_expr) {
-  blkdf <- data.frame(
-    block = sort(unique(object[[block_expr]])),
-    xmin = 0,
-    xmax = 0,
-    ymin = 0,
-    ymax = 0
-  )
-
-  for (i in 1:nrow(blkdf)) {
-    tmp <- object[object[[block_expr]] == blkdf$block[i], ]
-    blkdf[i, "ymin"] <- (min(as_numeric_factor(tmp$row)) - 0.5)
-    blkdf[i, "ymax"] <- (max(as_numeric_factor(tmp$row)) + 0.5)
-    blkdf[i, "xmin"] <- (min(as_numeric_factor(tmp$col)) - 0.5)
-    blkdf[i, "xmax"] <- (max(as_numeric_factor(tmp$col)) + 0.5)
-  }
+calculate_block_boundaries <- function(
+  object,
+  block_expr,
+  row_expr = "row",
+  column_expr = "col",
+  by = NULL
+) {
+  # One outline per block, within each grid when `by` is given
+  groups <- split(object, object[c(by, block_expr)], drop = TRUE)
+  blkdf <- do.call(rbind, lapply(groups, function(tmp) {
+    rows <- as_numeric_factor(tmp[[row_expr]])
+    cols <- as_numeric_factor(tmp[[column_expr]])
+    data.frame(
+      tmp[1, c(by, block_expr), drop = FALSE],
+      xmin = min(cols) - 0.5,
+      xmax = max(cols) + 0.5,
+      ymin = min(rows) - 0.5,
+      ymax = max(rows) + 0.5
+    )
+  }))
 
   return(blkdf)
 }

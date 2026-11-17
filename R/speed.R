@@ -62,7 +62,8 @@
 #'   information.
 #'
 #' @returns A list containing:
-#' - **design_df** - Data frame of optimised design
+#' - **design_df** - Data frame of optimised design. When levels swap different
+#'   columns, a `treatment` column combining them is added; see details.
 #' - **score** - Final optimisation score
 #' - **scores** - Vector of scores across iterations (for simple designs) or
 #'   named list of score vectors (for hierarchical designs)
@@ -78,7 +79,7 @@
 #' - **metadata** - A list describing how the design was produced: the captured
 #'   `call`, the ordered `levels`, the resolved `row_column` / `col_column`
 #'   names, and a `per_level` list recording each level's swap variable,
-#'   spatial factors, adjacency/balance weights, requested iterations, starting
+#'   `swap_within` as supplied, spatial factors, adjacency/balance weights, requested iterations, starting
 #'   temperature, cooling rate, objective function, achieved score and the
 #'   `stop_reason` that ended the level. Used by
 #'   [summary()][summary.design()] to recompute per-level evaluation metrics.
@@ -97,6 +98,14 @@
 #' levels of the design structure. For simple (non-hierarchical) designs, these
 #' arguments can be provided as single values. For more examples and detailed
 #' usage, see the package vignettes.
+#'
+#' When the levels of a hierarchical design swap different columns (a
+#' split-plot or strip-plot, but not a multi-environment trial that swaps one
+#' column at every level), the returned `design_df` gains a `treatment` column
+#' joining each level's treatment in level order with `"-"`, e.g. `"A-a"` for
+#' whole-plot treatment `A` and sub-plot treatment `a`. This lets [autoplot()]
+#' show the full treatment combination by default. No column is added if
+#' `data` already has a `treatment` column.
 #'
 #' `linked_cols` names columns that describe the treatment rather than the plot,
 #' so that a value paired with a treatment stays paired with it wherever the
@@ -166,6 +175,8 @@
 #'                 swap_all = TRUE,
 #'                 seed = 42)
 #'
+#' # Plot the combined whole-plot and sub-plot treatments
+#' autoplot(result)
 #' # Plot wholeplot allocations within blocks
 #' autoplot(result, treatments = "wholeplot_treatment")
 #' # Plot subplot allocations within wholeplots
@@ -280,6 +291,9 @@ speed <- function(data,
   dummy_group <- paste0("dummy_", as.integer(Sys.time()))
   data[[dummy_group]] <- factor(rep(1, nrow(data)))
 
+  # Recorded in metadata before the dummy group replaces "1" / "none"
+  swap_within <- lapply(optimise, function(opt) opt$swap_within)
+
   # Handle swap_within for each level
   for (level in names(optimise)) {
     opt <- optimise[[level]]
@@ -300,8 +314,20 @@ speed <- function(data,
   # Set here, not passed through do.call(): do.call would evaluate a language
   # object argument, re-invoking speed() recursively.
   design$metadata$call <- call
+  for (level in names(swap_within)) {
+    design$metadata$per_level[[level]]$swap_within <- swap_within[[level]]
+  }
   design$design_df[[dummy_group]] <- NULL
   design$design_df <- to_types(design$design_df, factored$input_types)
+
+  # Join differing swap columns into `treatment` so autoplot() works by default
+  swap_cols <- unique(vapply(optimise, function(opt) opt$swap, character(1)))
+  if (length(swap_cols) > 1 && !"treatment" %in% names(design$design_df)) {
+    design$design_df$treatment <- do.call(
+      paste,
+      c(lapply(design$design_df[swap_cols], as.character), sep = "-")
+    )
+  }
 
   # to print deprecate warning at the end
   optim_params()

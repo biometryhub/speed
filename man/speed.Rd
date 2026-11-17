@@ -96,7 +96,8 @@ information.}
 \value{
 A list containing:
 \itemize{
-\item \strong{design_df} - Data frame of optimised design
+\item \strong{design_df} - Data frame of optimised design. When levels swap different
+columns, a \code{treatment} column combining them is added; see details.
 \item \strong{score} - Final optimisation score
 \item \strong{scores} - Vector of scores across iterations (for simple designs) or
 named list of score vectors (for hierarchical designs)
@@ -112,7 +113,7 @@ drawn at random if the RNG has not been used yet.
 \item \strong{metadata} - A list describing how the design was produced: the captured
 \code{call}, the ordered \code{levels}, the resolved \code{row_column} / \code{col_column}
 names, and a \code{per_level} list recording each level's swap variable,
-spatial factors, adjacency/balance weights, requested iterations, starting
+\code{swap_within} as supplied, spatial factors, adjacency/balance weights, requested iterations, starting
 temperature, cooling rate, objective function, achieved score and the
 \code{stop_reason} that ended the level. Used by
 \link[=summary.design]{summary()} to recompute per-level evaluation metrics.
@@ -137,6 +138,14 @@ optimisation parameters and objective functions to be applied at different
 levels of the design structure. For simple (non-hierarchical) designs, these
 arguments can be provided as single values. For more examples and detailed
 usage, see the package vignettes.
+
+When the levels of a hierarchical design swap different columns (a
+split-plot or strip-plot, but not a multi-environment trial that swaps one
+column at every level), the returned \code{design_df} gains a \code{treatment} column
+joining each level's treatment in level order with \code{"-"}, e.g. \code{"A-a"} for
+whole-plot treatment \code{A} and sub-plot treatment \code{a}. This lets \code{\link[=autoplot]{autoplot()}}
+show the full treatment combination by default. No column is added if
+\code{data} already has a \code{treatment} column.
 
 \code{linked_cols} names columns that describe the treatment rather than the plot,
 so that a value paired with a treatment stays paired with it wherever the
@@ -202,6 +211,8 @@ result <- speed(df_split,
                 swap_all = TRUE,
                 seed = 42)
 
+# Plot the combined whole-plot and sub-plot treatments
+autoplot(result)
 # Plot wholeplot allocations within blocks
 autoplot(result, treatments = "wholeplot_treatment")
 # Plot subplot allocations within wholeplots
