@@ -18,6 +18,7 @@
 - `autoplot()` now defaults to the row, column and `swap` columns recorded by `speed()`, and draws the first
   level's `swap_within` as blocks, rather than requiring columns named `row`, `col`, `treatment` and `block`.
   Each level's `swap_within` is now recorded in `metadata`. (#127)
+- `autoplot()` now facets designs optimised with `grid_factors$by`, rather than overplotting the grids. (#134)
 - `autoplot()` now matches the block column exactly, so a column such as `site_block` is no longer mistaken
   for `block`.
 

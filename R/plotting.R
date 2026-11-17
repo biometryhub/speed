@@ -18,6 +18,9 @@
 #' @param legend Logical (default `FALSE`). If `TRUE`, displays the legend for treatment colors.
 #' @inheritParams rlang::args_dots_used
 #'
+#' @details Designs optimised with `grid_factors$by` (e.g. a multi-environment
+#'   trial) are faceted by that column, one panel per grid.
+#'
 #' @name autoplot
 #'
 #' @return A `ggplot2` object.
@@ -97,6 +100,10 @@ autoplot.design <- function(
   trt_expr <- rlang::enquo(treatments)
   block_supplied <- !rlang::quo_is_null(block_expr)
   block_off <- isFALSE(rlang::quo_get_expr(block_expr))
+  grid_by <- meta$grid_by
+  if (!isTRUE(grid_by %in% names(object))) {
+    grid_by <- NULL
+  }
 
   # Unsupplied columns default to those recorded in metadata, falling back to
   # the conventional names
@@ -107,9 +114,9 @@ autoplot.design <- function(
     column_expr <- rlang::sym(meta$col_column %||% "col")
   }
   if (!block_supplied) {
-    # The outermost level's boundary
+    # The outermost level's boundary; sites are separated by facets instead
     within <- meta$per_level[[1]]$swap_within
-    if (is.null(within) || within %in% c("1", "none")) {
+    if (is.null(within) || within %in% c("1", "none", grid_by)) {
       within <- "block"
     }
     block_expr <- rlang::sym(within)
@@ -203,6 +210,7 @@ autoplot.design <- function(
       trt_expr,
       rotation,
       size,
+      grid_by = grid_by,
       ...
     )
   } else {
@@ -230,6 +238,11 @@ autoplot.design <- function(
   }
 
   plt <- apply_axis_styling(plt, margin, object, row_expr, column_expr)
+
+  # Separate grids share coordinates, so give each its own panel
+  if (!is.null(grid_by)) {
+    plt <- plt + ggplot2::facet_wrap(ggplot2::vars(.data[[grid_by]]))
+  }
 
   return(plt)
 }
@@ -386,6 +399,7 @@ create_blocked_plot <- function(
   trt_expr,
   rotation,
   size,
+  grid_by = NULL,
   ...
 ) {
   # Block boundary calculation
@@ -393,7 +407,8 @@ create_blocked_plot <- function(
     object,
     block_expr,
     row_expr,
-    column_expr
+    column_expr,
+    by = grid_by
   )
 
   # Separate buffer plots from treatment plots
@@ -495,23 +510,22 @@ calculate_block_boundaries <- function(
   object,
   block_expr,
   row_expr = "row",
-  column_expr = "col"
+  column_expr = "col",
+  by = NULL
 ) {
-  blkdf <- data.frame(
-    block = sort(unique(object[[block_expr]])),
-    xmin = 0,
-    xmax = 0,
-    ymin = 0,
-    ymax = 0
-  )
-
-  for (i in 1:nrow(blkdf)) {
-    tmp <- object[object[[block_expr]] == blkdf$block[i], ]
-    blkdf[i, "ymin"] <- (min(as_numeric_factor(tmp[[row_expr]])) - 0.5)
-    blkdf[i, "ymax"] <- (max(as_numeric_factor(tmp[[row_expr]])) + 0.5)
-    blkdf[i, "xmin"] <- (min(as_numeric_factor(tmp[[column_expr]])) - 0.5)
-    blkdf[i, "xmax"] <- (max(as_numeric_factor(tmp[[column_expr]])) + 0.5)
-  }
+  # One outline per block, within each grid when `by` is given
+  groups <- split(object, object[c(by, block_expr)], drop = TRUE)
+  blkdf <- do.call(rbind, lapply(groups, function(tmp) {
+    rows <- as_numeric_factor(tmp[[row_expr]])
+    cols <- as_numeric_factor(tmp[[column_expr]])
+    data.frame(
+      tmp[1, c(by, block_expr), drop = FALSE],
+      xmin = min(cols) - 0.5,
+      xmax = max(cols) + 0.5,
+      ymin = min(rows) - 0.5,
+      ymax = max(rows) + 0.5
+    )
+  }))
 
   return(blkdf)
 }

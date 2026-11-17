@@ -56,6 +56,10 @@ A \code{ggplot2} object.
 \description{
 Generate plots for designs generated in speed
 }
+\details{
+Designs optimised with \code{grid_factors$by} (e.g. a multi-environment
+trial) are faceted by that column, one panel per grid.
+}
 \examples{
 # Create a design with blocks
 df <- data.frame(

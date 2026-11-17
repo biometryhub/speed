@@ -987,3 +987,30 @@ test_that("autoplot block outlines can be turned off and need an exact column", 
   names(result$design_df)[names(result$design_df) == "block"] <- "site_block"
   expect_length(autoplot(result)$layers, 2)
 })
+
+test_that("autoplot facets designs with separate grids", {
+  site <- data.frame(
+    row = rep(1:4, times = 4),
+    col = rep(1:4, each = 4),
+    block = rep(1:2, each = 8),
+    treatment = rep(paste0("T", 1:4), 4)
+  )
+  met <- rbind(cbind(site, site = "a"), cbind(site, site = "b"))
+
+  result <- speed(
+    met,
+    swap = "treatment",
+    swap_within = "site",
+    grid_factors = list(dim1 = "row", dim2 = "col", by = "site"),
+    iterations = 50,
+    seed = 1,
+    quiet = TRUE
+  )
+
+  plt <- autoplot(result)
+  expect_s3_class(plt$facet, "FacetWrap")
+  # sites are panels, so `block` is outlined within each one
+  blocks <- plt$layers[[3]]$data
+  expect_equal(nrow(blocks), 4)
+  expect_setequal(blocks$site, c("a", "b"))
+})
