@@ -40,8 +40,9 @@ row column used by \code{\link[=speed]{speed()}}, or \code{row}.}
 \item{column}{A variable to plot a column from \code{object} as columns. Defaults
 to the column used by \code{\link[=speed]{speed()}}, or \code{col}.}
 
-\item{block}{A variable to plot a column from \code{object} as blocks. Defaults to
-the first level's \code{swap_within}, or \code{block} if there is none.}
+\item{block}{A variable to plot a column from \code{object} as blocks, or \code{FALSE}
+for no block outlines. Defaults to the first level's \code{swap_within}, or
+\code{block} if there is none.}
 
 \item{treatments}{A variable to plot a column from \code{object} as treatments.
 Defaults to the \code{swap} column, or the combined \code{treatment} column when

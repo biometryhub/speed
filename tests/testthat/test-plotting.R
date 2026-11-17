@@ -963,3 +963,27 @@ test_that("speed records swap_within as supplied in metadata", {
   )
   expect_equal(blocked$metadata$per_level[[1]]$swap_within, "block")
 })
+
+test_that("autoplot block outlines can be turned off and need an exact column", {
+  df <- data.frame(
+    row = rep(1:4, times = 6),
+    col = rep(1:6, each = 4),
+    block = rep(1:3, each = 8),
+    treatment = rep(LETTERS[1:8], 3)
+  )
+  result <- speed(
+    df,
+    swap = "treatment",
+    swap_within = "block",
+    iterations = 20,
+    seed = 1,
+    quiet = TRUE
+  )
+
+  expect_length(autoplot(result)$layers, 4)
+  expect_length(autoplot(result, block = FALSE)$layers, 2)
+
+  # `site_block` no longer matches `block`
+  names(result$design_df)[names(result$design_df) == "block"] <- "site_block"
+  expect_length(autoplot(result)$layers, 2)
+})

@@ -5,8 +5,9 @@
 #' @param rotation Rotate the x axis labels and the treatment group labels within the plot. Allows for easier reading of long axis or treatment labels. Number between 0 and 360 (inclusive) - default 0
 #' @param margin Logical (default `FALSE`). A value of `FALSE` will expand the plot to the edges of the plotting area i.e. remove white space between plot and axes.
 #' @param palette A string specifying the colour scheme to use for plotting or a vector of custom colours to use as the palette. Default is equivalent to "Spectral". Colour blind friendly palettes can also be provided via options `"colour blind"` (or `"color blind"`, both equivalent to `"viridis"`), `"magma"`, `"inferno"`, `"plasma"`, `"cividis"`, `"rocket"`, `"mako"` or `"turbo"`. Other palettes from [scales::brewer_pal()] are also possible.
-#' @param block A variable to plot a column from `object` as blocks. Defaults to
-#'   the first level's `swap_within`, or `block` if there is none.
+#' @param block A variable to plot a column from `object` as blocks, or `FALSE`
+#'   for no block outlines. Defaults to the first level's `swap_within`, or
+#'   `block` if there is none.
 #' @param row A variable to plot a column from `object` as rows. Defaults to the
 #'   row column used by [speed()], or `row`.
 #' @param column A variable to plot a column from `object` as columns. Defaults
@@ -94,6 +95,8 @@ autoplot.design <- function(
   column_expr <- rlang::enquo(column)
   block_expr <- rlang::enquo(block)
   trt_expr <- rlang::enquo(treatments)
+  block_supplied <- !rlang::quo_is_null(block_expr)
+  block_off <- isFALSE(rlang::quo_get_expr(block_expr))
 
   # Unsupplied columns default to those recorded in metadata, falling back to
   # the conventional names
@@ -103,7 +106,7 @@ autoplot.design <- function(
   if (rlang::quo_is_null(column_expr)) {
     column_expr <- rlang::sym(meta$col_column %||% "col")
   }
-  if (rlang::quo_is_null(block_expr)) {
+  if (!block_supplied) {
     # The outermost level's boundary
     within <- meta$per_level[[1]]$swap_within
     if (is.null(within) || within %in% c("1", "none")) {
@@ -139,9 +142,8 @@ autoplot.design <- function(
     suffix = "Please specify the appropriate column using the 'treatments' argument."
   )
 
-  # Only verify block column if it's being used (i.e., if blocks exist in data)
-  # if(any(grepl("block", tolower(names(object))))) {
-  if (!is.null(block) && !any(grepl(block_expr, names(object)))) {
+  # A default block column is optional, so only check one that was asked for
+  if (block_supplied && !block_off) {
     verify_column_exists(
       block_expr,
       object,
@@ -192,7 +194,7 @@ autoplot.design <- function(
   object <- merge(object, colours)
 
   # Create plot based on whether blocks exist
-  if (any(grepl(block_expr, names(object)))) {
+  if (!block_off && block_expr %in% names(object)) {
     plt <- create_blocked_plot(
       object,
       row_expr,
