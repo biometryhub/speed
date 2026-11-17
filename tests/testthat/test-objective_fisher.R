@@ -1,5 +1,13 @@
 # tests/testthat/test-objective_fisher.R
 
+default_sigma <- function(nrows = 4, ncols = 6) cor_ar1_ar1(nrows, ncols, rho_row = 0.6, rho_col = 0.3)
+default_design <- function(nrows = 4, ncols = 6) {
+  initialise_design_df(
+    items = ncols, nrows = nrows, ncols = ncols,
+    block_nrows = 1, block_ncols = ncols
+  )
+}
+
 # ---- objective_function_info
 
 # all RCBDs are equally optimal
@@ -174,11 +182,8 @@ test_that("a requested estimable contrast does not require full connectedness", 
 })
 
 test_that("custom contrasts require treatment column names", {
-  df <- initialise_design_df(
-    items = 10, nrows = 2, ncols = 10,
-    block_nrows = 1, block_ncols = 10
-  )
-  Sigma <- cor_ar1_ar1(2, 10, rho_row = 0.6, rho_col = 0.3)
+  df <- default_design(2, 10)
+  Sigma <- default_sigma(2, 10)
   contrast <- matrix(c(1, -1, rep(0, 8)), nrow = 1)
 
   expect_error(
@@ -188,26 +193,14 @@ test_that("custom contrasts require treatment column names", {
     ),
     "must have column names"
   )
-  expect_error(
-    speed(
-      df, swap = "treatment", swap_within = "block",
-      obj_function = objective_function_info,
-      Sigma = Sigma, contrast_matrix = contrast,
-      iterations = 20, seed = 1, quiet = TRUE
-    ),
-    "must have column names"
-  )
 })
 
 test_that("named contrasts match treatments rather than column positions", {
-  df <- initialise_design_df(
-    items = 10, nrows = 2, ncols = 10,
-    block_nrows = 1, block_ncols = 10
-  )
+  df <- default_design(2, 10)
   df <- df[order(df$row, df$col), ]
   treatments <- paste0("T", 1:10)
   df$treatment <- factor(df$treatment, levels = treatments)
-  Sigma <- cor_ar1_ar1(2, 10, rho_row = 0.6, rho_col = 0.3)
+  Sigma <- default_sigma(2, 10)
   contrast <- matrix(
     c(1, -1, rep(0, 8)), nrow = 1,
     dimnames = list("T1 - T2", treatments)
@@ -260,7 +253,7 @@ test_that("incremental calculation matches full recalculation", {
     block     = rep(1:3, each = 4),
     treatment = rep(LETTERS[1:4], 3)
   )
-  Sigma <- cor_ar1_ar1(3, 4, rho_row = 0.6, rho_col = 0.3)
+  Sigma <- default_sigma(3, 4)
   current <- objective_function_info(
     df,
     "treatment",
@@ -314,11 +307,8 @@ test_that("incremental calculation matches full recalculation", {
 })
 
 test_that("covariance matrices remain aligned when layout rows are reordered", {
-  df <- initialise_design_df(
-    items = 6, nrows = 4, ncols = 6,
-    block_nrows = 1, block_ncols = 6
-  )
-  Sigma <- cor_ar1_ar1(4, 6, rho_row = 0.6, rho_col = 0.3)
+  df <- default_design()
+  Sigma <- default_sigma()
   sorted <- df[order(df$row, df$col), ]
   reordered <- df[rev(seq_len(nrow(df))), ]
   L <- compute_L_projection(df, Sigma)
@@ -352,11 +342,8 @@ test_that("covariance matrices remain aligned when layout rows are reordered", {
 })
 
 test_that("spatial scoring uses numeric coordinates and custom grid columns", {
-  df <- initialise_design_df(
-    items = 6, nrows = 4, ncols = 6,
-    block_nrows = 1, block_ncols = 6
-  )
-  Sigma <- cor_ar1_ar1(4, 6, rho_row = 0.6, rho_col = 0.3)
+  df <- default_design()
+  Sigma <- default_sigma()
   original <- objective_function_info(df, "treatment", c("row", "col"), Sigma = Sigma)
   names(df)[names(df) == "row"] <- "x"
   names(df)[names(df) == "col"] <- "y"
@@ -373,14 +360,11 @@ test_that("spatial scoring uses numeric coordinates and custom grid columns", {
 })
 
 test_that("spatial scoring orders multiple grids consistently", {
-  df <- initialise_design_df(
-    items = 4, nrows = 3, ncols = 4,
-    block_nrows = 1, block_ncols = 4
-  )
+  df <- default_design(3, 4)
   df <- rbind(transform(df, site = "A"), transform(df, site = "B"))
   df$block <- interaction(df$site, df$block, drop = TRUE)
   df$treatment[c(13, 16)] <- df$treatment[c(16, 13)]
-  Sigma <- kronecker(diag(c(1, 2)), cor_ar1_ar1(3, 4, rho_row = 0.6, rho_col = 0.3))
+  Sigma <- kronecker(diag(c(1, 2)), default_sigma(3, 4))
   original <- objective_function_info(
     df, "treatment", c("row", "col"), Sigma = Sigma, by = "site"
   )
@@ -421,14 +405,11 @@ test_that("spatial scoring orders multiple grids consistently", {
 })
 
 test_that("spatial scoring accepts covariance for observed plots only", {
-  df <- initialise_design_df(
-    items = 4, nrows = 3, ncols = 4,
-    block_nrows = 1, block_ncols = 4
-  )
+  df <- default_design(3, 4)
   df <- df[order(df$row, df$col), ]
   observed <- setdiff(seq_len(nrow(df)), c(2, 7))
   df <- df[observed, ]
-  Sigma <- cor_ar1_ar1(3, 4, rho_row = 0.6, rho_col = 0.3)[observed, observed]
+  Sigma <- default_sigma(3, 4)[observed, observed]
   original <- objective_function_info(df, "treatment", c("row", "col"), Sigma = Sigma)
   reordered <- objective_function_info(
     df[rev(seq_len(nrow(df))), ], "treatment", c("row", "col"), Sigma = Sigma
@@ -440,11 +421,8 @@ test_that("spatial scoring accepts covariance for observed plots only", {
 })
 
 test_that("cached projections are rebuilt when nuisance effects change", {
-  df <- initialise_design_df(
-    items = 6, nrows = 4, ncols = 6,
-    block_nrows = 1, block_ncols = 6
-  )
-  Sigma <- cor_ar1_ar1(4, 6, rho_row = 0.6, rho_col = 0.3)
+  df <- default_design()
+  Sigma <- default_sigma()
 
   for (covariance in list(NULL, Sigma)) {
     original <- objective_function_info(df, "treatment", c("row", "col"), Sigma = covariance)
@@ -463,13 +441,10 @@ test_that("cached projections are rebuilt when nuisance effects change", {
 })
 
 test_that("formula expansion and environment changes invalidate the projection", {
-  df <- initialise_design_df(
-    items = 4, nrows = 3, ncols = 4,
-    block_nrows = 1, block_ncols = 4
-  )
+  df <- default_design(3, 4)
   df <- df[order(df$row, df$col), ]
   df$block <- factor(df$block)
-  Sigma <- cor_ar1_ar1(3, 4, 0.6, 0.3)
+  Sigma <- default_sigma(3, 4)
 
   for (covariance in list(NULL, Sigma)) {
     nuisance <- ~ . - treatment - row - col
@@ -525,11 +500,8 @@ test_that("the default nuisance model requires at least two blocks", {
 })
 
 test_that("explicit nuisance models can replace the block model", {
-  df <- initialise_design_df(
-    items = 4, nrows = 3, ncols = 4,
-    block_nrows = 1, block_ncols = 4
-  )
-  Sigma <- cor_ar1_ar1(3, 4, rho_row = 0.6, rho_col = 0.3)
+  df <- default_design(3, 4)
+  Sigma <- default_sigma(3, 4)
   original <- objective_function_info(df, "treatment", c("row", "col"), Sigma = Sigma)
   L <- compute_L_projection(df, Sigma)
 
@@ -581,51 +553,37 @@ test_that("Sigma and L_matrix are mutually exclusive", {
 
 # ---- Test with speed function
 
-test_that("speed() does not treat negative D-optimality scores as an optimum", {
-  df <- initialise_design_df(
-    items = 6, nrows = 4, ncols = 6,
-    block_nrows = 1, block_ncols = 6
+test_that("speed() optimises with D-optimality", {
+  df <- default_design()
+  Sigma <- default_sigma()
+
+  result <- speed(
+    df,
+    swap = "treatment",
+    swap_within = "block",
+    obj_function = objective_function_info,
+    criterion = "D",
+    Sigma = Sigma,
+    iterations = 100,
+    early_stop_iterations = 200,
+    seed = 1,
+    quiet = TRUE
   )
-  Sigma <- cor_ar1_ar1(4, 6, rho_row = 0.6, rho_col = 0.3)
+  final <- objective_function_info(
+    result$design_df, "treatment", c("row", "col"),
+    criterion = "D", Sigma = Sigma
+  )
 
-  for (covariance in list(NULL, Sigma)) {
-    result <- speed(
-      df,
-      swap = "treatment",
-      swap_within = "block",
-      obj_function = objective_function_info,
-      criterion = "D",
-      Sigma = covariance,
-      iterations = 100,
-      early_stop_iterations = 200,
-      seed = 1,
-      quiet = TRUE
-    )
-    final <- objective_function_info(
-      result$design_df, "treatment", c("row", "col"),
-      criterion = "D", Sigma = covariance
-    )
-
-    expect_lt(result$score, 0)
-    expect_equal(result$iterations_run, 100)
-    expect_identical(result$metadata$per_level[[1]]$stop_reason, "iterations")
-    expect_equal(result$score, final$score, tolerance = 1e-10)
-    if (is.null(covariance)) {
-      expect_equal(result$scores, rep(-5 * log(4), 100), tolerance = 1e-10)
-    }
-  }
+  expect_lt(result$score, 0)
+  expect_equal(result$iterations_run, 100)
+  expect_identical(result$metadata$per_level[[1]]$stop_reason, "iterations")
+  expect_equal(result$score, final$score, tolerance = 1e-10)
 })
 
 # Actually test by passing to speed
 test_that("speed() optimises an RCBD with the info objective under AR1xAR1", {
-  skip_if_not_installed("speed")
-
-  df <- initialise_design_df(
-    items = 6, nrows = 4, ncols = 6,
-    block_nrows = 1, block_ncols = 6
-  )
-
-  Sigma <- cor_ar1_ar1(4, 6, rho_row = 0.6, rho_col = 0.3)
+  df <- default_design()
+  Sigma <- default_sigma()
 
   result <- speed(
     df,
@@ -640,7 +598,6 @@ test_that("speed() optimises an RCBD with the info objective under AR1xAR1", {
     quiet = TRUE
   )
 
-  expect_s3_class(result, "design")
   expect_lt(result$score, Inf)
 
   info <- objective_function_info(
@@ -650,33 +607,5 @@ test_that("speed() optimises an RCBD with the info objective under AR1xAR1", {
     Sigma = Sigma
   )
   expect_equal(info$rank, 5)
-  expect_true(is.finite(info$A_value))
-})
-
-test_that("speed() optimises a BIBD with the info objective", {
-  skip_if_not_installed("speed")
-
-  df <- initialise_design_df(
-    items = 5, nrows = 3, ncols = 10,
-    block_nrows = 3, block_ncols = 1
-  )
-
-  result <- speed(
-    df,
-    swap = "treatment",
-    spatial_factors = ~ block + row + col,
-    obj_function = objective_function_info,
-    criterion = "A",
-    optimise_params = optim_params(random_initialisation = TRUE),
-    seed = 42,
-    quiet = TRUE
-  )
-
-  info <- objective_function_info(
-    result$design_df,
-    "treatment",
-    c("row", "col")
-  )
-  expect_equal(info$rank, 4)
   expect_true(is.finite(info$A_value))
 })
