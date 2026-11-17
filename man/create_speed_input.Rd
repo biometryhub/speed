@@ -58,7 +58,7 @@ with names matching \code{swap}.}
 
 \item{early_stop_iterations}{Number of iterations without improvement before
 early stopping (default: 2000). For hierarchical designs, can be a named
-list with names matching \code{swap}. Optimisation can also stop at a given lower
+list with names matching \code{swap}. Optimisation can also stop at a known lower
 bound on the score; see \code{stop_at_optimal} and \code{lower_bound} in \code{\link[=optim_params]{optim_params()}}.}
 
 \item{obj_function}{Objective function used to calculate score (lower is

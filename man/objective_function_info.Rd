@@ -34,10 +34,12 @@ experiment.}
 
 \item{criterion}{Either \code{"A"} or \code{"D"}, representing A or D
 optimality.
-- A-optimality: Minimises \eqn{\mathrm{tr} \left( \mathcal{I}^-
-      \right)}{tr(I⁻)}.
-    - D-optimality: Minimises \eqn{-\log \left| \mathcal{I} \right|}{-
-      log(|I|)}}
+\itemize{
+\item A-optimality: Minimises \eqn{\mathrm{tr} \left( \mathcal{I}^-
+    \right)}{tr(I⁻)}.
+\item D-optimality: Minimises \eqn{-\log \left| \mathcal{I} \right|}{-
+    log(|I|)}
+}}
 
 \item{L_matrix}{Optional precomputed projection matrix in grid order, as
 returned by \code{\link[=compute_L_projection]{compute_L_projection()}}. Cannot be supplied with \code{Sigma}.}

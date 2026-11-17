@@ -441,7 +441,8 @@ speed_hierarchical <- function(data, optimise, quiet, seed, ...) {
 
       # Decide whether to accept the new design
       delta <- if (new_score == current_score) 0 else new_score - current_score
-      if (delta <= 0 || runif(1) < exp(-delta / temp)) {
+      accept_prob <- if (delta == 0) 1 else exp(-delta / temp)
+      if (delta < 0 || runif(1) < accept_prob) {
         current_design <- new_design$design
         current_score <- new_score
         current_score_obj <- new_score_obj
