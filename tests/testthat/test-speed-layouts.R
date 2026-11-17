@@ -94,6 +94,7 @@ test_that("speed works with a custom objective function", {
     swap = "treatment",
     spatial_factors = ~ row + col,
     obj_function = custom_obj_function(),
+    optimise_params = optim_params(lower_bound = 0),
     iterations = 1000,
     seed = 42,
     quiet = TRUE

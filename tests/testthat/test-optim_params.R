@@ -8,7 +8,8 @@ test_that("optim_params works with no arguments", {
     "random_initialisation",
     "adj_weight",
     "bal_weight",
-    "stop_at_optimal"
+    "stop_at_optimal",
+    "lower_bound"
   )
 
   optimize_params <- optim_params()
@@ -27,7 +28,8 @@ test_that("optim_params works with arguments", {
     "random_initialisation",
     "adj_weight",
     "bal_weight",
-    "stop_at_optimal"
+    "stop_at_optimal",
+    "lower_bound"
   )
 
   optimize_params <- optim_params(swap_count = 2)
@@ -57,7 +59,8 @@ test_that("optim_params works with arguments", {
     random_initialisation = 3,
     adj_weight = 2,
     bal_weight = 3,
-    stop_at_optimal = FALSE
+    stop_at_optimal = FALSE,
+    lower_bound = -10
   )
 
   optimize_params <- do.call(optim_params, optimize_params_expected)
@@ -77,7 +80,8 @@ test_that("optim_params works with legacy options", {
     "random_initialisation",
     "adj_weight",
     "bal_weight",
-    "stop_at_optimal"
+    "stop_at_optimal",
+    "lower_bound"
   )
 
   withr::with_options(
@@ -150,4 +154,14 @@ test_that("optim_params throws error for invalid inputs", {
   expect_error(optim_params(stop_at_optimal = "a"))
   expect_error(optim_params(stop_at_optimal = "TRUE"))
   expect_error(optim_params(stop_at_optimal = 1))
+})
+
+test_that("optim_params validates lower_bound", {
+  expect_null(optim_params()$lower_bound)
+  for (bound in c(-1, 0, 1)) {
+    expect_identical(optim_params(lower_bound = bound)$lower_bound, bound)
+  }
+  for (bound in list("0", TRUE, numeric(0), c(0, 1), NA_real_, NaN, Inf, -Inf, 1i)) {
+    expect_error(optim_params(lower_bound = bound), "`lower_bound`")
+  }
 })

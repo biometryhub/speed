@@ -396,7 +396,8 @@
   random_initialisation,
   adj_weight,
   bal_weight,
-  stop_at_optimal
+  stop_at_optimal,
+  lower_bound
 ) {
   verify_positive_whole_number(swap_count)
   verify_non_negative_whole(start_temp)
@@ -408,6 +409,13 @@
   }
   if (!is.null(bal_weight)) {
     verify_numeric(bal_weight)
+  }
+
+  if (!is.null(lower_bound)) {
+    verify_numeric(lower_bound)
+    if (is.complex(lower_bound) || !is.finite(lower_bound)) {
+      stop("`lower_bound` must be a finite real number.", call. = FALSE)
+    }
   }
 
   if (!(random_initialisation %in% c(TRUE, FALSE))) {
