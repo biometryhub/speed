@@ -1,0 +1,423 @@
+---
+title: "Irregular Designs and Pre-allocation with speed"
+author: "Wasin Pipattungsakul"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    theme: flatly
+    highlight: tango
+vignette: >
+  %\VignetteIndexEntry{Irregular Designs and Pre-allocation with speed}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Irregular Design
+
+## Overview
+
+Not every trial fully fills a whole rectangle of equally sized blocks. The plots may be unavailable because of
+various reasons including but not limited to infrastructure and damage, and blocks may have to bend around them.
+A design with such layout is often called an irregular design.
+
+This vignette starts with a small irregular layout, then moves on to the more complex one from the OzBarley
+elite panel trial ([Berger et al., 2026](https://doi.org/10.25909/28545575.v5)) with 222 treatments in 5
+complete blocks across two areas with 34 blank plots. After the irregular designs, designs with some treatments
+pre-allocated are demonstrated.
+
+```{r load-package}
+library(speed)
+```
+
+## When to Use
+
+- Some plots in the grid cannot be used
+- Blocks are not rectangular
+
+## Structure
+
+- **Blocks**: Blocks of any shape
+- **Blank plots**: Non-experimental area
+- **Sites**: Areas with their own row and column numbering, if the trial spans more than one
+- **Pre-allocated plots**: Plots whose treatment is fixed in advance
+
+::: {.callout-note}
+Rows of blank plots are removed from the data frame in these designs because they take no part in the
+optimisation.
+:::
+
+# Optimising a Single-Site Irregular Design
+
+## Setting Up Irregular Design with speed
+
+A 10×10 grid holds 28 treatments in 3 complete blocks. The 10 plots at the bottom right and a 2×3 hole in rows
+3-4 and columns 3-5 are blank. Blocks of 28 plots are then filled row by row.
+
+```{r simple-df}
+n_treatments <- 28
+
+simple_design <- initialise_design_df(items = 1, nrows = 10, ncols = 10)
+
+# drop blank plots
+is_blank <- with(simple_design, (row >= 9 & col >= 6) | (row %in% 3:4 & col %in% 3:5))
+simple_design <- simple_design[!is_blank, ]
+rownames(simple_design) <- NULL
+
+# assign blocks row by row
+simple_design$block <- NA
+simple_design$block[order(simple_design$row, simple_design$col)] <- rep(1:3, each = n_treatments)
+simple_design$block <- factor(simple_design$block)
+
+# one replicate of every treatment per block
+for (block in 1:3) {
+  simple_design[simple_design$block == block, ]$treatment <- 1:n_treatments
+}
+
+head(simple_design)
+```
+
+```{r simple-plot1}
+#| code-fold: true
+#| code-summary: "Code"
+#| fig-width: 6
+#| fig-height: 6
+autoplot_irregular <- function(object, ...) {
+  if (!inherits(object, "design")) {
+    class(object) <- c("design", class(object))
+  }
+
+  plt <- autoplot(object, ...)
+  # block outlines are the only plain rectangles, tiles are a subclass
+  is_outline <- vapply(plt$layers, function(layer) class(layer$geom)[1] == "GeomRect", logical(1))
+  plt$layers <- plt$layers[!is_outline]
+
+  return(plt + ggplot2::theme(panel.grid = ggplot2::element_blank()))
+}
+
+autoplot_irregular(simple_design, treatments = "block", size = 0, legend = TRUE) +
+  ggplot2::labs(fill = "Block")
+```
+
+## Performing the Optimisation
+
+```{r simple-example}
+simple_result <- speed(
+  data = simple_design,
+  swap = "treatment",
+  swap_within = "block",
+  spatial_factors = ~ row + col,
+  seed = 112
+)
+
+simple_result
+```
+
+## Output of the Optimisation
+
+No duplicated treatments along any row, column, or block.
+
+```{r simple-no-dupes}
+check_no_dupes <- function(df, factors) {
+  for (factor in factors) {
+    cat(factor, max(table(df$treatment, df[[factor]])), "\n")
+  }
+}
+
+check_no_dupes(simple_result$design_df, c("row", "col", "block"))
+```
+
+## Visualise the Output
+
+```{r simple-plot2}
+#| code-fold: true
+#| code-summary: "Code"
+#| fig-width: 6
+#| fig-height: 6
+autoplot_irregular(simple_result)
+```
+
+# Optimising a Two-Site Irregular Design
+
+## Setting Up Irregular Design with speed
+
+The OzBarley trial has two sites, `sw` (20×26) and `se` (24×26), with 5 complete blocks of 222 plots and block 1
+spanning both sites. The common steps to set up an irregular design are:
+
+1. Create the full rectangular layout.
+2. Remove the blank plots.
+3. Assign the plots to blocks.
+4. Allocate the treatments within each block.
+
+```{r irr-df}
+n_treatments <- 222
+
+irr_design <- initialise_design_df(
+  items = 1,
+  designs = list(
+    sw = list(nrows = 20, ncols = 26),
+    se = list(nrows = 24, ncols = 26)
+  )
+)
+
+irr_design$site_col <- paste(irr_design$site, irr_design$col, sep = "_")
+irr_design$site_row <- paste(irr_design$site, irr_design$row, sep = "_")
+
+# drop blank plots
+is_blank <- with(irr_design, {
+  sw_blank <- (col == 26 & row %in% c(9:12, 15:18, 20)) | (col == 15 & row == 9)
+  se_blank <- (col == 26 & row %in% c(15, 9:12)) | (col %in% 21:26 & row %in% 16:18) | (col == 15 & row == 9)
+  (site == "sw" & sw_blank) | (site == "se" & se_blank)
+})
+irr_design <- irr_design[!is_blank, ]
+rownames(irr_design) <- NULL
+
+is_sw <- irr_design$site == "sw"
+row <- irr_design$row
+col <- irr_design$col
+
+# assign blocks
+irr_design$block <- 1
+irr_design[is_sw & row <= 18 & col >= 6, ]$block <- 2
+irr_design[is_sw & row <= 15, ]$block <- 2
+irr_design[is_sw & row <= 9 & col <= 14, ]$block <- 3
+irr_design[is_sw & row <= 8, ]$block <- 3
+irr_design[!is_sw & row <= 18, ]$block <- 4
+irr_design[!is_sw & row <= 9 & col <= 14, ]$block <- 5
+irr_design[!is_sw & row <= 8, ]$block <- 5
+
+# one replicate of every treatment per block
+for (block in 1:5) {
+  irr_design[irr_design$block == block, ]$treatment <- 1:n_treatments
+}
+irr_design$block <- factor(irr_design$block)
+
+head(irr_design)
+```
+
+```{r irr-plot1}
+#| code-fold: true
+#| code-summary: "Code"
+#| fig-width: 14
+#| fig-height: 7
+plot_layout_irr <- function(df, fill, title = NULL, labels = TRUE) {
+  # white labels on the darker half of viridis
+  df$label_colour <- ifelse(as.integer(df[[fill]]) <= nlevels(df[[fill]]) / 2, "white", "black")
+  text_layer <- if (labels) {
+    ggplot2::geom_text(ggplot2::aes(label = treatment, colour = label_colour), size = 1.8)
+  }
+
+  return(
+    ggplot2::ggplot(df, ggplot2::aes(col, row, fill = get(fill))) +
+      ggplot2::geom_tile(color = "black") +
+      text_layer +
+      ggplot2::scale_colour_identity() +
+      ggplot2::scale_fill_viridis_d(drop = FALSE) +
+      ggplot2::scale_x_continuous(expand = c(0, 0), breaks = 1:max(df$col), position = "top") +
+      ggplot2::scale_y_continuous(expand = c(0, 0), breaks = 1:max(df$row)) +
+      ggplot2::labs(title = title) +
+      ggplot2::theme_bw() +
+      ggplot2::theme(
+        legend.position = "none",
+        panel.grid.major = ggplot2::element_blank(),
+        panel.grid.minor = ggplot2::element_blank()
+      )
+  )
+}
+
+autoplot_ozbarley <- function(df, labels = TRUE) {
+  is_sw <- df$site == "sw"
+  sw <- plot_layout_irr(df[is_sw, ], "block", "SW", labels)
+  se <- plot_layout_irr(df[!is_sw, ], "block", "SE", labels)
+
+  sw_x <- sw$scales$get_scales("x")
+  sw_x$trans <- scales::reverse_trans()
+
+  se_y <- se$scales$get_scales("y")
+  se_y$position <- "right"
+  return(patchwork::wrap_plots(sw, se, ncol = 2))
+}
+
+autoplot_ozbarley(irr_design, labels = FALSE)
+```
+
+Block 1 covers the top of both sites, while blocks 2-3 and 4-5 are confined to `sw` and `se` respectively.
+
+## Performing the Optimisation
+
+Treatments are swapped within blocks, so a treatment in block 1 can move between `sw`
+and `se`. Tools that handle one rectangular grid at a time require random allocation of treatments in block 1 in
+advance.
+
+```{r irr-example}
+irr_result <- speed(
+  data = irr_design,
+  swap = "treatment",
+  swap_within = "block",
+  spatial_factors = ~ site_row + site_col,
+  grid_factors = list(dim1 = "row", dim2 = "col", by = "site"),
+  optimise_params = optim_params(random_initialisation = 10),
+  adj_weight = 0,
+  seed = 112
+)
+
+irr_result
+```
+
+## Output of the Optimisation
+
+The output shows the final score, the number of iterations, and whether the optimisation stopped early.
+
+```{r irr-output}
+str(irr_result)
+```
+
+No duplicated treatments along any row, column, or block.
+
+```{r irr-no-dupes}
+df <- irr_result$design_df
+check_no_dupes(df, c("site_row", "site_col", "block"))
+```
+
+## Visualise the Output
+
+```{r irr-plot2}
+#| code-fold: true
+#| code-summary: "Code"
+#| fig-width: 14
+#| fig-height: 7
+autoplot_ozbarley(df)
+```
+
+This design has now been optimised.
+
+# Pre-allocating Treatments
+
+## Setting Up Pre-allocated Design with speed
+
+To match with prior trials, some plots may be pre-allocated with a treatment. For example, 6 plots in a 6×10
+blocked design are pre-allocated with treatments 1-3.
+
+::: {.callout-note}
+Unlike blank plots, rows of pre-allocated plots are kept in the data frame as part of the optimisation.
+:::
+
+```{r prealloc-df}
+n_treatments <- 20
+df_prealloc <- data.frame(
+  row = c(1, 2, 3, 4, 5, 6),
+  col = c(1, 6, 3, 8, 10, 2),
+  fixed = c(1, 2, 3, 1, 2, 3)
+)
+
+prealloc_design <- initialise_design_df(
+  items = 1:n_treatments,
+  nrows = 6,
+  ncols = 10,
+  block_nrows = 2,
+  block_ncols = 10
+)
+fixed_at <- match(paste(prealloc_design$row, prealloc_design$col), paste(df_prealloc$row, df_prealloc$col))
+is_fixed <- !is.na(fixed_at)
+
+prealloc_design$treatment[is_fixed] <- df_prealloc$fixed[fixed_at[is_fixed]]
+# non-fixed treatments 1-3 have one rep
+prealloc_design$treatment[!is_fixed] <- c(1:3, rep(4:n_treatments, 3))
+
+# ignore pre-allocated plots when swapping
+prealloc_design$swappable <- ifelse(is_fixed, NA, 1)
+
+head(prealloc_design)
+```
+
+```{r prealloc-plot1}
+#| code-fold: true
+#| code-summary: "Code"
+#| fig-width: 8
+#| fig-height: 5
+class(prealloc_design) <- c("design", class(prealloc_design))
+plt <- autoplot(prealloc_design, treatments = "block", size = 0, legend = TRUE)
+fixed_labels <- merge(plt$layers[[1]]$data, df_prealloc, by = c("row", "col"))
+plt +
+  ggplot2::geom_tile(
+    ggplot2::aes(col, row, colour = "Pre-allocated"),
+    data = df_prealloc,
+    fill = NA,
+    linewidth = 1,
+    inherit.aes = FALSE
+  ) +
+  ggplot2::geom_text(
+    ggplot2::aes(col, row, label = fixed),
+    data = fixed_labels,
+    colour = fixed_labels$text_col,
+    size = 4,
+    inherit.aes = FALSE
+  ) +
+  ggplot2::scale_colour_manual(values = c("Pre-allocated" = "red"), name = NULL) +
+  ggplot2::guides(fill = ggplot2::guide_legend(title = "Block", order = 2))
+```
+
+## Performing the Optimisation
+
+We are swapping within `swappable`, which is `NA` for the pre-allocated plots so they remain in place while
+still being part of the optimisation. The other plots are swapped across the whole layout, and `block` is added
+to `spatial_factors` to keep the blocks complete.
+
+```{r prealloc-example}
+prealloc_result <- speed(
+  data = prealloc_design,
+  swap = "treatment",
+  swap_within = "swappable",
+  spatial_factors = ~ row + col + block,
+  seed = 112
+)
+
+prealloc_result
+```
+
+## Output of the Optimisation
+
+No duplicated treatments along any row, column, or block.
+
+```{r prealloc-no-dupes}
+df <- prealloc_result$design_df
+check_no_dupes(df, c("row", "col", "block"))
+```
+
+## Visualise the Output
+
+```{r prealloc-plot2}
+#| code-fold: true
+#| code-summary: "Code"
+#| fig-width: 8
+#| fig-height: 5
+autoplot(prealloc_result) +
+  ggplot2::geom_tile(ggplot2::aes(col, row), data = df_prealloc, fill = NA, colour = "red", linewidth = 1)
+```
+
+This design has now been optimised, and the pre-allocated treatments stay in place.
+
+# Spatial Design Considerations
+
+## Field Shape and Orientation
+
+## Neighbour Effects
+
+# Using `speed` Effectively
+
+1. **Set appropriate parameters**: Balance optimisation time with improvement <!-- Link to vignette on parameters -->
+2. **[Visualise designs](autoplot.html)**: Always plot layouts before implementation  <!-- Link to autoplot -->
+3. **Compare alternatives**: Test multiple blocking strategies
+4. **Validate results**: Check constraint satisfaction and efficiency metrics
+
+# Conclusion
+
+## Further Reading
+
+# Related Vignettes
+
+- [Multi-Environment Trials](met.html)
+
+*This vignette demonstrates the versatility of the `speed` package for agricultural experimental design. For more advanced applications and custom designs, consult the package documentation and additional vignettes.*
