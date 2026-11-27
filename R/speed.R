@@ -98,6 +98,9 @@
 #' arguments can be provided as single values. For more examples and detailed
 #' usage, see the package vignettes.
 #'
+#' Treatments with `NA` in `swap_within` are never moved but still count towards
+#' the score.
+#'
 #' `linked_cols` names columns that describe the treatment rather than the plot,
 #' so that a value paired with a treatment stays paired with it wherever the
 #' search moves it. They take no part in scoring, and are returned in their

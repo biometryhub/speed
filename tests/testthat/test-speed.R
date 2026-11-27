@@ -357,6 +357,39 @@ test_that("speed respects swap_within boundaries", {
   vdiffr::expect_doppelganger("speed_blocks", autoplot(result))
 })
 
+test_that("speed keeps plots with NA swap_within in place", {
+  test_data <- data.frame(
+    row = rep(1:4, times = 4),
+    col = rep(1:4, each = 4),
+    treatment = rep(1:4, times = 4),
+    group = c(NA, rep(1, 14), NA)
+  )
+
+  result <- speed(
+    data = test_data,
+    swap = "treatment",
+    swap_within = "group",
+    spatial_factors = ~ row + col,
+    optimise_params = optim_params(random_initialisation = 5),
+    seed = 1,
+    quiet = TRUE
+  )
+
+  df <- result$design_df
+  fixed <- merge(df, test_data[is.na(test_data$group), ], by = c("row", "col"))
+  expect_equal(fixed$treatment.x, fixed$treatment.y)
+  expect_false(identical(
+    df$treatment[order(df$row, df$col)],
+    test_data$treatment[order(test_data$row, test_data$col)]
+  ))
+
+  # still used when scoring
+  expect_equal(
+    result$score,
+    objective_function(df, "treatment", c("row", "col"))$score
+  )
+})
+
 test_that("speed runs a with variation of row and column columns", {
   test_data <- data.frame(
     Row = rep(1:5, times = 4),

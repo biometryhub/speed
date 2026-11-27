@@ -45,17 +45,16 @@ library(speed)
 - **Pre-allocated plots**: Plots whose treatment is fixed in advance
 
 ::: {.callout-note}
-Blank plots are removed from the data frame in these designs, rather than kept with a placeholder treatment.
-They take no part in the optimisation or the scoring, and the plots show them as gaps.
+Rows of blank plots are removed from the data frame in these designs because they take no part in the
+optimisation.
 :::
 
 # Optimising a Single-Site Irregular Design
 
 ## Setting Up Irregular Design with speed
 
-A 10 × 10 grid holds 28 treatments in 3 complete blocks. The 10 plots in rows 9-10, columns 6-10 and a 2 × 3
-hole in rows 3-4, columns 3-5 are blank. Blocks are filled row by row, 28 plots at a time, so their boundaries
-step part-way across rows 4 and 7.
+A 10×10 grid holds 28 treatments in 3 complete blocks. The 10 plots at the bottom right and a 2×3 hole in rows
+3-4 and columns 3-5 are blank. Blocks of 28 plots are then filled row by row.
 
 ```{r simple-df}
 n_treatments <- 28
@@ -80,9 +79,6 @@ for (block in 1:3) {
 head(simple_design)
 ```
 
-`autoplot()` outlines each block with a rectangle, which cuts across irregular blocks. A small wrapper drops
-those outlines and the gridlines that show through the gaps.
-
 ```{r simple-plot1}
 #| code-fold: true
 #| code-summary: "Code"
@@ -101,10 +97,9 @@ autoplot_irregular <- function(object, ...) {
   return(plt + ggplot2::theme(panel.grid = ggplot2::element_blank()))
 }
 
-autoplot_irregular(simple_design, treatments = "block", size = 0)
+autoplot_irregular(simple_design, treatments = "block", size = 0, legend = TRUE) +
+  ggplot2::labs(fill = "Block")
 ```
-
-Colours mark the blocks and blank plots are left empty.
 
 ## Performing the Optimisation
 
@@ -122,7 +117,7 @@ simple_result
 
 ## Output of the Optimisation
 
-No duplicated treatments along any row or column, and every block still contains each treatment exactly once.
+No duplicated treatments along any row, column, or block.
 
 ```{r simple-no-dupes}
 check_no_dupes <- function(df, factors) {
@@ -148,9 +143,13 @@ autoplot_irregular(simple_result)
 
 ## Setting Up Irregular Design with speed
 
-The OzBarley trial has two sites, `sw` (20 rows × 26 columns) and `se` (24 rows × 26 columns), with 5 complete
-blocks of 222 plots. Block 1 spans both sites. We start from two rectangular sites and then carve out the blank
-plots and the irregular blocks.
+The OzBarley trial has two sites, `sw` (20×26) and `se` (24×26), with 5 complete blocks of 222 plots and block 1
+spanning both sites. The common steps to set up an irregular design are:
+
+1. Create the full rectangular layout.
+2. Remove the blank plots.
+3. Assign the plots to blocks.
+4. Allocate the treatments within each block.
 
 ```{r irr-df}
 n_treatments <- 222
@@ -197,8 +196,6 @@ irr_design$block <- factor(irr_design$block)
 
 head(irr_design)
 ```
-
-The two sites face each other, so `sw` is drawn with its columns reversed.
 
 ```{r irr-plot1}
 #| code-fold: true
@@ -250,9 +247,9 @@ Block 1 covers the top of both sites, while blocks 2-3 and 4-5 are confined to `
 
 ## Performing the Optimisation
 
-Treatments are swapped within blocks, so the block-1 plots of both sites form a single pool. Balance is
-measured along the rows and columns of each site. As in the [MET vignette](met.html), both sites number their
-rows and columns from 1, so `by = "site"` tells `speed()` that they are separate grids.
+Treatments are swapped within blocks, so a treatment in block 1 can move between `sw`
+and `se`. Tools that handle one rectangular grid at a time require random allocation of treatments in block 1 in
+advance.
 
 ```{r irr-example}
 irr_result <- speed(
@@ -268,10 +265,6 @@ irr_result <- speed(
 
 irr_result
 ```
-
-Block 1 is optimised as a whole, so a treatment can move between `sw` and `se` if that improves balance. Tools
-that handle one rectangular grid at a time need block 1 split, or shuffled in advance, before optimising each
-site separately.
 
 ## Output of the Optimisation
 
@@ -298,40 +291,43 @@ check_no_dupes(df, c("site_row", "site_col", "block"))
 autoplot_ozbarley(df)
 ```
 
-Rows and columns within each site are balanced, block 1 is shared across both sites, and the 34 blank plots
-are left out.
+This design has now been optimised.
 
 # Pre-allocating Treatments
 
 ## Setting Up Pre-allocated Design with speed
 
-Some plots may need a given treatment before optimisation starts, for example to line up with existing
-equipment or a previous season. We reuse the single-site layout and fix treatments 1-3 to two plots each, in
-different blocks, rows and columns.
+To match with prior trials, some plots may be pre-allocated with a treatment. For example, 6 plots in a 6×10
+blocked design are pre-allocated with treatments 1-3.
+
+::: {.callout-note}
+Unlike blank plots, rows of pre-allocated plots are kept in the data frame as part of the optimisation.
+:::
 
 ```{r prealloc-df}
-n_treatments <- 28
-prealloc <- data.frame(
-  row = c(1, 2, 5, 6, 8, 10),
+n_treatments <- 20
+df_prealloc <- data.frame(
+  row = c(1, 2, 3, 4, 5, 6),
   col = c(1, 6, 3, 8, 10, 2),
   fixed = c(1, 2, 3, 1, 2, 3)
 )
 
-prealloc_design <- simple_design
-fixed_at <- match(paste(prealloc_design$row, prealloc_design$col), paste(prealloc$row, prealloc$col))
+prealloc_design <- initialise_design_df(
+  items = 1:n_treatments,
+  nrows = 6,
+  ncols = 10,
+  block_nrows = 2,
+  block_ncols = 10
+)
+fixed_at <- match(paste(prealloc_design$row, prealloc_design$col), paste(df_prealloc$row, df_prealloc$col))
 is_fixed <- !is.na(fixed_at)
 
-# each block still holds every treatment once
-for (block in 1:3) {
-  in_block <- prealloc_design$block == block
-  fixed <- prealloc$fixed[fixed_at[in_block & is_fixed]]
-  prealloc_design$treatment[in_block & is_fixed] <- fixed
-  prealloc_design$treatment[in_block & !is_fixed] <- setdiff(1:n_treatments, fixed)
-}
+prealloc_design$treatment[is_fixed] <- df_prealloc$fixed[fixed_at[is_fixed]]
+# non-fixed treatments 1-3 have one rep
+prealloc_design$treatment[!is_fixed] <- c(1:3, rep(4:n_treatments, 3))
 
-# pre-allocated plots have no swap group
-prealloc_design$swap_group <- prealloc_design$block
-prealloc_design$swap_group[is_fixed] <- NA
+# ignore pre-allocated plots when swapping
+prealloc_design$swappable <- ifelse(is_fixed, NA, 1)
 
 head(prealloc_design)
 ```
@@ -339,26 +335,42 @@ head(prealloc_design)
 ```{r prealloc-plot1}
 #| code-fold: true
 #| code-summary: "Code"
-#| fig-width: 6
-#| fig-height: 6
-autoplot_irregular(prealloc_design, treatments = "swap_group", size = 0) +
-  ggplot2::geom_tile(ggplot2::aes(col, row), data = prealloc, fill = "grey", colour = "red", linewidth = 1)
+#| fig-width: 8
+#| fig-height: 5
+class(prealloc_design) <- c("design", class(prealloc_design))
+plt <- autoplot(prealloc_design, treatments = "block", size = 0, legend = TRUE)
+fixed_labels <- merge(plt$layers[[1]]$data, df_prealloc, by = c("row", "col"))
+plt +
+  ggplot2::geom_tile(
+    ggplot2::aes(col, row, colour = "Pre-allocated"),
+    data = df_prealloc,
+    fill = NA,
+    linewidth = 1,
+    inherit.aes = FALSE
+  ) +
+  ggplot2::geom_text(
+    ggplot2::aes(col, row, label = fixed),
+    data = fixed_labels,
+    colour = fixed_labels$text_col,
+    size = 4,
+    inherit.aes = FALSE
+  ) +
+  ggplot2::scale_colour_manual(values = c("Pre-allocated" = "red"), name = NULL) +
+  ggplot2::guides(fill = ggplot2::guide_legend(title = "Block", order = 2))
 ```
-
-Colours mark the swap groups. Pre-allocated plots, in grey with a red outline, belong to none.
 
 ## Performing the Optimisation
 
-`swap_within` points to `swap_group`, which is `NA` for the pre-allocated plots, so they are never swapped. They
-are still part of the scoring, and the free copies of treatments 1-3 count against them. A free plot of
-treatment 1 is therefore kept out of rows 1 and 6 and columns 1 and 8, where treatment 1 is already fixed.
+We are swapping within `swappable`, which is `NA` for the pre-allocated plots so they remain in place while
+still being part of the optimisation. The other plots are swapped across the whole layout, and `block` is added
+to `spatial_factors` to keep the blocks complete.
 
 ```{r prealloc-example}
 prealloc_result <- speed(
   data = prealloc_design,
   swap = "treatment",
-  swap_within = "swap_group",
-  spatial_factors = ~ row + col,
+  swap_within = "swappable",
+  spatial_factors = ~ row + col + block,
   seed = 112
 )
 
@@ -367,18 +379,11 @@ prealloc_result
 
 ## Output of the Optimisation
 
-No duplicated treatments along any row, column, or block, pre-allocated plots included.
+No duplicated treatments along any row, column, or block.
 
 ```{r prealloc-no-dupes}
 df <- prealloc_result$design_df
 check_no_dupes(df, c("row", "col", "block"))
-```
-
-Every pre-allocated plot keeps its treatment.
-
-```{r prealloc-fixed}
-fixed_after <- merge(df, prealloc, by = c("row", "col"))
-all(fixed_after$treatment == fixed_after$fixed)
 ```
 
 ## Visualise the Output
@@ -386,13 +391,13 @@ all(fixed_after$treatment == fixed_after$fixed)
 ```{r prealloc-plot2}
 #| code-fold: true
 #| code-summary: "Code"
-#| fig-width: 6
-#| fig-height: 6
-autoplot_irregular(prealloc_result) +
-  ggplot2::geom_tile(ggplot2::aes(col, row), data = prealloc, fill = NA, colour = "red", linewidth = 1)
+#| fig-width: 8
+#| fig-height: 5
+autoplot(prealloc_result) +
+  ggplot2::geom_tile(ggplot2::aes(col, row), data = df_prealloc, fill = NA, colour = "red", linewidth = 1)
 ```
 
-Pre-allocated plots are outlined in red.
+This design has now been optimised, and the pre-allocated treatments stay in place.
 
 # Spatial Design Considerations
 
@@ -410,10 +415,6 @@ Pre-allocated plots are outlined in red.
 # Conclusion
 
 ## Further Reading
-
-- Berger, B. et al. (2026). OzBarley: phenotypic data of the OzBarley elite panel collected in greenhouse trials
-  at the Australian Plant Phenomics Network, University of Adelaide. The University of Adelaide. Dataset.
-  <https://doi.org/10.25909/28545575.v5>
 
 # Related Vignettes
 
